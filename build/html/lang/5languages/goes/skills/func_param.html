@@ -1316,7 +1316,7 @@ var _hmt = _hmt || [];
 <p>在client-go中有这么一段代码，有人提 <a class="reference external" href="https://github.com/cloudnativeto/sig-k8s-source-code/issues/17">issue</a> 问出这个疑问:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">func</span> <span class="p">(</span><span class="n">r</span> <span class="o">*</span><span class="n">Request</span><span class="p">)</span> <span class="n">Do</span><span class="p">(</span><span class="n">ctx</span> <span class="n">context</span><span class="o">.</span><span class="n">Context</span><span class="p">)</span> <span class="n">Result</span> <span class="p">{</span>
   <span class="n">var</span> <span class="n">result</span> <span class="n">Result</span>
-  <span class="n">err</span> <span class="o">:=</span> <span class="n">r</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">func</span><span class="p">(</span><span class="n">req</span> <span class="o">*</span><span class="n">http</span><span class="o">.</span><span class="n">Request</span><span class="p">,</span> <span class="n">resp</span> <span class="o">*</span><span class="n">http</span><span class="o">.</span><span class="n">Response</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">err</span> <span class="p">:</span><span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">func</span><span class="p">(</span><span class="n">req</span> <span class="o">*</span><span class="n">http</span><span class="o">.</span><span class="n">Request</span><span class="p">,</span> <span class="n">resp</span> <span class="o">*</span><span class="n">http</span><span class="o">.</span><span class="n">Response</span><span class="p">)</span> <span class="p">{</span>
     <span class="n">result</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">transformResponse</span><span class="p">(</span><span class="n">resp</span><span class="p">,</span> <span class="n">req</span><span class="p">)</span>
   <span class="p">})</span>
   <span class="k">if</span> <span class="n">err</span> <span class="o">!=</span> <span class="n">nil</span> <span class="p">{</span>
@@ -1328,7 +1328,7 @@ var _hmt = _hmt || [];
 
 <span class="n">func</span> <span class="p">(</span><span class="n">r</span> <span class="o">*</span><span class="n">Request</span><span class="p">)</span> <span class="n">request</span><span class="p">(</span><span class="n">ctx</span> <span class="n">context</span><span class="o">.</span><span class="n">Context</span><span class="p">,</span> <span class="n">fn</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">http</span><span class="o">.</span><span class="n">Request</span><span class="p">,</span> <span class="o">*</span><span class="n">http</span><span class="o">.</span><span class="n">Response</span><span class="p">))</span> <span class="n">error</span> <span class="p">{</span>
 <span class="o">...</span>
-    <span class="n">resp</span><span class="p">,</span> <span class="n">err</span> <span class="o">:=</span> <span class="n">client</span><span class="o">.</span><span class="n">Do</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+    <span class="n">resp</span><span class="p">,</span> <span class="n">err</span> <span class="p">:</span><span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">Do</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
 <span class="o">...</span>
     <span class="n">fn</span><span class="p">(</span><span class="n">req</span><span class="p">,</span> <span class="n">resp</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">true</span>
@@ -1337,7 +1337,7 @@ var _hmt = _hmt || [];
 </div>
 <p>问题: 为什么Do要用传入 fn 的形式 去转换 Response, 直接按照下面的写不行么, 例如:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">func</span> <span class="p">(</span><span class="n">r</span> <span class="o">*</span><span class="n">Request</span><span class="p">)</span> <span class="n">Do</span><span class="p">(</span><span class="n">ctx</span> <span class="n">context</span><span class="o">.</span><span class="n">Context</span><span class="p">)</span> <span class="n">Result</span> <span class="p">{</span>
-  <span class="n">result</span><span class="p">,</span> <span class="n">err</span> <span class="o">:=</span> <span class="n">r</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
+  <span class="n">result</span><span class="p">,</span> <span class="n">err</span> <span class="p">:</span><span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">err</span> <span class="o">!=</span> <span class="n">nil</span> <span class="p">{</span>
     <span class="k">return</span> <span class="n">Result</span><span class="p">{</span><span class="n">err</span><span class="p">:</span> <span class="n">err</span><span class="p">}</span>
   <span class="p">}</span>
@@ -1346,7 +1346,7 @@ var _hmt = _hmt || [];
 
 <span class="n">func</span> <span class="p">(</span><span class="n">r</span> <span class="o">*</span><span class="n">Request</span><span class="p">)</span> <span class="n">request</span><span class="p">(</span><span class="n">ctx</span> <span class="n">context</span><span class="o">.</span><span class="n">Context</span><span class="p">,</span> <span class="n">fn</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">http</span><span class="o">.</span><span class="n">Request</span><span class="p">,</span> <span class="o">*</span><span class="n">http</span><span class="o">.</span><span class="n">Response</span><span class="p">))</span> <span class="p">(</span><span class="n">Result</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span> <span class="p">{</span>
 <span class="o">...</span>
-    <span class="n">resp</span><span class="p">,</span> <span class="n">err</span> <span class="o">:=</span> <span class="n">client</span><span class="o">.</span><span class="n">Do</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+    <span class="n">resp</span><span class="p">,</span> <span class="n">err</span> <span class="p">:</span><span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">Do</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
 <span class="o">...</span>
    <span class="n">result</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">transformResponse</span><span class="p">(</span><span class="n">resp</span><span class="p">,</span> <span class="n">req</span><span class="p">)</span>
    <span class="k">return</span> <span class="n">result</span><span class="p">,</span> <span class="n">nil</span>
@@ -1363,7 +1363,7 @@ var _hmt = _hmt || [];
 </div>
 <p>DoRaw函数:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">func</span> <span class="p">(</span><span class="n">r</span> <span class="o">*</span><span class="n">Request</span><span class="p">)</span> <span class="n">DoRaw</span><span class="p">()</span> <span class="p">([]</span><span class="n">byte</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span> <span class="p">{</span>
-  <span class="n">err</span> <span class="o">:=</span> <span class="n">r</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="n">func</span><span class="p">(</span><span class="n">req</span> <span class="o">*</span><span class="n">http</span><span class="o">.</span><span class="n">Request</span><span class="p">,</span> <span class="n">resp</span> <span class="o">*</span><span class="n">http</span><span class="o">.</span><span class="n">Response</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">err</span> <span class="p">:</span><span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="n">func</span><span class="p">(</span><span class="n">req</span> <span class="o">*</span><span class="n">http</span><span class="o">.</span><span class="n">Request</span><span class="p">,</span> <span class="n">resp</span> <span class="o">*</span><span class="n">http</span><span class="o">.</span><span class="n">Response</span><span class="p">)</span> <span class="p">{</span>
     <span class="o">...</span>
     <span class="n">result</span><span class="o">.</span><span class="n">body</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">err</span> <span class="o">=</span> <span class="n">ioutil</span><span class="o">.</span><span class="n">ReadAll</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">Body</span><span class="p">)</span>
     <span class="n">glogBody</span><span class="p">(</span><span class="s2">&quot;Response Body&quot;</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
@@ -1432,6 +1432,7 @@ var _hmt = _hmt || [];
       <script type="text/javascript" src="../../../_static/jquery.js"></script>
       <script type="text/javascript" src="../../../_static/underscore.js"></script>
       <script type="text/javascript" src="../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../../_static/language_data.js"></script>
 
   
 

@@ -1316,8 +1316,8 @@ var _hmt = _hmt || [];
 <div class="section" id="id2">
 <h2>惰性求值和闭包<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
 <p>实例:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">a</span> <span class="o">:=</span> <span class="p">[]</span><span class="nb">int</span><span class="p">{</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">}</span>
-<span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">i</span><span class="o">:=</span> <span class="nb">range</span> <span class="n">a</span> <span class="p">{</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">a</span> <span class="p">:</span><span class="o">=</span> <span class="p">[]</span><span class="nb">int</span><span class="p">{</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">}</span>
+<span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span><span class="o">=</span> <span class="nb">range</span> <span class="n">a</span> <span class="p">{</span>
   <span class="n">go</span> <span class="n">func</span><span class="p">()</span> <span class="p">{</span>
     <span class="n">fmt</span><span class="o">.</span><span class="n">Println</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
   <span class="p">}()</span>
@@ -1336,7 +1336,7 @@ var _hmt = _hmt || [];
 </pre></div>
 </div>
 <p>两种解决方法。其中第一种方法很好理解，就是把变量v的值通过参数的形式传递给goroutine，因为go中func的参数传递都是值传递，所以就在goroutine启动时获得了当前v变量的值:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">v</span> <span class="o">:=</span> <span class="nb">range</span> <span class="n">values</span> <span class="p">{</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">v</span> <span class="p">:</span><span class="o">=</span> <span class="nb">range</span> <span class="n">values</span> <span class="p">{</span>
     <span class="n">go</span> <span class="n">func</span><span class="p">(</span><span class="n">u</span> <span class="n">string</span><span class="p">)</span> <span class="p">{</span>
         <span class="n">fmt</span><span class="o">.</span><span class="n">Println</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
         <span class="n">done</span> <span class="o">&lt;-</span> <span class="n">true</span>
@@ -1345,8 +1345,8 @@ var _hmt = _hmt || [];
 </pre></div>
 </div>
 <p>第二种方法是更巧妙地通过一个赋值语句来解决的:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">v</span> <span class="o">:=</span> <span class="nb">range</span> <span class="n">values</span> <span class="p">{</span>
-    <span class="n">v</span> <span class="o">:=</span> <span class="n">v</span> <span class="o">//</span> <span class="n">create</span> <span class="n">a</span> <span class="n">new</span> <span class="s1">&#39;v&#39;</span><span class="o">.</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">v</span> <span class="p">:</span><span class="o">=</span> <span class="nb">range</span> <span class="n">values</span> <span class="p">{</span>
+    <span class="n">v</span> <span class="p">:</span><span class="o">=</span> <span class="n">v</span> <span class="o">//</span> <span class="n">create</span> <span class="n">a</span> <span class="n">new</span> <span class="s1">&#39;v&#39;</span><span class="o">.</span>
     <span class="n">go</span> <span class="n">func</span><span class="p">()</span> <span class="p">{</span>
         <span class="n">fmt</span><span class="o">.</span><span class="n">Println</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
     <span class="p">}()</span>
@@ -1361,10 +1361,10 @@ var _hmt = _hmt || [];
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">Using</span> <span class="n">reference</span> <span class="n">to</span> <span class="n">loop</span> <span class="n">iterator</span> <span class="n">variable</span>
 <span class="o">//</span> <span class="n">Due</span> <span class="n">to</span> <span class="n">efficiency</span><span class="p">,</span> <span class="n">the</span> <span class="n">loop</span> <span class="n">iterator</span> <span class="n">variable</span> <span class="ow">is</span>
     <span class="o">//</span> <span class="n">a</span> <span class="n">single</span> <span class="n">variable</span> <span class="n">that</span> <span class="n">takes</span> <span class="n">different</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">each</span> <span class="n">loop</span> <span class="n">iteration</span><span class="o">.</span>
-<span class="ow">in</span> <span class="o">:=</span> <span class="p">[]</span><span class="nb">int</span><span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">}</span>
+<span class="ow">in</span> <span class="p">:</span><span class="o">=</span> <span class="p">[]</span><span class="nb">int</span><span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">}</span>
 
 <span class="n">var</span> <span class="n">out</span> <span class="p">[]</span><span class="o">*</span><span class="nb">int</span>
-<span class="k">for</span>  <span class="n">_</span><span class="p">,</span> <span class="n">v</span> <span class="o">:=</span> <span class="nb">range</span> <span class="ow">in</span> <span class="p">{</span>
+<span class="k">for</span>  <span class="n">_</span><span class="p">,</span> <span class="n">v</span> <span class="p">:</span><span class="o">=</span> <span class="nb">range</span> <span class="ow">in</span> <span class="p">{</span>
     <span class="n">out</span> <span class="o">=</span> <span class="n">append</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">v</span><span class="p">)</span>
 <span class="p">}</span>
 
@@ -1378,7 +1378,7 @@ var _hmt = _hmt || [];
 <span class="n">原因</span><span class="p">:</span>
     <span class="nb">range</span> <span class="n">中的</span> <span class="n">value</span> <span class="n">使用相同的指针地址</span>
 <span class="n">解决方法</span><span class="p">:</span>
-<span class="k">for</span>  <span class="n">_</span><span class="p">,</span> <span class="n">v</span> <span class="o">:=</span> <span class="nb">range</span> <span class="ow">in</span> <span class="p">{</span>
+<span class="k">for</span>  <span class="n">_</span><span class="p">,</span> <span class="n">v</span> <span class="p">:</span><span class="o">=</span> <span class="nb">range</span> <span class="ow">in</span> <span class="p">{</span>
     <span class="n">v</span> <span class="o">=</span> <span class="n">v</span> <span class="o">//</span> <span class="n">create</span> <span class="n">a</span> <span class="n">new</span> <span class="s1">&#39;v&#39;</span><span class="o">.</span>
     <span class="n">out</span> <span class="o">=</span> <span class="n">append</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">v</span><span class="p">)</span>
 <span class="p">}</span>
@@ -1389,7 +1389,7 @@ var _hmt = _hmt || [];
 <p>This behavior of the language, not defining a new variable for each iteration, may have been a mistake in retrospect. It may be addressed in a later version but, for compatibility, cannot change in Go version 1.</p>
 </div>
 <p>关于 <code class="docutils literal notranslate"><span class="pre">single</span> <span class="pre">variable</span></code> 的说明:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">a</span> <span class="o">:=</span> <span class="mi">123</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">a</span> <span class="p">:</span><span class="o">=</span> <span class="mi">123</span>
 <span class="n">fmt</span><span class="o">.</span><span class="n">Printf</span><span class="p">(</span><span class="s2">&quot;%v</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
 <span class="n">fmt</span><span class="o">.</span><span class="n">Printf</span><span class="p">(</span><span class="s2">&quot;%v</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">a</span><span class="p">)</span>
 <span class="n">a</span> <span class="o">=</span> <span class="mi">456</span>
@@ -1416,10 +1416,10 @@ var _hmt = _hmt || [];
 <div class="section" id="id3">
 <h2>指针与切片实例<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
 <p>以下代码输出什么:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">s</span><span class="o">:=</span><span class="s2">&quot;123&quot;</span>
-<span class="n">ps</span><span class="o">:=&amp;</span><span class="n">s</span>
-<span class="n">b</span><span class="o">:=</span><span class="p">[]</span><span class="n">byte</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
-<span class="n">pb</span><span class="o">:=&amp;</span><span class="n">b</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">s</span><span class="p">:</span><span class="o">=</span><span class="s2">&quot;123&quot;</span>
+<span class="n">ps</span><span class="p">:</span><span class="o">=&amp;</span><span class="n">s</span>
+<span class="n">b</span><span class="p">:</span><span class="o">=</span><span class="p">[]</span><span class="n">byte</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+<span class="n">pb</span><span class="p">:</span><span class="o">=&amp;</span><span class="n">b</span>
 
 <span class="n">s</span><span class="o">+=</span><span class="s2">&quot;4&quot;</span>
 <span class="o">*</span><span class="n">ps</span><span class="o">+=</span><span class="s2">&quot;5&quot;</span>
@@ -1435,7 +1435,7 @@ var _hmt = _hmt || [];
 </pre></div>
 </div>
 <p>关键在于:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">b</span><span class="o">:=</span><span class="p">[]</span><span class="n">byte</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">b</span><span class="p">:</span><span class="o">=</span><span class="p">[]</span><span class="n">byte</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>说明:</p>
@@ -1528,6 +1528,7 @@ The conversion from byte slice back to string with string(b) also makes a copy,
       <script type="text/javascript" src="../../../_static/jquery.js"></script>
       <script type="text/javascript" src="../../../_static/underscore.js"></script>
       <script type="text/javascript" src="../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../../_static/language_data.js"></script>
 
   
 
