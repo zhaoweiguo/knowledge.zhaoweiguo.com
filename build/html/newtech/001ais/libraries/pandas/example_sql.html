@@ -1,0 +1,586 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>利用pandas实现SQL操作 &mdash; 新溪-gordon V1.5.1 documentation</title>
+  
+
+  
+  
+    <link rel="shortcut icon" href="../../../_static/favicon-16x16.ico"/>
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="实例-缺失值的处理" href="example_default_value.html" />
+    <link rel="prev" title="实例-统计分析" href="example_analysis.html" /> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+
+<script>
+// 百度统计
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?c4af0e06c3eadbfa7717c13ecc7220d8";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-178653440-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-178653440-2');
+</script>
+
+<!-- 评论插件 gittalk start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+<!-- 评论插件 gittalk end -->
+
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> 新溪-gordon
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                V1.5.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">关键技术</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../../001ai.html">001AI相关</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../normal.html">常用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../normals/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../normals/ml.html">机器学习machine learning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../normals/bi.html">BI(Business Intelligence)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../normals/other.html">其他</a></li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../library.html">函数库</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../ipython.html">IPython</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../ipythons/normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ipythons/magic.html">魔法命令 </a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ipythons/display.html">display函数</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../jupyter.html">Jupyter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../numpy.html">numpy</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="../pandas.html">Pandas</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="example_subset.html">实例-subset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="example_analysis.html">实例-统计分析</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">利用pandas实现SQL操作</a></li>
+<li class="toctree-l4"><a class="reference internal" href="example_default_value.html">实例-缺失值的处理</a></li>
+<li class="toctree-l4"><a class="reference internal" href="example_multi_index.html">多层索引的使用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="practice.html">实践</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_input_output.html">API-输入输出</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_General.html">API-General functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_Series.html">API-Series</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_DataFrame.html">API-DataFrame</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_Index.html">API-index</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../matplotlib.html">matplotlib</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../matplotlibs/normal.html">基本</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../matplotlibs/install.html">安装</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../matplotlibs/pyplot.html">pyplot </a></li>
+<li class="toctree-l4"><a class="reference internal" href="../matplotlibs/matplotlib.patches.html">matplotlib.patches</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../matplotlibs/example.html">实例</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../matplotlibs/pylab.html">pylab子包</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../scipy.html">SciPy</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../SciPys/normal.html">常用</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../sklearn.html">sklearn</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../sklearns/normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sklearns/supervised.html">监督学习</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sklearns/unsupervised.html">无监督学习</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../statsmodels.html">statsmodels</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../framework.html">学习框架</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../frameworks/mxnet.html">mxnet库</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../frameworks/mxnets/ndarray.html">nd模块</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../frameworks/mxnets/gluon.html">gluon模块</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../frameworks/mxnets/autograd.html">autograd模块</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../frameworks/pytorch.html">PyTorch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../frameworks/tensorflow.html">tensorflow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../frameworks/Keras.html">Keras</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../frameworks/Keras/normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../frameworks/Keras/demo.html">实例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../algorithm.html">相关算法</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../deep_learning.html">深度学习</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../deep_learnings/history.html">历史</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../deep_learnings/ann.html">ANN(NN)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../deep_learnings/dnn.html">深度神经网络(Deep Neural Network, DNN)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../deep_learnings/cnn.html">卷积神经网络(Convolutional Neural Network, CNN)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../deep_learnings/rnn.html">RNN: 循环神经网(Recurrent Neural Network, RNN)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../deep_learnings/lstm.html">LSTM: 长短时记忆(Long Short Term Memory, LSTM)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../deep_learnings/relu.html">ReLU(激活函数)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../opensource.html">开源项目</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../opensources/alphaGo.html">AlphaGo</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../opensources/kubeflow.html">kubeflow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../opensources/normal.html">常用</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../math.html">数学</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../question.html">常见问题</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../002blockchain.html">002区块链相关</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../002blockchains/normal.html">常用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../002blockchains/normals/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../002blockchains/normals/opensource.html">常用开源项目</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../002blockchains/normals/concept.html">定义</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../002blockchains/consensus.html">共识</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../002blockchains/application.html">区块链应用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../002blockchains/applications/normal.html">常用</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../002blockchains/bitcoin.html">比特币</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../002blockchains/ethereum.html">以太坊</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../002blockchains/ethereums/normal.html">基本</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../002blockchains/ethereums/normals/install.html">安装</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../002blockchains/ethereums/normals/protocol.html">协议</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../002blockchains/ethereums/normals/init_net.html">初始化创建</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../002blockchains/ethereums/normals/rinkeby.html">非以太网主网-rinkeby</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../002blockchains/ethereums/normals/gas.html">以太坊费用(Gas)</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../002blockchains/ethereums/geth.html">geth命令</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../002blockchains/ethereums/geths/0help.html">帮助</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../002blockchains/ethereums/geths/0option.html">OPTIONS选项</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../002blockchains/ethereums/geths/0dev_mod.html">Dev mode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../002blockchains/ethereums/geths/0javascript.html">JavaScript Console</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../002blockchains/ethereums/geths/account.html">geth account</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../002blockchains/ethereums/geths/attach.html">geth attach命令</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../002blockchains/ethereums/geths/wallet.html">geth wallet</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../002blockchains/ethereums/contract.html">智能合约</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../002blockchains/ethereums/contracts/demo.html">实例</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../002blockchains/ethereums/web3.html">web3</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../002blockchains/ethereums/web3s/normal.html">基本</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../002blockchains/ethereums/web3s/admin.html">admin Namespace</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../002blockchains/ethereums/web3s/eth.html">eth Namespace</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../002blockchains/ethereums/web3s/miner.html">miner Namespace</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../002blockchains/ethereums/web3s/net.html">net网络相关</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../002blockchains/ethereums/web3s/debug.html">debug Namespace</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../002blockchains/ethereums/web3s/les.html">les Namespace</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../002blockchains/ethereums/web3s/clique.html">clique Namespace</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../002blockchains/ethereums/web3s/txpool.html">txpool Namespace</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../002blockchains/ethereums/web3s/personal.html">personal Namespace</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../002blockchains/ethereums/web3s/web3.js.html">web3.js</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../002blockchains/ethereums/web3s/web3.js_eth.html">eth相关函数</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../002blockchains/ethereums/practice.html">实操</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../002blockchains/ethereums/practices/demo1.html">简单实操</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../002blockchains/ethereums/practices/get_record_by_addr.html">以太坊中查询某个地址的交易记录</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../002blockchains/ethereums/practices/start_from_zero.html">创建专属自己的以太坊</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../002blockchains/ethereums/question.html">常见问题</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../002blockchains/ethereums/source.html">源码学习</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../002blockchains/ethereums/tmp.html">临时收集</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../002blockchains/coin.html">币圈</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../002blockchains/coins/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../002blockchains/coins/coin.html">币种</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../002blockchains/coins/coins/Chia.html">Chia</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../002blockchains/coins/coins/Monero.html">门罗币</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../002blockchains/coins/pool.html">矿池</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../002blockchains/coins/website.html">网站</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../002blockchains/other.html">其他区块链</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../003iot.html">003物联网</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../003iots/normal.html">常用</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../005G.html">5G 相关</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../005Gs/normal.html">常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../005Gs/3gpp.html">3gpp</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../006vr.html">AR&amp;VR</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">新溪-gordon</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../001ai.html">001AI相关</a> &raquo;</li>
+        
+          <li><a href="../../library.html">函数库</a> &raquo;</li>
+        
+          <li><a href="../pandas.html">Pandas</a> &raquo;</li>
+        
+      <li>利用pandas实现SQL操作</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../../_sources/001ais/libraries/pandas/example_sql.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="pandassql">
+<span id="pandas-example-sql"></span><h1>利用pandas实现SQL操作<a class="headerlink" href="#pandassql" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id1">
+<h2>增:添加新行或增加新列<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">91</span><span class="p">]:</span><span class="n">dic</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;Name&#39;</span><span class="p">:[</span><span class="s1">&#39;LiuShunxiang&#39;</span><span class="p">,</span><span class="s1">&#39;Zhangshan&#39;</span><span class="p">],</span>
+    <span class="s1">&#39;Sex&#39;</span><span class="p">:[</span><span class="s1">&#39;M&#39;</span><span class="p">,</span><span class="s1">&#39;F&#39;</span><span class="p">],</span>
+    <span class="s1">&#39;Age&#39;</span><span class="p">:[</span><span class="mi">27</span><span class="p">,</span><span class="mi">23</span><span class="p">],</span>
+    <span class="s1">&#39;Height&#39;</span><span class="p">:[</span><span class="mf">165.7</span><span class="p">,</span><span class="mf">167.2</span><span class="p">],</span>
+    <span class="s1">&#39;Weight&#39;</span><span class="p">:[</span><span class="mi">61</span><span class="p">,</span><span class="mi">63</span><span class="p">]</span>
+<span class="p">}</span>
+<span class="n">In</span> <span class="p">[</span><span class="mi">92</span><span class="p">]:</span><span class="n">student2</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">dic</span><span class="p">)</span>
+    <span class="o">...</span><span class="p">:</span><span class="nb">print</span><span class="p">(</span><span class="n">student2</span><span class="p">)</span>
+           <span class="n">Name</span> <span class="n">Sex</span>  <span class="n">Age</span>  <span class="n">Height</span>  <span class="n">Weight</span>
+<span class="mi">0</span>  <span class="n">LiuShunxiang</span>   <span class="n">M</span>   <span class="mi">27</span>   <span class="mf">165.7</span>      <span class="mi">61</span>
+<span class="mi">1</span>     <span class="n">Zhangshan</span>   <span class="n">F</span>   <span class="mi">23</span>   <span class="mf">167.2</span>      <span class="mi">63</span>
+</pre></div>
+</div>
+<p>将student2中的数据新增到 <a class="reference internal" href="example_subset.html#pandas-example-subset"><span class="std std-ref">student</span></a> 中，可以通过concat函数实现:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">student3</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">student</span><span class="p">,</span><span class="n">student2</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">student3</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>在student2中新增一列学生成绩:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>// 对于新增的列没有赋值，就会出现空NaN的形式
+In [93]: print(pd.DataFrame(student2,
+      columns=[&#39;Age&#39;,&#39;Height&#39;,&#39;Name&#39;,&#39;Sex&#39;,&#39;Weight&#39;,&#39;Score&#39;]))
+   Age  Height          Name Sex  Weight  Score
+0   27   165.7  LiuShunxiang   M      61    NaN
+1   23   167.2     Zhangshan   F      63    NaN
+</pre></div>
+</div>
+</div>
+<div class="section" id="id2">
+<h2>删:删除表,观测行或变量列<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>删表:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">102</span><span class="p">]:</span> <span class="k">del</span> <span class="n">student2</span> <span class="c1">#删除数据框student2, 通过del命令可以删除python的所有对象</span>
+     <span class="o">...</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="n">student2</span><span class="p">)</span>
+<span class="o">---------------------------------------------------------------------------</span>
+<span class="ne">NameError</span>                                 <span class="n">Traceback</span> <span class="p">(</span><span class="n">most</span> <span class="n">recent</span> <span class="n">call</span> <span class="n">last</span><span class="p">)</span>
+<span class="o">&lt;</span><span class="n">ipython</span><span class="o">-</span><span class="nb">input</span><span class="o">-</span><span class="mi">103</span><span class="o">-</span><span class="n">a5f84f69c799</span><span class="o">&gt;</span> <span class="ow">in</span> <span class="o">&lt;</span><span class="n">module</span><span class="o">&gt;</span>
+<span class="o">----&gt;</span> <span class="mi">1</span> <span class="nb">print</span><span class="p">(</span><span class="n">student2</span><span class="p">)</span>
+
+<span class="ne">NameError</span><span class="p">:</span> <span class="n">name</span> <span class="s1">&#39;student2&#39;</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">defined</span>
+</pre></div>
+</div>
+<p>删除原数据中的第1,2,4,7行的数据:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">102</span><span class="p">]:</span> <span class="nb">print</span><span class="p">(</span><span class="n">student</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">6</span><span class="p">]))</span>
+    <span class="n">Age</span>  <span class="n">Height</span>     <span class="n">Name</span> <span class="n">Sex</span>  <span class="n">Weight</span>
+<span class="mi">2</span>    <span class="mi">13</span>    <span class="mf">65.3</span>  <span class="n">Barbara</span>   <span class="n">F</span>    <span class="mf">98.0</span>
+<span class="mi">4</span>    <span class="mi">14</span>    <span class="mf">63.5</span>    <span class="n">Henry</span>   <span class="n">M</span>   <span class="mf">102.5</span>
+<span class="mi">5</span>    <span class="mi">12</span>    <span class="mf">57.3</span>    <span class="n">James</span>   <span class="n">M</span>    <span class="mf">83.0</span>
+<span class="mi">7</span>    <span class="mi">15</span>    <span class="mf">62.5</span>    <span class="n">Janet</span>   <span class="n">F</span>   <span class="mf">112.5</span>
+<span class="mi">8</span>    <span class="mi">13</span>    <span class="mf">62.5</span>  <span class="n">Jeffrey</span>   <span class="n">M</span>    <span class="mf">84.0</span>
+<span class="o">...</span>
+</pre></div>
+</div>
+<p>删除所有14岁以下的学生:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">其实这个删除就是保留删除条件的反面数据</span>
+<span class="o">//</span> <span class="n">即</span><span class="p">:</span> <span class="n">取出大于14岁的学生</span>
+<span class="n">In</span> <span class="p">[</span><span class="mi">102</span><span class="p">]:</span> <span class="nb">print</span><span class="p">(</span><span class="n">student</span><span class="p">[</span><span class="n">student</span><span class="p">[</span><span class="s1">&#39;Age&#39;</span><span class="p">]</span><span class="o">&gt;</span><span class="mi">14</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>删除指定的列:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>// 不论是删除行还是删除列，都可以通过drop方法实现，只需要设定好删除的轴即可
+// 即调整drop方法中的axis参数
+// 默认该参数为0，表示删除行观测，如果需要删除列变量，则需设置为1
+print(student.drop([&#39;Height&#39;,&#39;Weight&#39;],axis=1).head())
+</pre></div>
+</div>
+</div>
+<div class="section" id="id3">
+<h2>改:修改原始记录的值<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>student3中姓名为LiuShunxiang的学生身高错了，应该是173:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">102</span><span class="p">]:</span> <span class="n">student3</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">student3</span><span class="p">[</span><span class="s1">&#39;Name&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;LiuShunxiang&#39;</span><span class="p">,</span><span class="s1">&#39;Height&#39;</span><span class="p">]</span><span class="o">=</span><span class="mi">173</span>
+     <span class="o">...</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="n">student3</span><span class="p">[</span><span class="n">student3</span><span class="p">[</span><span class="s1">&#39;Name&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;LiuShunxiang&#39;</span><span class="p">][[</span><span class="s1">&#39;Name&#39;</span><span class="p">,</span><span class="s1">&#39;Height&#39;</span><span class="p">]])</span>
+
+           <span class="n">Name</span>  <span class="n">Height</span>
+<span class="mi">0</span>  <span class="n">LiuShunxiang</span>   <span class="mf">173.0</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="groupby">
+<h2>聚合:groupby函数实现数据的聚合<a class="headerlink" href="#groupby" title="Permalink to this headline">¶</a></h2>
+<p>根据性别分组，计算各组别中学生身高和体重的平均值:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">student</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;Sex&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+</pre></div>
+</div>
+<p>如果不想对年龄计算平均值的话，就需要剔除改变量:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">student</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s1">&#39;Age&#39;</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;Sex&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+</pre></div>
+</div>
+<p>groupby还可以使用多个分组变量，例如根据年龄和性别分组，计算身高与体重的平均值:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">student</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;Sex&#39;</span><span class="p">,</span><span class="s1">&#39;Age&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+</pre></div>
+</div>
+<p>对每个分组计算多个统计量:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">student</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s1">&#39;Age&#39;</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;Sex&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">agg</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">]))</span>
+</pre></div>
+</div>
+<p>使用sort_index和sort_values实现序列和数据框的排序工作:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">20</span><span class="p">,</span><span class="mi">10</span><span class="p">)))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">Data</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">Data</span><span class="o">.</span><span class="n">sort_index</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">Data</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>在数据框中一般都是按值排序:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">student</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Age&#39;</span><span class="p">,</span><span class="s1">&#39;Height&#39;</span><span class="p">]))</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id4">
+<h2>多表连接<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<p>构造一个新表:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dic2</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;Name&#39;</span><span class="p">:[</span><span class="s1">&#39;Alf&#39;</span><span class="p">,</span><span class="s1">&#39;Alice&#39;</span><span class="p">,</span><span class="s1">&#39;Bar&#39;</span><span class="p">,</span><span class="s1">&#39;Car&#39;</span><span class="p">,</span><span class="s1">&#39;Henry&#39;</span><span class="p">,</span><span class="s1">&#39;Jef&#39;</span><span class="p">,</span><span class="s1">&#39;Jud&#39;</span><span class="p">,</span><span class="s1">&#39;Philip&#39;</span><span class="p">,</span><span class="s1">&#39;Rob&#39;</span><span class="p">,</span><span class="s1">&#39;Willam&#39;</span><span class="p">],</span>
+    <span class="s1">&#39;Score&#39;</span><span class="p">:[</span><span class="mi">88</span><span class="p">,</span><span class="mi">76</span><span class="p">,</span><span class="mi">89</span><span class="p">,</span><span class="mi">67</span><span class="p">,</span><span class="mi">79</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">92</span><span class="p">,</span><span class="mi">86</span><span class="p">,</span><span class="mi">73</span><span class="p">,</span><span class="mi">77</span><span class="p">]}</span>
+<span class="n">score</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">dic2</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">score</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>把学生表student与学生成绩表score做一个关联:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">stu_score1</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">student</span><span class="p">,</span> <span class="n">score</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s1">&#39;Name&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">stu_score1</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>默认情况下，merge函数实现的是两个表之间的内连接，即返回两张表中共同部分的数据</p>
+</div>
+<p>可以通过how参数设置连接的方式，left为左连接；right为右连接；outer为外连接:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">stu_score2</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">student</span><span class="p">,</span> <span class="n">score</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s1">&#39;Name&#39;</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">stu_score2</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="example_default_value.html" class="btn btn-neutral float-right" title="实例-缺失值的处理" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="example_analysis.html" class="btn btn-neutral" title="实例-统计分析" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+  
+  <div id="gitalk-container"></div>
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2010-2020, 新溪-gordon.
+
+    </p>
+  </div>
+  <div>备案号 <a href="http://www.beian.miit.gov.cn">京ICP备16018553号</a></div><div>Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a></div>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'V1.5.1',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../../_static/language_data.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+
+
+      var gitalk = new Gitalk({
+              clientID: '565177626b5d46427009',
+              clientSecret: 'b2a36e67e1d2a73e43667f46d571c2624f8e1026',
+              repo: 'knowledge',
+              owner: 'zhaoweiguo',
+              admin: ['zhaoweiguo'],
+              id: location.pathname,      // Ensure uniqueness and length less than 50
+              distractionFreeMode: false  // Facebook-like distraction free mode
+            })
+      gitalk.render('gitalk-container')
+
+  </script> 
+
+</body>
+</html>

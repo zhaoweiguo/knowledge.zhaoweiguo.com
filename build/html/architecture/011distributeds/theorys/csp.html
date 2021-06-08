@@ -1,0 +1,442 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>并发模型-CSP &mdash; 新溪-gordon V1.5.1 documentation</title>
+  
+
+  
+  
+    <link rel="shortcut icon" href="../../_static/favicon-16x16.ico"/>
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="并发相关-FLP" href="flp.html" />
+    <link rel="prev" title="并发相关-CAP" href="cap.html" /> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+
+
+<script>
+// 百度统计
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?c4af0e06c3eadbfa7717c13ecc7220d8";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-178653440-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-178653440-2');
+</script>
+
+<!-- 评论插件 gittalk start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+<!-- 评论插件 gittalk end -->
+
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> 新溪-gordon
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                V1.5.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">关键知识</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../010architecture.html">010架构设计</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../010architectures/normal.html">常用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../010architectures/normals/normal.html">常用</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../010architectures/design_mode.html">23种设计模式 </a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../010architectures/design_modes/singleton.html">单例模式 </a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../010architectures/design_modes/observer-design.html">观察者模式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../010architectures/design_modes/decorator.html">装饰器模式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../010architectures/design_modes/mediator.html">中介者模式</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../010architectures/history.html">架构的历史</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../010architectures/historys/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../010architectures/historys/01origin_distributed_sys.html">原始分布式时代</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../010architectures/historys/02monolithic_sys.html">单体系统时代</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../010architectures/historys/03soa_sys.html">SOA架构</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../010architectures/historys/04microService.html">微服务架构</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../010architectures/historys/04microServices/normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../010architectures/historys/04microServices/9feature.html">微服务的九个核心的业务与技术特征</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../010architectures/historys/04microServices/ServiceMesh.html">ServiceMesh</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../010architectures/historys/04microServices/collect.html">微服务架构</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../010architectures/historys/05cloudnative.html">云原生时代——后微服务时代</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../010architectures/historys/05cloudnatives/collect1.html">云原生</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../010architectures/historys/05cloudnatives/collect2.html">收集2</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../010architectures/historys/05cloudnatives/12Factor.html">云原生应用的12要素</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../010architectures/historys/05cloudnatives/distribute_architecture.html">从分布式架构到云原生架构</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../010architectures/historys/06serverless.html">无服务时代</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../010architectures/historys/06serverless/collect1.html">Serverless</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../010architectures/graph.html">架构图</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../010architectures/graphs/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../010architectures/graphs/business.html">业务架构图</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../010architectures/graphs/c4-model.html">软件架构——C4模型</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../010architectures/other.html">其他架构设计</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../010architectures/others/cqrs.html">CQRS </a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../010architectures/others/crud.html">CRUD</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../010architectures/others/ddd.html">领域驱动设计</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../010architectures/others/api.html">api设计</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../010architectures/others/event_driver.html">事件驱动架构</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../010architectures/others/network_agent.html">网络代理</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../010architectures/others/message_bus.html">消息总线</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../010architectures/others/other.html">其他</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../011distributed.html">011分布式系统</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../normal.html">常用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../normals/normal.html">分布式系统</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../normals/concept.html">并发</a></li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="reference internal" href="../theory.html">并发相关理论</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="cap.html">并发相关-CAP</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">并发模型-CSP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="flp.html">并发相关-FLP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Actor.html">并发模型-Actor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Raft.html">The Raft Consensus Algorithm </a></li>
+<li class="toctree-l3"><a class="reference internal" href="Paxos.html">一致性-Paxos算法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Gossip.html">Gossip协议</a></li>
+<li class="toctree-l3"><a class="reference internal" href="BASE.html">BASE</a></li>
+<li class="toctree-l3"><a class="reference internal" href="consistent_hash.html">一致性hash</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../transaction.html">事务</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../transactions/normal.html">通用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../transactions/local.html">本地事务</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../transactions/global.html">全局事务(Global Transactions)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../transactions/share.html">共享事务(Share Transactions)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../transactions/distribute.html">分布式事务</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../transactions/distributes/reliable_event_queue.html">可靠事件队列</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../transactions/distributes/SAGA.html">SAGA 事务</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../transactions/distributes/TCC.html">TCC 事务</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../consensus.html">分布式共识</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../consensus/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../consensus/paxos.html">Paxos算法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../consensus/zab.html">zab协议</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../consensus/raft.html">raft协议</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../012microservice.html">012微服务架构</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../012microservices/normal.html">常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../012microservices/discovery.html">服务注册&amp;发现</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../012microservices/api_gateway.html">API网关</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../012microservices/contract.html">对比</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../013dataanalysis.html">013数据分析</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../013dataanalysis/normal.html">常用</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">新溪-gordon</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../011distributed.html">011分布式系统</a> &raquo;</li>
+        
+          <li><a href="../theory.html">并发相关理论</a> &raquo;</li>
+        
+      <li>并发模型-CSP</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/011distributeds/theorys/csp.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="csp">
+<span id="id1"></span><h1>并发模型-CSP<a class="headerlink" href="#csp" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><p>Communicating Sequential Processes</p></li>
+<li><p>通信顺序进程，又翻译为交换消息的顺序程序，用来描述并发性系统的交互模式</p></li>
+<li><p>早在上个世纪七十年代，多核处理器还是一个科研主题，并没有进入普通程序员的视野。 Tony Hoare 于 1977 年提出通信顺序进程（CSP）理论，遥遥领先与他所在的时代。</p></li>
+</ul>
+<p>CSP有以下三个特点:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1.每个程序是为了顺序执行而创建的
+2.数据通过管道来通信，而不是通过共享内存
+3.通过增加相同的程序来扩容
+// Golang的并发模型基于CSP理论，Golang并发的口号是：不用通过共享内存来通信，而是通过通信来共享内存
+</pre></div>
+</div>
+<p>Golang并发模式支持并发的元素集:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>goroutines
+channels
+select
+sync package
+// 其中goroutines，channels和select 对应于实现CSP理论，即通过通信来共享内存
+// 这几乎能解决Golang并发的90%问题，另外的10%场景需要通过同步原语来解决，即sync包相关的结构
+</pre></div>
+</div>
+<div class="section" id="gpm">
+<h2>实现-GPM调试模型<a class="headerlink" href="#gpm" title="Permalink to this headline">¶</a></h2>
+<p>GPM 代表了三个角色，分别是:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. Goroutine:
+    用 go 关键字创建的执行体，它对应一个结构体 g，结构体里保存了 goroutine 的堆栈信息
+2. Processor
+    表示处理器，有了它才能建立 G、M 的联系
+3. Machine
+    表示操作系统的线程
+</pre></div>
+</div>
+<p>Goroutine:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Goroutine 就是代码中使用 go 关键词创建的执行单元，也是大家熟知的有 “轻量级线程” 之称的协程，
+协程是不为操作系统所知的，它由编程语言层面实现，上下文切换不需要经过内核态，
+再加上协程占用的内存空间极小，所以有着非常大的发展潜力。
+</pre></div>
+</div>
+<p>Proccessor:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>负责 Machine 与 Goroutine 的连接，它能提供线程需要的上下文环境，也能分配 G 到它应该去的线程上执行
+处理器的数量也是默认按照 GOMAXPROCS 来设置的，与线程的数量一一对应
+</pre></div>
+</div>
+<p>Machine:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>M 就是对应操作系统的线程，最多会有 GOMAXPROCS 个活跃线程能够正常运行，默认情况下 GOMAXPROCS 被设置为内核数，假如有四个内核，那么默认就创建四个线程，每一个线程对应一个 runtime.m 结构体。线程数等于 CPU 个数的原因是，每个线程分配到一个 CPU 上就不至于出现线程的上下文切换，可以保证系统开销降到最低。
+
+M 里面存了两个比较重要的东西，一个是 g0，一个是 curg:
+    g0：会深度参与运行时的调度过程，比如 goroutine 的创建、内存分配等
+    curg：代表当前正在线程上执行的 goroutine。
+</pre></div>
+</div>
+<div class="figure align-default" id="id4">
+<img alt="../../_images/GPM.png" src="../../_images/GPM.png" />
+<p class="caption"><span class="caption-text">Goroutine、Processor和Machine三者的关系</span><a class="headerlink" href="#id4" title="Permalink to this image">¶</a></p>
+</div>
+</div>
+<div class="section" id="id2">
+<h2>参考<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://www.cnblogs.com/makelu/p/11205704.html">Golang 高效实践之并发实践channel篇</a></p></li>
+<li><p><a class="reference external" href="https://www.zhihu.com/question/26192499">【知乎】如何深入浅出地解释并发模型中的 CSP 模型？</a></p></li>
+<li><p><a class="reference external" href="http://jolestar.com/parallel-programming-model-thread-goroutine-actor/">并发之痛 Thread，Goroutine，Actor</a></p></li>
+<li><p>[掘金]Go 语言的 GPM 调度器是什么？: <a class="reference external" href="https://juejin.cn/post/6844904130398404616">https://juejin.cn/post/6844904130398404616</a></p></li>
+</ul>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="flp.html" class="btn btn-neutral float-right" title="并发相关-FLP" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="cap.html" class="btn btn-neutral" title="并发相关-CAP" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+  
+  <div id="gitalk-container"></div>
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2010-2020, 新溪-gordon.
+
+    </p>
+  </div>
+  <div>备案号 <a href="http://www.beian.miit.gov.cn">京ICP备16018553号</a></div><div>Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a></div>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'V1.5.1',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../_static/language_data.js"></script>
+
+  
+
+  <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+
+
+      var gitalk = new Gitalk({
+              clientID: '565177626b5d46427009',
+              clientSecret: 'b2a36e67e1d2a73e43667f46d571c2624f8e1026',
+              repo: 'knowledge',
+              owner: 'zhaoweiguo',
+              admin: ['zhaoweiguo'],
+              id: location.pathname,      // Ensure uniqueness and length less than 50
+              distractionFreeMode: false  // Facebook-like distraction free mode
+            })
+      gitalk.render('gitalk-container')
+
+  </script> 
+
+</body>
+</html>

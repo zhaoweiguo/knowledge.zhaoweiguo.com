@@ -1,0 +1,765 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>TCP协议报文首部 &mdash; 新溪-gordon V1.5.1 documentation</title>
+  
+
+  
+  
+    <link rel="shortcut icon" href="../../_static/favicon-16x16.ico"/>
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="TCP传输" href="tcp_transfer.html" />
+    <link rel="prev" title="常用" href="normal.html" /> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+
+
+<script>
+// 百度统计
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?c4af0e06c3eadbfa7717c13ecc7220d8";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-178653440-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-178653440-2');
+</script>
+
+<!-- 评论插件 gittalk start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+<!-- 评论插件 gittalk end -->
+
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> 新溪-gordon
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                V1.5.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../normal.html">常用</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/normal.html">常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/hub.html">集线器</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/switch.html">交换机</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../normals/switch.html#id2">二层交换机</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../normals/switch.html#id3">广播风暴</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../normals/switch.html#stp">STP</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../normals/switch.html#id4">三层交换机</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/router.html">路由器及相关</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../normals/router.html#id2">路由器的附加功能</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../normals/router.html#id3">地址转换功能</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../normals/router.html#id4">包过滤功能</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../normals/router.html#id5">命令操作</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../normals/router.html#id6">静态&amp;动态路由</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/osi.html">OSI各层级</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/layer_datalink.html">数据链路层 </a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../normals/layer_datalink.html#id3">网卡网络包</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../normals/layer_datalink.html#adsl">ADSL</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../normals/layer_datalink.html#ftth">FTTH</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/gateway.html">网关</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../http.html">http文档</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../https/normal.html">常用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../https/normals/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../https/normals/http_method.html">HTTP Method方法</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../https/normals/http_method.html#http">HTTP协议的格式</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../https/normals/http_method.html#id2">实例说明</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../https/header.html">协议header</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../https/headers/normal.html">常用</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../https/headers/normal.html#http">HTTP 中主要的头字段</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../https/headers/connection.html">Connection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../https/headers/content-encoding.html">Content-Encoding</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../https/headers/content-length.html">Content-Length</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../https/headers/content-range.html">Content-Range</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../https/headers/content-range.html#range">Range</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../https/headers/content-range.html#id1">Content-Range</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../https/headers/content-range.html#id2">增加校验</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../https/headers/content-range.html#id3">工作原理</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../https/headers/content-type.html">Content-Type</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../https/headers/content-types/multipart_form-data.html">multipart/form-data</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../https/headers/transfer-encoding.html">Transfer-Encoding</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../https/headers/cookie.html">cookie</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../https/headers/Content-Security-Policy.html">Content-Security-Policy</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../https/headers/Content-Security-Policy.html#csp">启用 CSP</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../https/headers/Content-Security-Policy.html#id1">限制选项</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../https/headers/Content-Security-Policy.html#report">report选项</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../https/headers/Content-Security-Policy.html#id2">选项值</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../https/headers/Content-Security-Policy.html#script-src">script-src 的特殊值</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../https/headers/Content-Security-Policy.html#id3">参考</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../https/http_code.html">http返回码</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../https/http_code.html#xx">1xx-信息提示</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../https/http_code.html#id1">2xx-成功</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../https/http_code.html#id2">3xx-重定向</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../https/http_code.html#id3">4xx-客户端错误</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../https/http_code.html#id4">5xx-服务器错误</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../https/DNS.html">DNS</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../https/DNS/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../https/DNS/root.html">根 DNS 服务器</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../https/DNS/root.html#id1">扩展</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../https/DNS/root.html#id2">参考</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../https/DNS/type.html">三类DNS</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../https/DNS/type.html#id1">权威 DNS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../https/DNS/type.html#id2">递归 DNS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../https/DNS/type.html#id3">转发DNS</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../https/DNS/httpdns.html">httpdns</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../https/practice.html">实践</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../https/practices/real_ip.html">真实IP</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../https/http2.html">http2协议 </a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../https/http2.html#id2">新特性</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../https/http2.html#http2">http2工具</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../https/http3.html">http3协议</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../https/http3.html#http3-1">http3要点 </a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../https/websocket.html">websocket协议</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../https/other.html">其他</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../https/others/phrase_polling.html">轮询、长轮询、长连接</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../https/others/phrase_polling.html#id2">说明一</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../https/others/phrase_polling.html#id3">说明二</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../https/others/phrase_polling.html#id4">原理图</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../https/others/tmp.html">临时</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../https/others/tmp.html#id2">说明</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../ssl_tls.html">ssl/tls协议</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../ssl_tls/normal.html">基本</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../ssl_tls/ca.html">如何使用ca证书签名证书</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../ssl_tls/check.html">证书验证</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../ssl_tls/handshake.html">SSL/TLS协议的基本过程</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../ssl_tls/bidiauth.html">单向认证vs双向认证 </a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../ssl_tls/tmp.html">临时</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../ssl_tls/tmp.html#id2">参考</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../ssl_tls/dtls.html">DTLS协议</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../tcp-ip.html">TCP/IP相关协议</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../TCP.html">tcp相关</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="normal.html">常用</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="normal.html#id2">参考</a></li>
+</ul>
+</li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">TCP协议报文首部</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id1">TCP报文首部固定部分各字段</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id3">网络整体包</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tcp_transfer.html">TCP传输</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tcp_state_machine.html">TCP状态</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tcp_state_machine.html#id1">TCP 建立连接</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tcp_state_machine.html#id2">TCP 断开连接</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tcp_state_machine.html#id3">TCP 状态迁移路线图</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tcp_state_machine.html#id4">TCP各状态详解</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tcp_state_machine.html#id5">命令查看TCP状态</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../UDP.html">udp协议</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../UDP.html#id1">基于 UDP 实现可靠传输</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../IP.html">ip协议</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../ips/normal.html">常用</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../ips/normal.html#ip">IP 头部格式</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ips/normal.html#id2">IP选路-动态选路</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ips/normal.html#cidr">无类型域间选路(CIDR)</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../ips/dhcp.html">DHCP</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../ips/dhcp.html#dhcp-discover">DHCP Discover</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ips/dhcp.html#dhcp-offer">DHCP Offer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ips/dhcp.html#dhcp-request">DHCP Request 广播数据包</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ips/dhcp.html#dhcp-ack">DHCP ACK 消息包</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ips/dhcp.html#id1">扩展</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../ips/tool.html">工具</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../ICMP.html">ICMP协议</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../ICMP.html#id1">ICMP的应用</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../ICMP.html#ping">ping</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ICMP.html#traceroute">Traceroute</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ICMP.html#tcpdump">tcpdump抓包</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../IGMP.html">IGMP协议</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../IGMP.html#unicast">1.1.单播(unicast)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../IGMP.html#id1">1.2.广播(unicast)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../IGMP.html#multicast">1.3.多播(multicast)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../IGMP.html#id2">IGMP协议</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../ARP.html">ARP协议</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../RARP.html">RARP协议</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../rpc.html">rpc相关</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../rpcs/normal.html">常用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../rpcs/normals/normal.html">常用</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../rpcs/normals/normal.html#id2">原理</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../rpcs/normals/normal.html#rpc">各类RPC</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../rpcs/normals/history.html">历史</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../rpcs/normal.html#id2">参考</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../rpcs/HTTP-REST.html">HTTP REST</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../rpcs/HTTP-RESTs/normal.html">常用</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../rpcs/HTTP-RESTs/normal.html#rpc">与RPC对比</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../rpcs/HTTP-RESTs/concept.html">REST概念</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../rpcs/HTTP-RESTs/concept.html#hypertext">超文本(Hypertext)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../rpcs/HTTP-RESTs/concept.html#id2">REST 中的关键概念</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../rpcs/HTTP-RESTs/feature.html">RESTful 风格的系统六个特征</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../rpcs/HTTP-RESTs/richardsonMaturityModel.html">Richardson 成熟度模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../rpcs/HTTP-RESTs/weakness.html">REST 的不足与争议</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../rpcs/HTTP-RESTs/other.html">Rest相关</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../rpcs/HTTP-RESTs/other.html#restful">RESTful架构风格的特点</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../rpcs/HTTP-RESTs/other.html#roa-soa-restrpc">ROA,SOA,REST与RPC</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../rpcs/HTTP-RESTs/other.html#resthybrid">本真REST与hybrid风格</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../rpcs/HTTP-RESTs/other.html#id1">参考</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../rpcs/gRPC.html">gRPC</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../rpcs/gRPCs/protobuf.html">protobuf</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../rpcs/gRPCs/protobuf.html#proto3">proto3</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../rpcs/gRPCs/protobuf.html#proto2">proto2</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../rpcs/gRPCs/protobuf.html#protoc">protoc</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../rpcs/gRPCs/protobuf.html#id1">参考</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../rpcs/gRPCs/protoc-gen-go.html">protoc-gen-go</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../rpcs/thrift.html">thrift</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../rpcs/thrifts/thrift_introduce.html">简单介绍</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../rpcs/thrifts/thrift_introduce.html#id2">网址</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../rpcs/thrifts/thrift_introduce.html#id3">架构设计</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../rpcs/thrifts/thrift_introduce.html#id4">支持的数据传输格式</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../rpcs/thrifts/thrift_introduce.html#id5">支持的数据传输方式</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../rpcs/thrifts/thrift_introduce.html#id6">支持的服务模型</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../rpcs/thrifts/thrift_usage.html">简单用法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../rpcs/thrifts/thrift_usage.html#id2">实例</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../rpcs/thrifts/thrift_usage.html#thrift-erlang">thrift-erlang实例</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../rpcs/thrifts/thrift_protocalbuffer.html">与protocal buffer的比较</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../rpcs/JSON-RPC.html">JSON-RPC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../rpcs/web_service.html">web Service</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../rpcs/Dubbo.html">Dubbo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../rpcs/CORBA.html">CORBA协议</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../rpcs/IPC.html">IPC</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../other.html">其他协议</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../others/Gopher.html">Gopher协议</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../others/Gopher.html#id1">基础使用</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../others/ftp.html">FTP协议</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../others/ftp.html#xx">1xx-肯定的初步答复</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../others/ftp.html#id1">2xx-肯定的完成答复</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../others/ftp.html#id2">3xx-肯定的中间答复</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../others/ftp.html#id3">4xx-瞬态否定的完成答复</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../others/ftp.html#id4">5xx-永久性否定的完成答复</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../others/ftp.html#id5">常见的FTP状态代码及其原因</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../others/amqp.html">AMQP协议</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../others/amqp.html#id2">选型要点概述 </a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../others/coap.html">COAP协议  </a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../others/coaps/coap_protocol.html">Coap协议</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../others/coaps/coap_cli.html">Coap协议client </a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../others/coaps/coap_cli.html#libcoap">libcoap</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../others/coaps/coap_cli.html#node-coap-cli">Node CoAP CLI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../others/coaps/coap_cli.html#browser-plugin">浏览器插件</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../others/coaps/coap_cli.html#wireshark">wireshark</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../others/coaps/coap_cli.html#coap">coap测试服务器</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../others/coaps/coap_example_node.html">Coap协议Node实例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../others/coaps/coap_example_node.html#simple-demo">Simple Demo</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../others/coaps/coap_example_node.html#id1">实例2</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../others/coaps/coap_architecture.html">Coap架构图</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../others/auth1.html">Auth1.0协议</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../others/auth2.html">Auth2.0协议 </a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../others/auth2.html#auth-code">授权码模式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../others/auth2.html#implicit">简化模式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../others/auth2.html#resource-owner-password-credentials-grant">密码模式（Resource Owner Password Credentials Grant）</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../others/auth2.html#client-credentials-grant">客户端模式(Client Credentials Grant)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../others/auth2.html#renew-token">更新令牌</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../others/qos.html">QoS</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../others/qos.html#qos0">QoS0:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../others/qos.html#qos1">QoS1</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../others/qos.html#qos2">QoS2</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../others/jwt.html">JWT</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../others/jwt.html#jwt-1">JWT 的原理 </a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../others/jwt.html#id2">JWT 的数据结构</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../others/jwt.html#id3">JWT 的使用方式</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../others/jsonnet.html">jsonnet</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../others/jsonnet.html#id2">安装</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../others/jsonnet.html#json">JSON的应用场景跟缺陷</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../others/jsonnet.html#id3">Jsonnet使用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../others/jsonnet.html#id4">Jsonnet实例</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../others/jsonnet.html#id5">Jsonnet 使用场景</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../others/jsonnet.html#id6">参考</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../others/other.html">其他</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">新溪-gordon</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../tcp-ip.html">TCP/IP相关协议</a> &raquo;</li>
+        
+          <li><a href="../TCP.html">tcp相关</a> &raquo;</li>
+        
+      <li>TCP协议报文首部</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/tcp-ips/tcps/tcp_message_head.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="tcp">
+<h1>TCP协议报文首部<a class="headerlink" href="#tcp" title="Permalink to this headline">¶</a></h1>
+<div class="figure align-default" id="id4">
+<a class="reference internal image-reference" href="../../_images/tcp_protocol2.png"><img alt="../../_images/tcp_protocol2.png" src="../../_images/tcp_protocol2.png" style="width: 80%;" /></a>
+<p class="caption"><span class="caption-text">TCP协议报文头格式</span><a class="headerlink" href="#id4" title="Permalink to this image">¶</a></p>
+</div>
+<div class="section" id="id1">
+<h2>TCP报文首部固定部分各字段<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic">
+<li><p>源端口和目的端口:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>各占两字节，分别写入源端口号和目的端口号
+TCP的复用也是通过端口实现的
+</pre></div>
+</div>
+</li>
+<li><p>报文段序号:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>占4字节
+在一个TCP连接中传送的字节流中的每一个字节都按顺序编号
+整个要传送的字节流的起始序号必须在连接建立时设置
+首部中的序号字段值则是指本报文所发送的数据的第一个字节的序号
+
+注：不是每次新连接是从1、2、3开始的，因为两次连接序号是重复的
+每个连接都要有不同的序号。
+这个序号的起始序号是随着时间变化的，可以看成一个 32 位的计数器，每 4 微秒加一
+这个方案如果重复，需要 4 个多小时
+</pre></div>
+</div>
+</li>
+<li><p>确认号:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>期望收到对方下一个报文段的第一个数据字节的序号
+若确认号为N，则表明到序号N-1为止的所有数据都已正确收到
+</pre></div>
+</div>
+</li>
+<li><p>数据偏移:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">指出TCP报文段的数据起始处距离TCP报文段的起始处有多远</span>
+<span class="n">实际上指出了TCP报文段的首部长度</span>
+</pre></div>
+</div>
+</li>
+<li><p>保留:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>保留为今后使用，目前应置为0
+</pre></div>
+</div>
+</li>
+<li><p>6个控制位:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>TCP 协议的控制信息，主要用来控制连接操作
+</pre></div>
+</div>
+</li>
+<li><p>窗口:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>窗口字段明确指出了现在允许对方发送的数据量，该值经常在动态变化着
+例如:
+确认号是701，窗口字段是1000
+这就表明从701算起，发送此报文段的一方还有接收1000个字节数据的接收缓存空间
+</pre></div>
+</div>
+</li>
+<li><p>检验和:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>检验和字段检验的范围包括首部和数据这两部分
+和UDP一样，在计算检验和时要在TCP报文段的前面加上12字节的伪首部
+</pre></div>
+</div>
+</li>
+<li><p>紧急指针:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>紧急指针仅在URG=1时才有意义，它指出本报文段中的紧急数据的字节数
+即使窗口为零时也可发送紧急数据
+</pre></div>
+</div>
+</li>
+</ol>
+<p>10.选项:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>可选
+选项有最大报文长度MSS、窗口扩大选项、时间戳选项、选择确认选项等
+</pre></div>
+</div>
+<div class="section" id="id2">
+<h3>6个控制位<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>控制位顺序:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mf">1.</span> <span class="n">URG</span><span class="p">(</span><span class="n">紧急</span><span class="p">)</span>
+<span class="mf">2.</span> <span class="n">ACK</span><span class="p">(</span><span class="n">确认</span><span class="p">)</span>
+<span class="mf">3.</span> <span class="n">PSH</span><span class="p">(</span><span class="n">推送</span><span class="p">)</span>
+<span class="mf">4.</span> <span class="n">RST</span><span class="p">(</span><span class="n">复位</span><span class="p">)</span>
+<span class="mf">5.</span> <span class="n">SYN</span><span class="p">(</span><span class="n">同步</span><span class="p">)</span>
+<span class="mf">6.</span> <span class="n">FIN</span><span class="p">(</span><span class="n">终止</span><span class="p">)</span>
+</pre></div>
+</div>
+<ol class="arabic">
+<li><p>紧急URG:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>当URG为1时，表明紧急指针字段有效，告诉系统有紧急数据，应尽快优先传送。
+</pre></div>
+</div>
+</li>
+<li><p>确认ACK:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>TCP规定，在连接建立后所有传送的报文段都必须把ACK置1
+
+ACK(回复)
+表示接收数据序号字段有效，一般用于通知发送方数据已经正确接收
+代表接收确认
+</pre></div>
+</div>
+</li>
+<li><p>推送PSH:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">很少使用</span>
+</pre></div>
+</div>
+</li>
+<li><p>复位RST:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>当RST=1时，表明TCP连接中出现严重错误，必须释放连接，然后再重新建立运输连接
+强制断开连接，用于异常中断
+</pre></div>
+</div>
+</li>
+<li><p>同步SYN:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>在连接建立时用来同步序号:
+  SYN=1&amp;ACK=0: 表明这是一个连接请求报文段，开始通信时连接操作中发送的第一个包中
+  SYN=1&amp;ACK=1: 对方若同意建立连接，则应在响应的报文段中使用SYN=1&amp;ACK=1
+
+注: 如果能够过滤这样的包，则后面的操作都无法继续，可以屏蔽整个访问
+</pre></div>
+</div>
+</li>
+<li><p>终止FIN:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>用来释放一个连接
+  当FIN=1时，表明此报文段的发送方的数据已发送完毕，并要求释放运输连接
+</pre></div>
+</div>
+</li>
+</ol>
+</div>
+</div>
+<div class="section" id="id3">
+<h2>网络整体包<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>协议栈积累多少数据才能发送:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 每个网络包能容纳的数据长度
+    协议栈会根据 MTU 来进行判断(最大 1500 字节)
+2. 时间(毫秒为单位)
+    即便缓冲区中的数据长度没有达到 MSS
+    当经过一定时间之后， 就会把网络包发送出去
+3. 应用程序指定“不等待填满缓冲区直接发送”
+    协议栈就会按照要求直接发送数据。
+    实例说明:
+      浏览器这种会话型的应用程序在向服务器发送数据时，等待填满缓冲区导致延迟会产生很大影响
+      因此一般会使用直接发送的选项。
+</pre></div>
+</div>
+<div class="figure align-default" id="id5">
+<img alt="../../_images/tcp_mtu.png" src="../../_images/tcp_mtu.png" />
+<p class="caption"><span class="caption-text">MTU 与 MSS</span><a class="headerlink" href="#id5" title="Permalink to this image">¶</a></p>
+</div>
+<div class="figure align-default" id="id6">
+<img alt="../../_images/tcp_mtu2.png" src="../../_images/tcp_mtu2.png" />
+<p class="caption"><span class="caption-text">应用程序数据的拆分发送</span><a class="headerlink" href="#id6" title="Permalink to this image">¶</a></p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="tcp_transfer.html" class="btn btn-neutral float-right" title="TCP传输" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="normal.html" class="btn btn-neutral" title="常用" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+  
+  <div id="gitalk-container"></div>
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2010-2020, 新溪-gordon.
+
+    </p>
+  </div>
+  <div>备案号 <a href="http://www.beian.miit.gov.cn">京ICP备16018553号</a></div><div>Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a></div>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'V1.5.1',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../_static/language_data.js"></script>
+
+  
+
+  <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+
+
+      var gitalk = new Gitalk({
+              clientID: '565177626b5d46427009',
+              clientSecret: 'b2a36e67e1d2a73e43667f46d571c2624f8e1026',
+              repo: 'knowledge',
+              owner: 'zhaoweiguo',
+              admin: ['zhaoweiguo'],
+              id: location.pathname,      // Ensure uniqueness and length less than 50
+              distractionFreeMode: false  // Facebook-like distraction free mode
+            })
+      gitalk.render('gitalk-container')
+
+  </script> 
+
+</body>
+</html>
