@@ -1,0 +1,410 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>DNS相关安全 &mdash; 新溪-gordon V1.5.1 documentation</title>
+  
+
+  
+  
+    <link rel="shortcut icon" href="../_static/favicon-16x16.ico"/>
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="漏洞相关" href="../vulnerability.html" />
+    <link rel="prev" title="黑客相关" href="hacker.html" /> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+
+<script>
+// 百度统计
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?c4af0e06c3eadbfa7717c13ecc7220d8";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-178653440-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-178653440-2');
+</script>
+
+<!-- 评论插件 gittalk start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+<!-- 评论插件 gittalk end -->
+
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> 新溪-gordon
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                V1.5.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">安全相关</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../normal.html">常用</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="normal.html">常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfa.html">多因素认证</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hacker.html">黑客相关</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">DNS相关安全</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../vulnerability.html">漏洞相关</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../vulnerabilities/injection.html">injection 注入攻击</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../vulnerabilities/injections/injection_xPath.html">XPath injection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../vulnerabilities/injections/injection_sql.html">sql injection</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../vulnerabilities/XSS.html">XSS跨站脚本攻击</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../vulnerabilities/CSRF.html">CSRF</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../vulnerabilities/SSRF.html">SSRF</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../vulnerabilities/Control_Missing.html">越权(控制缺失)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../cryptography.html">加密</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../cryptographys/normal.html">其他</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cryptographys/symmetric-key.html">对称加密(Symmetric-key Cryptography)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../cryptographys/symmetric-keys/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptographys/symmetric-keys/SM4.html">SM4-国密</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptographys/symmetric-keys/AES.html">AES加解密</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptographys/symmetric-keys/other.html">其他</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../cryptographys/public-key.html">公钥加密(Public-key Cryptography)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../cryptographys/public-keys/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptographys/public-keys/SM2.html">SM2-国密</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptographys/public-keys/RSA.html">rsa加解密</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptographys/public-keys/DH.html">DH</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptographys/public-keys/EC.html">EC</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../cryptographys/digest-algorithm.html">摘要算法(digest-algorithm)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../cryptographys/digest-algorithms/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptographys/digest-algorithms/SM3.html">SM3-国密</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptographys/digest-algorithms/sha2.html">SHA-2</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptographys/digest-algorithms/sha3.html">SHA-3</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptographys/digest-algorithms/md5.html">md5摘要算法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptographys/digest-algorithms/other.html">其他</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../cryptographys/message-authentication-code.html">消息认证码(MAC, Message Authentication Code)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cryptographys/signature-algorithm.html">数字签名</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../cryptographys/signature-algorithms/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptographys/signature-algorithms/DSA.html">DSA</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptographys/signature-algorithms/ECDSA.html">ECDSA</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptographys/signature-algorithms/other.html">其他</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../cryptographys/key.html">密钥——秘密的精华</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cryptographys/PRNG.html">伪随机数生成器(Pseudo Random Number Generator, PRNG)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../trust_network.html">信任网络</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../trust_networks/normal.html">常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../trust_networks/PKI.html">PKI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../trust_networks/PGP.html">pgp/gpg相关</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../trust_networks/PGP.html#id2">参考</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../cryptotool.html">加密工具</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../cryptotools/encrypt_openssl.html">Openssl命令相关</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../cryptotools/openssls/openssl_normal.html">openssl基本</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptotools/openssls/openssl_question.html">加密常见问题</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptotools/openssls/openssl_rsa.html">openssl rsa命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptotools/openssls/openssl_ciphers.html">openssl ciphers命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptotools/openssls/openssl_pkcs12.html">openssl pkcs12命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptotools/openssls/openssl_rand.html">openssl rand命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptotools/openssls/openssl_ecparam.html">openssl ecparam命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptotools/openssls/openssl_enc.html">openssl enc命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptotools/openssls/openssl_sha.html">openssl sha命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptotools/openssls/openssl_s_client.html">openssl s_client命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptotools/openssls/openssl_dgst.html">openssl dgst命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptotools/openssls/openssl_x509.html">openssl x509命令</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../cryptotools/encrypt_base64.html">baseXX命令使用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cryptotools/encrypt_easy-rsa.html">easy-rsa命令</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cryptotools/encrypt_cfssl.html">cfssl命令</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cryptotools/cert.html">证书相关</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../cryptotools/certs/normal.html">基本</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptotools/certs/cert_ca.html">ca证书相关</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptotools/certs/letsencrypt.html">Let’s Encrypt</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptotools/certs/hpkp.html">证书固定(钉扎)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptotools/certs/question.html">常见问题</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../cryptotools/practice.html">实战</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../cryptotools/practices/encrypt_mac_p12.html">mac的p12导出私钥</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptotools/practices/encrypt_makecert.html">微软makecert导出私钥</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptotools/practices/encrypt_ca.html">生成ca证书并签名子证书</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptotools/practices/ssl_to_ssh.html">OpenSSL转OpenSSH密钥</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptotools/practices/disable_tls1.0.html">网站如何禁止tls1.0漏洞</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptotools/practices/self_signed_cert.html">在Linux中新增CA证书</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptotools/practices/cert_match.html">验证是否与秘钥匹配</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cryptotools/practices/cert_gen.html">自动创建证书请求</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../cryptotools/encrypt_mbedtls.html">mbedtls-主流的SSL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cryptotools/kerberos.html">Kerberos</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cryptotools/question.html">常见问题</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">新溪-gordon</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../normal.html">常用</a> &raquo;</li>
+        
+      <li>DNS相关安全</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/normals/DNS.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="dns">
+<h1>DNS相关安全<a class="headerlink" href="#dns" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id1">
+<h2>安全事件<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>参见: <cite>链接-时间线</cite></p>
+</div>
+<div class="section" id="id2">
+<h2>攻击手段<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>query flood  通过不断的发 DNS 请求报文来耗尽目的 DNS 资源，形成拒绝服务。具体分类包括源 IP 是否随机以及目的域名是否随机等。</p></li>
+<li><p>response flood  通过不断的发 DNS 响应报文来达到拒绝服务的目的。</p></li>
+<li><p>udp floodv  DNS 底层协议为 UDP，基于 UDP 的各种 flood 攻击也都会给 DNS 带来危害。</p></li>
+<li><p>折射攻击（反射攻击）  伪造源 IP 为第三方，借助 DNS 的回包来达到 DoS 掉第三方的目的。属于 “借刀杀人” 的手段。</p></li>
+<li><p>放大攻击  折射攻击的一种。通过恶意的构造响应报文来达到流量放大作用，从而对第三方形成带宽攻击。请求报文几十字节，响应报文几千字节，意味着可以形成百倍以上流量放大系数。</p></li>
+<li><p>缓存投毒  每一台 DNS 都有缓存，缓存投毒指的是通过恶意手段污染 DNS 缓存，形成 DNS 劫持或者拒绝服务。</p></li>
+<li><p>漏洞攻击  利用各种漏洞来达到入侵并控制 DNS 服务器目的。漏洞不仅仅指 DNS 程序本身的，也有可能是机器或者网络其它的 “问题点”。</p></li>
+<li><p>社会工程学手段  所有的系统都需要人的维护，而人永远是安全中最脆弱的一环。</p></li>
+</ul>
+</div>
+<div class="section" id="id3">
+<h2>防御手段<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>对于权威 DNS 来说:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>由于请求来源多是运营商或者公共 DNS 厂商的递归 DNS，源 IP 相对比较固定，可以实施源 IP 白名单策略。
+该策略对于伪造源 IP 的攻击具有一定削弱作用。
+
+对于域名随机的攻击来说，如果权威 DNS 本身承载的域名量不是很大，可以考虑域名白名单策略。
+
+如果源 IP 就是运营商的，然后请求域名也是合法的，只能靠一定限速策略以及 DNS 服务器本身性能了。
+</pre></div>
+</div>
+<p>对于递归 DNS 来说:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>各种白名单策略误伤都会很严重，因此也主要靠 DNS 服务器本身性能了。
+</pre></div>
+</div>
+<p>高性能 DNS 服务器目前比较流行的做法是基于 Intel DPDK 来实施。</p>
+<p>另外一种推荐实施的策略是 RRL（Response Rate Limit），该策略对于防御折射攻击 / 放大攻击有一定效果。尽管折射攻击的目标不是 DNS 本身，但是不防御的话如果把第三方打挂仍然会产生连带责任，因此建议实施 RRL。</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../vulnerability.html" class="btn btn-neutral float-right" title="漏洞相关" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="hacker.html" class="btn btn-neutral" title="黑客相关" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+  
+  <div id="gitalk-container"></div>
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2010-2020, 新溪-gordon.
+
+    </p>
+  </div>
+  <div>备案号 <a href="http://www.beian.miit.gov.cn">京ICP备16018553号</a></div><div>Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a></div>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'V1.5.1',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="../_static/language_data.js"></script>
+
+  
+
+  <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+
+
+      var gitalk = new Gitalk({
+              clientID: '565177626b5d46427009',
+              clientSecret: 'b2a36e67e1d2a73e43667f46d571c2624f8e1026',
+              repo: 'knowledge',
+              owner: 'zhaoweiguo',
+              admin: ['zhaoweiguo'],
+              id: location.pathname,      // Ensure uniqueness and length less than 50
+              distractionFreeMode: false  // Facebook-like distraction free mode
+            })
+      gitalk.render('gitalk-container')
+
+  </script> 
+
+</body>
+</html>
