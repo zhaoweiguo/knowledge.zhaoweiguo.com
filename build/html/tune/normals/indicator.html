@@ -244,18 +244,50 @@ var _hmt = _hmt || [];
 <h1>常见指标<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="id2">
 <h2>性能指标<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
-<ul class="simple">
-<li><p>redis: 并发请求数也就每秒 3-5 万</p></li>
-<li><p>nginx 负载均衡性能是 3-5 万左</p></li>
-<li><p>mc 的读取性能 3-5 万左右</p></li>
+<ul>
+<li><p>redis: 并发请求数也就每秒 3-5 万(基于 Reactor 模式)</p></li>
+<li><p>nginx 负载均衡性能是 3-5 万左(基于 Reactor 模式)</p></li>
+<li><p>mc 的读取性能 3-5 万左右(基于 Reactor 模式)</p></li>
+<li><p>LVS 的性能是十万级，据说可达到 80 万 / 秒</p></li>
+<li><p>F5 性能是百万级，从 200 万 / 秒到 800 万 / 秒都有</p></li>
 <li><p>kafka 号称百万级, 百万级是集群性能</p></li>
 <li><p>zookeeper 写入读取 2 万以上</p></li>
 <li><p>http 请求访问大概在 1.5-2 万左右(HTTP get 操作访问一个简单页面测试结果)</p></li>
-<li><p>mysql 的 tps 和写入的数据有关，我们测试了 mysql 写入 k-v 数据，主键存储 k，tps 上万</p></li>
+<li><p>MySQL 的 TPS 和写入的数据有关:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>写入 k/v 数据，主键存储 k，上万TPS
+读取 k/v 数据，可以达到10万 QPS
+
+mysql 官网 benchmarks:
+https://www.mysql.com/why-mysql/benchmarks/
+单机 32users 并发只读近 40w+ qps，读写 10w+ qps
+说明:
+    这个数据有误导性，要看具体的 SQL 语句和表结构，实际应用中一般不可能这么高
+    这个数据是简单的 k/v 数据
+</pre></div>
+</div>
+</li>
+<li><p>NoSQL量级一般都是上万，但和测试硬件测试用例相关</p></li>
 <li><p>业务系统一个 TPS 接口的请求时间 10~50ms 是比较合理的，QPS 5~20ms 是比较合理的</p></li>
 </ul>
 <p>理想情况下，性能测试的时候，CPU 能压到 80% 以上，此时的 TPS/QPS 就是峰值，如果 CPU 没压满，指标就上不去，就可能有优化的空间。
 如果是业务系统，由于业务复杂度差异很大，有的每秒 500 请求可能就是高性能了，因此需要针对业务进行性能测试，确立性能基线，方便后续架构设计做比较</p>
+<p>http 相关性能:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Spring Boot 基于 HTTP 协议的，HTTP 协议本身的解析非常耗性能
+    我们之前实测 Hello world，16 核或者 32 核的机器，单机 TPS 也就 1.5 万左右（核数增加对性能作用不大）
+</pre></div>
+</div>
+<ul>
+<li><p>一般把日活转换为 pv，然后按 pv 计算 QPS</p></li>
+<li><p>单台服务器性能一般是:</p>
+<blockquote>
+<div><p>企业用的线上物理服务器，如:
+16 核 16g
+32 核 16G
+与时俱进，现在基本都是 32 核 48g 内存</p>
+<p>云主机的性能可以按照同配置的物理机 80% 的性能来估算</p>
+</div></blockquote>
+</li>
+</ul>
 </div>
 <div class="section" id="id3">
 <h2>内存, 磁盘指标<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
@@ -300,6 +332,13 @@ var _hmt = _hmt || [];
 <span class="n">并发峰值</span> <span class="o">=</span> <span class="n">并发均值</span> <span class="o">*</span> <span class="n">N</span>
 </pre></div>
 </div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 响应时间（RT）
+2. 并发数（Concurrency）
+3. 吞吐量（TPS）
+
+吞吐量 = 并发数 / 平均响应时间
+</pre></div>
+</div>
 <ul class="simple">
 <li><p>最⼤吞吐量： 可⽀持的带宽</p></li>
 <li><p>最⼤并发连接数: 每秒连接的总数量，体现并发处理连接的能⼒</p></li>
@@ -307,6 +346,8 @@ var _hmt = _hmt || [];
 <li><p>PPS: 每秒处理包量: 每秒钟转发的包量，体现包转发速率</p></li>
 <li><p>QPS: Query Per Second(每秒请求数，一般指读取，TPS)</p></li>
 <li><p>TPS: Transactions Per Second(每秒事务数，一般指写入，QPS)</p></li>
+<li><p>并发数：同一时刻的接收的访问数量，时间单位一般用秒，也可以用分钟和小时，常见有并发请求数，并发连接数</p></li>
+<li><p>日活：每日活跃用户数，指当天来访问过系统的用户，同一用户，无论用户访问多少功能和页面都只算一个用户</p></li>
 </ul>
 </div>
 </div>

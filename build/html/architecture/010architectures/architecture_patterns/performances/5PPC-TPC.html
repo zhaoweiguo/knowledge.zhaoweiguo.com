@@ -1,0 +1,576 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>单服务器高性能模式: PPC&amp;TPC &mdash; 新溪-gordon V1.5.1 documentation</title>
+  
+
+  
+  
+    <link rel="shortcut icon" href="../../../_static/favicon-16x16.ico"/>
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="单服务器高性能模式: Reactor&amp;Proactor" href="6Reactor-Proactor.html" />
+    <link rel="prev" title="高性能缓存架构" href="4cache.html" /> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+
+<script>
+// 百度统计
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?c4af0e06c3eadbfa7717c13ecc7220d8";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-178653440-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-178653440-2');
+</script>
+
+<!-- 评论插件 gittalk start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+<!-- 评论插件 gittalk end -->
+
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> 新溪-gordon
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                V1.5.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">关键知识</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../../010architecture.html">010架构设计</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../normal.html">常用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../normals/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../normals/tmp.html">临时</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../normals/other.html">其他架构设计</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../normals/others/cqrs.html">CQRS </a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../normals/others/crud.html">CRUD</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../normals/others/ddd.html">领域驱动设计</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../normals/others/api.html">api设计</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../normals/others/event_driver.html">事件驱动架构</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../normals/others/network_agent.html">网络代理</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../normals/others/message_bus.html">消息总线</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../normals/others/other.html">其他</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../design_mode.html">23种设计模式 </a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../design_modes/singleton.html">单例模式 </a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../design_modes/observer-design.html">观察者模式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../design_modes/decorator.html">装饰器模式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../design_modes/mediator.html">中介者模式</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../history.html">架构的历史</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../historys/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../historys/01origin_distributed_sys.html">原始分布式时代</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../historys/02monolithic_sys.html">单体系统时代</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../historys/03soa_sys.html">SOA架构</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../historys/04microService.html">微服务架构</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../historys/04microServices/normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../historys/04microServices/9feature.html">微服务的九个核心的业务与技术特征</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../historys/04microServices/ServiceMesh.html">ServiceMesh</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../historys/04microServices/collect.html">微服务架构</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../historys/05cloudnative.html">云原生时代——后微服务时代</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../historys/05cloudnatives/collect1.html">云原生</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../historys/05cloudnatives/collect2.html">收集2</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../historys/05cloudnatives/12Factor.html">云原生应用的12要素</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../historys/05cloudnatives/distribute_architecture.html">从分布式架构到云原生架构</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../historys/06serverless.html">无服务时代</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../historys/06serverless/collect1.html">Serverless</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../architecture_design.html">软件架构设计</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../architecture_designs/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../architecture_designs/history_design.html">架构设计的历史</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../architecture_designs/purpose.html">架构设计目的</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../architecture_designs/purposes/1performance.html">复杂度来源-高性能</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../architecture_designs/purposes/2availability.html">复杂度来源-高可用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../architecture_designs/purposes/3expandability.html">复杂度来源-可扩展性</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../architecture_designs/purposes/4lowcost.html">复杂度来源-低成本</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../architecture_designs/purposes/5security.html">复杂度来源-安全</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../architecture_designs/purposes/6scalability.html">复杂度来源-规模</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../architecture_designs/purposes/7other.html">其他</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../architecture_designs/principle.html">架构设计原则</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../architecture_designs/process.html">架构设计流程</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../architecture_designs/process/1recognize.html">识别复杂度</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../architecture_designs/process/2alternative.html">设计备选方案</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../architecture_designs/process/3assess.html">评估&amp;选择备选方案</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../architecture_designs/process/4detailed.html">详细方案设计</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../architecture_pattern.html">架构模式</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../normal.html">常用</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="../performance.html">高性能架构模式</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="1read-write-seperate.html">读写分离</a></li>
+<li class="toctree-l4"><a class="reference internal" href="2split-db-table.html">分库分表</a></li>
+<li class="toctree-l4"><a class="reference internal" href="3NoSQL.html">高性能 NoSQL</a></li>
+<li class="toctree-l4"><a class="reference internal" href="4cache.html">高性能缓存架构</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">单服务器高性能模式: PPC&amp;TPC</a></li>
+<li class="toctree-l4"><a class="reference internal" href="6Reactor-Proactor.html">单服务器高性能模式: Reactor&amp;Proactor</a></li>
+<li class="toctree-l4"><a class="reference internal" href="7slb.html">高性能负载均衡: 分类&amp;架构&amp;算法</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../availability.html">高可用架构模式</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../availabilitys/normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../availabilitys/1CAP.html">CAP理论</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../availabilitys/2FMEA.html">FMEA</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../expandability.html">可扩展架构模式</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../expandabilitys/normal.html">常用</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../graph.html">架构图</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../graphs/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../graphs/business.html">业务架构图</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../graphs/c4-model.html">软件架构——C4模型</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../011distributed.html">011分布式系统</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../011distributeds/normal.html">常用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/normals/normal.html">分布式系统</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/normals/concept.html">并发</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../011distributeds/theory.html">并发相关理论</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/theorys/CAP.html">并发相关-CAP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/theorys/FLP.html">并发相关-FLP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/theorys/DLS.html">DLS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/theorys/CSP.html">并发模型-CSP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/theorys/Actor.html">并发模型-Actor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/theorys/Gossip.html">Gossip协议</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/theorys/BASE.html">BASE</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/theorys/ACID.html">ACID原则</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/theorys/UUID.html">UUID</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/theorys/consistent_hash.html">一致性hash</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../011distributeds/transaction.html">事务</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/transactions/normal.html">通用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/transactions/local.html">本地事务</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/transactions/global.html">全局事务(Global Transactions)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/transactions/share.html">共享事务(Share Transactions)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/transactions/distribute.html">分布式事务</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../011distributeds/transactions/distributes/reliable_event_queue.html">可靠事件队列</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../011distributeds/transactions/distributes/SAGA.html">SAGA 事务</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../011distributeds/transactions/distributes/TCC.html">TCC 事务</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../011distributeds/consensus.html">分布式共识</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/consensus/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/consensus/Paxos.html">Paxos算法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/consensus/zab.html">zab协议</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/consensus/Raft.html">The Raft Consensus Algorithm </a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../012microservice.html">012微服务架构</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../012microservices/normal.html">常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../012microservices/discovery.html">服务注册&amp;发现</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../012microservices/api_gateway.html">API网关</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../012microservices/contract.html">对比</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../013dataanalysis.html">013数据分析</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../013dataanalysis/normal.html">常用</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../014governance.html">014服务治理</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../014governances/normal.html">常用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../014governances/normals/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../014governances/normals/technical-debt.html">技术债</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../014governances/normals/anti-fragile.html">反脆弱</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../014governances/normals/code-review.html">Code Review</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../014governances/service_protection.html">服务保护</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">新溪-gordon</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../010architecture.html">010架构设计</a> &raquo;</li>
+        
+          <li><a href="../../architecture_pattern.html">架构模式</a> &raquo;</li>
+        
+          <li><a href="../performance.html">高性能架构模式</a> &raquo;</li>
+        
+      <li>单服务器高性能模式: PPC&amp;TPC</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../../_sources/010architectures/architecture_patterns/performances/5PPC-TPC.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="ppc-tpc">
+<h1>单服务器高性能模式: PPC&amp;TPC<a class="headerlink" href="#ppc-tpc" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><p>PPC: Process Per Connection</p></li>
+<li><p>TPC: Thread Per Connection</p></li>
+</ul>
+<p>高性能又是最复杂的一环，磁盘、操作系统、CPU、内存、缓存、网络、编程语言、架构等，每个都有可能影响系统达到高性能:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>一行不恰当的 debug 日志，就可能将服务器的性能从 TPS 30000 降低到 8000；
+一个 tcp_nodelay 参数，就可能将响应时间从 2 毫秒延长到 40 毫秒
+</pre></div>
+</div>
+<p>高性能架构设计主要集中在两方面:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>尽量提升单服务器的性能，将单服务器的性能发挥到极致。
+如果单服务器无法支撑性能，设计服务器集群方案。
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>除了以上两点，最终系统能否实现高性能，还和具体的实现及编码相关。但架构设计是高性能的基础，如果架构设计没有做到高性能，则后面的具体实现和编码能提升的空间是有限的。形象地说，架构设计决定了系统性能的上限，实现细节决定了系统性能的下限。</p>
+</div>
+<p>单服务器高性能的关键之一就是服务器采取的并发模型，并发模型有如下两个关键设计点:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mf">1.</span> <span class="n">服务器如何管理连接</span>
+<span class="mf">2.</span> <span class="n">服务器如何处理请求</span>
+</pre></div>
+</div>
+<p>以上两个设计点最终都和操作系统的 I/O 模型及进程模型相关:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. I/O 模型：阻塞、非阻塞、同步、异步
+2. 进程模型：单进程、多进程、多线程
+</pre></div>
+</div>
+<div class="section" id="ppc">
+<h2>PPC<a class="headerlink" href="#ppc" title="Permalink to this headline">¶</a></h2>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>每次有新的连接就新建一个进程去专门处理这个连接的请求，这是传统的 UNIX 网络服务器所采用的模型。</p>
+</div>
+<p>PPC 模式实现简单，比较适合服务器的连接数没那么多的情况，例如数据库服务器。</p>
+<p>当服务器的并发和访问量从几十剧增到成千上万，这种模式的弊端就凸显出来:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mf">1.</span> <span class="n">fork</span> <span class="n">代价高</span>
+<span class="mf">2.</span> <span class="n">父子进程通信复杂</span>
+<span class="mf">3.</span> <span class="n">支持的并发连接数量有限</span>
+</pre></div>
+</div>
+<div class="section" id="prefork">
+<h3>prefork<a class="headerlink" href="#prefork" title="Permalink to this headline">¶</a></h3>
+<p>prefork 就是提前创建进程（pre-fork）。系统在启动的时候就预先创建好进程，然后才开始接受用户的请求，当有新的连接进来的时候，就可以省去 fork 进程的操作，让用户访问更快、体验更好</p>
+</div>
+</div>
+<div class="section" id="tpc">
+<h2>TPC<a class="headerlink" href="#tpc" title="Permalink to this headline">¶</a></h2>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>每次有新的连接就新建一个线程去专门处理这个连接的请求</p>
+</div>
+<div class="section" id="prethread">
+<h3>prethread<a class="headerlink" href="#prethread" title="Permalink to this headline">¶</a></h3>
+<p>和 prefork 类似，prethread 模式会预先创建线程，然后才开始接受用户的请求，当有新的连接进来的时候，就可以省去创建线程的操作，让用户感觉更快、体验更好。</p>
+<p>prethread 理论上可以比 prefork 支持更多的并发连接，Apache 服务器 MPM worker 模式默认支持 16 × 25 = 400 个并发处理线程。</p>
+</div>
+</div>
+<div class="section" id="id1">
+<h2>思考<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>高并发需要根据两个条件划分:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>连接数量，请求数量
+1. 海量连接（成千上万）海量请求：例如抢购，双十一等
+    面对海量的连接，使用集群，并且单机使用 『IO 复用模型』或者『异步 IO 模型』
+    针对海量的请求，使用集群，并且单机使用『多进程处理』或『多线程』
+2. 常量连接（几十上百）海量请求：例如中间件，比如数据库，redis，kafka
+    适合 TPC 和 PPC，可使用阻塞 IO
+    当然使用非阻塞 IO 也没问题，如:
+      Activemq 既支持 BIO 也支持 NIO
+      Rocketmq 也是使用 netty 这样的 NIO 框架
+3. 海量连接常量请求：例如门户网站
+4. 常量连接常量请求：例如内部运营系统，管理系统
+</pre></div>
+</div>
+<p>PPC 和 TPC适合场景:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>PPC 和 TPC 能够支持的最大连接数差不多，都是几百个
+这两种方式明显不支持高连接数的场景
+
+所以 PPC 和 TPC 适合:
+1. 常量连接海量请求。比如数据库，redis，kafka 等等
+2. 常量连接常量请求。比如企业内部网址
+
+tpc 异常时整个服务器就挂了，而 ppc 不会，所以 ppc 适合数据库，中间件这类
+
+ppc 的服务器，连接满了后新的连接进不来，但旧的连接发送请求是没问题的
+
+ppc 和 tpc 模式一般如何根据硬件配置计算可支持的并发数呢
+一般按照 CPU 核数 * 2 来计算
+
+不是说用了多进程就是 PPC，而是说用进程来处理连接才是 PPC
+所以 redis 用 fork 来创建持久化进程不是 PPC。
+</pre></div>
+</div>
+<p>BIO:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>一个线程处理一个请求。
+缺点:
+    并发量高时，线程数较多，浪费资源。
+    如果编程控制不善，可能造成系统资源耗尽。
+Tomcat7 或以下，在 Linux 系统中默认使用这种方式。
+可以适用于小到中规模的客户端并发数场景，无法胜任大规模并发业务。
+</pre></div>
+</div>
+<p>NIO:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>利用多路复用 IO 技术，可以通过少量的线程处理大量的请求。
+Tomcat8 在 Linux 系统中默认使用这种方式。
+Tomcat7 必须修改 Connector 配置来启动。
+
+NIO 最适用于 “高并发” 的业务场景，
+所谓高并发是指 1ms 内至少同时有成百上千个连接请求准备就绪，其他情况下 NIO 技术发挥不出它明显的优势
+</pre></div>
+</div>
+<p>BIO&amp;NIO&amp;AIO:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>BIO：阻塞 io，PPC 和 TPC 属于这种
+NIO：多路复用 io，reactor 就是基于这种技术
+AIO：异步 io，Proactor 就是基于这种技术
+</pre></div>
+</div>
+<p>一些常见的细节点如下:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>java：推荐看 disruptor 的设计论文，包括 false sharing, 并发无锁，ring buffer 等；
+网络：tcp_nodelay，NIO；
+内存：内存池，对象池，数据结构
+存储：磁盘尾部追加，LSM；
+</pre></div>
+</div>
+<p>异步 io 性能相比 io 复用没有明显优势，但操作系统设计比较复杂:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Linux</span> <span class="n">上主流的是</span> <span class="n">epoll</span> <span class="n">io</span> <span class="n">复用</span>
+<span class="n">Windows</span> <span class="n">上是</span> <span class="n">IOCP</span> <span class="n">的异步</span> <span class="n">io</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id2">
+<h2>参考<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>更多内容你可以参考《UNIX 网络编程》三卷本</p></li>
+</ul>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="6Reactor-Proactor.html" class="btn btn-neutral float-right" title="单服务器高性能模式: Reactor&amp;Proactor" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="4cache.html" class="btn btn-neutral" title="高性能缓存架构" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+  
+  <div id="gitalk-container"></div>
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2010-2020, 新溪-gordon.
+
+    </p>
+  </div>
+  <div>备案号 <a href="http://www.beian.miit.gov.cn">京ICP备16018553号</a></div><div>Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a></div>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'V1.5.1',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../../_static/language_data.js"></script>
+
+  
+
+  <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+
+
+      var gitalk = new Gitalk({
+              clientID: '565177626b5d46427009',
+              clientSecret: 'b2a36e67e1d2a73e43667f46d571c2624f8e1026',
+              repo: 'knowledge',
+              owner: 'zhaoweiguo',
+              admin: ['zhaoweiguo'],
+              id: location.pathname,      // Ensure uniqueness and length less than 50
+              distractionFreeMode: false  // Facebook-like distraction free mode
+            })
+      gitalk.render('gitalk-container')
+
+  </script> 
+
+</body>
+</html>
