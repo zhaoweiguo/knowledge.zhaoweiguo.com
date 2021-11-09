@@ -1,0 +1,158 @@
+Makefile语法
+############
+
+命令
+====
+
+.. note:: Makefile 支持 Linux 命令，调用方式跟在 Linux 系统下调用命令的方式基本一致。
+
+
+@变量
+-----
+
+.. note:: 正常情况下，make会打印每条命令，然后再执行，这就叫做回声(echoing)
+
+例::
+
+    test:
+        # 这是测试
+
+执行上面的规则，会得到下面的结果::
+
+    $ make test
+    # 这是测试
+
+在命令的前面加上@，就可以关闭回声::
+
+    test:
+        @# 这是测试
+
+通常只在注释和纯显示的echo命令前面加上@::
+
+    test:
+        @# 这是测试
+        @echo TODO
+
+
+-变量
+-----
+
+默认情况下，每条命令执行完 make 就会检查其返回码。如果返回成功（返回码为 0），make 就执行下一条指令；如果返回失败（返回码非 0），make 就会终止当前命令。很多时候，命令出错（比如删除了一个不存在的文件）时，我们并不想终止，这时就可以在命令行前加 - 符号，来让 make 忽略命令的出错，以继续执行下一条命令，比如：
+
+
++变量
+-----
+
+.. note:: 要求 make 执行命令，即使使用了 - n 选项
+
+
+示例::
+
+  all: 
+    @echo aaaa 
+    @+echo bbbb
+
+使用 make 执行的结果为::
+
+    $ make 
+    aaaa 
+    bbbb
+
+使用 make -n 执行的结果为::
+
+    echo aaaa 
+    echo bbbb 
+    bbbb
+
+
+变量
+====
+
+1. 引用变量时可以通过::
+
+    $() 或者 ${}
+
+    如:
+    txt = Hello World
+    test:
+        @echo $(txt)
+
+2. 调用Shell变量，需要在美元符号前，再加一个美元符号，这是因为Make命令会对美元符号转义::
+
+    test:
+      @echo $$HOME
+
+四个赋值运算符
+--------------
+
+* What is the difference between the GNU Makefile variable assignments =, ?=, := and +=?: https://stackoverflow.com/questions/448910/what-is-the-difference-between-the-gnu-makefile-variable-assignments-a
+
+``=``::
+
+    VARIABLE = value
+    # 在执行时扩展，允许递归扩展
+
+    示例:
+    A = a
+    B = $(A) b
+    A = c
+
+.. note:: 最后的值为 c b，而不是 a b。也就是说，在用变量给变量赋值时，右边变量的取值，取的是最终的变量值
+
+
+``:=``::
+
+    VARIABLE := value
+    # 在定义时扩展
+
+    示例:
+    A = a
+    B = $(A) b
+    A = c
+
+.. note:: B 最后的值为 a b。通过 := 的赋值方式，可以避免 = 赋值带来的潜在的不一致。
+
+``?=``::
+
+    VARIABLE ?= value
+    # 只有在该变量为空时才设置值
+
+``+=``::
+
+    VARIABLE += value
+    # 将值追加到变量的尾端
+
+
+
+
+其他
+====
+
+注释(井号（#）在Makefile中表示注释)::
+
+    # 这是注释
+    result.txt: source.txt
+        # 这是注释
+        cp source.txt result.txt # 这也是注释
+
+
+通配符::
+
+    Makefile 的通配符与 Bash 一致，主要有星号（*）、问号（？）和 [...] 
+    如:
+    clean:
+        rm -f *.o
+
+模式匹配::
+
+    %.o: %.c
+
+    等同于下面的写法:
+    f1.o: f1.c
+    f2.o: f2.c
+    // 使用匹配符%，可以将大量同类型的文件，只用一条规则就完成构建
+
+
+
+
+

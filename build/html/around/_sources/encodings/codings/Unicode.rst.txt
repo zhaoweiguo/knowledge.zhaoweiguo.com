@@ -1,0 +1,124 @@
+Unicode
+#######
+
+* 2020 年 3 月 10 日公布的 13.0.0，已经收录超过 14 万个字符
+* 2020 年 3 月 10 日公布的 Unicode 标准 13.0.0 中，新增了 55 个新的 emoji 表情
+
+
+.. figure:: /images/arrouds/unicode1_plane.png
+
+   现在的 Unicode 字符分为 17 组编排，每组为一个平面（Plane），而每个平面拥有 65536（即 2 的 16 次方）个码值（Code Point）。我们用到的绝大多数字符都属于第 0 号平面，即 BMP 平面。除了 BMP 平面之外，其它的平面都被称为补充平面。
+
+
+.. figure:: /images/arrouds/unicode2_utf8_convert.png
+
+   Unicode 和 UTF-8 的转换规则
+
+
+实例
+====
+
+::
+
+    # 测试环境 macOS/Linux，Python 2.7
+    >>> import re
+    >>> re.compile(r'[时间]', re.DEBUG)
+    in
+      literal 230
+      literal 151
+      literal 182
+      literal 233
+      literal 151
+      literal 180
+    <_sre.SRE_Pattern object at 0x1053e09f0>
+    >>> re.compile(ur'[时间]', re.DEBUG)
+    in
+      literal 26102
+      literal 38388
+    <_sre.SRE_Pattern object at 0x1053f8710>
+
+查看文本编码成 UTF-8 或 GBK 方式，以及编码的结果::
+
+    # UTF-8
+    >>> u' 极客'.encode('utf-8')
+    '\xe6\x9e\x81\xe5\xae\xa2'  # 含有 e6
+    >>> u' 时间'.encode('utf-8')
+    '\xe6\x97\xb6\xe9\x97\xb4'  # 含有 e6
+
+    # GBK
+    >>> u' 极客'.encode('gbk')
+    '\xbc\xab\xbf\xcd'  # 含有 bc
+    >>> u' 时间'.encode('gbk')
+    '\xca\xb1\xbc\xe4'  # 含有 bc
+
+Python 测试的结果::
+
+    # Python 2.7
+    >>> import re
+    >>> re.findall(r'^.$', '学')    # 注: 会先把'学'转化为 UTF-8(Linux)或 GBK(Windows)
+    []
+    >>> re.findall(r'^.$', u'学')   # 转为 unicode 编码
+    [u'\u5b66']
+
+    >>> re.findall(r'^.+$', '学')                    # 1. 查看默认编码
+    ['\xe5\xad\xa6']
+    >>> re.findall(r'^.+$', u'学'.encode('utf-8'))   # 2. 指定 utf-8编码
+    ['\xe5\xad\xa6']
+    >>> re.findall(r'^.+$', u'学'.encode('gbk'))     # 3. 指定 GBK 编码
+    ['\xd1\xa7']
+
+    # Python 3.7
+    >>> import re
+    >>> re.findall(r'^.$', '学')
+    [' 学']
+    >>> re.findall(r'(?a)^.$', '学')
+    [' 学']
+
+
+
+
+
+
+Unicode
+=======
+
+* Unicode 只规定了字符对应的码值，如果要进行存储或者网络传输等，这个码值得编码成字节，常见的编码方式是 UTF-8。
+* 在内存中使用的时候可以使用 unicode，但存储到硬盘里时就得转换成字节编码形式。
+
+
+Unicode字符集（简称为UCS）,国际标准组织于1984年4月成立ISO/IEC JTC1/SC2/WG2工作组，针对各国文字、符号进行统一性编码。1991年美国跨国公司成立Unicode Consortium，并于1991年10月与WG2达成协议，采用同一编码字集。目前Unicode是采用16位编码体系，其字符集内容与 ISO10646的BMP（Basic Multilingual Plane）相同。Unicode于1992年6月通过DIS（Draf International Standard），目前版本V2.0于1996公布，内容包含符号6811个，汉字20902个，韩文拼音11172个，造字区6400个，保留 20249个，共计65534个。Unicode编码后的大小是一样的.例如一个英文字母 "a" 和　一个汉字 "好"，编码后都是占用的空间大小是一样的，都是两个字节！
+
+
+Unicode可以用来表示所有语言的字符，而且是定长双字节（也有四字节的）编码，包括英文字母在内。所以可以说它是不兼容iso8859-1编码的，也不兼容任何编码。不过，相对于iso8859-1编码来说，uniocode编码只是在前面增加了一个0字节，比如字母'a'为"00 61"。
+
+
+需要说明的是，定长编码便于计算机处理（注意GB2312/GBK不是定长编码），而unicode又可以用来表示所有字符，所以在很多软件内部是使用unicode编码来处理的，比如java。
+
+
+Unicode当然是一个很大的集合，现在的规模可以容纳100多万个符号。每个符号的编码都不一样，比如，U+0639表示阿拉伯字母Ain，U+0041表示英语的大写字母A，U+4E25表示汉字“严”。具体的符号对应表，可以查询 unicode.org，或者专门的汉字对应表。 http://www.chi2ko.com/tool/CJK.htm
+
+
+
+
+
+
+Unicode的问题
+-------------
+
+需要注意的是，Unicode只是一个符号集，它只规定了符号的二进制代码，却没有规定这个二进制代码应该如何存储。
+
+比如，汉字“严”的unicode是十六进制数4E25，转换成二进制数足足有15位（100111000100101），也就是说这个符号的表示至少需要2个字节。表示其他更大的符号，可能需要3个字节或者4个字节，甚至更多。
+
+这里就有两个严重的问题，第一个问题是，如何才能区别unicode和ascii？计算机怎么知道三个字节表示一个符号，而不是分别表示三个符号呢？第二个问题是，我们已经知道，英文字母只用一个字节表示就够了，如果unicode统一规定，每个符号用三个或四个字节表示，那么每个英文字母前都必然有二到三个字节是0，这对于存储来说是极大的浪费，文本文件的大小会因此大出二三倍，这是无法接受的。
+
+它们造成的结果是：1）出现了unicode的多种存储方式，也就是说有许多种不同的二进制格式，可以用来表示unicode。2）unicode在很长一段时间内无法推广，直到互联网的出现。
+
+
+
+
+
+
+
+
+
+

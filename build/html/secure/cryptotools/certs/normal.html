@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>基本 &mdash; 新溪-gordon V1.5.2 documentation</title>
+  <title>基本 &mdash; 新溪-gordon V1.6.5 documentation</title>
   
 
   
@@ -28,6 +28,7 @@
 
   <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="ca证书相关" href="cert_ca.html" />
@@ -89,7 +90,7 @@ var _hmt = _hmt || [];
             
             
               <div class="version">
-                V1.5.2
+                V1.6.5
               </div>
             
           
@@ -132,6 +133,7 @@ var _hmt = _hmt || [];
 <li class="toctree-l2"><a class="reference internal" href="../../vulnerabilities/CSRF.html">CSRF</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../vulnerabilities/SSRF.html">SSRF</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../vulnerabilities/Control_Missing.html">越权(控制缺失)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../vulnerabilities/Clickjacking.html">Clickjacking</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../cryptography.html">加密</a><ul>
@@ -176,7 +178,7 @@ var _hmt = _hmt || [];
 <li class="toctree-l2"><a class="reference internal" href="../../trust_networks/normal.html">常用</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../trust_networks/PKI.html">PKI</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../trust_networks/PGP.html">pgp/gpg相关</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../trust_networks/PGP.html#id2">参考</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trust_networks/PGP.html#id3">参考</a></li>
 </ul>
 </li>
 <li class="toctree-l1 current"><a class="reference internal" href="../../cryptotool.html">加密工具</a><ul class="current">
@@ -290,10 +292,43 @@ var _hmt = _hmt || [];
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="id1">
-<h1>基本<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="id2">
-<h2>一. 证书和编码<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+  <table class="docutils align-default">
+<colgroup>
+<col style="width: 32%" />
+<col style="width: 24%" />
+<col style="width: 24%" />
+<col style="width: 21%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="../../genindex.html"><span class="std std-ref">Index</span></a></p></td>
+<td><p><a class="reference internal" href="../../py-modindex.html"><span class="std std-ref">Module Index</span></a></p></td>
+<td><p><a class="reference internal" href="../../search.html"><span class="std std-ref">Search Page</span></a></p></td>
+</tr>
+</tbody>
+</table>
+<details>
+<summary>目录</summary><div class="sidebar">
+<p class="sidebar-title">目录</p>
+<div class="contents topic" id="contents">
+<p class="topic-title">Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#id2" id="id7">基本</a></p>
+<ul>
+<li><p><a class="reference internal" href="#id3" id="id8">一. 证书和编码</a></p></li>
+<li><p><a class="reference internal" href="#x509" id="id9">二. X509文件扩展</a></p></li>
+<li><p><a class="reference internal" href="#id4" id="id10">三. 编码: 决定扩展名方式</a></p></li>
+<li><p><a class="reference internal" href="#openssl" id="id11">四. 常见的OpenSSL证书操作(重要)</a></p></li>
+<li><p><a class="reference internal" href="#id5" id="id12">五. 原文链接</a></p></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</details><div class="section" id="id2">
+<h1><a class="toc-backref" href="#id7">基本</a><a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id3">
+<h2><a class="toc-backref" href="#id8">一. 证书和编码</a><a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
 <blockquote>
 <div><p>X.509证书,其核心是根据RFC 5280编码或数字签名的数字文档
 实际上，术语X.509证书通常指的是IETF的PKIX证书和X.509 v3证书标准的CRL 文件
@@ -301,15 +336,15 @@ var _hmt = _hmt || [];
 </div></blockquote>
 </div>
 <div class="section" id="x509">
-<h2>二. X509文件扩展<a class="headerlink" href="#x509" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id9">二. X509文件扩展</a><a class="headerlink" href="#x509" title="Permalink to this headline">¶</a></h2>
 <blockquote>
 <div><p>我们首先要了解的是每种类型的文件扩展名。 很多人不清楚DER，PEM，CRT和CER结尾的文件是什么，更有甚者错误地说是可以互换的
 在某些情况下,某些可以互换,最佳做法是识别证书的编码方式,然后正确标记
 正确标签的证书将更容易操纵</p>
 </div></blockquote>
 </div>
-<div class="section" id="id3">
-<h2>三. 编码: 决定扩展名方式<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id4">
+<h2><a class="toc-backref" href="#id10">三. 编码: 决定扩展名方式</a><a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
 <p>1）.DER 扩展名:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>.DER = DER扩展用于二进制DER编码证书。
 这些文件也可能承载CER或CRT扩展。
@@ -349,7 +384,7 @@ PKCS#12 或 PFX格式是以加密的二进制形式存储服务器认证证书�
 </div>
 </div>
 <div class="section" id="openssl">
-<h2>四. 常见的OpenSSL证书操作(重要)<a class="headerlink" href="#openssl" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id11">四. 常见的OpenSSL证书操作(重要)</a><a class="headerlink" href="#openssl" title="Permalink to this headline">¶</a></h2>
 <p>证书操作有四种基本类型。查看，转换，组合和提取。
 1）查看证书:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>PEM编码的证书是ASCII，它们是不可读的。这里有一些命令可以让你以可读的形式输出证书的内容;
@@ -402,11 +437,26 @@ openssl pkcs12 -in certificate.pfx -out certificate.cer -nodes
 </pre></div>
 </div>
 </div>
-<div class="section" id="id4">
-<h2>五. 原文链接<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id5">
+<h2><a class="toc-backref" href="#id12">五. 原文链接</a><a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p><a class="reference external" href="http://www.gtopia.org/blog/2010/02/der-vs-crt-vs-cer-vs-pem-certificates/">DER.VS.CRT.VS.CER.VS.PEM-CERTIFICATES</a></p></li>
 </ul>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 32%" />
+<col style="width: 24%" />
+<col style="width: 24%" />
+<col style="width: 21%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="../../genindex.html"><span class="std std-ref">Index</span></a></p></td>
+<td><p><a class="reference internal" href="../../py-modindex.html"><span class="std std-ref">Module Index</span></a></p></td>
+<td><p><a class="reference internal" href="../../search.html"><span class="std std-ref">Search Page</span></a></p></td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 
@@ -453,7 +503,7 @@ openssl pkcs12 -in certificate.pfx -out certificate.cer -nodes
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../',
-            VERSION:'V1.5.2',
+            VERSION:'V1.6.5',
             LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',

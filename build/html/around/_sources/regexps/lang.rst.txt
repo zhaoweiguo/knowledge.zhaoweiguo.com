@@ -1,0 +1,321 @@
+语言
+####
+
+1. 校验文本内容
+===============
+
+
+.. note:: 【实例】验证日期格式年月日为例子来讲解，比如 2020-01-01，我们使用正则 ``\d {4}-\d {2}-\d {2}`` 来验证
+
+
+.. figure:: /images/regexps/regexp_lang1.jpeg
+
+   部分常见编程语言校验文本方式
+
+
+
+Python
+------
+
+.. note:: 在 Python 中，正则的包名是 re，验证文本可以使用 re.match 或 re.search 的方法，这两个方法的区别在于，re.match 是从开头匹配的，re.search 是从文本中找子串
+
+::
+
+    # 测试环境 Python3
+    >>> import re
+    >>> re.match(r'\d{4}-\d{2}-\d{2}', '2020-06-01')
+    <re.Match object; span=(0, 10), match='2020-06-01'>
+    # 这个输出是匹配到了，范围是从下标 0 到下标 10，匹配结果是 2020-06-01
+    # re.search 输出结果也是类似的
+
+
+校验文本是否匹配::
+
+    # 测试环境 Python3
+    >>> import re
+    >>> reg = re.compile(r'\A\d{4}-\d{2}-\d{2}\Z')  # 建议先编译，提高效率
+    >>> reg.search('2020-06-01') is not None
+    True
+    >>> reg.match('2020-06-01') is not None  # 使用 match 时 \A 可省略
+    True
+
+.. note:: 如果不添加 \A 和 \Z 的话，我们就可能得到错误的结果。而造成这个错误的主要原因就是，没有完全匹配，而是部分匹配。至于为什么不推荐用 ^ 和 $，因为在多行模式下，它们的匹配行为会发现变化
+
+错误示范::
+
+    >>> re.match(r'\d{4}-\d{2}-\d{2}', '2020-06-01abc') is not None
+    True
+    >>> re.search(r'\d{4}-\d{2}-\d{2}', 'abc2020-06-01') is not None
+    True
+
+
+Golang
+------
+
+::
+
+    re := regexp.MustCompile(`\A\d{4}-\d{2}-\d{2}\z`)
+    // 输出 true
+    fmt.Println(re.MatchString("2020-06-01"))
+
+.. note:: 【注意】和 Python 语言不同，在 Go 语言中，正则尾部断言使用的是 \z，而不是 \Z。
+
+JavaScript
+----------
+
+.. note:: 在 JavaScript 中没有 \A 和 \z，我们可以使用 ^ 和 $ 来表示每行的开头和结尾，默认情况下它们是匹配整个文本的开头或结尾（默认不是多行匹配模式）。在 JavaScript 中校验文本的时候，不要使用多行匹配模式，因为使用多行模式会改变 ^ 和 $ 的匹配行为。
+
+::
+
+    // 方法 1
+    /^\d{4}-\d{2}-\d{2}$/.test("2020-06-01")  // true
+
+    // 方法 2
+    var regex = /^\d{4}-\d{2}-\d{2}$/
+    "2020-06-01".search(regex) == 0  // true
+
+    // 方法 3
+    var regex = new RegExp(/^\d{4}-\d{2}-\d{2}$/)
+    regex.test("2020-01-01") // true
+
+.. note:: 方法 3 本质上和方法 1 是一样的，方法 1 写起来更简洁。
+
+.. warning:: 需要注意的是，在使用 RegExp 对象时，如果使用 g 模式，可能会有意想不到的结果，连续调用会出现第二次返回 false 的情况。
+
+实例说明::
+
+    var r = new RegExp(/^\d{4}-\d{2}-\d{2}$/, "g")
+    r.test("2020-01-01") // true
+    r.test("2020-01-01") // false
+
+
+【原因】这是因为 RegExp 在全局模式下，正则会找出文本中的所有可能的匹配，找到一个匹配时会记下 lastIndex，在下次再查找时找不到，lastIndex 变为 0，所以才有上面现象::
+
+    var regex = new RegExp(/^\d{4}-\d{2}-\d{2}$/, "g")
+    regex.test("2020-01-01") // true
+    regex.lastIndex // 10
+    regex.test("2020-01-01") // false
+    regex.lastIndex // 0
+    // 为了加深理解，你可以看下面这个例子
+    var regex = new RegExp(/\d{4}-\d{2}-\d{2}/, "g")
+    regex.test("2020-01-01 2020-02-02") // true
+    regex.lastIndex // 10
+    regex.test("2020-01-01 2020-02-02") // true
+    regex.lastIndex // 21
+    regex.test("2020-01-01 2020-02-02") // false
+
+
+ES6 中添加了匹配模式 u::
+
+    /^\u{1D306}$/u.test("𝌆") // true
+    /^\u{1D306}$/.test("𝌆") // false
+    /^.$/u.test("好") // true
+    /^.$/u.test("好人") // false
+    /^.$/u.test("a") // true
+    /^.$/u.test("ab") // false
+
+
+
+
+2. 提取文本内容
+===============
+
+
+.. figure:: /images/regexps/regexp_lang2.jpeg
+
+   部分常见编程语言提取文本内容
+
+.. note:: 【实例】以查找日志的年月为例进行讲解，年月可以用正则 ``\d {4}-\d {2}`` 来表示
+
+Python
+------
+
+::
+
+    # 没有子组时
+    >>> import re
+    >>> reg = re.compile(r'\d{4}-\d{2}')
+    >>> reg.findall('2020-05 2020-06')
+    ['2020-05', '2020-06']
+
+    # 有子组时
+    >>> reg = re.compile(r'(\d{4})-(\d{2})')
+    >>> reg.findall('2020-05 2020-06')
+    [('2020', '05'), ('2020', '06')]
+
+想节约内存，可以采用迭代器的方式来处理::
+
+    >>> import re
+    >>> reg = re.compile(r'(\d{4})-(\d{2})')
+    >>> for match in reg.finditer('2020-05 2020-06'):
+    ...     print('date: ', match[0])  # 整个正则匹配到的内容
+    ...     print('year: ', match[1])  # 第一个子组
+    ...     print('month:', match[2])  # 第二个子组
+    ...
+    date:  2020-05
+    year:  2020
+    month: 05
+    date:  2020-06
+    year:  2020
+    month: 06
+
+Golang
+------
+
+::
+
+    func main() {
+      re := regexp.MustCompile(`\d{4}-\d{2}`)
+      
+      // 返回一个切片 (可动态扩容的数组) [2020-06 2020-07]
+      fmt.Println(re.FindAllString("2020-06 2020-07", -1)) 
+      
+      // 捕获子组的查找示例
+      re2 := regexp.MustCompile(`(\d{4})-(\d{2})`)
+      // 返回结果和上面 Python 类似
+      for _, match := range re2.FindAllStringSubmatch("2020-06 2020-07", -1) {
+         fmt.Println("date: ", match[0])
+         fmt.Println("year: ", match[1])
+         fmt.Println("month:", match[2])
+      }
+    }
+
+JavaScript
+----------
+
+::
+
+    // 使用 g 模式，查找所有符合要求的内容
+    "2020-06 2020-07".match(/\d{4}-\d{2}/g)
+    // 输出：["2020-06", "2020-07"]
+    // 不使用 g 模式，找到第一个就会停下来
+    "2020-06 2020-07".match(/\d{4}-\d{2}/)
+    // 输出：["2020-06", index: 0, input: "2020-06 2020-07", groups: undefined]
+
+查找中文等 Unicode 字符，可以使用 u 匹配模式::
+
+    '𝌆'.match(/\u{1D306}/ug) // 使用匹配模式 u
+    ["𝌆"]
+    '𝌆'.match(/\u{1D306}/g) // 不使用匹配模式 u
+    null
+    // 如果你对这个符号感兴趣，可以参考 https://unicode-table.com/cn/1D306
+
+
+
+3. 替换文本内容
+===============
+
+
+
+.. figure:: /images/regexps/regexp_lang3.jpeg
+
+   部分常见编程语言替换文本内容
+
+Python
+------
+
+::
+
+    >>> import re
+    >>> reg = re.compile(r'(\d{2})-(\d{2})-(\d{4})')
+    >>> reg.sub(r'\3 年 \1 月 \2 日', '02-20-2020 05-21-2020')
+    '2020 年 02 月 20 日 2020 年 05 月 21 日'
+    # 可以在替换中使用 \g <数字>，如果分组多于 10 个时避免歧义
+    >>> reg.sub(r'\g<3> 年 \g<1 > 月 \g<2 > 日', '02-20-2020 05-21-2020')
+    '2020 年 02 月 20 日 2020 年 05 月 21 日'
+    # 返回替换次数
+    >>> reg.subn(r'\3 年 \1 月 \2 日', '02-20-2020 05-21-2020')
+    ('2020 年 02 月 20 日 2020 年 05 月 21 日', 2)
+
+Golang
+------
+
+::
+
+    func main() {
+      re := regexp.MustCompile(`(\d{2})-(\d{2})-(\d{4})`)
+      // 示例一，返回 2020 年 02 月 20 日 2020 年 05 月 21 日
+      fmt.Println(re.ReplaceAllString("02-20-2020 05-21-2020", "${3} 年 ${1} 月 ${2} 日"))
+      // 示例二，返回空字符串，因为 "3 年"，"1 月"，"2 日" 这样的子组不存在
+      fmt.Println(re.ReplaceAllString("02-20-2020 05-21-2020", "$3 年 $1 月 $2 日"))
+      
+      // 示例三，返回 2020-02-20 2020-05-21
+      fmt.Println(re.ReplaceAllString("02-20-2020 05-21-2020", "$3-$1-$2"))
+    }
+
+JavaScript
+----------
+
+需要指定 g 模式，否则只会替换第一个::
+
+    // 使用 g 模式，替换所有的
+    "02-20-2020 05-21-2020".replace(/(\d{2})-(\d{2})-(\d{4})/g, "$3 年 $1 月 $2 日")
+    // 输出 "2020 年 02 月 20 日 2020 年 05 月 21 日"
+    // 不使用 g 模式时，只替换一次
+    "02-20-2020 05-21-2020".replace(/(\d{2})-(\d{2})-(\d{4})/, "$3 年 $1 月 $2 日")
+    // 输出 "2020 年 02 月 20 日 05-21-2020"
+
+
+4. 切割文本内容
+===============
+
+
+.. figure:: /images/regexps/regexp_lang4.jpeg
+
+   部分常见编程语言切割文本内容
+
+
+Python
+------
+
+使用字符串的切割方法::
+
+    >>> "a b  c\n\nd\t\n \te".split()
+    ['a', 'b', 'c', 'd', 'e']
+
+正则切割::
+
+    >>> import re
+    >>> reg = re.compile(r'\W+')
+    >>> reg.split("apple, pear! orange; tea")
+    ['apple', 'pear', 'orange', 'tea']
+    # 限制切割次数，比如切一刀，变成两部分
+    >>> reg.split("apple, pear! orange; tea", 1)
+    ['apple', 'pear! orange; tea']
+
+Golang
+------
+
+::
+
+    func main() {
+      re := regexp.MustCompile(`\W+`)
+      
+      // 返回 [] string {"apple", "pear", "orange", "tea"}
+      fmt.Printf("%#v", re.Split("apple, pear! orange; tea", -1)
+
+
+      // 返回 [] string {"apple", "pear! orange; tea"}
+      fmt.Printf("%#v\n", re.Split("apple, pear! orange; tea", 2))
+      // 返回 [] string {"apple"}
+      fmt.Printf("%#v\n", re.Split("apple", 2))
+
+    }
+
+JavaScript
+----------
+
+正则的切割和 Python 和 Go 有些类似，但又有区别::
+
+    "apple, pear! orange; tea".split(/\W+/)
+    // 输出：["apple", "pear", "orange", "tea"]
+    // 传入第二个参数的情况
+    "apple, pear! orange; tea".split(/\W+/, 1)
+    // 输出 ["apple"]
+    "apple, pear! orange; tea".split(/\W+/, 2)
+    // 输出 ["apple", "pear"]
+    "apple, pear! orange; tea".split(/\W+/, 10)
+    // 输出 ["apple", "pear", "orange", "tea"]
+
+
+

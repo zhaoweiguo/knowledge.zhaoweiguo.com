@@ -1,0 +1,214 @@
+Command-命令
+############
+
+.. note:: creates objects that encapsulate actions and parameters.
+
+.. note:: The command pattern encapsulates a request as an object, thereby letting us parameterize other objects with different requests, queue or log requests, and support undoable operations.命令模式将请求（命令）封装为一个对象，这样可以使用不同的请求参数化其他对象（将不同请求依赖注入到其他对象），并且能够支持请求（命令）的排队执行、记录日志、撤销等（附加控制）功能。
+
+
+实现::
+
+    1. 把函数封装成对象，实现相同接口，使其可以通过参数传递
+    2. [函数式语言专属] 把函数当参数传递
+
+    后面会有两个例子详细说明
+
+
+应用场景::
+
+    用来控制命令的执行，如:
+        异步、延迟、排队执行的命令、撤销重做命令、
+        存储命令、给命令记录日志等
+
+
+命令模式 VS 策略模式
+====================
+
+每个设计模式都应该由两部分组成::
+
+    第一部分是应用场景，即这个模式可以解决哪类问题；
+    第二部分是解决方案，即这个模式的设计思路和具体的代码实现。
+
+    设计模式之间的主要区别还是在于设计意图，也就是应用场景。
+    单纯地看设计思路或者代码实现，有些模式确实很相似，比如策略模式和工厂模式。
+
+命令模式 VS 策略模式的区别::
+
+    在策略模式中，不同的策略具有相同的目的、不同的实现、互相之间可以替换。
+        比如，BubbleSort、SelectionSort 都是为了实现排序的，
+        只不过一个是用冒泡排序算法来实现的，另一个是用选择排序算法来实现的。
+    而在命令模式中，不同的命令具有不同的目的，对应不同的处理逻辑，并且互相之间不可替换。
+
+    命令模式: 通过不同的事件执行不同的命令
+    策略模式: 通过不同的配置或参数使用不同的算法
+
+
+代码实现
+========
+
+实例1-将函数封装为对象
+----------------------
+
+实例::
+
+    // 定义接口: 后面封装成对象的命令会实现此接口
+    type ICommand interface {
+        Execute() error
+    }
+
+    // 实现1: StartCommand 游戏开始运行
+    type StartCommand struct{}
+    // NewStartCommand NewStartCommand
+    func NewStartCommand( /*正常情况下这里会有一些参数*/ ) *StartCommand {
+        return &StartCommand{}
+    }
+    // Execute Execute
+    func (c *StartCommand) Execute() error {
+        fmt.Println("game start")
+        return nil
+    }
+
+    // 实现2: ArchiveCommand 游戏存档
+    type ArchiveCommand struct{}
+    // NewArchiveCommand NewArchiveCommand
+    func NewArchiveCommand( /*正常情况下这里会有一些参数*/ ) *ArchiveCommand {
+        return &ArchiveCommand{}
+    }
+    // Execute Execute
+    func (c *ArchiveCommand) Execute() error {
+        fmt.Println("game archive")
+        return nil
+    }
+
+使用::
+
+    func TestDemo(t *testing.T) {
+        // 用于测试，模拟来自客户端的事件
+        eventChan := make(chan string)
+        go func() {
+            events := []string{"start", "archive", "start", "archive", "start", "start"}
+            for _, e := range events {
+                eventChan <- e
+            }
+        }()
+        defer close(eventChan)
+
+        // 使用命令队列缓存命令
+        commands := make(chan ICommand, 1000)
+        defer close(commands)
+
+        go func() {
+            for {
+                // 从请求或者其他地方获取相关事件参数
+                event, ok := <-eventChan
+                if !ok {
+                    return
+                }
+
+                var command ICommand
+                switch event {
+                case "start":
+                    command = NewStartCommand()
+                case "archive":
+                    command = NewArchiveCommand()
+                }
+
+                // 将命令入队
+                commands <- command
+            }
+        }()
+
+        for {
+            select {
+            case c := <-commands:
+                c.Execute()
+            case <-time.After(1 * time.Second):
+                fmt.Println("timeout 1s")
+                return
+            }
+        }
+    }
+
+
+实例2-将函数直接作为参数
+------------------------
+
+实例::
+
+    // 把函数当对象/参数
+    type Command func() error
+
+    // StartCommandFunc 返回一个 Command 命令
+    // 是因为正常情况下不会是这么简单的函数
+    // 一般都会有一些参数
+    func StartCommandFunc() Command {
+        return func() error {
+            fmt.Println("game start")
+            return nil
+        }
+    }
+
+    // ArchiveCommandFunc ArchiveCommandFunc
+    func ArchiveCommandFunc() Command {
+        return func() error {
+            fmt.Println("game archive")
+            return nil
+        }
+    }
+
+
+使用::
+
+    func TestDemoFunc(t *testing.T) {
+        // 用于测试，模拟来自客户端的事件
+        eventChan := make(chan string)
+        go func() {
+            events := []string{"start", "archive", "start", "archive", "start", "start"}
+            for _, e := range events {
+                eventChan <- e
+            }
+
+        }()
+        defer close(eventChan)
+
+        // 使用命令队列缓存命令
+        commands := make(chan Command, 1000)
+        defer close(commands)
+
+        go func() {
+            for {
+                // 从请求或者其他地方获取相关事件参数
+                event, ok := <-eventChan
+                if !ok {
+                    return
+                }
+
+                var command Command
+                switch event {
+                case "start":
+                    command = StartCommandFunc()
+                case "archive":
+                    command = ArchiveCommandFunc()
+                }
+
+                // 将命令入队
+                commands <- command
+            }
+        }()
+
+        for {
+            select {
+            case c := <-commands:
+                c()
+            case <-time.After(1 * time.Second):
+                fmt.Println("timeout 1s")
+                return
+            }
+        }
+    }
+
+
+
+
+
+

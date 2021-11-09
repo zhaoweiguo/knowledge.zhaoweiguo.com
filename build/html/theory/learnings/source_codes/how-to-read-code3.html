@@ -1,0 +1,476 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>如何阅读源码3 &mdash; 新溪-gordon V1.6.5 documentation</title>
+  
+
+  
+  
+    <link rel="shortcut icon" href="../../_static/favicon-16x16.ico"/>
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="如何高效阅读源码" href="efficient-read-code.html" />
+    <link rel="prev" title="如何阅读源码2" href="how-to-read-code2.html" /> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+
+
+<script>
+// 百度统计
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?c4af0e06c3eadbfa7717c13ecc7220d8";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-178653440-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-178653440-2');
+</script>
+
+<!-- 评论插件 gittalk start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+<!-- 评论插件 gittalk end -->
+
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> 新溪-gordon
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                V1.6.5
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">理论</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../normal.html">常用</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/normal.html">常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/iceberg_theory.html">冰山理论</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/design_thinking.html">设计思维</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../learning.html">学习相关</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../study.html">如何学习</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../studys/fast-learn-new-field.html">如何快速熟悉一个领域</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../studys/how-to-write.html">如何写作</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../studys/teaching-as-learning.html">以教为学</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../studys/ZTD-learning-routine.html">ZTD学习套路</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../studys/how-to-become-guru.html">如何成为大师/大牛</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../studys/powerful-learning.html">高效学习</a></li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="reference internal" href="../source_code.html">源码学习</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="learn-method.html">如何高效学习</a></li>
+<li class="toctree-l3"><a class="reference internal" href="why-read-code.html">为何阅读源码</a></li>
+<li class="toctree-l3"><a class="reference internal" href="how-to-read-code.html">如何阅读源码</a></li>
+<li class="toctree-l3"><a class="reference internal" href="how-to-read-code2.html">如何阅读源码2</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">如何阅读源码3</a></li>
+<li class="toctree-l3"><a class="reference internal" href="efficient-read-code.html">如何高效阅读源码</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../lifelong-learning.html">终身学习方法论</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../lifelong-learnings/learning1.html">终身学习方法论1</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../lifelong-learnings/推演-做-复盘.html">推演-做-复盘</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../lifelong-learnings/表达套路.html">表达套路</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../read.html">如何阅读</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../reads/如何阅读.html">如何阅读</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reads/如何读一本非虚构图书.html">如何读一本非虚构图书</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../fundamental-rule.html">底层思维</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../fundamental-rules/analysis-method.html">分析方法</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../fundamental-rules/analysis-methods/辩证法.html">辩证法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../fundamental-rules/analysis-methods/归纳法.html">归纳法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../fundamental-rules/analysis-methods/演绎法.html">演绎法</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../fundamental-rules/math-method.html">数学方法</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../fundamental-rules/math-methods/二八定律.html">二八定律</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../fundamental-rules/math-methods/中位数-平均数-方差.html">中位数-平均数-方差</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../fundamental-rules/math-methods/合理运用时间序列.html">合理运用时间序列</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../fundamental-rules/math-methods/多因素分析问题.html">多因素分析问题</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../economy.html">经济</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../psychics.html">心理学</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../startup.html">创业</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../experience.html">经历</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../experiences/collect.html">收集</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../other.html">其他</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">新溪-gordon</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../learning.html">学习相关</a> &raquo;</li>
+        
+          <li><a href="../source_code.html">源码学习</a> &raquo;</li>
+        
+      <li>如何阅读源码3</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/learnings/source_codes/how-to-read-code3.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <table class="docutils align-default">
+<colgroup>
+<col style="width: 32%" />
+<col style="width: 24%" />
+<col style="width: 24%" />
+<col style="width: 21%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="../../genindex.html"><span class="std std-ref">Index</span></a></p></td>
+<td><p><a class="reference internal" href="../../py-modindex.html"><span class="std std-ref">Module Index</span></a></p></td>
+<td><p><a class="reference internal" href="../../search.html"><span class="std std-ref">Search Page</span></a></p></td>
+</tr>
+</tbody>
+</table>
+<details>
+<summary>目录</summary><div class="sidebar">
+<p class="sidebar-title">目录</p>
+<div class="contents topic" id="contents">
+<p class="topic-title">Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#id2" id="id9">如何阅读源码3</a></p>
+<ul>
+<li><p><a class="reference internal" href="#id3" id="id10">为何要读别人的代码？</a></p></li>
+<li><p><a class="reference internal" href="#id4" id="id11">阅读源码的产出</a></p></li>
+<li><p><a class="reference internal" href="#id5" id="id12">理解架构的核心脉络</a></p></li>
+<li><p><a class="reference internal" href="#id6" id="id13">理解业务的实现机制</a></p></li>
+<li><p><a class="reference internal" href="#id7" id="id14">参考</a></p></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</details><div class="section" id="id2">
+<h1><a class="toc-backref" href="#id9">如何阅读源码3</a><a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id3">
+<h2><a class="toc-backref" href="#id10">为何要读别人的代码？</a><a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>阅读别人的代码，通常会带有一定的目的性。完整把一个系统的代码 “读懂” 需要极大的精力。所以明确阅读代码的目标很重要，因为它决定了你最终能够为这事付出多大的精力，或者说成本。</p>
+</div>
+<p>目标分为这样几种类型:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mf">1.</span> <span class="n">我要评估是否引入某个第三方模块</span>
+<span class="mf">2.</span> <span class="n">我要给某个模块局部修改一个</span> <span class="n">Bug</span>
+    <span class="n">可能是因为使用的第三方模块遇到了一个问题</span>
+    <span class="n">可能是你的上级临时指定了一个模块的</span> <span class="n">Bug</span> <span class="n">给你</span>
+<span class="mf">3.</span> <span class="n">我要以某个开源模块为榜样去学习</span>
+<span class="mf">4.</span> <span class="n">我要接手并长期维护某个模块</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>读懂源代码真的很难，它其实是架构的反向过程。它类似于反编译，但是并不是指令级的反编译，而是需要根据指令反推更高维的思想。</p>
+</div>
+</div>
+<div class="section" id="id4">
+<h2><a class="toc-backref" href="#id11">阅读源码的产出</a><a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>有产出的学习过程，才是最好的学习方式。阅读源代码的产出应该是什么？答案是，构建这个程序的思路，也就是架构设计。</p>
+</div>
+<p>学习有几个层次:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mf">1.</span> <span class="n">读懂</span>
+<span class="mf">2.</span> <span class="n">能复述</span>
+<span class="mf">3.</span> <span class="n">转换成自己的语言说出来</span>
+<span class="mf">4.</span> <span class="n">说出来能让别人听得懂</span>
+<span class="mf">5.</span> <span class="n">说出来能让很多人听得懂</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id5">
+<h2><a class="toc-backref" href="#id12">理解架构的核心脉络</a><a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
+<p>理解架构的核心脉络的步骤:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 首先，有文档，一定要先看文档
+2. 看源代码
+  理解系统的概要设计。
+  概要设计的关注点是各个软件实体的业务范畴，以及它们之间的关系。
+  有了这些，我们就能够理解这个系统的架构设计的核心脉络。
+</pre></div>
+</div>
+<p>看源码的步骤:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 把公开的软件实体（模块、类、函数、常量、全局变量等）的规格整理出来
+    可以借助现成的工具(如go doc)
+2. 看 example、unit test 等
+    这些属于我们研究对象的客户，也就是使用方。它们能够辅助我们理解各个软件实体的语义。
+    初步推测出各个软件实体的业务范畴，以及它们之间的关系。
+3. 进一步证实或证伪我们的结论
+    如果证伪了，我们需要重新梳理各个软件实体之间的关系。
+    怎么去证实或证伪？
+    选重点的类或函数，通过看它们的源代码来理解其业务流程，以此印证我们的猜测。
+4. 确保我们正确理解了系统，就需要将结论写下来，形成文档
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>业务系统的概要设计、接口理清楚后，通常来说，我们对这个系统就初步有谱了。如果我们是评估第三方模块要不要采纳等相对轻的目标，那么到此基本就可以告一段落了。</p>
+</div>
+</div>
+<div class="section" id="id6">
+<h2><a class="toc-backref" href="#id13">理解业务的实现机制</a><a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h2>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>只有在必要的情况下，我们才研究实现机制。研究实现是非常费时的，毕竟系统的 UserStory 数量上就有很多。把一个个 UserStory 的具体业务流程都研究清楚写下来，是非常耗时的。如果这个业务系统不是我们接下来重点投入的方向，就没必要在这方面去过度投入。</p>
+</div>
+<p>目标就很重要:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 如果我们只是顺带解决一下遇到的 Bug，我们自然把关注点放在要解决的 Bug 本身相关的业务流程上
+    无论是用第三方代码遇到的，还是上级随手安排的临时任务，
+2. 如果我们是接手一个新的业务系统，我们也没有精力立刻把所有细节都搞清楚。
+    这时候我们需要梳理的是关键业务流程。
+</pre></div>
+</div>
+<p>怎么搞清楚业务流程:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>程序 = 数据结构 + 算法
+
+1. 数据结构是容易梳理的，类的成员变量、数据库的表结构，通常都有快速提取的方式
+    MongoDB 可能会难一些，因为弱 schema 的原因，
+    我们需要通过阅读代码的方式去理解 schema。
+    更麻烦的是，不确定历史上经历过多少轮的 schema 变更，这通过最新源代码可能看不出来
+    一个不小心，我们就可能会处理到非预期 schema 的数据。
+2. 理各个 UserStory 的业务流程，并给这些业务流程画出它的 UML 时序图
+    这个过程随时可以补充。所以我们挑选对我们当前工作最为相关的来做就好了。
+</pre></div>
+</div>
+</div>
+<div class="section" id="id7">
+<h2><a class="toc-backref" href="#id14">参考</a><a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>【极客时间】许式伟的架构课/06软件工程篇</p></li>
+</ul>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 32%" />
+<col style="width: 24%" />
+<col style="width: 24%" />
+<col style="width: 21%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="../../genindex.html"><span class="std std-ref">Index</span></a></p></td>
+<td><p><a class="reference internal" href="../../py-modindex.html"><span class="std std-ref">Module Index</span></a></p></td>
+<td><p><a class="reference internal" href="../../search.html"><span class="std std-ref">Search Page</span></a></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="efficient-read-code.html" class="btn btn-neutral float-right" title="如何高效阅读源码" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="how-to-read-code2.html" class="btn btn-neutral" title="如何阅读源码2" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+  
+  <div id="gitalk-container"></div>
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2010-2020, 新溪-gordon.
+
+    </p>
+  </div>
+  <div>备案号 <a href="http://www.beian.miit.gov.cn">京ICP备16018553号</a></div><div>Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a></div>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'V1.6.5',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../_static/language_data.js"></script>
+
+  
+
+  <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+
+
+      var gitalk = new Gitalk({
+              clientID: '565177626b5d46427009',
+              clientSecret: 'b2a36e67e1d2a73e43667f46d571c2624f8e1026',
+              repo: 'knowledge',
+              owner: 'zhaoweiguo',
+              admin: ['zhaoweiguo'],
+              id: location.pathname,      // Ensure uniqueness and length less than 50
+              distractionFreeMode: false  // Facebook-like distraction free mode
+            })
+      gitalk.render('gitalk-container')
+
+  </script> 
+
+</body>
+</html>

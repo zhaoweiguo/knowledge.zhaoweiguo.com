@@ -1,0 +1,82 @@
+常用
+####
+
+* 官网: https://opentelemetry.io
+* github: https://github.com/open-telemetry
+* OpenTelemetry specification: https://github.com/open-telemetry/opentelemetry-specification
+* golang版实现 https://github.com/open-telemetry/opentelemetry-go
+* Google论文Dapper: :ref:`here <dapper>`
+* [glossary]目录表: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md
+* 文档: https://opentelemetry.io/docs/
+* OpenTelemetry Enhancement Proposals: https://github.com/open-telemetry/oteps::
+
+    OpenTelemetry uses an "OTEP" (similar to a RFC) process 
+        for proposing changes to the OpenTelemetry specification.
+
+
+* YouTube(Meeting auto upload): https://www.youtube.com/channel/UCHZDBZTIfdy94xMjMKz-_MA/videos
+* [Google Doc]OpenTelemetry SIG: Specifications: https://docs.google.com/document/d/1pdvPeKjA8v8w_fGKAN68JjWBmVJtPCpqdi9IZrd6eEo/
+
+* OpenTelemetry makes robust, portable telemetry a built-in feature of cloud-native software.
+* OpenTelemetry provides a single set of APIs, libraries, agents, and collector services to capture distributed traces and metrics from your application. You can analyze them using Prometheus, Jaeger, and other observability tools.
+
+* OpenTracing支持、OpenCensus支持、直接进入CNCF sanbox项目
+
+他的核心工作主要集中在3个部分::
+
+    规范的制定，包括概念、协议、API，除了自身的协议外，还需要把这些规范和W3C、GRPC这些协议达成一致
+    相关SDK、Tool的实现和集成，包括各类语言的SDK、代码自动注入、其他三方库(Log4j、LogBack等)的集成
+    采集系统的实现，目前还是采用OpenCensus的采集架构，包括Agent和Collector
+
+    OpenTelemetry 只是做了数据规范、SDK、采集的事情，
+    对于 Backend、Visual、Alert 等并不涉及，
+    官方目前推荐的是:
+        用 Prometheus 去做 Metrics 的 Backend
+        用 Jaeger 去做 Tracing 的 Backend
+
+.. note:: 终极目标：OpenTelemetry 的终态就是实现 Metrics、Tracing、Logging 的融合，作为 CNCF 可观察性的终极解决方案。
+
+step-by-step guide to making the process easier::
+
+    1. Communication between collectors, and different back ends through exporters. 
+    2. For the collector to aggregate, batch, and process 
+        according to the collection’s configuration.
+    3. Then the collector and the exporter exchange data in the form of telemetry, 
+        which is usually sent as an in-process. 
+    4. The next step is the need for processing extensions, 
+        which can be added by SDK and allows for effects 
+        such as filtering, samplings, and enrichments. 
+        Sometimes, it’s possible to replace the SDK with an alternative.
+
+Components of OpenTelemetry::
+
+    1. APIs: 
+        APIs are a core element to OpenTelemetry 
+            that are specific to the coding language of the program itself.
+        These are some of the foundations of the program.
+    2. The SDK: 
+        This component is also unique to each coding language. 
+        It focuses on building the gap between exported elements and the APIs. 
+        The SDK also allows other features like transaction sampling and filtering, 
+            making them ideal in OpenTelemetry. 
+    3. The In-Process Exporter: 
+        This is needed to determine where you want your telemetry sent. 
+        This exporter allows you to easily decouple your code 
+            from the back-end configuration, 
+            making it easy to alternate back ends without having to re-instrument your code. 
+    4. The Collector: 
+        This function in telemetry is optional, 
+            but a very useful component of OpenTelemetry 
+                because it allows for flexibility 
+                in the sending and receiving of application telemetry to the back ends. 
+            There are two models of deployment of the collector. 
+            The first is the agent that uses the same host with the application, 
+            The second is a standalone process 
+                which is separate and doesn’t use the same host with the application. 
+
+
+
+
+
+
+

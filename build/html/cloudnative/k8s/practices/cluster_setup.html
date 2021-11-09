@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>3.5.1. Kubernetes集群组建 &mdash; 新溪-gordon V1.5.2 documentation</title>
+  <title>3.5.1. Kubernetes集群组建 &mdash; 新溪-gordon V1.6.5 documentation</title>
   
 
   
@@ -28,6 +28,7 @@
 
   <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="3.5.2. Kubernetes集群重建" href="cluster_rebuild.html" />
@@ -89,7 +90,7 @@ var _hmt = _hmt || [];
             
             
               <div class="version">
-                V1.5.2
+                V1.6.5
               </div>
             
           
@@ -115,7 +116,10 @@ var _hmt = _hmt || [];
             
               <p class="caption"><span class="caption-text">云原生</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="../../normal.html">1. 常用</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../normal.html">1. 常用</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/tmp.html">1.1. 临时</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../../docker.html">2. Docker相关</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../dockers/normal.html">2.1. 常用</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../dockers/docker.html">2.2. Docker相关</a><ul>
@@ -448,10 +452,58 @@ var _hmt = _hmt || [];
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="kubernetes">
-<h1><span class="section-number">3.5.1. </span>Kubernetes集群组建<a class="headerlink" href="#kubernetes" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="id1">
-<h2>安装前准备<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+  <table class="docutils align-default">
+<colgroup>
+<col style="width: 32%" />
+<col style="width: 24%" />
+<col style="width: 24%" />
+<col style="width: 21%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="../../genindex.html"><span class="std std-ref">Index</span></a></p></td>
+<td><p><a class="reference internal" href="../../py-modindex.html"><span class="std std-ref">Module Index</span></a></p></td>
+<td><p><a class="reference internal" href="../../search.html"><span class="std std-ref">Search Page</span></a></p></td>
+</tr>
+</tbody>
+</table>
+<details>
+<summary>目录</summary><div class="sidebar">
+<p class="sidebar-title">目录</p>
+<div class="contents topic" id="contents">
+<p class="topic-title">Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#kubernetes" id="id22">Kubernetes集群组建</a></p>
+<ul>
+<li><p><a class="reference internal" href="#id2" id="id23">安装前准备</a></p></li>
+<li><p><a class="reference internal" href="#docker-kubeadm" id="id24">安装docker, kubeadm相关(全部结点)</a></p>
+<ul>
+<li><p><a class="reference internal" href="#centos" id="id25">Centos</a></p></li>
+<li><p><a class="reference internal" href="#ubuntu-1" id="id26">Ubuntu </a></p></li>
+<li><p><a class="reference internal" href="#debian-3" id="id27">Debian </a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#id5" id="id28">拉取需要的镜像(所有结点都要有这7个镜像)</a></p>
+<ul>
+<li><p><a class="reference internal" href="#id6" id="id29">方法一</a></p></li>
+<li><p><a class="reference internal" href="#id7" id="id30">方法二</a></p></li>
+<li><p><a class="reference internal" href="#id8" id="id31">方法三</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#master" id="id32">初始化集群(Master节点)</a></p></li>
+<li><p><a class="reference internal" href="#id9" id="id33">安装网络插件(Master节点)</a></p></li>
+<li><p><a class="reference internal" href="#id13" id="id34">加入集群(从结点)</a></p></li>
+<li><p><a class="reference internal" href="#id14" id="id35">遇到的问题</a></p></li>
+<li><p><a class="reference internal" href="#id15" id="id36">执行命令</a></p></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</details><div class="section" id="kubernetes">
+<h1><a class="toc-backref" href="#id22"><span class="section-number">3.5.1. </span>Kubernetes集群组建</a><a class="headerlink" href="#kubernetes" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id2">
+<h2><a class="toc-backref" href="#id23">安装前准备</a><a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
 <p>1、关闭selinux:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1.1 临时方案
 $ setenforce 0
@@ -494,9 +546,9 @@ END
 </div>
 </div>
 <div class="section" id="docker-kubeadm">
-<h2>安装docker, kubeadm相关(全部结点)<a class="headerlink" href="#docker-kubeadm" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id24">安装docker, kubeadm相关(全部结点)</a><a class="headerlink" href="#docker-kubeadm" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="centos">
-<h3>Centos<a class="headerlink" href="#centos" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id25">Centos</a><a class="headerlink" href="#centos" title="Permalink to this headline">¶</a></h3>
 <p>Yum仓库添加Kubernetes:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>// 增加文件/etc/yum.repos.d/kubernetes.repo
 1. Google版
@@ -530,7 +582,7 @@ $ echo &quot;net.bridge.bridge-nf-call-iptables=1&quot; &gt; /etc/sysctl.d/k8s.c
 </div>
 </div>
 <div class="section" id="ubuntu-1">
-<h3>Ubuntu <a class="footnote-reference brackets" href="#id17" id="id2">1</a><a class="headerlink" href="#ubuntu-1" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id26">Ubuntu <a class="footnote-reference brackets" href="#id18" id="id3">1</a></a><a class="headerlink" href="#ubuntu-1" title="Permalink to this headline">¶</a></h3>
 <p>使用国内镜像源:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">vim</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">apt</span><span class="o">/</span><span class="n">sources</span><span class="o">.</span><span class="n">list</span>
 <span class="n">deb</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">mirrors</span><span class="o">.</span><span class="n">aliyun</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">ubuntu</span><span class="o">/</span> <span class="n">xenial</span> <span class="n">main</span> <span class="n">restricted</span>
@@ -565,7 +617,7 @@ $ apt-get install -y kubelet kubeadm kubectl --allow-unauthenticated
 </div>
 </div>
 <div class="section" id="debian-3">
-<h3>Debian <a class="footnote-reference brackets" href="#id19" id="id3">3</a><a class="headerlink" href="#debian-3" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id27">Debian <a class="footnote-reference brackets" href="#id20" id="id4">3</a></a><a class="headerlink" href="#debian-3" title="Permalink to this headline">¶</a></h3>
 <p>卸载旧版本:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ sudo apt-get remove docker \
            docker-engine \
@@ -612,10 +664,10 @@ $ sudo apt-get install docker-ce
 </div>
 </div>
 </div>
-<div class="section" id="id4">
-<h2>拉取需要的镜像(所有结点都要有这7个镜像)<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="id5">
-<h3>方法一<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<h2><a class="toc-backref" href="#id28">拉取需要的镜像(所有结点都要有这7个镜像)</a><a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id6">
+<h3><a class="toc-backref" href="#id29">方法一</a><a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
 <p>原始需要拉取的镜像:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ docker pull k8s.gcr.io/kube-apiserver:v1.15.0
 $ docker pull k8s.gcr.io/kube-controller-manager:v1.15.0
@@ -627,8 +679,8 @@ $ docker pull k8s.gcr.io/coredns:1.3.1
 </pre></div>
 </div>
 </div>
-<div class="section" id="id6">
-<h3>方法二<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id7">
+<h3><a class="toc-backref" href="#id30">方法二</a><a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
 <p>gcr被墙，国内拉不到镜像，docker官方做了镜像备份:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ docker pull mirrorgooglecontainers/kube-apiserver:v1.15.0
 $ docker pull mirrorgooglecontainers/kube-controller-manager:v1.15.0
@@ -651,8 +703,8 @@ $ docker tag mirrorgooglecontainers/flannel:v0.11.0-amd64 quay.io/coreos/flannel
 </pre></div>
 </div>
 </div>
-<div class="section" id="id7">
-<h3>方法三<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id8">
+<h3><a class="toc-backref" href="#id31">方法三</a><a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
 <p>直接使用本人在aliyun的镜像:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ docker pull registry.cn-hangzhou.aliyuncs.com/xxxxxxxx/kube-proxy:v1.15.0
 $ docker pull registry.cn-hangzhou.aliyuncs.com/xxxxxxxx/kube-apiserver:v1.15.0
@@ -676,7 +728,7 @@ $ docker tag registry.cn-hangzhou.aliyuncs.com/xxxxxxxx/coredns:1.3.1 k8s.gcr.io
 </div>
 </div>
 <div class="section" id="master">
-<h2>初始化集群(Master节点)<a class="headerlink" href="#master" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id32">初始化集群(Master节点)</a><a class="headerlink" href="#master" title="Permalink to this headline">¶</a></h2>
 <p>执行:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ kubeadm init --kubernetes-version=v1.15.0
 
@@ -711,24 +763,24 @@ $ kubectl -n kube-system get po -o wide
 </pre></div>
 </div>
 </div>
-<div class="section" id="id8">
-<h2>安装网络插件(Master节点)<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h2>
-<p>kube插件 <a class="footnote-reference brackets" href="#id18" id="id9">2</a></p>
-<p>方法1: 执行安装Flannel(未实测) <a class="reference internal" href="#id16" id="id10"><span>[附录2]</span></a>:</p>
+<div class="section" id="id9">
+<h2><a class="toc-backref" href="#id33">安装网络插件(Master节点)</a><a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h2>
+<p>kube插件 <a class="footnote-reference brackets" href="#id19" id="id10">2</a></p>
+<p>方法1: 执行安装Flannel(未实测) <a class="reference internal" href="#id17" id="id11"><span>[附录2]</span></a>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/v0.9.1/Documentation/kube-flannel.yml
 
 $ kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/k8s-manifests/kube-flannel-rbac.yml
 </pre></div>
 </div>
-<p>方法2: 执行安装Weave Net <a class="reference internal" href="#id15" id="id11"><span>[附录1]</span></a></p>
+<p>方法2: 执行安装Weave Net <a class="reference internal" href="#id16" id="id12"><span>[附录1]</span></a></p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">kubectl</span> <span class="n">apply</span> <span class="o">-</span><span class="n">f</span> <span class="s2">&quot;https://cloud.weave.works/k8s/net?k8s-version=$(kubectl  version | base64 | tr -d &#39;</span><span class="se">\n</span><span class="s2">&#39;)&quot;</span>
 
 <span class="n">使用的资源文件详见附录</span>
 </pre></div>
 </div>
 </div>
-<div class="section" id="id12">
-<h2>加入集群(从结点)<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id13">
+<h2><a class="toc-backref" href="#id34">加入集群(从结点)</a><a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h2>
 <p>加入集群:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>// 初使化集群
 $ kubeadm join 192.168.99.232:6443 --token psvou0.zy4lwqsrkh3kaf4g \
@@ -763,8 +815,8 @@ $ kubectl -n kube-system describe pod &lt;podName&gt;    // 查看pod详情
 </pre></div>
 </div>
 </div>
-<div class="section" id="id13">
-<h2>遇到的问题<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id14">
+<h2><a class="toc-backref" href="#id35">遇到的问题</a><a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h2>
 <ol class="arabic">
 <li><p>翻墙问题:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">a</span><span class="o">.</span> <span class="n">使用ssh</span> <span class="o">-</span><span class="n">D建立通道</span>
@@ -827,8 +879,8 @@ $ kubectl get svc -n kube-system -o wide
 </li>
 </ol>
 </div>
-<div class="section" id="id14">
-<h2>执行命令<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id15">
+<h2><a class="toc-backref" href="#id36">执行命令</a><a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h2>
 <p>$&gt; kubeadm join:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ kubeadm join 192.168.99.232:6443 --token psvou0.zy4lwqsrkh3kaf4g \
     --discovery-token-ca-cert-hash sha256:dfe3957e15a7c0a3afe8448391db836835824ef3592d8f9e2cbe0c8580f115dd
@@ -931,7 +983,7 @@ kubeadm join 192.168.99.232:6443 --token ylzhq5.maygo3jvcpue9bi5 \
 </pre></div>
 </div>
 <dl class="citation">
-<dt class="label" id="id15"><span class="brackets"><a class="fn-backref" href="#id11">附录1</a></span></dt>
+<dt class="label" id="id16"><span class="brackets"><a class="fn-backref" href="#id12">附录1</a></span></dt>
 <dd><p>Weave Net资源文件net.yml:</p>
 </dd>
 </dl>
@@ -1186,7 +1238,7 @@ kubeadm join 192.168.99.232:6443 --token ylzhq5.maygo3jvcpue9bi5 \
 </pre></div>
 </div>
 <dl class="citation">
-<dt class="label" id="id16"><span class="brackets"><a class="fn-backref" href="#id10">附录2</a></span></dt>
+<dt class="label" id="id17"><span class="brackets"><a class="fn-backref" href="#id11">附录2</a></span></dt>
 <dd><p>Flannel资源文件net_kube-flannel-rbac.yml和net_kube-flannel-rbac.yml:</p>
 </dd>
 </dl>
@@ -1374,16 +1426,31 @@ kubeadm join 192.168.99.232:6443 --token ylzhq5.maygo3jvcpue9bi5 \
 </pre></div>
 </div>
 <dl class="footnote brackets">
-<dt class="label" id="id17"><span class="brackets"><a class="fn-backref" href="#id2">1</a></span></dt>
+<dt class="label" id="id18"><span class="brackets"><a class="fn-backref" href="#id3">1</a></span></dt>
 <dd><p><a class="reference external" href="https://blog.csdn.net/u013171997/article/details/93607025">https://blog.csdn.net/u013171997/article/details/93607025</a></p>
 </dd>
-<dt class="label" id="id18"><span class="brackets"><a class="fn-backref" href="#id9">2</a></span></dt>
+<dt class="label" id="id19"><span class="brackets"><a class="fn-backref" href="#id10">2</a></span></dt>
 <dd><p><a class="reference external" href="http://kuber-netes.io/docs/admin/addons/">http://kuber-netes.io/docs/admin/addons/</a></p>
 </dd>
-<dt class="label" id="id19"><span class="brackets"><a class="fn-backref" href="#id3">3</a></span></dt>
+<dt class="label" id="id20"><span class="brackets"><a class="fn-backref" href="#id4">3</a></span></dt>
 <dd><p><a class="reference external" href="https://yeasy.gitbooks.io/docker_practice/install/debian.html">https://yeasy.gitbooks.io/docker_practice/install/debian.html</a></p>
 </dd>
 </dl>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 32%" />
+<col style="width: 24%" />
+<col style="width: 24%" />
+<col style="width: 21%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="../../genindex.html"><span class="std std-ref">Index</span></a></p></td>
+<td><p><a class="reference internal" href="../../py-modindex.html"><span class="std std-ref">Module Index</span></a></p></td>
+<td><p><a class="reference internal" href="../../search.html"><span class="std std-ref">Search Page</span></a></p></td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 
@@ -1430,7 +1497,7 @@ kubeadm join 192.168.99.232:6443 --token ylzhq5.maygo3jvcpue9bi5 \
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../',
-            VERSION:'V1.5.2',
+            VERSION:'V1.6.5',
             LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',

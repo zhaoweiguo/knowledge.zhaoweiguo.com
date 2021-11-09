@@ -1,0 +1,77 @@
+错误码规范
+##########
+
+常见的错误码设计方式
+====================
+
+1. 不论请求成功或失败，始终返回 200 http status code，在 HTTP Body 中包含用户账号没有找到的错误信息::
+
+    如: Facebook API 的错误 Code 设计，始终返回 200 http status code：
+    {
+      "error": {
+        "message": "Syntax error \"Field picture specified more than once. This is only possible before version 2.1\" at character 23: id,name,picture,picture",
+        "type": "OAuthException",
+        "code": 2500,
+        "fbtrace_id": "xxxxxxxxxxx"
+      }
+    }
+
+    缺点:
+      对于每一次请求，我们都要去解析 HTTP Body，从中解析出错误码和错误信息
+
+2. 返回 http 404 Not Found 错误码，并在 Body 中返回简单的错误信息::
+
+    如: Twitter API 的错误设计
+    根据错误类型，返回合适的 HTTP Code，并在 Body 中返回错误信息和自定义业务 Code
+
+    HTTP/1.1 400 Bad Request
+    {"errors":[{"code":215,"message":"Bad Authentication data."}]}
+
+3. 返回 http 404 Not Found 错误码，并在 Body 中返回详细的错误信息::
+
+    如: 微软 Bing API 的错误设计，会根据错误类型，返回合适的 HTTP Code，并在 Body 中返回详尽的错误信息
+    HTTP/1.1 400
+    {
+      "code": 100101,
+      "message": "Database error",
+      "reference": "https://github.com/xx/tree/master/docs/guide/faq/xxxx"
+    }
+
+
+
+业务 Code 码设计
+================
+
+Code 码设计规范::
+
+    1. 纯数字表示
+    2. 不同部位代表不同的服务
+    3. 不同的模块
+
+    如: 错误代码说明：100101
+    10: 服务
+    01: 某个服务下的某个模块
+    01: 模块下的错误码序号，每个模块可以注册 100 个错误
+
+
+建议 http status code 不要太多::
+
+    200 - 表示请求成功执行
+    400 - 表示客户端出问题
+    500 - 表示服务端出问题
+
+    如果觉得这 3 个错误码不够用，可以加如下 3 个错误码:
+    401 - 表示认证失败
+    403 - 表示授权失败
+    404 - 表示资源找不到，这里的资源可以是 URL 或者 RESTful 资源
+
+
+
+
+
+
+
+
+
+
+

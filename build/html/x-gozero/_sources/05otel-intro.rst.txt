@@ -1,0 +1,88 @@
+05快速学习了解 OpenTelemetry
+############################
+
+
+
+
+初使化::
+
+    exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(url)))
+
+
+    optionBatcher := sdktrace.WithBatcher(exp)
+    //// or:
+    // batcher := tracesdk.NewBatchSpanProcessor(exp)
+    // optionBatcher := tracesdk.WithSpanProcessor(batcher),
+
+    optionSampler := sdktrace.WithSampler(sdktrace.ParentBased(sdktrace.TraceIDRatioBased(sampler)))
+
+    resource := resource.NewSchemaless(semconv.ServiceNameKey.String(servicename)))
+    //// or
+    // resource := resource.NewWithAttributes(
+    //   semconv.SchemaURL,
+    //   semconv.ServiceNameKey.String(service),
+    //   attribute.String("environment", environment),
+    //   attribute.Int64("ID", id),
+    // )
+    optionResource := tracesdk.WithResource(resource)
+
+
+    tp := sdktrace.NewTracerProvider(
+        optionBatcher,
+        optionSampler,
+        optionResource
+    )
+
+    // 设置全局变量tp
+    otel.SetTracerProvider(tp)
+    // 设置全局变量propagator
+    otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
+      propagation.TraceContext{}, propagation.Baggage{}))
+    // 设置错误处理
+    otel.SetErrorHandler(otel.ErrorHandlerFunc(func(e error) {
+      log.Errorf("[otel] error: %v", err)
+    }))
+
+
+本服务使用::
+
+    tr := otel.Tracer("<traceName>")
+    _, span := tr.Start(ctx, spanName)
+    span.SetAttributes(attribute.Key("<key>").String("<value>"))
+    defer span.End()
+
+
+其他服务初使化::
+
+    requestMetadata, _ := metadata.FromIncomingContext(ctx)
+    metadataCopy := requestMetadata.Copy()
+    bags, spanCtx := opentelemetry.Extract(ctx, propagator, &metadataCopy)
+    ctx = baggage.ContextWithBaggage(ctx, bags)
+    tr := otel.Tracer(opentelemetry.TraceName)
+
+    name, attr := opentelemetry.SpanInfo(info.FullMethod, opentelemetry.PeerFromCtx(ctx))
+
+    ctx, span := tr.Start(trace.ContextWithRemoteSpanContext(ctx, spanCtx), name,
+      trace.WithSpanKind(trace.SpanKindServer), trace.WithAttributes(attr...))
+    defer span.End()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

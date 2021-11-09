@@ -1,0 +1,59 @@
+HTTP Strict-Transport-Security
+##############################
+
+.. note:: HSTS 是国际互联网工程组织 IETE 正在推行一种新的 Web 安全协议 HTTP Strict Transport Security（HSTS）。采用 HSTS 协议的网站将保证浏览器始终连接到该网站的 HTTPS 加密版本。The HTTP Strict-Transport-Security response header (often abbreviated as HSTS) lets a web site tell browsers that it should only be accessed using HTTPS, instead of using HTTP.
+
+Syntax::
+
+    Strict-Transport-Security: max-age=<expire-time>
+    Strict-Transport-Security: max-age=<expire-time>; includeSubDomains
+    Strict-Transport-Security: max-age=<expire-time>; preload
+
+Directives::
+
+    1. max-age=<expire-time>
+    The time, in seconds, that the browser should remember that a site is only to be accessed using HTTPS.
+
+    2. includeSubDomains Optional
+    If this optional parameter is specified, this rule applies to all of the site's subdomains as well.
+
+    3. preload Optional
+    Maintained by Google. Not part of the specification and should not be treated as official.
+
+
+
+HSTS Preload List
+=================
+
+* 官网: https://hstspreload.org/
+
+.. note:: ``HSTS Preload List`` Google 维护的，一个内置于各大浏览器的 Https 网站列表，它不是 HSTS 的官方标准。但主要浏览器现在都支持。
+
+* 直接搜索是否有你的域名: https://cs.chromium.org/chromium/src/net/http/transport_security_state_static.json
+* 在 Chrome 浏览器的地址框中输入 “chrome://net-internals/#hsts” 查看
+
+.. note:: ``加入 HSTS Preload List`` 和 ``撤销 HSTS Preload List``，都需要等待 1-2 月，待新版本的 Chrome 和 Chromium、Firefox、IE 等发布，所以能否加入成功除了审核通过外，还得看浏览器版本的更新。
+
+
+实例
+====
+
+Nginx::
+
+    location ~ [^/]\.php(/|$) {
+      add_header Strict-Transport-Security "max-age=63072000; includeSubdomains; preload";
+    }
+
+PHP::
+
+    header("Strict-Transport-Security: max-age=63072000; includeSubdomains; preload");
+
+
+
+
+参考
+====
+
+* HSTS: https://developer.mozilla.org/en-US/docs/Glossary/HSTS
+* HTTP Strict-Transport-Security: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
+

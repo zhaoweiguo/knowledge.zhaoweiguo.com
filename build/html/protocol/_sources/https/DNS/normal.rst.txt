@@ -14,58 +14,95 @@ Class::
     而 Class 就是用来识别网络的信息。
     不过，如今除了互联网并没有其他的网络了，因此 Class 的值永远是代表互联网的 IN
 
-记录类型::
+* |:ref:| `nslookup命令`
 
-    1. A
-      Address 的缩写
-      返回值:
-        ip 地址
-        如: 192.168.0.23
+记录类型
+========
 
-      验证生效方法:
-        $ ping zhaoweiguo.com
+1. A::
 
-    2. MX
-      Mail eXchange，邮件交换
-      返回值:
-        域名和优先级
-        如: 10 mail.qq.com
-      说明: 优先级数值较小的邮件服务器代表更优先
+    Address 的缩写
+    返回值:
+      ip 地址
+      如: 192.168.0.23
 
-      验证生效方法:
-          // linux/mac 用法:
-          ➜ nslookup -type=mx mail.zhaoweiguo.com
-          Server:   10.96.1.18
-          Address:  10.96.1.18#53
+    验证生效方法:
+      $ ping zhaoweiguo.com
 
-          Non-authoritative answer:
-          mail.zhaoweiguo.com canonical name = mail.mxhichina.com.
-          // windows 用法
-          $ nslookup -qt=mx zhaoweiguo.com
+    AAAA: 用来指定主机名（或域名）对应的 IPv6 地址
+
+2. MX::
+
+    邮件交换记录，用于将以该域名为结尾的电子邮件指向对应的邮件服务器以进行处理
+    Mail eXchange，邮件交换
+    返回值:
+      域名和优先级
+      如: 10 mail.qq.com
+    说明: 优先级数值较小的邮件服务器代表更优先
+
+    验证生效方法:
+        // linux/mac 用法:
+        ➜ nslookup -type=mx mail.zhaoweiguo.com
+        Server:   10.96.1.18
+        Address:  10.96.1.18#53
+
+        Non-authoritative answer:
+        mail.zhaoweiguo.com canonical name = mail.mxhichina.com.
+        // windows 用法
+        $ nslookup -qt=mx zhaoweiguo.com
 
 
-    3. PTR
-      根据 IP 地址反查域名
+3. PTR::
 
-    4. SOA
-      查询域名属性信息
+    根据 IP 地址反查域名
 
-    5. NS
-      查询 DNS 服务器 IP 地址
+4. SOA::
 
-    6. CNAME
-      查询域名相关别名
+    查询域名属性信息
 
-    7. TXT
-      记录值：没有固定的格式。大部分时间，TXT 记录是用来做 SPF 反垃圾邮件的。
-        最典型的 SPF 格式的 TXT 记录例子为 “v=spf1 a mx ~all”，
-          表示只有这个域名的 A 记录和 MX 记录中的 IP 地址有权限使用这个域名发送邮件
-      主机记录：填写子域名。
-        例如，添加 www.123.com 的 TXT 记录，您在 “主机记录” 处选择 “www” 即可
-        如果只是想添加 123.com 的 TXT 记录，您在 “主机记录” 处选择 “@” 即可
+5. NS::
 
-      验证生效方法:
-        $ dig -t txt _dns-acme.zhaoweiguo.com
+    查询 DNS 服务器 IP 地址
+    域名服务器记录，如果需要把子域名交给其他 DNS 服务器解析，就需要添加 NS 记录。
+
+
+6. CNAME::
+
+    查询域名相关别名:
+    CNAME 的全称是 Canonical Name，通常称别名记录
+    如果需要将域名指向另一个域名，再由另一个域名提供 IP 地址，就需要添加 CNAME 记录
+
+    $ nslookup -type=CNAME www.zhaoweiguo.com
+
+7. TXT::
+
+    记录值：没有固定的格式。大部分时间，TXT 记录是用来做 SPF 反垃圾邮件的。
+      最典型的 SPF 格式的 TXT 记录例子为 “v=spf1 a mx ~all”，
+        表示只有这个域名的 A 记录和 MX 记录中的 IP 地址有权限使用这个域名发送邮件
+    主机记录：填写子域名。
+      例如，添加 www.123.com 的 TXT 记录，您在 “主机记录” 处选择 “www” 即可
+      如果只是想添加 123.com 的 TXT 记录，您在 “主机记录” 处选择 “@” 即可
+
+    验证生效方法:
+      $ dig -t txt _dns-acme.zhaoweiguo.com
+
+    可以填写任何东西，长度限制 255。
+    绝大多数的 TXT 记录是用来做 SPF 记录（反垃圾邮件）
+    MX 记录的作用是给寄信者指明某个域名的邮件服务器有哪些。
+    SPF 的作用跟 MX 相反，它向收信者表明，哪些邮件服务器是经过某个域名认可会发送邮件的
+
+8. 显性 URL::
+
+    从一个地址 301 重定向（也叫「永久性转移」）到另一个地址的时候，就需要添加显性 URL 记录。
+
+9. 隐性 URL::
+
+    从一个地址 302 跳转（也叫「临时跳转」）到另一个地址，需要添加隐性 URL 记录。
+    它类似于显性 URL，区别在于隐性 URL 不会改变地址栏中的域名。
+
+存储表格式
+==========
+
 
 DNS服务器存储「资源记录」表格式::
 
@@ -81,7 +118,14 @@ DNS服务器存储「资源记录」表格式::
    找到目标 DNS 服务器
 
 
+TTL 设置
+========
 
+
+
+.. figure:: /images/protocols/dns2.png
+
+   找到目标 DNS 服务器
 
 
 

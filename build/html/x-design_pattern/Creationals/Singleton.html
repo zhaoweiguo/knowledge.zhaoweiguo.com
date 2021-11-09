@@ -1,0 +1,561 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Singleton-单例模式 &mdash; 新溪-gordon V1.6.5 documentation</title>
+  
+
+  
+  
+    <link rel="shortcut icon" href="../_static/favicon-16x16.ico"/>
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Abstract Factory-抽象工厂" href="Abstract-Factory.html" />
+    <link rel="prev" title="Creational-创建型(5)" href="../Creational.html" /> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+
+<script>
+// 百度统计
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?c4af0e06c3eadbfa7717c13ecc7220d8";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-178653440-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-178653440-2');
+</script>
+
+<!-- 评论插件 gittalk start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+<!-- 评论插件 gittalk end -->
+
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> 新溪-gordon
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                V1.6.5
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../normal.html">常用</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../normals/normal.html">常用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../normals/normal.html#id3">参考</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../normals/anti-pattern.html">反模式</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../normals/anti-pattern.html#id3">举例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../normals/anti-pattern.html#id4">社会和组织结构</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../normals/anti-pattern.html#id5">软件工程</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../normals/anti-pattern.html#id6">参考</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../Creational.html">Creational-创建型(5)</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Singleton-单例模式</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id2">饿汉方式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">懒汉方式</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Abstract-Factory.html">Abstract Factory-抽象工厂</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Abstract-Factory.html#id2">简单工厂模式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Abstract-Factory.html#id3">抽象工厂模式</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Factory-Method.html">Factor-Method工厂方法</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Builder.html">Builder-建造者</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Builder.html#id2">遇到问题</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Builder.html#id3">示例</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Builder.html#id4">建造者模式</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Prototype.html">Prototype-原型</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Prototype.html#id2">遇到的问题</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Prototype.html#id3">示例</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Prototype.html#id4">原型模式</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../Structural.html">Structural-结构型(7+1)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../Structurals/Proxy.html">Proxy-代理模式</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../Structurals/Proxy.html#id2">代理模式的应用场景</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../Structurals/Bridge.html">Bridge-桥接模式</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../Structurals/Bridge.html#id2">桥接模式的应用举例</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../Structurals/Decorator.html">Decorator-装饰器模式</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../Structurals/Decorator.html#id2">与代理模式的区别</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../Structurals/Decorator.html#id3">参考</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../Structurals/Adapter.html">Adapter-适配器</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../Structurals/Adapter.html#id2">实现方式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../Structurals/Adapter.html#id3">代理/桥接/装饰器/适配器的区别</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../Structurals/Facade.html">Facade-门面模式</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../Structurals/Facade.html#id2">应用场景</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../Structurals/Facade.html#id3">与适配器模式对比</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../Structurals/Composite.html">Composite-组合</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../Structurals/Composite.html#id2">场景举例</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../Structurals/Flyweight.html">Flyweight-享元模式</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../Structurals/Flyweight.html#vs">享元模式 vs 单例/缓存/对象池</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../Structurals/Options.html">Options-选项模式</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../Structurals/Options.html#id2">实例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../Behavioral.html">Behavioral-行为型(11)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../Behaviorals/Observer.html">Observer-观察者模式</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../Behaviorals/Observer.html#id2">参考</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../Behaviorals/Template-method.html">Template method模版方法</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../Behaviorals/Template-method.html#callback">与回调(Callback)区别和联系</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../Behaviorals/Template-method.html#id2">示例</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../Behaviorals/Strategy.html">Strategy-策略模式</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../Behaviorals/Strategy.html#id2">示例</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../Behaviorals/Strategy.html#id3">实战</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../Behaviorals/ChainOfResponsibility.html">Chain Of Responsibility-职责链模式</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../Behaviorals/Iterator.html">Iterator-迭代器</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../Behaviorals/Iterator.html#id2">使用迭代器为啥不能增删元素</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../Behaviorals/State.html">State-状态模式</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../Behaviorals/Visitor.html">Visitor-访问者</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../Behaviorals/Memento.html">Memento-备忘录</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../Behaviorals/Memento.html#id2">与”备份”的区别</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../Behaviorals/Command.html">Command-命令</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../Behaviorals/Command.html#vs">命令模式 VS 策略模式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../Behaviorals/Command.html#id2">代码实现</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../Behaviorals/Command.html#id3">实例1-将函数封装为对象</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../Behaviorals/Command.html#id4">实例2-将函数直接作为参数</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../Behaviorals/Interpreter.html">Interpreter-解释器</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../Behaviorals/Mediator.html">Mediator-中介模式</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../Behaviorals/Mediator.html#vs">中介模式 VS 观察者模式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../Behaviorals/Mediator.html#id2">参考</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../other.html">其他</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">新溪-gordon</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../Creational.html">Creational-创建型(5)</a> &raquo;</li>
+        
+      <li>Singleton-单例模式</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/Creationals/Singleton.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <table class="docutils align-default">
+<colgroup>
+<col style="width: 32%" />
+<col style="width: 24%" />
+<col style="width: 24%" />
+<col style="width: 21%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="../genindex.html"><span class="std std-ref">Index</span></a></p></td>
+<td><p><a class="reference internal" href="../py-modindex.html"><span class="std std-ref">Module Index</span></a></p></td>
+<td><p><a class="reference internal" href="../search.html"><span class="std std-ref">Search Page</span></a></p></td>
+</tr>
+</tbody>
+</table>
+<details>
+<summary>目录</summary><div class="sidebar">
+<p class="sidebar-title">目录</p>
+<div class="contents topic" id="contents">
+<p class="topic-title">Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#singleton" id="id5">Singleton-单例模式</a></p>
+<ul>
+<li><p><a class="reference internal" href="#id2" id="id6">饿汉方式</a></p></li>
+<li><p><a class="reference internal" href="#id3" id="id7">懒汉方式</a></p></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</details><div class="section" id="singleton">
+<h1><a class="toc-backref" href="#id5">Singleton-单例模式</a><a class="headerlink" href="#singleton" title="Permalink to this headline">¶</a></h1>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>因为单例模式保证了实例的全局唯一性，而且只被初始化一次，所以比较适合全局共享一个实例，且只需要被初始化一次的场景，例如数据库实例、全局配置、全局任务池等。</p>
+</div>
+<p>单例模式又分为饿汉方式和懒汉方式:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">饿汉方式</span><span class="p">:</span> <span class="n">全局的单例实例在包被加载时创建</span>
+<span class="n">懒汉方式</span><span class="p">:</span> <span class="n">全局的单例实例在第一次被使用时创建</span>
+
+<span class="n">双重检测</span>
+<span class="n">静态内部类</span>
+<span class="n">枚举</span>
+</pre></div>
+</div>
+<img alt="../_images/singleton1.png" src="../_images/singleton1.png" />
+<p>单例这种设计模式存在哪些问题？为什么会被称为反模式:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 单例这种设计模式对于 OOP 的四大特征中的抽象、继承、多态都支持得不好
+    违背了基于接口而非实现的设计原则，也就违背了广义上理解的 OOP 的抽象特性。
+    一旦你选择将某个类设计成到单例类，也就意味着放弃了继承和多态这两个强有力的面向对象特性，
+    也就相当于损失了可以应对未来需求变化的扩展性。
+2. 单例会隐藏类之间的依赖关系
+    单例类不需要显示创建、不需要依赖参数传递，在函数中直接调用就可以了。
+    如果代码比较复杂，这种调用关系就会非常隐蔽。
+3. 单例对代码的扩展性不友好
+    数据库连接池设计成单例类
+    当在系统中创建两个数据库连接池:
+        慢 SQL 独享一个数据库连接池
+        其他 SQL 独享另外一个数据库连接池
+    单例类在某些情况下会影响代码的扩展性、灵活性。
+    所以，数据库连接池、线程池这类的资源池，最好还是不要设计成单例类。
+4. 单例对代码的可测试性不友好
+    单例类这种硬编码式的使用方式，导致无法实现 mock 替换
+5. 单例不支持有参数的构造函数
+</pre></div>
+</div>
+<div class="section" id="id2">
+<h2><a class="toc-backref" href="#id6">饿汉方式</a><a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>实例:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">package</span> <span class="n">singleton</span>
+
+<span class="nb">type</span> <span class="n">singleton</span> <span class="n">struct</span> <span class="p">{</span>
+<span class="p">}</span>
+
+<span class="n">var</span> <span class="n">ins</span> <span class="o">*</span><span class="n">singleton</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">singleton</span><span class="p">{}</span>
+
+<span class="n">func</span> <span class="n">GetInsOr</span><span class="p">()</span> <span class="o">*</span><span class="n">singleton</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">ins</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>缺点:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>因为实例是在包被导入时初始化的，所以如果初始化耗时，会导致程序加载时间比较长
+</pre></div>
+</div>
+</div>
+<div class="section" id="id3">
+<h2><a class="toc-backref" href="#id7">懒汉方式</a><a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>缺点:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>非并发安全，在实际使用时需要加锁
+</pre></div>
+</div>
+<p>不加锁的一个实现:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>package singleton
+
+type singleton struct {
+}
+
+var ins *singleton
+
+func GetInsOr() *singleton {
+    if ins == nil {
+        ins = &amp;singleton{}
+    }
+
+    return ins
+}
+
+问题: 在创建 ins 时，如果 ins==nil，就会再创建一个 ins 实例，这时候单例就会有多个实例
+</pre></div>
+</div>
+<p>带检查锁的一个实现:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="s2">&quot;sync&quot;</span>
+
+<span class="nb">type</span> <span class="n">singleton</span> <span class="n">struct</span> <span class="p">{</span>
+<span class="p">}</span>
+
+<span class="n">var</span> <span class="n">ins</span> <span class="o">*</span><span class="n">singleton</span>
+<span class="n">var</span> <span class="n">mu</span> <span class="n">sync</span><span class="o">.</span><span class="n">Mutex</span>
+
+<span class="n">func</span> <span class="n">GetIns</span><span class="p">()</span> <span class="o">*</span><span class="n">singleton</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="n">ins</span> <span class="o">==</span> <span class="n">nil</span> <span class="p">{</span>
+    <span class="n">mu</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">ins</span> <span class="o">==</span> <span class="n">nil</span> <span class="p">{</span>
+      <span class="n">ins</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">singleton</span><span class="p">{}</span>
+    <span class="p">}</span>
+    <span class="n">mu</span><span class="o">.</span><span class="n">Unlock</span><span class="p">()</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="n">ins</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>在 Go 开发中，还有一种更优雅的实现方式:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">package</span> <span class="n">singleton</span>
+
+<span class="kn">import</span> <span class="p">(</span>
+    <span class="s2">&quot;sync&quot;</span>
+<span class="p">)</span>
+
+<span class="nb">type</span> <span class="n">singleton</span> <span class="n">struct</span> <span class="p">{</span>
+<span class="p">}</span>
+
+<span class="n">var</span> <span class="n">ins</span> <span class="o">*</span><span class="n">singleton</span>
+<span class="n">var</span> <span class="n">once</span> <span class="n">sync</span><span class="o">.</span><span class="n">Once</span>
+
+<span class="n">func</span> <span class="n">GetInsOr</span><span class="p">()</span> <span class="o">*</span><span class="n">singleton</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="n">ins</span> <span class="o">==</span> <span class="n">nil</span> <span class="p">{</span>
+        <span class="n">once</span><span class="o">.</span><span class="n">Do</span><span class="p">(</span><span class="n">func</span><span class="p">()</span> <span class="p">{</span>
+            <span class="n">ins</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">singleton</span><span class="p">{}</span>
+        <span class="p">})</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">ins</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 32%" />
+<col style="width: 24%" />
+<col style="width: 24%" />
+<col style="width: 21%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="../genindex.html"><span class="std std-ref">Index</span></a></p></td>
+<td><p><a class="reference internal" href="../py-modindex.html"><span class="std std-ref">Module Index</span></a></p></td>
+<td><p><a class="reference internal" href="../search.html"><span class="std std-ref">Search Page</span></a></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="Abstract-Factory.html" class="btn btn-neutral float-right" title="Abstract Factory-抽象工厂" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="../Creational.html" class="btn btn-neutral" title="Creational-创建型(5)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+  
+  <div id="gitalk-container"></div>
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2010-2020, 新溪-gordon.
+
+    </p>
+  </div>
+  <div>备案号 <a href="http://www.beian.miit.gov.cn">京ICP备16018553号</a></div><div>Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a></div>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'V1.6.5',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="../_static/language_data.js"></script>
+
+  
+
+  <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+
+
+      var gitalk = new Gitalk({
+              clientID: '565177626b5d46427009',
+              clientSecret: 'b2a36e67e1d2a73e43667f46d571c2624f8e1026',
+              repo: 'knowledge',
+              owner: 'zhaoweiguo',
+              admin: ['zhaoweiguo'],
+              id: location.pathname,      // Ensure uniqueness and length less than 50
+              distractionFreeMode: false  // Facebook-like distraction free mode
+            })
+      gitalk.render('gitalk-container')
+
+  </script> 
+
+</body>
+</html>

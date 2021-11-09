@@ -1,0 +1,109 @@
+Template method模版方法
+#######################
+
+.. note:: Define the skeleton of an algorithm in an operation, deferring some steps to subclasses. Template Method lets subclasses redefine certain steps of an algorithm without changing the algorithm’s structure. 定义一个操作中算法的骨架，而将一些步骤延迟到子类中。这种方法让子类在不改变一个算法结构的情况下，就能重新定义该算法的某些特定步骤。简单来说，模板模式就是将一个类中能够公共使用的方法放置在抽象类中实现，将不能公共使用的方法作为抽象方法，强制子类去实现，这样就做到了将一个类作为一个模板，让开发者去填充需要填充的地方。
+
+模板模式作用一：复用::
+
+    模板模式把一个算法中不变的流程抽象到父类的模板方法 templateMethod () 中，
+    将可变的部分 method1 ()、method2 () 留给子类 ContreteClass1 和 ContreteClass2 来实现。
+    所有的子类都可以复用父类中模板方法定义的流程代码。
+
+模板模式作用二：扩展::
+
+    这里所说的扩展，并不是指代码的扩展性，而是指框架的扩展性，有点类似控制反转
+
+    模板模式常用在框架的开发中，让框架用户可以在不修改框架源码的情况下，定制化框架的功能
+
+与回调(Callback)区别和联系
+==========================
+
+.. note:: 【回调的原理解析】回调是一种双向调用关系。A 类事先注册某个函数 F 到 B 类，A 类在调用 B 类的 P 函数的时候，B 类反过来调用 A 类注册给它的 F 函数。这里的 F 函数就是 “回调函数”。A 调用 B，B 反过来又调用 A，这种调用机制就叫作 “回调”。
+
+::
+
+    同步回调指在函数返回之前执行回调函数；异步回调指的是在函数返回之后执行回调函数
+    从应用场景上来看，同步回调看起来更像模板模式，异步回调看起来更像观察者模式
+
+主要区别在于代码实现::
+
+    模板模式基于继承来实现，回调基于组合来实现
+
+
+
+
+示例
+====
+
+::
+
+    package template
+
+    import "fmt"
+
+    type Cooker interface {
+      fire()
+      cooke()
+      outfire()
+    }
+
+    // 类似于一个抽象类
+    type CookMenu struct {
+    }
+
+    func (CookMenu) fire() {
+      fmt.Println("开火")
+    }
+
+    // 做菜，交给具体的子类实现
+    func (CookMenu) cooke() {
+    }
+
+    func (CookMenu) outfire() {
+      fmt.Println("关火")
+    }
+
+    // 封装具体步骤
+    func doCook(cook Cooker) {
+      cook.fire()
+      cook.cooke()
+      cook.outfire()
+    }
+
+    type XiHongShi struct {
+      CookMenu
+    }
+
+    func (*XiHongShi) cooke() {
+      fmt.Println("做西红柿")
+    }
+
+    type ChaoJiDan struct {
+      CookMenu
+    }
+
+    func (ChaoJiDan) cooke() {
+      fmt.Println("做炒鸡蛋")
+    }
+
+使用::
+
+    func TestTemplate(t *testing.T) {
+      // 做西红柿
+      xihongshi := &XiHongShi{}
+      doCook(xihongshi)
+
+      fmt.Println("\n=====> 做另外一道菜")
+      // 做炒鸡蛋
+      chaojidan := &ChaoJiDan{}
+      doCook(chaojidan)
+    }
+
+
+
+
+
+
+
+
+
