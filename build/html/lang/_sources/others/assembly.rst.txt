@@ -1,0 +1,120 @@
+汇编语言
+########
+
+寄存器::
+
+    rbp: register base pointer 栈基址寄存器（栈帧指针），指向当前栈帧的(栈底)地址
+        rbp is the base pointer, which points to the base of the current stack frame
+    rsp: register stack pointer 栈顶寄存器（栈指针），指向当前栈帧的(栈顶)地址
+        rsp is the stack pointer, which points to the top of the current stack frame.
+
+
+
+
+
+实例-函数调用
+=============
+
+C 语言::
+
+    // function_example.c
+    #include <stdio.h>
+    int static add(int a, int b)
+    {
+        return a+b;
+    }
+    int main()
+    {
+        int x = 5;
+        int y = 10;
+        int u = add(x, y);
+    }
+
+
+执行命令::
+
+    $ gcc -g -c function_example.c
+    $ objdump -d -M intel -S function_example.o 
+
+汇编代码-add::
+
+    int static add(int a, int b)
+    {
+       0:   55                      push   rbp
+       1:   48 89 e5                mov    rbp,rsp
+       4:   89 7d fc                mov    DWORD PTR [rbp-0x4],edi
+       7:   89 75 f8                mov    DWORD PTR [rbp-0x8],esi
+        return a+b;
+       a:   8b 55 fc                mov    edx,DWORD PTR [rbp-0x4]
+       d:   8b 45 f8                mov    eax,DWORD PTR [rbp-0x8]
+      10:   01 d0                   add    eax,edx
+    }
+      12:   5d                      pop    rbp
+      13:   c3                      ret    
+
+说明::
+    
+    push   rbp: 
+        把之前调用函数，也就是 main 函数的栈帧的栈底地址，压栈
+    mov    rbp,rsp: 
+        把 rsp 的值复制到 rbp 里，而 rsp 始终会指向栈顶
+        这意味着：rbp 和 rsp 都指向 main 函数的栈顶
+        也就是 add 函数的栈帧的栈底地址了
+
+汇编代码-main::
+
+    0000000000000014 <main>:
+    int main()
+    {
+      14:   55                      push   rbp
+      15:   48 89 e5                mov    rbp,rsp
+      18:   48 83 ec 10             sub    rsp,0x10
+        int x = 5;
+      1c:   c7 45 fc 05 00 00 00    mov    DWORD PTR [rbp-0x4],0x5
+        int y = 10;
+      23:   c7 45 f8 0a 00 00 00    mov    DWORD PTR [rbp-0x8],0xa
+        int u = add(x, y);
+      2a:   8b 55 f8                mov    edx,DWORD PTR [rbp-0x8]
+      2d:   8b 45 fc                mov    eax,DWORD PTR [rbp-0x4]
+      30:   89 d6                   mov    esi,edx
+      32:   89 c7                   mov    edi,eax
+      34:   e8 c7 ff ff ff          call   0 <add>
+      39:   89 45 f4                mov    DWORD PTR [rbp-0xc],eax
+      3c:   b8 00 00 00 00          mov    eax,0x0
+    }
+      41:   c9                      leave  
+      42:   c3                      ret    
+
+
+内联优化编译::
+
+    $ gcc -g -c -O function_example_inline.c
+    $ objdump -d -M intel -S function_example_inline.o
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

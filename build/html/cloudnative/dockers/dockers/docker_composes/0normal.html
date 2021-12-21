@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>常用 &mdash; 新溪-gordon V1.6.5 documentation</title>
+  <title>常用 &mdash; 新溪-gordon V1.6.6 documentation</title>
   
 
   
@@ -90,7 +90,7 @@ var _hmt = _hmt || [];
             
             
               <div class="version">
-                V1.6.5
+                V1.6.6
               </div>
             
           
@@ -128,7 +128,6 @@ var _hmt = _hmt || [];
 <li class="toctree-l4"><a class="reference internal" href="../normals/normal.html">基本</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../normals/mac.html">mac路径相关</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../normals/proxy.html">Docker代理加速</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../normals/net.html">网络相关</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../normals/introduce.html">介绍</a></li>
 </ul>
 </li>
@@ -141,7 +140,15 @@ var _hmt = _hmt || [];
 <li class="toctree-l4"><a class="reference internal" href="../Dockerfiles/multistage-build.html">多阶段构建</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../docker_cmd.html">2.2.4. docker命令</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../net.html">2.2.4. 网络相关</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../nets/normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../nets/practice.html">实践</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../nets/cross-host.html">跨主机容器通信</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../nets/cross-container.html">容器间通信方式</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../nets/tmp.html">临时</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../docker_cmd.html">2.2.5. docker命令</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../docker_cmds/0help.html">帮助</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../docker_cmds/0topology.html">拓扑图</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../docker_cmds/manages/config.html">docker config</a></li>
@@ -179,7 +186,7 @@ var _hmt = _hmt || [];
 <li class="toctree-l4"><a class="reference internal" href="../docker_cmds/cmds/cp.html">docker cp命令</a></li>
 </ul>
 </li>
-<li class="toctree-l3 current"><a class="reference internal" href="../docker_compose.html">2.2.5. docker-compose命令</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../docker_compose.html">2.2.6. docker-compose命令</a><ul class="current">
 <li class="toctree-l4"><a class="reference internal" href="0help.html">帮助</a></li>
 <li class="toctree-l4"><a class="reference internal" href="0config.html">配置实例</a></li>
 <li class="toctree-l4"><a class="reference internal" href="0install.html">安装与卸载</a></li>
@@ -189,12 +196,11 @@ var _hmt = _hmt || [];
 <li class="toctree-l4"><a class="reference internal" href="question.html">常见问题</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../docker_machine.html">2.2.6. docker-machine命令</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docker_swarm.html">2.2.7. Docker Swarm</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../question.html">2.2.8. 常见问题</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../practice.html">2.2.9. docker实战</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../docker_machine.html">2.2.7. docker-machine命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../docker_swarm.html">2.2.8. Docker Swarm</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../question.html">2.2.9. 常见问题</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../practice.html">2.2.10. docker实战</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../practices/registry.html">运行自己的Docker私有镜像仓库 Registry</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../practices/net.html">Docker网络模式详解</a></li>
 </ul>
 </li>
 </ul>
@@ -433,7 +439,7 @@ var _hmt = _hmt || [];
         
           <li><a href="../../docker.html"><span class="section-number">2.2. </span>Docker相关</a> &raquo;</li>
         
-          <li><a href="../docker_compose.html"><span class="section-number">2.2.5. </span>docker-compose命令</a> &raquo;</li>
+          <li><a href="../docker_compose.html"><span class="section-number">2.2.6. </span>docker-compose命令</a> &raquo;</li>
         
       <li>常用</li>
     
@@ -525,16 +531,57 @@ Compose 中有两个重要的概念:</p>
 </pre></div>
 </div>
 <p>docker-compose.yml:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>version: &#39;3&#39;
+services:
+
+  web:
+    build: .
+    ports:
+     - &quot;5000:5000&quot;
+    depends_on:                     // 指定依赖
+      - mongodb
+
+  redis:
+    image: &quot;redis:alpine&quot;
+    container_name: redis-name      // 指定 container 名
+    working_dir: /opt/workedge      // 指定工作目录
+    command: ls -lh                 // 指定执行命令
+    volumes:                        // 指定挂载目录
+        - .:/data/
+    ports:                          // 指定端口绑定
+        - &quot;27017:27017&quot;
+    restart: always                 // 容器挂掉时，是否重启
+</pre></div>
+</div>
+<p>实例-指定网络(mongo_net):</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">version</span><span class="p">:</span> <span class="s1">&#39;3&#39;</span>
 <span class="n">services</span><span class="p">:</span>
 
-  <span class="n">web</span><span class="p">:</span>
-    <span class="n">build</span><span class="p">:</span> <span class="o">.</span>
-    <span class="n">ports</span><span class="p">:</span>
-     <span class="o">-</span> <span class="s2">&quot;5000:5000&quot;</span>
+  <span class="n">mongo</span><span class="p">:</span>
+    <span class="n">image</span><span class="p">:</span> <span class="n">mongo</span><span class="p">:</span><span class="mf">4.0</span><span class="o">.</span><span class="mi">27</span>
+    <span class="n">networks</span><span class="p">:</span>
+      <span class="n">mongo_net</span><span class="p">:</span>
 
-  <span class="n">redis</span><span class="p">:</span>
-    <span class="n">image</span><span class="p">:</span> <span class="s2">&quot;redis:alpine&quot;</span>
+<span class="n">networks</span><span class="p">:</span>
+  <span class="n">mongo_net</span><span class="p">:</span>
+    <span class="n">driver</span><span class="p">:</span> <span class="n">bridge</span>
+    <span class="n">ipam</span><span class="p">:</span>
+      <span class="n">config</span><span class="p">:</span>
+      <span class="o">-</span> <span class="n">subnet</span><span class="p">:</span> <span class="mf">172.16</span><span class="o">.</span><span class="mf">0.0</span><span class="o">/</span><span class="mi">24</span>
+        <span class="n">gateway</span><span class="p">:</span> <span class="mf">172.16</span><span class="o">.</span><span class="mf">0.254</span>
+</pre></div>
+</div>
+<p>实例-指定 volumes:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">version</span><span class="p">:</span> <span class="s2">&quot;3.9&quot;</span>
+<span class="n">services</span><span class="p">:</span>
+
+  <span class="n">db</span><span class="p">:</span>
+    <span class="n">image</span><span class="p">:</span> <span class="n">postgres</span><span class="p">:</span><span class="mf">9.4</span>
+    <span class="n">volumes</span><span class="p">:</span>
+      <span class="o">-</span> <span class="n">db</span><span class="o">-</span><span class="n">data</span><span class="p">:</span><span class="o">/</span><span class="n">var</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">postgresql</span><span class="o">/</span><span class="n">data</span>
+
+<span class="n">volumes</span><span class="p">:</span>
+  <span class="n">db</span><span class="o">-</span><span class="n">data</span><span class="p">:</span>
 </pre></div>
 </div>
 <p>运行 compose 项目:</p>
@@ -604,7 +651,7 @@ $ docker stack deploy -f file.yml &lt;name&gt;
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../../',
-            VERSION:'V1.6.5',
+            VERSION:'V1.6.6',
             LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',

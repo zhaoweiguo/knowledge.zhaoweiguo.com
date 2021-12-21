@@ -51,9 +51,53 @@ docker-compose.yml::
         build: .
         ports:
          - "5000:5000"
+        depends_on:                     // 指定依赖
+          - mongodb
          
       redis:
         image: "redis:alpine"
+        container_name: redis-name      // 指定 container 名
+        working_dir: /opt/workedge      // 指定工作目录
+        command: ls -lh                 // 指定执行命令
+        volumes:                        // 指定挂载目录
+            - .:/data/
+        ports:                          // 指定端口绑定
+            - "27017:27017"
+        restart: always                 // 容器挂掉时，是否重启
+
+
+实例-指定网络(mongo_net)::
+
+    version: '3'
+    services:
+
+      mongo:
+        image: mongo:4.0.27
+        networks:
+          mongo_net:
+
+    networks:
+      mongo_net:
+        driver: bridge
+        ipam:
+          config:
+          - subnet: 172.16.0.0/24
+            gateway: 172.16.0.254
+
+实例-指定 volumes::
+
+    version: "3.9"
+    services:
+
+      db:
+        image: postgres:9.4
+        volumes:
+          - db-data:/var/lib/postgresql/data
+
+    volumes:
+      db-data:
+
+
 
 运行 compose 项目::
 
