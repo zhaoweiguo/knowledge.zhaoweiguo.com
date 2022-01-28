@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>黑客相关 &mdash; 新溪-gordon V1.6.6 documentation</title>
+  <title>黑客相关 &mdash; 新溪-gordon V1.6.7 documentation</title>
   
 
   
@@ -90,7 +90,7 @@ var _hmt = _hmt || [];
             
             
               <div class="version">
-                V1.6.6
+                V1.6.7
               </div>
             
           
@@ -311,22 +311,104 @@ var _hmt = _hmt || [];
 <div class="contents topic" id="contents">
 <p class="topic-title">Contents</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="#id2" id="id4">黑客相关</a></p>
+<li><p><a class="reference internal" href="#id2" id="id6">黑客相关</a></p>
 <ul>
-<li><p><a class="reference internal" href="#fork-bomb" id="id5">fork bomb</a></p></li>
+<li><p><a class="reference internal" href="#fork-bomb" id="id7">fork bomb</a></p></li>
+<li><p><a class="reference internal" href="#hash" id="id8">逆向Hash</a></p>
+<ul>
+<li><p><a class="reference internal" href="#id3" id="id9">预先计算的散列链</a></p></li>
+<li><p><a class="reference internal" href="#rainbow-table" id="id10">彩虹表(rainbow table)</a></p></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
 </details><div class="section" id="id2">
-<h1><a class="toc-backref" href="#id4">黑客相关</a><a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h1>
+<h1><a class="toc-backref" href="#id6">黑客相关</a><a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h1>
 <p>被黑客攻击后，多数公司有能力恢复数据，但是担心被窃取的数据会被泄露给竞争对手造成难以预估的后果，三分之一的受害公司会愿意支付赎金。</p>
 <div class="section" id="fork-bomb">
-<h2><a class="toc-backref" href="#id5">fork bomb</a><a class="headerlink" href="#fork-bomb" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id7">fork bomb</a><a class="headerlink" href="#fork-bomb" title="Permalink to this headline">¶</a></h2>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>是指在计算机中，通过不断建立新进程来消耗系统中的进程资源，它是一种黑客攻击方式。</p>
+</div>
+</div>
+<div class="section" id="hash">
+<h2><a class="toc-backref" href="#id8">逆向Hash</a><a class="headerlink" href="#hash" title="Permalink to this headline">¶</a></h2>
+<p>逆向Hash有三种办法:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 暴力破解法
+    时间成本太高
+2. 字典法
+    提前构建一个 “明文 -&gt; 密文” 对应关系的一个大型数据库，破解时通过密文直接反查明文。
+    但存储一个这样的数据库，空间成本是惊人的
+3. 构建彩虹表
+    在字典法的基础上改进，以时间换空间。是现在破解哈希常用的办法
+</pre></div>
+</div>
+<div class="section" id="id3">
+<h3><a class="toc-backref" href="#id9">预先计算的散列链</a><a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>预先计算的散列链是彩虹表的前身：使用「字典法」存储所有的明文密码对需要的空间太大，密码学家们想出了一种以计算时间降低存储空间的办法：“预计算的哈希链集”（Precomputed hash chains）。</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>约简函数（reduction function）R 函数是构建这条链的时候定义的一个函数：它的值域和定义域与 H 函数相反。通过该函数可以将哈希值约简为一个与原文相同格式的值。</p>
+</div>
+<p>原理(以 k=2 的哈希链为例):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">aaaaaa</span> <span class="o">-</span><span class="p">(</span><span class="n">hash函数</span><span class="p">)</span><span class="o">-&gt;</span> <span class="mi">281</span><span class="n">DAF40</span> <span class="o">-</span><span class="p">(</span><span class="n">reduction函数</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">sgfnyd</span>
+  <span class="o">-</span><span class="p">(</span><span class="n">hash函数</span><span class="p">)</span><span class="o">-&gt;</span><span class="mi">920</span><span class="n">ECF10</span><span class="o">-</span><span class="p">(</span><span class="n">reduction函数</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">kiebgt</span>
+</pre></div>
+</div>
+<p>这条链是这样生成的:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 随机选择一个明文 aaaaaa
+2. 对其求哈希得到 281DAF40
+3. R (281DAF40) 得到另外一个明文 sgfnyd
+4. 继续重复 2,3 步骤
+
+注: 存储的时候，不需要存储所有的节点，只需要存储每条链的头尾节点（这里是 aaaaaa 和 kiebgt）
+</pre></div>
+</div>
+<p>预计算的哈希链集的意义:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 对于一个长度为 k 的预计算的哈希链集，每次破解计算次数不超过 k，因此比暴力破解大大节约时间
+2. 每条链只保存起节点和末节点，储存空间只需约 1/k，因而大大节约了空间
+</pre></div>
+</div>
+<p>R 函数的问题:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>要发挥预计算的哈希链集的左右，需要一个分布均匀的 R 函数。当出现碰撞时，就会出现下面这种情况
+111 --H--&gt; EDEDED --R--&gt; 222 --H--&gt; FEDEFE --R--&gt; 333 --H--&gt; FEFEDC --R--&gt; 444
+454 --H--&gt; FEDECE --R--&gt; 333 --H--&gt; FEFEDC --R--&gt; 444 -H--&gt; FEGEDC --R--&gt; 555
+
+两条链出现了重叠。这两条哈希链能解密的明文数量就远小于理论上的明文数 2×k
+由于集合只保存链条的首末节点，因此这样的重复链条并不能被迅速地发现
+</pre></div>
+</div>
+</div>
+<div class="section" id="rainbow-table">
+<h3><a class="toc-backref" href="#id10">彩虹表(rainbow table)</a><a class="headerlink" href="#rainbow-table" title="Permalink to this headline">¶</a></h3>
+<div class="figure align-default" id="id5">
+<img alt="../_images/rainbow-table1.webp" src="../_images/rainbow-table1.webp" />
+<p class="caption"><span class="caption-text">彩虹表的出现，针对性的解决了 R 函数导致的链重叠问题：它在各步的运算中，并不使用统一的 R 函数，而是分别使用 R1…Rk 共 k 个不同的 R 函数（下划线表示下标）</span><a class="headerlink" href="#id5" title="Permalink to this image">¶</a></p>
+</div>
+<p>彩虹表的使用:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>彩虹表的使用比哈希链集稍微麻烦一些。
+
+1. 首先，假设要破解的密文位于某一链条的 k-1 位置处，
+      对其进行 Rk 运算，看是否能够在末节点中找到对应的值
+2. 如果找到，则可以使用起节点验证其正确性
+3. 否则，继续假设密文位于 k-2 位置处
+    这时就需要进行 Rk-1、H、Rk 两步运算，然后在末节点中查找结果
+4. 如是反复
+    最不利条件下需要将密文进行完整的 R1、H、…Rk 运算后，
+    才能得知密文是否存在于彩虹表之中
+</pre></div>
+</div>
+<p>彩虹表是一个用于加密散列函数逆运算的预先计算好的表，为破解密码的散列值（或称哈希值、微缩图、摘要、指纹、哈希密文）而准备。一般主流的彩虹表都在 100G 以上。 这样的表常常用于恢复由有限集字符组成的固定长度的纯文本密码。这是空间 / 时间替换的典型实践，比「暴力破解」处理时间少而储存空间多，但却比简单的「字典法」的破解方式储存空间少而处理时间多。使用加 salt 的 KDF 函数可以使这种攻击难以实现。彩虹表是马丁・赫尔曼早期提出的简单算法的应用。</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>加盐哈希可以抵御彩虹表：（注意）盐可以是用户名，手机号等，但必须保证每个用户的 salt 都不一样才是安全的。彩虹表在生成的过程中，针对的是特定的函数 H，H 如果发生了改变，则已有的彩虹表数据就完全无法使用。如果每个用户都用一个不同的盐值，那么每个用户的 H 函数都不同，则必须要为每个用户都生成一个不同的彩虹表。大大提高了破解难度。</p>
 </div>
 <table class="docutils align-default">
 <colgroup>
@@ -343,6 +425,7 @@ var _hmt = _hmt || [];
 </tr>
 </tbody>
 </table>
+</div>
 </div>
 </div>
 
@@ -389,7 +472,7 @@ var _hmt = _hmt || [];
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'V1.6.6',
+            VERSION:'V1.6.7',
             LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
