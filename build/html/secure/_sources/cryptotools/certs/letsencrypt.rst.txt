@@ -1,26 +1,62 @@
 Let's Encrypt
 #############
 
-* Let's Encrypt [1]_
-* Certbot is EFF's tool to obtain certs from Let's Encrypt: https://github.com/certbot/certbot
+* Let's Encrypt: https://letsencrypt.org/
+* Certbot is EFF's tool to obtain certs from Let's Encrypt: https://certbot.eff.org/
+* GitHub: https://github.com/certbot/certbot
 
-Getting Started With Shell Access [2]_
+
+安装
+====
+
+Debian 9版::
+
+      $ sudo apt-get install certbot python-certbot-nginx
+
+
+
+Docker版::
+
+    $ docker run -it --rm --name certbot \
+        -v "/etc/letsencrypt:/etc/letsencrypt" \
+        -v "/var/lib/letsencrypt:/var/lib/letsencrypt" \
+        certbot/certbot certonly
+
+
+Getting Started With Shell Access
 ======================================
 
-实例——Nginx on Debian 9 (stretch)::
+基于Nginx生成证书::
 
-    1. SSH into the server with sudo privileges.
-    2. Install Certbot:
-      $ sudo apt-get install certbot python-certbot-nginx
-    3. 生成证书
-
-       a) 生成证书并自动修改nginx配置
-          $ sudo certbot --nginx
-       b) 只生成证书
-          $ sudo certbot certonly --nginx
+   a) 生成证书并自动修改nginx配置
+      $ sudo certbot --nginx
+   b) 只生成证书
+      $ sudo certbot certonly --nginx
     4. 证书有效期3个月:
       // 刷新证书(未验证)
       $ certbot renew
+
+不基于web server生成证书::
+
+    注意: 用这种方法80端口不能被占用
+    $ certbot certonly --standalone --email admin@zhaoweiguo.com -d webrtc3.zhaoweiguo.com
+
+    条件:
+    1. 执行此命令必须使用 root 用户获得文件夹的权限
+    2. 域名能访问并且有绑定的公网 IP
+    3. 必须在此域名绑定的服务器上运行
+    4. 会使用 80 断端口，如果 nginx 监听 80 端口，把 nginx 先关掉
+
+Docker版本不基于web server::
+
+    $ docker run -it -p 80:80 --rm --name certbot \
+        -v "/etc/letsencrypt:/etc/letsencrypt" \
+        -v "/var/lib/letsencrypt:/var/lib/letsencrypt" \
+        certbot/certbot certonly --standalone \
+        --email admin@zhaoweiguo.com -d webrtc3.zhaoweiguo.com
+
+成功界面
+========
 
 IMPORTANT NOTES::
 
@@ -37,9 +73,7 @@ IMPORTANT NOTES::
      Donating to ISRG / Let's Encrypt:   https://letsencrypt.org/donate
      Donating to EFF:                    https://eff.org/donate-le
 
-
+参考
+====
 
 * 申请 Let's Encrypt 永久免费 SSL 证书过程教程及常见问题，及续期: https://blog.csdn.net/u013378306/article/details/80030405
-
-.. [1] https://letsencrypt.org/
-.. [2] https://certbot.eff.org/

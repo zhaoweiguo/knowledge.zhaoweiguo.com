@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>docker run &mdash; 新溪-gordon V1.6.7 documentation</title>
+  <title>docker run &mdash; 新溪-gordon V1.6.8 documentation</title>
   
 
   
@@ -90,7 +90,7 @@ var _hmt = _hmt || [];
             
             
               <div class="version">
-                V1.6.7
+                V1.6.8
               </div>
             
           
@@ -481,12 +481,16 @@ var _hmt = _hmt || [];
 <div class="contents topic" id="contents">
 <p class="topic-title">Contents</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="#docker-run" id="id3">docker run</a></p></li>
+<li><p><a class="reference internal" href="#docker-run" id="id4">docker run</a></p>
+<ul>
+<li><p><a class="reference internal" href="#id2" id="id5">常用实例</a></p></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
 </details><div class="section" id="docker-run">
-<h1><a class="toc-backref" href="#id3">docker run</a><a class="headerlink" href="#docker-run" title="Permalink to this headline">¶</a></h1>
+<h1><a class="toc-backref" href="#id4">docker run</a><a class="headerlink" href="#docker-run" title="Permalink to this headline">¶</a></h1>
 <p>Usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># 在一新的container中运行一新的命令</span>
 <span class="n">docker</span> <span class="n">run</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">IMAGE</span> <span class="p">[</span><span class="n">COMMAND</span><span class="p">]</span> <span class="p">[</span><span class="n">ARG</span><span class="o">...</span><span class="p">]</span>
@@ -505,52 +509,62 @@ var _hmt = _hmt || [];
 <span class="o">-</span><span class="n">w</span><span class="p">,</span> <span class="o">--</span><span class="n">workdir</span> <span class="n">string</span>   <span class="n">Working</span> <span class="n">directory</span> <span class="n">inside</span> <span class="n">the</span> <span class="n">container</span>
 </pre></div>
 </div>
-<p>常用实例:</p>
+<div class="section" id="id2">
+<h2><a class="toc-backref" href="#id5">常用实例</a><a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span># 执行docker命令
 $ docker run ubuntu:14.04 /bin/cat /etc/issue
-
-// -p, --publish list
-# 1. 将容器内的80端口绑定到本地宿主机的80端口上
+</pre></div>
+</div>
+<p>-p, –publish list指定端口:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 将容器内的80端口绑定到本地宿主机的80端口上
 $ docker run -d -p 127.0.0.1:80:80 --name static_web test/static_web nginx -g &quot;daemon off;&quot;
-# 2. udp模式
+
+2. udp模式
 $ sudo docker run -d -p 127.0.0.1:5000:5000/udp training/webapp python app.py
-# 3. 可以使用类似的方法将容器内的80端口绑定到一个特定网络接口的随机端口上:
+
+3. 可以使用类似的方法将容器内的80端口绑定到一个特定网络接口的随机端口上:
 # docker run -d -p 127.0.0.1::80 --name static_web test/static_web nginx -g &quot;daemon off;&quot;
-# 4. 容器启动绑定多IP
+
+4. 容器启动绑定多IP
 $ docker run -d -p 5005:5000 -p 5006:80 myfirstapp python app.py   #容器ID:44e703c1279a
 $ docker port 44e703c1279a
 5000/tcp -&gt; 0.0.0.0:5005
 80/tcp -&gt; 0.0.0.0:5006
-
-// -P, --publish-all
-# 该命令会将容器内的80端口对本地宿主机公开，并且绑定到宿主机的一个随机端口上
+</pre></div>
+</div>
+<p>-P, –publish-all:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span># 该命令会将容器内的80端口对本地宿主机公开，并且绑定到宿主机的一个随机端口上
 $ docker run -d -P --name static_web test/static_web nginx -g &quot;daemon off;&quot;
-
-
-// -i: --interactive
+</pre></div>
+</div>
+<p>-it:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>// -i: --interactive
 // -t: --tty
 # 需要在运行时指定: --name jenkins-tutorials
 $ docker exec -it jenkins-tutorials bash
 $ docker run -t -i ubuntu:14.04 /bin/bash   # shell登陆 -t(--tty=true) and -i(--interactive=true)
-
-// --link list
-# 创建一个名为web的container链接到名为db的container
+</pre></div>
+</div>
+<p>–link list:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span># 创建一个名为web的container链接到名为db的container
 # --link &lt;name&gt;:&lt;alias&gt;:
 #     &lt;name&gt;:  为要被链接的container的name
 #     &lt;alias&gt;: 是这个&lt;name&gt;的别名
 $ docker run -d -P --name web --link db:db training/webapp python app.py
-
-// -v, --volume list
-# list是指: -v可以被多次使用
+</pre></div>
+</div>
+<p>-v, –volume list:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span># list是指: -v可以被多次使用
 $ docker run -d -P --name web -v /webapp training/webapp python app.py
 $ docker run -p 8080:8080 -p 50000:50000 -v jenkins_home:/var/jenkins_home jenkins/jenkins
 # Mount a Host Directory as a Data Volume
 $ docker run -d -P --name web -v /src/webapp:/opt/webapp training/webapp python app.py
 # 新建一个read-only类型的volume:
 $ docker run -d -P --name web -v /src/webapp:/opt/webapp:ro training/webapp python app.py
-
-// -d, --detach
-$ docker run -d ubuntu:14.04 /bin/sh -c &quot;while true; do echo hello world; sleep 1; done&quot;
+</pre></div>
+</div>
+<p>-d, –detach:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ docker run -d ubuntu:14.04 /bin/sh -c &quot;while true; do echo hello world; sleep 1; done&quot;
 1e5535038e285177d5214659a068137486f96ee5c2e85a4ac52dc83f2ebe4147
 </pre></div>
 </div>
@@ -672,6 +686,7 @@ $ docker run -d ubuntu:14.04 /bin/sh -c &quot;while true; do echo hello world; s
 </tbody>
 </table>
 </div>
+</div>
 
 
            </div>
@@ -716,7 +731,7 @@ $ docker run -d ubuntu:14.04 /bin/sh -c &quot;while true; do echo hello world; s
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../../../',
-            VERSION:'V1.6.7',
+            VERSION:'V1.6.8',
             LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',

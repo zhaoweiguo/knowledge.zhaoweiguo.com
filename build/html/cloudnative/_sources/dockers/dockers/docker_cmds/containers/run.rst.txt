@@ -19,28 +19,37 @@ Usage::
     -v, --volume list   Bind mount a volume, 例: -v <host volume>:<container volume>
     -w, --workdir string   Working directory inside the container
 
-常用实例::
+常用实例
+========
+
+::
 
     # 执行docker命令
     $ docker run ubuntu:14.04 /bin/cat /etc/issue
 
-    // -p, --publish list
-    # 1. 将容器内的80端口绑定到本地宿主机的80端口上
+-p, --publish list指定端口::
+
+    1. 将容器内的80端口绑定到本地宿主机的80端口上
     $ docker run -d -p 127.0.0.1:80:80 --name static_web test/static_web nginx -g "daemon off;"
-    # 2. udp模式
+    
+    2. udp模式
     $ sudo docker run -d -p 127.0.0.1:5000:5000/udp training/webapp python app.py
-    # 3. 可以使用类似的方法将容器内的80端口绑定到一个特定网络接口的随机端口上:
+    
+    3. 可以使用类似的方法将容器内的80端口绑定到一个特定网络接口的随机端口上:
     # docker run -d -p 127.0.0.1::80 --name static_web test/static_web nginx -g "daemon off;"
-    # 4. 容器启动绑定多IP
+    
+    4. 容器启动绑定多IP
     $ docker run -d -p 5005:5000 -p 5006:80 myfirstapp python app.py   #容器ID:44e703c1279a
     $ docker port 44e703c1279a
     5000/tcp -> 0.0.0.0:5005
     80/tcp -> 0.0.0.0:5006
 
-    // -P, --publish-all
+-P, --publish-all::
+
     # 该命令会将容器内的80端口对本地宿主机公开，并且绑定到宿主机的一个随机端口上
     $ docker run -d -P --name static_web test/static_web nginx -g "daemon off;"
 
+-it::
 
     // -i: --interactive
     // -t: --tty
@@ -48,14 +57,16 @@ Usage::
     $ docker exec -it jenkins-tutorials bash
     $ docker run -t -i ubuntu:14.04 /bin/bash   # shell登陆 -t(--tty=true) and -i(--interactive=true)
 
-    // --link list
+--link list::
+
     # 创建一个名为web的container链接到名为db的container
     # --link <name>:<alias>:
     #     <name>:  为要被链接的container的name
     #     <alias>: 是这个<name>的别名
     $ docker run -d -P --name web --link db:db training/webapp python app.py
 
-    // -v, --volume list
+-v, --volume list::
+
     # list是指: -v可以被多次使用
     $ docker run -d -P --name web -v /webapp training/webapp python app.py
     $ docker run -p 8080:8080 -p 50000:50000 -v jenkins_home:/var/jenkins_home jenkins/jenkins
@@ -64,7 +75,8 @@ Usage::
     # 新建一个read-only类型的volume:
     $ docker run -d -P --name web -v /src/webapp:/opt/webapp:ro training/webapp python app.py
 
-    // -d, --detach
+-d, --detach::
+
     $ docker run -d ubuntu:14.04 /bin/sh -c "while true; do echo hello world; sleep 1; done"
     1e5535038e285177d5214659a068137486f96ee5c2e85a4ac52dc83f2ebe4147
 
