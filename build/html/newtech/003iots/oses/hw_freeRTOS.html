@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>FreeRTOS &mdash; 新溪-gordon V1.6.11 documentation</title>
+  <title>FreeRTOS &mdash; 新溪-gordon V1.6.12 documentation</title>
   
 
   
@@ -31,8 +31,8 @@
   <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="OpenWrt" href="hw_OpenWrt.html" />
-    <link rel="prev" title="嵌入式系统" href="hw_osBrief.html" /> 
+    <link rel="next" title="RT-thread" href="hw_RT-thread.html" />
+    <link rel="prev" title="嵌入式OS" href="../os.html" /> 
 
   
   <script src="../../_static/js/modernizr.min.js"></script>
@@ -63,7 +63,7 @@
             
             
               <div class="version">
-                V1.6.11
+                V1.6.12
               </div>
             
           
@@ -293,25 +293,32 @@
 <li class="toctree-l3"><a class="reference internal" href="../hardwares/picture.html">各种硬件图示</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../cloud.html">设备云</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../cloud.html#id3">开源平台</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cloud.html">设备云</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../clouds/normal.html">常用</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../edge.html">边缘服务</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../edges/normal.html">边缘计算</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../smart-home.html">智能家居</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../smart-speaker.html">智能音箱</a></li>
 <li class="toctree-l2 current"><a class="reference internal" href="../os.html">嵌入式OS</a><ul class="current">
-<li class="toctree-l3"><a class="reference internal" href="hw_osBrief.html">嵌入式系统</a></li>
 <li class="toctree-l3 current"><a class="current reference internal" href="#">FreeRTOS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hw_RT-thread.html">RT-thread</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hw_mbedOS.html">mbedOS</a></li>
 <li class="toctree-l3"><a class="reference internal" href="hw_OpenWrt.html">OpenWrt</a></li>
 <li class="toctree-l3"><a class="reference internal" href="hw_raspberry.html">树莓派相关</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="raspberrys/rasp_normal.html">树莓派日常</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="tmp.html">临时</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../security.html">安全</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../scenario.html">应用场景</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../scenarios/smart-home.html">智能家居</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../scenarios/smart-speaker.html">智能音箱</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../005G.html">5G 相关</a><ul>
@@ -409,24 +416,51 @@
 <div class="contents topic" id="contents">
 <p class="topic-title">Contents</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="#freertos" id="id3">FreeRTOS</a></p></li>
+<li><p><a class="reference internal" href="#freertos" id="id5">FreeRTOS</a></p>
+<ul>
+<li><p><a class="reference internal" href="#id2" id="id6">简介</a></p></li>
+<li><p><a class="reference internal" href="#id3" id="id7">源码</a></p></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
 </details><div class="section" id="freertos">
-<h1><a class="toc-backref" href="#id3">FreeRTOS</a><a class="headerlink" href="#freertos" title="Permalink to this headline">¶</a></h1>
+<h1><a class="toc-backref" href="#id5">FreeRTOS</a><a class="headerlink" href="#freertos" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id2">
+<h2><a class="toc-backref" href="#id6">简介</a><a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>针对嵌入式设备的开源实时操作系统，支持众多的微处理器。创始人 Richard Barry，诞生于 2003 年，完全开源、免费，轻量级嵌入式实时操作系统。C 和汇编来写的，其中绝大部分都是用 C 语言编写的，只有极少数的与处理器密切相关的部分代码才是用汇编写的。在嵌入式领域，FreeRTOS是不多的同时具有实时性，开源性，可靠性，易用性，多平台支持等特点的嵌入式操作系统。目前，FreeRTOS已经发展到支持包含X86，Xilinx，Altera等多达30种的硬件平台</p>
+<p>主要功能:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>任务管理、时间管理、信号量、消息队列、内存管理、记录功能、软件定时器、协程等，
+可基本满足较小系统的需要。
+</pre></div>
+</div>
+<p>主要特点:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>源码公开、可移植、可裁剪、调度策略灵活，
+可以方便移植到各种单片机上运行。
+
+FreeRTOS内核支持优先级调度算法，每个任务可根据重要程度的不同被赋予一定的优先级，CPU总是让处于就绪态的、优先级最高的任务先运行。
+FreeRTOS内核同时支持轮换调度算法，系统允许不同的任务使用相同的优先级，在没有更高优先级任务就绪的情况下，同一优先级的任务共享CPU的使用时间。
+</pre></div>
+</div>
+<p>FreeRTOS的不足:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>相对于常见的μC/OS—II操作系统，FreeRTOS操作系统既有优点也存在不足。
+其不足之处:
+  1. 体现在系统的服务功能上，
+      如FreeRTOS只提供了消息队列和信号量的实现，无法以后进先出的顺序向消息队列发送消息；
+  2. FreeRTOS只是一个操作系统内核
+      需外扩第三方的GUI(图形用户界面)、TCP/IP协议栈、FS(文件系统)等才能实现一个较复杂的系统，
+      不像μC/OS-II可以和μC/GUI、μC/FS、μC/TCP-IP等无缝结合。
+</pre></div>
+</div>
+</div>
+<div class="section" id="id3">
+<h2><a class="toc-backref" href="#id7">源码</a><a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
 <p>FreeRTOS源码目录:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>FreeRTOS-Plus          包含FreeRTOS+组件和演示例程；
 FreeRTOS                   包含FreeRTOS实时内核源文件和演示例程
 </pre></div>
 </div>
-<p>简介:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>FreeRTOS 由 Richard Barry 开发，是一个开源的、可移植的、小型的嵌入式实时操作系统内核。FreeRTOS 既支持抢占式多任务，也支持协作式多任务。FreeRTOS的主要特性如下：
-</pre></div>
-</div>
-<p>在嵌入式领域，FreeRTOS是不多的同时具有实时性，开源性，可靠性，易用性，多平台支持等特点的嵌入式操作系统。目前，FreeRTOS已经发展到支持包含X86，Xilinx，Altera等多达30种的硬件平台</p>
-<p>作为一个轻量级的操作系统，FreeRTOS提供的功能包括：任务管理、时间管理、信号量、消息队列、内存管理、记录功能等，可基本满足较小系统的需要。FreeRTOS内核支持优先级调度算法，每个任务可根据重要程度的不同被赋予一定的优先级，CPU总是让处于就绪态的、优先级最高的任务先运行。FreeRTOS内核同时支持轮换调度算法，系统允许不同的任务使用相同的优先级，在没有更高优先级任务就绪的情况下，同一优先级的任务共享CPU的使用时间。</p>
-<p>FreeRTOS的不足　相对于常见的μC/OS—II操作系统，FreeRTOS操作系统既有优点也存在不足。其不足之处，一方面体现在系统的服务功能上，如FreeRTOS只提供了消息队列和信号量的实现，无法以后进先出的顺序向消息队列发送消息；另一方面，FreeRTOS只是一个操作系统内核，需外扩第三方的GUI(图形用户界面)、TCP/IP协议栈、FS(文件系统)等才能实现一个较复杂的系统，不像μC/OS-II可以和μC/GUI、μC/FS、μC/TCP-IP等无缝结合。</p>
 <table class="docutils align-default">
 <colgroup>
 <col style="width: 32%" />
@@ -443,6 +477,7 @@ FreeRTOS                   包含FreeRTOS实时内核源文件和演示例程
 </tbody>
 </table>
 </div>
+</div>
 
 
            </div>
@@ -452,10 +487,10 @@ FreeRTOS                   包含FreeRTOS实时内核源文件和演示例程
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="hw_OpenWrt.html" class="btn btn-neutral float-right" title="OpenWrt" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="hw_RT-thread.html" class="btn btn-neutral float-right" title="RT-thread" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="hw_osBrief.html" class="btn btn-neutral" title="嵌入式系统" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="../os.html" class="btn btn-neutral" title="嵌入式OS" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -487,7 +522,7 @@ FreeRTOS                   包含FreeRTOS实时内核源文件和演示例程
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../',
-            VERSION:'V1.6.11',
+            VERSION:'V1.6.12',
             LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',

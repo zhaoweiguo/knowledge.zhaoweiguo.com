@@ -1,5 +1,65 @@
 跨os相关问题
-=================
+############
+
+
+交叉编译问题
+============
+
+一般情况
+--------
+
+::
+
+    # mac上编译linux和windows二进制
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build 
+    CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build 
+
+    # linux上编译mac和windows二进制
+    CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build 
+    CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build
+
+    # windows上编译mac和linux二进制
+    SET CGO_ENABLED=0 SET GOOS=darwin SET GOARCH=amd64 go build main.go
+    SET CGO_ENABLED=0 SET GOOS=linux SET GOARCH=amd64 go build main.go
+
+
+交叉编译是下支持CGO
+-------------------
+
+交叉编译是不支持CGO的，也就是说如果你的代码中存在C代码，是编译不了的::
+
+    // 注意: 比如说你的程序中使用了sqlite数据库，在编译go-sqlite驱动时按照上面的做法是编译不通过的
+    // 需要CGO支持的，要将CGO_ENABLED的0改为1，也就是CGO_ENABLED=1
+    
+x86 linux上编译arm版的二进制::
+
+    $ CGO_ENABLED=1 GOOS=linux GOARCH=arm CC=arm-linux-gnueabi-gcc go build
+
+Mac 下交叉编译 x86::
+
+    安装依赖:
+    $ brew install FiloSottile/musl-cross/musl-cross
+    编译:
+    $ CGO_ENABLED=1 GOOS=linux  GOARCH=amd64  CC=x86_64-linux-musl-gcc  CXX=x86_64-linux-musl-g++ go build -o BIN_NAME
+
+    运行时可能报:
+    /lib/ld-musl-x86_64.so.1: bad ELF interpreter: No such file or directory
+    这是因为 linux 没有安装 musl 的支持
+
+
+
+
+相关错误::
+
+    1. implicit declaration of function 'setresgid' is invalid in C99
+
+
+
+* Golang 如何交叉编译各个平台的二进制文件详解: https://www.jb51.net/article/146168.htm
+* 使用 go 语言进行交叉编译的时候遇到的一些问题: https://www.baifachuan.com/posts/4862a3b1.html
+
+其他
+====
 
 cannot execute binary file
 --------------------------------
@@ -30,31 +90,6 @@ Golang编译的二进制文件在alpine中无法运行
     // 注意: Neither GOOS=linux nor GOARCH=amd6 was necessary.
     $> CGO_ENABLED=0 go build
 
-交叉编译问题
-------------
-
-一般情况 [3]_ ::
-
-    # mac上编译linux和windows二进制
-    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build 
-    CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build 
-     
-    # linux上编译mac和windows二进制
-    CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build 
-    CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build
-     
-    # windows上编译mac和linux二进制
-    SET CGO_ENABLED=0 SET GOOS=darwin SET GOARCH=amd64 go build main.go
-    SET CGO_ENABLED=0 SET GOOS=linux SET GOARCH=amd64 go build main.go
-
-交叉编译是不支持CGO的，也就是说如果你的代码中存在C代码，是编译不了的::
-
-    // 注意: 比如说你的程序中使用了sqlite数据库，在编译go-sqlite驱动时按照上面的做法是编译不通过的
-    // 需要CGO支持的，要将CGO_ENABLED的0改为1，也就是CGO_ENABLED=1
-    linux上编译arm版的二进制:
-    # Build for arm
-    CGO_ENABLED=1 GOOS=linux GOARCH=arm CC=arm-linux-gnueabi-gcc go build
-
 go tool cgo: exit status 2
 -------------------------------
 
@@ -72,4 +107,3 @@ go tool cgo: exit status 2
 
 
 .. [2] https://stackoverflow.com/questions/34729748/installed-go-binary-not-found-in-path-on-alpine-linux-docker
-.. [3] https://www.jb51.net/article/146168.htm
