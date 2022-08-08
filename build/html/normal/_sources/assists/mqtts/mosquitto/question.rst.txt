@@ -1,0 +1,82 @@
+问题
+####
+
+
+遇到的问题::
+
+    1.安装遇到的问题
+    fatal error: uuid/uuid.h: No such file or directory
+    // 解决方法
+    yum install libuuid-devel
+
+    2.使用时遇到的问题
+    libmosquitto.so.1: cannot open shared object file: No such file or directory
+    // 解决方法
+    sudo ln -s /usr/local/lib/libmosquitto.so.1 /usr/lib/libmosquitto.so.1
+    sudo ldconfig
+
+  
+证书相关
+========
+
+MQTTX 工具 SSL Secure 标记为选中::
+
+
+    1. Error: unable to verify the first certificate
+    2. Error [ERR_TLS_CERT_ALTNAME_INVALID]: Hostname/IP does not match certificate's altnames: IP: 127.0.0.1 is not in the cert's list:
+    3. Error: self signed certificate in certificate chain
+
+    3. Error: write EPROTO 140193543951000:error:10000410:SSL routines:OPENSSL_internal:SSLV3_ALERT_HANDSHAKE_FAILURE:../../third_party/boringssl/src/ssl/tls_record.cc:594:SSL alert number 40
+
+    4. 配置上use_identity_as_username true
+    Error: Connection refused: Bad username or password
+
+    5. Error: certificate signature failure
+
+
+
+
+证书安全级别不够
+----------------
+
+现象::
+
+    OpenSSL Error[0]: error:140AB18E:SSL routines:SSL_CTX_use_certificate:ca md too weak
+
+
+报错原因分析::
+
+    原因是 openssl 调整了安全级别，要求 ca 具备更高等级的安全，因此先前发布的证书，如果采用了不安全的算法，比如 MD5，就会显示上述这个错误
+
+解决办法::
+
+    1. 重新生成证书，先前证书弃用
+    2. 使用函数 SSL_CTX_set_security_level (ctx,1); 下调安全级别
+      此函数使用官方教程
+      /docs/man1.1.1/man3/SSL_CTX_set_security_level.html
+
+参考链接::
+
+    ca md too weak · Issue #682 · adrienverge/openfortivpn · GitHub
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

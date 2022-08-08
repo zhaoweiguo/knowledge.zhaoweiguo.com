@@ -1,0 +1,67 @@
+配置文件
+########
+
+
+日志相关::
+
+    log_dest file /mosquitto/log/mosquitto.log
+    log_timestamp true
+    log_timestamp_format %Y-%m-%dT%H:%M:%S
+    log_type debug
+
+
+证书相关
+========
+
+::
+
+    cafile /etc/mosquitto/ca_certificates/ca.crt
+    certfile /etc/mosquitto/certs/server.crt
+    keyfile /etc/mosquitto/certs/server.key
+    # require_certificate true
+    use_identity_as_username true
+
+
+
+
+require_certificate::
+
+    1. false
+        the SSL/TLS component of the client will verify the server 
+        but there is no requirement for the client to provide anything for the server: 
+          authentication is limited to the MQTT built in username/password. 
+    2. true
+        the client must provide a valid certificate in order to connect successfully. 
+
+
+use_identity_as_username::
+
+    1. true:
+      It causes the Common Name (CN) from the client certificate to be used 
+        instead of the MQTT username for access control purposes. 
+      The password is not used because it is assumed that only authenticated clients have valid certificates. 
+      This means that any CA certificates you include in cafile are valid for connecting to your broker. 
+    2. false:
+      the client must authenticate as normal (if required by password_file) through the MQTT options. 
+
+
+use_subject_as_username::
+
+    The same principle applies for the use_subject_as_username option, 
+      but the entire certificate subject is used as the username instead of just the CN.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
