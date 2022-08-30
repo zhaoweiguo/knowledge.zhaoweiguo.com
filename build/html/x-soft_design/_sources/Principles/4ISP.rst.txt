@@ -1,0 +1,161 @@
+接口隔离原则-ISP
+################
+
+* Interface Segregation Principle
+
+.. note:: Clients should not be forced to depend upon interfaces that they do not use
+
+
+在设计微服务或者类库接口的时候，如果部分接口只被部分调用者使用，那我们就需要将这部分接口隔离出来，单独给对应的调用者使用，而不是强迫其他调用者也依赖这部分不会被用到的接口。
+
+单一职责原则的时候，也提到过类似的问题。实际上，判定功能是否单一，除了很强的主观性，还需要结合具体的场景。
+
+接口隔离原则与单一职责原则的区别
+================================
+
+.. note:: 接口隔离原则跟单一职责原则有点类似，不过稍微还是有点区别。单一职责原则针对的是模块、类、接口的设计。而接口隔离原则相对于单一职责原则，一方面它更侧重于接口的设计，另一方面它的思考的角度不同。它提供了一种判断接口是否职责单一的标准：通过调用者如何使用接口来间接地判定。如果调用者只使用部分接口或接口的部分功能，那接口的设计就不够职责单一。
+
+实例
+====
+
+简介::
+
+    假设我们的项目中用到了三个外部系统：Redis、MySQL、Kafka。
+    每个系统都对应一系列配置信息，比如地址、端口、访问超时时间等。
+    为了在内存中存储这些配置信息，供项目中的其他模块来使用
+
+    新需求1: 希望支持 Redis 和 Kafka 配置信息的热更新
+    新需求2: 新增监控功能,暴露 MySQL 和 Redis 的配置信息，不暴露 Kafka 的配置信息
+
+例1-使用接口隔离原则实现::
+
+    public interface Updater {
+      void update();
+    }
+
+    public interface Viewer {
+      String outputInPlainText();
+      Map<String, String> output();
+    }
+
+    public class RedisConfig implemets Updater, Viewer {
+      //...省略其他属性和方法...
+      @Override
+      public void update() { //... }
+      @Override
+      public String outputInPlainText() { //... }
+      @Override
+      public Map<String, String> output() { //...}
+    }
+
+    public class KafkaConfig implements Updater {
+      //...省略其他属性和方法...
+      @Override
+      public void update() { //... }
+    }
+
+    public class MysqlConfig implements Viewer {
+      //...省略其他属性和方法...
+      @Override
+      public String outputInPlainText() { //... }
+      @Override
+      public Map<String, String> output() { //...}
+    }
+
+    public class SimpleHttpServer {
+      private String host;
+      private int port;
+      private Map<String, List<Viewer>> viewers = new HashMap<>();
+      
+      public SimpleHttpServer(String host, int port) {//...}
+      
+      public void addViewers(String urlDirectory, Viewer viewer) {
+        if (!viewers.containsKey(urlDirectory)) {
+          viewers.put(urlDirectory, new ArrayList<Viewer>());
+        }
+        this.viewers.get(urlDirectory).add(viewer);
+      }
+      
+      public void run() { //... }
+    }
+
+    public class Application {
+        ConfigSource configSource = new ZookeeperConfigSource();
+        public static final RedisConfig redisConfig = new RedisConfig(configSource);
+        public static final KafkaConfig kafkaConfig = new KakfaConfig(configSource);
+        public static final MySqlConfig mysqlConfig = new MySqlConfig(configSource);
+        
+        public static void main(String[] args) {
+            ScheduledUpdater redisConfigUpdater =
+                new ScheduledUpdater(redisConfig, 300, 300);
+            redisConfigUpdater.run();
+            
+            ScheduledUpdater kafkaConfigUpdater =
+                new ScheduledUpdater(kafkaConfig, 60, 60);
+            redisConfigUpdater.run();
+            
+            SimpleHttpServer simpleHttpServer = new SimpleHttpServer(“127.0.0.1”, 2389);
+            simpleHttpServer.addViewer("/config", redisConfig);
+            simpleHttpServer.addViewer("/config", mysqlConfig);
+            simpleHttpServer.run();
+        }
+    }
+
+例2-不使用 ISP实现::
+
+    public interface Config {
+      void update();
+      String outputInPlainText();
+      Map<String, String> output();
+    }
+
+    public class RedisConfig implements Config {
+      //...需要实现Config的三个接口update/outputIn.../output
+    }
+
+    public class KafkaConfig implements Config {
+      //...需要实现Config的三个接口update/outputIn.../output
+    }
+
+    public class MysqlConfig implements Config {
+      //...需要实现Config的三个接口update/outputIn.../output
+    }
+
+    public class ScheduledUpdater {
+      //...省略其他属性和方法..
+      private Config config;
+
+      public ScheduleUpdater(Config config, long initialDelayInSeconds, long periodInSeconds) {
+          this.config = config;
+          //...
+      }
+      //...
+    }
+
+    public class SimpleHttpServer {
+      private String host;
+      private int port;
+      private Map<String, List<Config>> viewers = new HashMap<>();
+     
+      public SimpleHttpServer(String host, int port) {//...}
+      
+      public void addViewer(String urlDirectory, Config config) {
+        if (!viewers.containsKey(urlDirectory)) {
+          viewers.put(urlDirectory, new ArrayList<Config>());
+        }
+        viewers.get(urlDirectory).add(config);
+      }
+      
+      public void run() { //... }
+    }
+
+
+
+
+
+
+
+
+
+
+

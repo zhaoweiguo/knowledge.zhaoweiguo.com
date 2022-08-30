@@ -1,0 +1,509 @@
+A PAINLESS GUIDE TO CRC ERROR DETECTION ALGORITHMS
+##################################################
+
+The Basic Idea Behind CRC Algorithms
+====================================
+
+Example::
+
+    传输2个字节的数据: (6,23)
+    => 16进制: 0617
+    => 2进制: 00000110 00010111
+
+假设使用除数1001，得::
+
+              ...0000010101101 = 00AD =  173 = QUOTIENT
+             ____-___-___-___-
+    9= 1001 ) 0000011000010111 = 0617 = 1559 = DIVIDEND
+    DIVISOR   0000.,,....,.,,,
+              ----.,,....,.,,,
+               0000,,....,.,,,
+               0000,,....,.,,,
+               ----,,....,.,,,
+                0001,....,.,,,
+                0000,....,.,,,
+                ----,....,.,,,
+                 0011....,.,,,
+                 0000....,.,,,
+                 ----....,.,,,
+                  0110...,.,,,
+                  0000...,.,,,
+                  ----...,.,,,
+                   1100..,.,,,
+                   1001..,.,,,
+                   ====..,.,,,
+                    0110.,.,,,
+                    0000.,.,,,
+                    ----.,.,,,
+                     1100,.,,,
+                     1001,.,,,
+                     ====,.,,,
+                      0111.,,,
+                      0000.,,,
+                      ----.,,,
+                       1110,,,
+                       1001,,,
+                       ====,,,
+                        1011,,
+                        1001,,
+                        ====,,
+                         0101,
+                         0000,
+                         ----
+                          1011
+                          1001
+                          ====
+                          0010 = 02 = 2 = REMAINDER
+
+结论::
+
+    1559除以9=173余2
+
+    传输内容: 06172(16进制)
+    0617是要传输的内容
+    2是校验和
+
+
+
+
+
+
+
+Polynomical Arithmetic
+======================
+
+在 CRC 算法中，将二进制数据流作为多项式的系数，然后进行的是多项式的乘除法。
+
+多项式说明::
+
+    23(decimal) => 17 (hex) => 10111 binary
+    =>
+    1*x^4 + 0*x^3 + 1*x^2 + 1*x^1 + 1*x^0
+    =>
+    x^4 + x^2 + x^1 + x^0
+
+多项式乘法::
+
+    (x^3 + x^2 + x^0)(x^3 + x^1 + x^0)
+    = (x^6 + x^4 + x^3
+     + x^5 + x^3 + x^2
+     + x^3 + x^1 + x^0)
+    = x^6 + x^5 + x^4 + 3*x^3 + x^2 + x^1 + x^0
+
+polynomial arithmetic mod 2::
+
+    多项式算法不知道 x 的值，所有系统都做模2运算，所以
+    3*x^3 模2后变成 x^3
+
+    说明: 这儿本质是『遇到加减的地方都用异或运算来代替』
+
+最终结果::
+
+    x^6 + x^5 + x^4 + x^3 + x^2 + x^1 + x^0
+
+Binary Arithmetic with No Carries
+=================================
+
+.. note:: CRC arithmetic is primarily about XORing particular values at various shifting offsets.
+
+
+加减用异或(没有进位、借位操作)::
+
+      10011011
+     +11001010
+      --------
+      01010001
+
+乘法操作::
+
+        1101
+      x 1011
+        ----
+        1101
+       1101.
+      0000..
+     1101...
+     -------
+     1111111  Note: The sum uses CRC addition
+
+除法操作::
+
+                1100001010
+           _______________
+    10011 ) 11010110110000
+            10011,,.,,....
+            -----,,.,,....
+             10011,.,,....
+             10011,.,,....
+             -----,.,,....
+              00001.,,....
+              00000.,,....
+              -----.,,....
+               00010,,....
+               00000,,....
+               -----,,....
+                00101,....
+                00000,....
+                -----,....
+                 01011....
+                 00000....
+                 -----....
+                  10110...
+                  10011...
+                  -----...
+                   01010..
+                   00000..
+                   -----..
+                    10100.
+                    10011.
+                    -----.
+                     01110
+                     00000
+                     -----
+                      1110 = Remainder
+
+
+如果 A 是 B 的倍数::
+
+    if A was 0111010110 and B was 11:
+    则: 可以通过对 B 的各种移位进行异或运算，从零构造出 A
+        0111010110
+      = .......11.
+      + ....11....
+      + ...11.....
+        .11.......
+
+
+一个可用的实例
+==============
+
+.. note:: 在 CRC 算法中，这个指定的被除数有一个专有名称叫做 “生成多项式(generator polynomial)”或简化为"多项式(polynomial, poly)"。生成多项式经常会说到多项式的位宽（Width，简记为 W），这个位宽不是多项式对应的二进制数的位数，而是位数减 1。比如 CRC8 中用到的位宽为 8 的生成多项式，其实对应得二进制数有九位：100110001。
+
+CRC algorithms操作总结::
+
+   1. Choose a width W, and a poly G (of width W).
+   2. Append W zero bits to the message. Call this M'.
+   3. Divide M' by G using CRC arithmetic. The remainder is the checksum.
+
+实例::
+
+   Original message                : 1101011011(M)
+   Poly                            :      10011(G of width 4)
+   Message after appending W zeros : 11010110110000(M')
+
+Divide M' by G::
+
+                1100001010 = Quotient (nobody cares about the quotient)
+           _______________
+    10011 ) 11010110110000 = Augmented message (1101011011 + 0000)
+    =Poly   10011,,.,,....
+            -----,,.,,....
+             10011,.,,....
+             10011,.,,....
+             -----,.,,....
+              00001.,,....
+              00000.,,....
+              -----.,,....
+               00010,,....
+               00000,,....
+               -----,,....
+                00101,....
+                00000,....
+                -----,....
+                 01011....
+                 00000....
+                 -----....
+                  10110...
+                  10011...
+                  -----...
+                   01010..
+                   00000..
+                   -----..
+                    10100.
+                    10011.
+                    -----.
+                     01110
+                     00000
+                     -----
+                      1110 = Remainder = THE CHECKSUM!!!!
+
+最终::
+
+    传输的数据是: 11010110111110: 1101011011(原始数据)+1110(校验和)
+
+
+接收方有2种验证方式::
+
+    1. Separate the message and checksum.
+        然后按上面运算得到 checksum2，验证两者是否相同
+    2. 直接用传输的数据除以 poly 看结果是否为零
+
+
+
+Choosing A Poly
+===============
+
+
+.. note:: 生成多项式的选取是个很有难度的问题，如果选的不好，那么检出错误的概率就会低很多。好在这个问题已经被专家们研究了很长一段时间了，对于我们这些使用者来说，只要把现成的成果拿来用就行了。
+
+最常用的几种生成多项式如下::
+
+    1. CRC8=X8+X5+X4+X0
+        => 100110001
+        => 0x131
+    2. CRC-CCITT=X16+X12+X5+X0    [X25 standard]
+    3. CRC16=X16+X15+X2+X0
+    4. CRC12=X12+X11+X3+X2+X0
+    5. CRC32=X32+X26+X23+X22+X16+X12+X11+X10+X8+X7+X5+X4+X2+X1+X0     [Ethernet]
+        => 100000100110000010001110110110111
+        => 0x04C11DB7
+        => reverse notation: 0b11101101101110001000001100100000
+        => reverse notation: 1110,1101,1011,1000,1000,0011,0010,0000
+        => reverse notation: 0xEDB88320
+    6. CRC32_Q=x³²+ x³¹+ x²⁴+ x²²+ x¹⁶+ x¹⁴+ x⁸+ x⁷+ x⁵+ x³+ x¹+ x⁰
+        => reverse notation: 0b11010101100000101000001010000001
+        => 0xD5828281
+
+
+.. note:: 文献中生成多项式多用 16 进制简写法来表示，因为生成多项式的最高位肯定为 1，最高位的位置由位宽可知，故在简记式中，将最高的 1 统一去掉了，如 CRC32 的生成多项式简记为 04C11DB7 实际上表示的是 104C11DB7。
+
+
+位宽 W=1 的生成多项式 (CRC1) 有两种，分别是 X1 和 X1+X0，可以证明 10 对应的就是奇偶校验中的奇校验，而 11 对应则是偶校验。因此，写到这里我们知道了奇偶校验其实就是 CRC 校验的一种特例
+
+A Straightforward CRC Implementation
+====================================
+
+.. note:: 实现 CRC algorithm 本质是要实现 CRC 除法。要重新实现而不是用机器自带的除法指令原因有二：1.除法用的是CRC arithmetic;2.处理器没有这么长位数的寄存器。
+
+示例(W=4, poly=10011)，需要下面一个4位的 Register::
+
+                3   2   1   0   Bits
+              +---+---+---+---+
+     Pop! <-- |   |   |   |   | <----- Augmented message
+              +---+---+---+---+
+
+           1    0   0   1   1   = The Poly
+
+计算算法伪代码::
+
+   Load the register with zero bits.
+   Augment the message by appending W zero bits to the end of it.
+   While (more message bits)
+      Begin
+      Shift the register left by one bit, reading the next bit of the
+         augmented message into register bit position 0.
+      If (a 1 bit popped out of the register during last step)
+         Register = Register XOR Poly.
+      End
+   The register now contains the remainder.
+
+对每个循环::
+
+    原始Register: t7 t6 t5 t4 t3 t2 t1 t0
+
+    新的Register:
+            t6 t5 t4 t3 t2 t1 t0 ??(这个是移位后的下一位)
+    + t7 * (g7 g6 g5 g4 g3 g2 g1 g0)    [Reminder: + is XOR]
+
+    结论:
+      每一次新的Register运算都是:
+      1. 如果移位后得到的 t7为0: Register 就是移位后的值
+      2. 如果移位后得到的 t7为1: Register 就是移位后的值 XOR Poly
+
+伪代码详解::
+
+    Poly: 10011
+    W: 4
+    Message(appending W zero): 11010110110000
+    Register: 0000
+
+    Step1:
+      Register: 0000=>0001
+      Message: 1010110110000
+    Step2:
+      Register: 0001=>0011
+      Message: 010110110000
+    Step3:
+      Register: 0011=>0110
+      Message: 10110110000
+    Step4:
+      Register: 0110=>1101
+      Message: 0110110000
+    Step5:
+      Register: 1101=>1010 XOR Poly => 1010 XOR 0011 => 1001
+      Message: 110110000
+    Step6:
+      Register: 1001=>0011 XOR Poly => 0011 XOR 0011 => 0000
+      Message: 10110000
+    Step7:
+      Register: 0000=>0001
+      Message: 0110000
+    Step8:
+      Register: 0001=>0010
+      Message: 110000
+    Step9:
+      Register: 0010=>0101
+      Message: 10000
+    Step10:
+      Register: 0101=>1011
+      Message: 0000
+    Step10:
+      Register: 1011=>0110 XOR Poly => 0110 XOR 0011 => 0101
+      Message: 000
+    Step10:
+      Register: 0101=>1010
+      Message: 00
+    Step10:
+      Register: 1010=>0100 XOR Poly => 0100 XOR 0011 => 0111
+      Message: 0
+    Step10:
+      Register: 0111=>1110
+      Message: nil
+
+    Finished:
+      remainder: 1110
+
+
+A Table-Driven Implementation
+=============================
+
+.. note:: The SIMPLE algorithm above is a good starting point because it corresponds directly to the theory presented so far, and because it is so SIMPLE. However, because it operates at the bit level, it is rather awkward to code (even in C), and inefficient to execute (it has to loop once for each bit). 为提高效率，应该使用一个算法不以 bit 为单位，而是以nibbles (4 bits), bytes (8 bits), words(16 bits) and longwords (32 bits) and higher为单位。
+
+为方便讨论把4Bits换成32Bit=>4Bytes，需要32bits 的 Register(和上面一样，只不过Poly从4bit变成4Byte，处理单元从1bit变成1Byte)::
+
+                 3    2    1    0   Bytes
+              +----+----+----+----+
+     Pop! <-- |    |    |    |    | <----- Augmented message
+              +----+----+----+----+
+
+             1<------32 bits------>
+
+详解::
+
+    假设:
+      the top 8 bits of the 32-bit register (byte 3) to have the values: t7 t6 t5 t4 t3 t2 t1 t0
+      the top 8 bits of the poly: g7 g6.. g0
+
+    1. the 1st iteration, 根据 t7决定要不要执行 XOR Poly
+
+    2. the 2nd iteration, the top byte of register will be:
+                t6 t5 t4 t3 t2 t1 t0 ??
+        + t7 * (g7 g6 g5 g4 g3 g2 g1 g0)    [Reminder: + is XOR]
+    即: 第1次迭代后top1 bit= t6 + t7*g7
+    即: 要不要执行 XOR Poly 与(t7, t6)有关系
+
+    同理:
+    3. 3次迭代后，要不要执行 XOR Poly 与(t7, t6, t5)，共3位有关系
+    ...
+    k. K次迭代后，要不要执行 XOR Poly 与(t7, t6, ..)共 k 位有关系
+
+.. important:: 【结论】前8次迭代执行多少次与 Poly 的 XOR 操作只和头一个字节(top8位)有关。那我们是不是可以提前把这个数算出来呢？用这个提前算出来的值来与 Register 中的原始数据中做 XOR 操作，实现与上面多次进行的 XOR Poly 操作相同的效果。
+
+设想：在寄存器中不同的偏移处与一个常量值(0110)做 XOR 操作算出「Poly和」::
+
+    0100010  Register
+    ...0110  XOR this
+    ..0110.  XOR this
+    0110...  XOR this
+    -------
+    0011000
+
+.. note:: 【本质】以空间换取时间，直接将 CRC 表格计算好作为一个常数数组使用。一个字节(范围: 0-255)共256位，如果我们把所有这256种情况与 Poly的 XOR 操作都提前算出来不就减少好多运算了嘛！
+
+
+算法-::
+
+    While (augmented message is not exhausted)
+      Begin
+        1. 取出寄存器中的头一个字节
+        2. 计算出上面这个字节对应的控制字节
+        3. 根据控制字节位为1的执行 XOR 操作(注意移位)并计算出「Poly和」
+        4. 把寄存器左移一个字节，并在寄存器最后读一字节新的数据
+        5. 把步骤3计算的「Poly和」与寄存器做 XOR 操作
+      End
+
+    说明: 这个算法和前面一位位的算法效率一样，并没有比前面的算法更好
+    因为: 
+
+
+优化-把预算出来的数据放到一个表中，算法就可优化为::
+
+   While (augmented message is not exhaused)
+      Begin
+      Top = top_byte(Register);
+      Register = (Register << 24) | next_augmessage_byte;
+      Register = Register XOR precomputed_table[Top];
+      End
+
+
+::
+
+               3    2    1    0   Bytes
+            +----+----+----+----+
+     +-----<|    |    |    |    | <----- Augmented message
+     |      +----+----+----+----+
+     |                ^
+     |                |
+     |               XOR
+     |                |
+     |     0+----+----+----+----+       Algorithm
+     v      +----+----+----+----+       ---------
+     |      +----+----+----+----+       1. Shift the register left by
+     |      +----+----+----+----+          one byte, reading in a new
+     |      +----+----+----+----+          message byte.
+     |      +----+----+----+----+       2. Use the top byte just rotated
+     |      +----+----+----+----+          out of the register to index
+     +----->+----+----+----+----+          the table of 256 32-bit values.
+            +----+----+----+----+       3. XOR the table value into the
+            +----+----+----+----+          register.
+            +----+----+----+----+       4. Goto 1 iff more augmented
+            +----+----+----+----+          message bytes.
+         255+----+----+----+----+
+
+In C, the algorithm main loop looks like this::
+
+   r=0;
+   while (len--)
+     {
+      byte t = (r >> 24) & 0xFF;
+      r = (r << 8) | *p++;
+      r^=table[t];
+     }
+
+更优化为::
+
+    r=0; while (len--) r = ((r << 8) | *p++) ^ table[(r >> 24) & 0xFF];
+
+
+A Slightly Mangled Table-Driven Implementation
+==============================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+参考
+====
+
+* A PAINLESS GUIDE TO CRC ERROR DETECTION ALGORITHMS: https://zlib.net/crc_v3.txt
