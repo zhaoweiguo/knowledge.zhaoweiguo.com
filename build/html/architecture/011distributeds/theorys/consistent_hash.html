@@ -398,7 +398,23 @@
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
+            <nav id="local-table-of-contents" role="navigation" aria-labelledby="local-table-of-contents-title">
+              <h4 id="local-table-of-contents-title">On This Page</h4>
+              <ul>
+<li><a class="reference internal" href="#">一致性hash</a><ul>
+<li><a class="reference internal" href="#id2">Hash 取模</a></li>
+<li><a class="reference internal" href="#id3">一致 Hash 算法</a><ul>
+<li><a class="reference internal" href="#id4">容错性</a></li>
+<li><a class="reference internal" href="#id5">拓展性</a></li>
+<li><a class="reference internal" href="#id6">虚拟节点</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id7">参考</a></li>
+</ul>
+</li>
+</ul>
+
+            </nav>
   <table class="docutils align-default">
 <colgroup>
 <col style="width: 32%" />
@@ -414,33 +430,11 @@
 </tr>
 </tbody>
 </table>
-<details>
-<summary>目录</summary><div class="sidebar">
-<p class="sidebar-title">目录</p>
-<div class="contents topic" id="contents">
-<p class="topic-title">Contents</p>
-<ul class="simple">
-<li><p><a class="reference internal" href="#hash" id="id9">一致性hash</a></p>
-<ul>
-<li><p><a class="reference internal" href="#id2" id="id10">Hash 取模</a></p></li>
-<li><p><a class="reference internal" href="#id3" id="id11">一致 Hash 算法</a></p>
-<ul>
-<li><p><a class="reference internal" href="#id4" id="id12">容错性</a></p></li>
-<li><p><a class="reference internal" href="#id5" id="id13">拓展性</a></p></li>
-<li><p><a class="reference internal" href="#id6" id="id14">虚拟节点</a></p></li>
-</ul>
-</li>
-<li><p><a class="reference internal" href="#id7" id="id15">参考</a></p></li>
-</ul>
-</li>
-</ul>
-</div>
-</div>
-</details><div class="section" id="hash">
-<h1><a class="toc-backref" href="#id9">一致性hash</a><a class="headerlink" href="#hash" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="hash">
+<h1>一致性hash<a class="headerlink" href="#hash" title="Permalink to this headline">¶</a></h1>
 <p>当我们在做数据库分库分表或者是分布式缓存时，不可避免的都会遇到一个问题：如何将数据均匀的分散到各个节点中，并且尽量的在加减节点时能使受影响的数据最少。</p>
 <div class="section" id="id2">
-<h2><a class="toc-backref" href="#id10">Hash 取模</a><a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<h2>Hash 取模<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
 <p>随机放置就不说了，会带来很多问题。通常最容易想到的方案就是 hash 取模了:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">将传入的</span> <span class="n">Key</span> <span class="n">按照</span> <span class="n">index</span> <span class="o">=</span> <span class="nb">hash</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">%</span> <span class="n">N</span> <span class="n">这样来计算出需要存放的节点</span>
 <span class="n">其中</span><span class="p">:</span>
@@ -455,7 +449,7 @@
 </div>
 </div>
 <div class="section" id="id3">
-<h2><a class="toc-backref" href="#id11">一致 Hash 算法</a><a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<h2>一致 Hash 算法<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
 <p>一致 Hash 算法是将所有的哈希值构成了一个环，其范围在 0 ~ 2^32-1。如下图:</p>
 <img alt="https://img.zhaoweiguo.com/knowledge/images/theorys/consistent_hash/ring1.png" src="https://img.zhaoweiguo.com/knowledge/images/theorys/consistent_hash/ring1.png" />
 <p>之后将各个节点散列到这个环上，可以用节点的 IP、hostname 这样的唯一性字段作为 Key 进行 hash(key)，散列之后如下：</p>
@@ -464,19 +458,19 @@
 <img alt="https://img.zhaoweiguo.com/knowledge/images/theorys/consistent_hash/ring3.png" src="https://img.zhaoweiguo.com/knowledge/images/theorys/consistent_hash/ring3.png" />
 <p>这样按照顺时针方向就可以把 k1 定位到 N1节点，k2 定位到 N3节点，k3 定位到 N2节点。</p>
 <div class="section" id="id4">
-<h3><a class="toc-backref" href="#id12">容错性</a><a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<h3>容错性<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
 <p>这时假设 N1 宕机了：</p>
 <img alt="https://img.zhaoweiguo.com/knowledge/images/theorys/consistent_hash/ring4.png" src="https://img.zhaoweiguo.com/knowledge/images/theorys/consistent_hash/ring4.png" />
 <p>依然根据顺时针方向，k2 和 k3 保持不变，只有 k1 被重新映射到了 N3。这样就很好的保证了容错性，当一个节点宕机时只会影响到少少部分的数据。</p>
 </div>
 <div class="section" id="id5">
-<h3><a class="toc-backref" href="#id13">拓展性</a><a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<h3>拓展性<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
 <p>当新增一个节点N4时:</p>
 <img alt="https://img.zhaoweiguo.com/knowledge/images/theorys/consistent_hash/ring5.png" src="https://img.zhaoweiguo.com/knowledge/images/theorys/consistent_hash/ring5.png" />
 <p>在 N2 和 N3 之间新增了一个节点 N4 ，这时会发现受印象的数据只有 k3，其余数据也是保持不变，所以这样也很好的保证了拓展性。</p>
 </div>
 <div class="section" id="id6">
-<h3><a class="toc-backref" href="#id14">虚拟节点</a><a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<h3>虚拟节点<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>到目前为止该算法依然也有点问题</p>
@@ -489,7 +483,7 @@
 </div>
 </div>
 <div class="section" id="id7">
-<h2><a class="toc-backref" href="#id15">参考</a><a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h2>
+<h2>参考<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p>一致性 Hash 算法分析: <a class="reference external" href="https://crossoverjie.top/2018/01/08/Consistent-Hash/">https://crossoverjie.top/2018/01/08/Consistent-Hash/</a></p></li>
 </ul>
@@ -592,7 +586,8 @@
   </script>
 
 
-<script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script>
+<script type="text/javascript" src="../../_static/js/table-of-contents-sidebar.js"></script>
+<!-- <script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script> -->
 <script type="text/javascript">
     window.onload = function(e){
         TableOfContents.init({

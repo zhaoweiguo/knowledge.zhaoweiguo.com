@@ -89,23 +89,23 @@
             
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="01overview.html">01整体源码分析</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="01overview.html#id4">整体分析</a></li>
-<li class="toctree-l2"><a class="reference internal" href="01overview.html#id5">目录结构</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="01overview.html#id6">一级目录</a></li>
+<li class="toctree-l2"><a class="reference internal" href="01overview.html#id3">整体分析</a></li>
+<li class="toctree-l2"><a class="reference internal" href="01overview.html#id4">目录结构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="01overview.html#id5">一级目录</a></li>
 <li class="toctree-l3"><a class="reference internal" href="01overview.html#core">core 目录</a></li>
 <li class="toctree-l3"><a class="reference internal" href="01overview.html#rest">rest 目录</a></li>
 <li class="toctree-l3"><a class="reference internal" href="01overview.html#zrpc">zrpc 目录</a></li>
 <li class="toctree-l3"><a class="reference internal" href="01overview.html#tools">tools 目录</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="01overview.html#id7">相关链接</a></li>
+<li class="toctree-l2"><a class="reference internal" href="01overview.html#id6">相关链接</a></li>
 </ul>
 </li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">02对最简单的 api gateway 项目并进行源码分析</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#id3">生成 api gateway 项目</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id4">入口文件分析</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">生成 api gateway 项目</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">入口文件分析</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#rest-server">1. 生成 rest.Server 结构体</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id7">2. 注册路由</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">2. 注册路由</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#server">3. server 启动</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#httpx-router">3.1 生成httpx.Router接口</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#http">3.2 启动 http 服务</a><ul>
@@ -115,7 +115,7 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#id10">实际 http 请求</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id9">实际 http 请求</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="05otel-intro.html">05快速学习了解 OpenTelemetry</a></li>
@@ -183,7 +183,29 @@
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
+            <nav id="local-table-of-contents" role="navigation" aria-labelledby="local-table-of-contents-title">
+              <h4 id="local-table-of-contents-title">On This Page</h4>
+              <ul>
+<li><a class="reference internal" href="#">02对最简单的 api gateway 项目并进行源码分析</a><ul>
+<li><a class="reference internal" href="#id2">生成 api gateway 项目</a></li>
+<li><a class="reference internal" href="#id3">入口文件分析</a></li>
+<li><a class="reference internal" href="#rest-server">1. 生成 rest.Server 结构体</a></li>
+<li><a class="reference internal" href="#id6">2. 注册路由</a></li>
+<li><a class="reference internal" href="#server">3. server 启动</a><ul>
+<li><a class="reference internal" href="#httpx-router">3.1 生成httpx.Router接口</a></li>
+<li><a class="reference internal" href="#http">3.2 启动 http 服务</a><ul>
+<li><a class="reference internal" href="#internal-starthttp">internal.StartHttp</a></li>
+<li><a class="reference internal" href="#s-bindroutes-router">s.bindRoutes(router)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id9">实际 http 请求</a></li>
+</ul>
+</li>
+</ul>
+
+            </nav>
   <table class="docutils align-default">
 <colgroup>
 <col style="width: 32%" />
@@ -199,61 +221,32 @@
 </tr>
 </tbody>
 </table>
+<div class="section" id="api-gateway">
+<h1><a class="toc-backref" href="#id13">02对最简单的 api gateway 项目并进行源码分析</a><a class="headerlink" href="#api-gateway" title="Permalink to this headline">¶</a></h1>
 <details>
 <summary>目录</summary><div class="sidebar">
 <p class="sidebar-title">目录</p>
 <div class="contents topic" id="contents">
 <p class="topic-title">Contents</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="#api-gateway" id="id14">02对最简单的 api gateway 项目并进行源码分析</a></p>
+<li><p><a class="reference internal" href="#api-gateway" id="id13">02对最简单的 api gateway 项目并进行源码分析</a></p>
 <ul>
-<li><p><a class="reference internal" href="#id3" id="id15">生成 api gateway 项目</a></p></li>
-<li><p><a class="reference internal" href="#id4" id="id16">入口文件分析</a></p></li>
-<li><p><a class="reference internal" href="#rest-server" id="id17">1. 生成 rest.Server 结构体</a></p></li>
-<li><p><a class="reference internal" href="#id7" id="id18">2. 注册路由</a></p></li>
-<li><p><a class="reference internal" href="#server" id="id19">3. server 启动</a></p>
+<li><p><a class="reference internal" href="#id2" id="id14">生成 api gateway 项目</a></p></li>
+<li><p><a class="reference internal" href="#id3" id="id15">入口文件分析</a></p></li>
+<li><p><a class="reference internal" href="#rest-server" id="id16">1. 生成 rest.Server 结构体</a></p></li>
+<li><p><a class="reference internal" href="#id6" id="id17">2. 注册路由</a></p></li>
+<li><p><a class="reference internal" href="#server" id="id18">3. server 启动</a></p>
 <ul>
-<li><p><a class="reference internal" href="#httpx-router" id="id20">3.1 生成httpx.Router接口</a></p></li>
-<li><p><a class="reference internal" href="#http" id="id21">3.2 启动 http 服务</a></p>
+<li><p><a class="reference internal" href="#httpx-router" id="id19">3.1 生成httpx.Router接口</a></p></li>
+<li><p><a class="reference internal" href="#http" id="id20">3.2 启动 http 服务</a></p>
 <ul>
-<li><p><a class="reference internal" href="#internal-starthttp" id="id22">internal.StartHttp</a></p></li>
-<li><p><a class="reference internal" href="#s-bindroutes-router" id="id23">s.bindRoutes(router)</a></p></li>
+<li><p><a class="reference internal" href="#internal-starthttp" id="id21">internal.StartHttp</a></p></li>
+<li><p><a class="reference internal" href="#s-bindroutes-router" id="id22">s.bindRoutes(router)</a></p></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#id10" id="id24">实际 http 请求</a></p></li>
-</ul>
-</li>
-</ul>
-</div>
-</div>
-</details><div class="section" id="api-gateway">
-<h1><a class="toc-backref" href="#id25">02对最简单的 api gateway 项目并进行源码分析</a><a class="headerlink" href="#api-gateway" title="Permalink to this headline">¶</a></h1>
-<details>
-<summary>目录</summary><div class="sidebar">
-<p class="sidebar-title">目录</p>
-<div class="contents topic" id="id2">
-<p class="topic-title">Contents</p>
-<ul class="simple">
-<li><p><a class="reference internal" href="#api-gateway" id="id25">02对最简单的 api gateway 项目并进行源码分析</a></p>
-<ul>
-<li><p><a class="reference internal" href="#id3" id="id26">生成 api gateway 项目</a></p></li>
-<li><p><a class="reference internal" href="#id4" id="id27">入口文件分析</a></p></li>
-<li><p><a class="reference internal" href="#rest-server" id="id28">1. 生成 rest.Server 结构体</a></p></li>
-<li><p><a class="reference internal" href="#id7" id="id29">2. 注册路由</a></p></li>
-<li><p><a class="reference internal" href="#server" id="id30">3. server 启动</a></p>
-<ul>
-<li><p><a class="reference internal" href="#httpx-router" id="id31">3.1 生成httpx.Router接口</a></p></li>
-<li><p><a class="reference internal" href="#http" id="id32">3.2 启动 http 服务</a></p>
-<ul>
-<li><p><a class="reference internal" href="#internal-starthttp" id="id33">internal.StartHttp</a></p></li>
-<li><p><a class="reference internal" href="#s-bindroutes-router" id="id34">s.bindRoutes(router)</a></p></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p><a class="reference internal" href="#id10" id="id35">实际 http 请求</a></p></li>
+<li><p><a class="reference internal" href="#id9" id="id23">实际 http 请求</a></p></li>
 </ul>
 </li>
 </ul>
@@ -263,8 +256,8 @@
 <p class="admonition-title">Note</p>
 <p>go-zero 是一个集成了各种工程实践的 web 和 rpc 框架。本文讲解 web 框架的源码分析，下一节讲解 rpc 框架的源码分析。示例是使用最简单的一个功能：传过来一个 url 地址，转化为一个短网址。</p>
 </div>
-<div class="section" id="id3">
-<h2><a class="toc-backref" href="#id26">生成 api gateway 项目</a><a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id2">
+<h2><a class="toc-backref" href="#id14">生成 api gateway 项目</a><a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
 <p>编写 <a class="reference external" href="https://github.com/demo-examples/demo-go-zero/blob/master/02api-gateway/gateway.api">gateway.api</a>  文件:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>type (
   shortenReq {
@@ -312,8 +305,8 @@ $ tree
 </pre></div>
 </div>
 </div>
-<div class="section" id="id4">
-<h2><a class="toc-backref" href="#id27">入口文件分析</a><a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id3">
+<h2><a class="toc-backref" href="#id15">入口文件分析</a><a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
 <p><a class="reference external" href="https://github.com/demo-examples/demo-go-zero/blob/master/02api-gateway/api/shorturl.go">入口文件</a> 分析:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">var</span> <span class="n">configFile</span> <span class="o">=</span> <span class="n">flag</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="s2">&quot;f&quot;</span><span class="p">,</span> <span class="s2">&quot;etc/shorturl-api.yaml&quot;</span><span class="p">,</span> <span class="s2">&quot;the config file&quot;</span><span class="p">)</span>
 
@@ -343,9 +336,9 @@ $ tree
 <span class="p">}</span>
 </pre></div>
 </div>
-<div class="figure align-default" id="id12">
+<div class="figure align-default" id="id11">
 <img alt="https://img.zhaoweiguo.com/knowledge/images/opensources/go-zero/api-gateway1.png" src="https://img.zhaoweiguo.com/knowledge/images/opensources/go-zero/api-gateway1.png" />
-<p class="caption"><span class="caption-text">核心数据结构关系</span><a class="headerlink" href="#id12" title="Permalink to this image">¶</a></p>
+<p class="caption"><span class="caption-text">核心数据结构关系</span><a class="headerlink" href="#id11" title="Permalink to this image">¶</a></p>
 </div>
 <p>小结:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 由配置文件生成配置结构体: config.Config
@@ -361,7 +354,7 @@ $ tree
 </div>
 </div>
 <div class="section" id="rest-server">
-<h2><a class="toc-backref" href="#id28">1. 生成 rest.Server 结构体</a><a class="headerlink" href="#rest-server" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id16">1. 生成 rest.Server 结构体</a><a class="headerlink" href="#rest-server" title="Permalink to this headline">¶</a></h2>
 <p>相关结构体:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">type</span> <span class="n">Server</span> <span class="n">struct</span> <span class="p">{</span>
   <span class="n">ngin</span> <span class="o">*</span><span class="n">engine</span>
@@ -442,8 +435,8 @@ $ tree
 </pre></div>
 </div>
 </div>
-<div class="section" id="id7">
-<h2><a class="toc-backref" href="#id29">2. 注册路由</a><a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id6">
+<h2><a class="toc-backref" href="#id17">2. 注册路由</a><a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h2>
 <p>调用 <a class="reference external" href="https://github.com/demo-examples/demo-go-zero/blob/master/02api-gateway/api/internal/handler/routes.go">server.AddRoutes</a>  函数注册路由:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>handler.RegisterHandlers(server, ctx)
 =&gt;
@@ -515,7 +508,7 @@ conf 信息简单，routes 结构如下图所示
 </div>
 </div>
 <div class="section" id="server">
-<h2><a class="toc-backref" href="#id30">3. server 启动</a><a class="headerlink" href="#server" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id18">3. server 启动</a><a class="headerlink" href="#server" title="Permalink to this headline">¶</a></h2>
 <p>server 启动:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>server.Start()
 =&gt;
@@ -540,12 +533,12 @@ func (s *Server) Start() {
 <span class="mf">2.</span> <span class="n">s</span><span class="o">.</span><span class="n">StartWithRouter</span><span class="p">:</span> <span class="n">启动</span> <span class="n">http</span> <span class="n">服务</span>
 </pre></div>
 </div>
-<div class="figure align-default" id="id13">
+<div class="figure align-default" id="id12">
 <img alt="https://img.zhaoweiguo.com/knowledge/images/opensources/go-zero/api-gateway2.png" src="https://img.zhaoweiguo.com/knowledge/images/opensources/go-zero/api-gateway2.png" />
-<p class="caption"><span class="caption-text">路由存储相关结构关系</span><a class="headerlink" href="#id13" title="Permalink to this image">¶</a></p>
+<p class="caption"><span class="caption-text">路由存储相关结构关系</span><a class="headerlink" href="#id12" title="Permalink to this image">¶</a></p>
 </div>
 <div class="section" id="httpx-router">
-<h3><a class="toc-backref" href="#id31">3.1 生成httpx.Router接口</a><a class="headerlink" href="#httpx-router" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id19">3.1 生成httpx.Router接口</a><a class="headerlink" href="#httpx-router" title="Permalink to this headline">¶</a></h3>
 <p>生成的 <a class="reference external" href="https://github.com/tal-tech/go-zero/blob/5c6a3132ebe96afee256b8ee07c0bf8b8c6e0a39/rest/router/patrouter.go#L26-L37">httpx.Router</a> 接口分析:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">type</span> <span class="n">Router</span> <span class="n">interface</span> <span class="p">{</span>
   <span class="n">http</span><span class="o">.</span><span class="n">Handler</span>
@@ -577,7 +570,7 @@ func (s *Server) Start() {
 </div>
 </div>
 <div class="section" id="http">
-<h3><a class="toc-backref" href="#id32">3.2 启动 http 服务</a><a class="headerlink" href="#http" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id20">3.2 启动 http 服务</a><a class="headerlink" href="#http" title="Permalink to this headline">¶</a></h3>
 <p><a class="reference external" href="https://github.com/tal-tech/go-zero/blob/5c6a3132ebe96afee256b8ee07c0bf8b8c6e0a39/rest/router/patrouter.go#L64-L74">s.StartWithRouter</a> 服务启动:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">func</span> <span class="p">(</span><span class="n">s</span> <span class="o">*</span><span class="n">engine</span><span class="p">)</span> <span class="n">StartWithRouter</span><span class="p">(</span><span class="n">router</span> <span class="n">httpx</span><span class="o">.</span><span class="n">Router</span><span class="p">)</span> <span class="n">error</span> <span class="p">{</span>
   <span class="k">if</span> <span class="n">err</span> <span class="p">:</span><span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">bindRoutes</span><span class="p">(</span><span class="n">router</span><span class="p">);</span> <span class="n">err</span> <span class="o">!=</span> <span class="n">nil</span> <span class="p">{</span>
@@ -599,7 +592,7 @@ func (s *Server) Start() {
 </pre></div>
 </div>
 <div class="section" id="internal-starthttp">
-<h4><a class="toc-backref" href="#id33">internal.StartHttp</a><a class="headerlink" href="#internal-starthttp" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id21">internal.StartHttp</a><a class="headerlink" href="#internal-starthttp" title="Permalink to this headline">¶</a></h4>
 <p>先看 <a class="reference external" href="https://github.com/tal-tech/go-zero/blob/5c6a3132ebe96afee256b8ee07c0bf8b8c6e0a39/rest/internal/starter.go#L12-L41">internal.StartHttp</a></p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>// 这是 http，https 类似
 func StartHttp(host string, port int, handler http.Handler) error {
@@ -633,7 +626,7 @@ func start(host string, port int, handler http.Handler, run func(srv *http.Serve
 </div>
 </div>
 <div class="section" id="s-bindroutes-router">
-<h4><a class="toc-backref" href="#id34">s.bindRoutes(router)</a><a class="headerlink" href="#s-bindroutes-router" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id22">s.bindRoutes(router)</a><a class="headerlink" href="#s-bindroutes-router" title="Permalink to this headline">¶</a></h4>
 <p>一级循环生成 router:<a class="reference external" href="https://github.com/tal-tech/go-zero/blob/5c6a3132ebe96afee256b8ee07c0bf8b8c6e0a39/rest/engine.go#L132-L142">bindRoutes</a>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">func</span> <span class="p">(</span><span class="n">s</span> <span class="o">*</span><span class="n">engine</span><span class="p">)</span> <span class="n">bindRoutes</span><span class="p">(</span><span class="n">router</span> <span class="n">httpx</span><span class="o">.</span><span class="n">Router</span><span class="p">)</span> <span class="n">error</span> <span class="p">{</span>
   <span class="o">//</span> <span class="p">[</span><span class="n">一级</span> <span class="k">for</span><span class="p">]:</span>
@@ -725,8 +718,8 @@ func start(host string, port int, handler http.Handler, run func(srv *http.Serve
 </div>
 </div>
 </div>
-<div class="section" id="id10">
-<h2><a class="toc-backref" href="#id35">实际 http 请求</a><a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id9">
+<h2><a class="toc-backref" href="#id23">实际 http 请求</a><a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h2>
 <table class="docutils align-default">
 <colgroup>
 <col style="width: 32%" />
@@ -825,7 +818,8 @@ func start(host string, port int, handler http.Handler, run func(srv *http.Serve
   </script>
 
 
-<script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script>
+<script type="text/javascript" src="_static/js/table-of-contents-sidebar.js"></script>
+<!-- <script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script> -->
 <script type="text/javascript">
     window.onload = function(e){
         TableOfContents.init({

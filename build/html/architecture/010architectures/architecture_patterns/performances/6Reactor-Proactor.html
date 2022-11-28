@@ -400,7 +400,22 @@
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
+            <nav id="local-table-of-contents" role="navigation" aria-labelledby="local-table-of-contents-title">
+              <h4 id="local-table-of-contents-title">On This Page</h4>
+              <ul>
+<li><a class="reference internal" href="#">单服务器高性能模式: Reactor&amp;Proactor</a><ul>
+<li><a class="reference internal" href="#reactor">Reactor</a><ul>
+<li><a class="reference internal" href="#id2">1. 单 Reactor 单进程 / 线程</a></li>
+<li><a class="reference internal" href="#id3">2. 单 Reactor 多线程</a></li>
+<li><a class="reference internal" href="#id4">3. 多 Reactor 多进程 / 线程</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#proactor">Proactor</a></li>
+</ul>
+</li>
+</ul>
+
+            </nav>
   <table class="docutils align-default">
 <colgroup>
 <col style="width: 32%" />
@@ -416,35 +431,14 @@
 </tr>
 </tbody>
 </table>
-<details>
-<summary>目录</summary><div class="sidebar">
-<p class="sidebar-title">目录</p>
-<div class="contents topic" id="contents">
-<p class="topic-title">Contents</p>
-<ul class="simple">
-<li><p><a class="reference internal" href="#reactor-proactor" id="id6">单服务器高性能模式: Reactor&amp;Proactor</a></p>
-<ul>
-<li><p><a class="reference internal" href="#reactor" id="id7">Reactor</a></p>
-<ul>
-<li><p><a class="reference internal" href="#id2" id="id8">1. 单 Reactor 单进程 / 线程</a></p></li>
-<li><p><a class="reference internal" href="#id3" id="id9">2. 单 Reactor 多线程</a></p></li>
-<li><p><a class="reference internal" href="#id4" id="id10">3. 多 Reactor 多进程 / 线程</a></p></li>
-</ul>
-</li>
-<li><p><a class="reference internal" href="#proactor" id="id11">Proactor</a></p></li>
-</ul>
-</li>
-</ul>
-</div>
-</div>
-</details><div class="section" id="reactor-proactor">
-<h1><a class="toc-backref" href="#id6">单服务器高性能模式: Reactor&amp;Proactor</a><a class="headerlink" href="#reactor-proactor" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="reactor-proactor">
+<h1>单服务器高性能模式: Reactor&amp;Proactor<a class="headerlink" href="#reactor-proactor" title="Permalink to this headline">¶</a></h1>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>应对高并发场景</p>
 </div>
 <div class="section" id="reactor">
-<h2><a class="toc-backref" href="#id7">Reactor</a><a class="headerlink" href="#reactor" title="Permalink to this headline">¶</a></h2>
+<h2>Reactor<a class="headerlink" href="#reactor" title="Permalink to this headline">¶</a></h2>
 <p>I/O 多路复用技术归纳起来有两个关键实现点:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 当多条连接共用一个阻塞对象后，进程只需要在一个阻塞对象上等待，而无须再轮询所有连接
     常见的实现方式有 select、epoll、kqueue 等。
@@ -482,14 +476,14 @@ Nginx 使用进程，Memcache 使用线程
 </pre></div>
 </div>
 <div class="section" id="id2">
-<h3><a class="toc-backref" href="#id8">1. 单 Reactor 单进程 / 线程</a><a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<h3>1. 单 Reactor 单进程 / 线程<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>单 Reactor 单进程的方案在实践中应用场景不多，只适用于业务处理非常快速的场景，目前比较著名的开源软件中使用单 Reactor 单进程的是 Redis</p>
 </div>
 </div>
 <div class="section" id="id3">
-<h3><a class="toc-backref" href="#id9">2. 单 Reactor 多线程</a><a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<h3>2. 单 Reactor 多线程<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
 <p>单 Reator 多线程方案能够充分利用多核多 CPU 的处理能力，但同时也存在下面的问题:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>a. 多线程数据共享和访问比较复杂。
     例如，子线程完成业务处理后，要把结果传递给主线程的 Reactor 进行发送，这里涉及共享数据的互斥和保护机制。
@@ -501,7 +495,7 @@ b. Reactor 承担所有事件的监听和响应，只在主线程中运行，瞬
 </div>
 </div>
 <div class="section" id="id4">
-<h3><a class="toc-backref" href="#id10">3. 多 Reactor 多进程 / 线程</a><a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<h3>3. 多 Reactor 多进程 / 线程<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
 <p>多 Reactor 多进程 / 线程的方案看起来比单 Reactor 多线程要复杂，但实际实现时反而更加简单，主要原因是:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>a. 父进程和子进程的职责非常明确，父进程只负责接收新连接，子进程负责完成后续的业务处理
 b. 父进程和子进程的交互很简单，父进程只需要把新连接传给子进程，子进程无须返回数据
@@ -516,7 +510,7 @@ c. 子进程之间是互相独立的，无须同步共享之类的处理
 </div>
 </div>
 <div class="section" id="proactor">
-<h2><a class="toc-backref" href="#id11">Proactor</a><a class="headerlink" href="#proactor" title="Permalink to this headline">¶</a></h2>
+<h2>Proactor<a class="headerlink" href="#proactor" title="Permalink to this headline">¶</a></h2>
 <p>Proactor 方案:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. Proactor Initiator 负责创建 Proactor 和 Handler
     并将 Proactor 和 Handler 都通过 Asynchronous Operation Processor 注册到内核
@@ -625,7 +619,8 @@ c. 子进程之间是互相独立的，无须同步共享之类的处理
   </script>
 
 
-<script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script>
+<script type="text/javascript" src="../../../_static/js/table-of-contents-sidebar.js"></script>
+<!-- <script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script> -->
 <script type="text/javascript">
     window.onload = function(e){
         TableOfContents.init({

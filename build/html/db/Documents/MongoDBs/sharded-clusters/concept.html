@@ -753,7 +753,23 @@
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
+            <nav id="local-table-of-contents" role="navigation" aria-labelledby="local-table-of-contents-title">
+              <h4 id="local-table-of-contents-title">On This Page</h4>
+              <ul>
+<li><a class="reference internal" href="#">基本概念</a><ul>
+<li><a class="reference internal" href="#shard-key">Shard Key(分片键)</a></li>
+<li><a class="reference internal" href="#chunk">Chunk(块)</a><ul>
+<li><a class="reference internal" href="#id3">chunk 的拆分&amp;迁移</a></li>
+<li><a class="reference internal" href="#id4">修改 chunk 大小</a></li>
+<li><a class="reference internal" href="#jumbo-chunk">jumbo chunk</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#balancer">Balancer(均衡器)</a></li>
+</ul>
+</li>
+</ul>
+
+            </nav>
   <table class="docutils align-default">
 <colgroup>
 <col style="width: 32%" />
@@ -769,32 +785,10 @@
 </tr>
 </tbody>
 </table>
-<details>
-<summary>目录</summary><div class="sidebar">
-<p class="sidebar-title">目录</p>
-<div class="contents topic" id="contents">
-<p class="topic-title">Contents</p>
-<ul class="simple">
-<li><p><a class="reference internal" href="#id2" id="id6">基本概念</a></p>
-<ul>
-<li><p><a class="reference internal" href="#shard-key" id="id7">Shard Key(分片键)</a></p></li>
-<li><p><a class="reference internal" href="#chunk" id="id8">Chunk(块)</a></p>
-<ul>
-<li><p><a class="reference internal" href="#id3" id="id9">chunk 的拆分&amp;迁移</a></p></li>
-<li><p><a class="reference internal" href="#id4" id="id10">修改 chunk 大小</a></p></li>
-<li><p><a class="reference internal" href="#jumbo-chunk" id="id11">jumbo chunk</a></p></li>
-</ul>
-</li>
-<li><p><a class="reference internal" href="#balancer" id="id12">Balancer(均衡器)</a></p></li>
-</ul>
-</li>
-</ul>
-</div>
-</div>
-</details><div class="section" id="id2">
-<h1><a class="toc-backref" href="#id6">基本概念</a><a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id2">
+<h1>基本概念<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="shard-key">
-<h2><a class="toc-backref" href="#id7">Shard Key(分片键)</a><a class="headerlink" href="#shard-key" title="Permalink to this headline">¶</a></h2>
+<h2>Shard Key(分片键)<a class="headerlink" href="#shard-key" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p>通过定义 shared key （分片键）从而对整个集合进行分片，分片键的好坏直接影响到整个集群的性能</p></li>
 <li><p>另外需要注意的是，一个集合有且只有一个分片键，一旦分片键确定好之后就不能更改</p></li>
@@ -816,14 +810,14 @@
 </div>
 </div>
 <div class="section" id="chunk">
-<h2><a class="toc-backref" href="#id8">Chunk(块)</a><a class="headerlink" href="#chunk" title="Permalink to this headline">¶</a></h2>
+<h2>Chunk(块)<a class="headerlink" href="#chunk" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p>chunk （块）是均衡器迁移数据的最小单元，默认大小为 64MB，取值范围为 1-1024MB</p></li>
 <li><p>一个块只存在于一个分片，每个块由片键在特定范围内的文档组成，块的范围为左闭又开即 [start,end)</p></li>
 <li><p>一个文档属于且只属于一个块，当一个块增加到特定大小的时候，会通过拆分点（split point）被拆分成 2 个较小的块</p></li>
 </ul>
 <div class="section" id="id3">
-<h3><a class="toc-backref" href="#id9">chunk 的拆分&amp;迁移</a><a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<h3>chunk 的拆分&amp;迁移<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
 <p>拆分过程如下:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>mongos 接收到客户端发起的写请求后会检查当前块的拆分阈值点。
 如果需要拆分，mongos 则会像分片服务器发起一个拆分请求。
@@ -842,7 +836,7 @@
 </div>
 </div>
 <div class="section" id="id4">
-<h3><a class="toc-backref" href="#id10">修改 chunk 大小</a><a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<h3>修改 chunk 大小<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>修改 chunk 大小需要注意以下几点:
@@ -853,7 +847,7 @@ chunk size 的可调整范围为 1-1024MB。</p>
 </div>
 </div>
 <div class="section" id="jumbo-chunk">
-<h3><a class="toc-backref" href="#id11">jumbo chunk</a><a class="headerlink" href="#jumbo-chunk" title="Permalink to this headline">¶</a></h3>
+<h3>jumbo chunk<a class="headerlink" href="#jumbo-chunk" title="Permalink to this headline">¶</a></h3>
 <p>在有些情况下，chunk 会持续增长，超过 ChunkSize，官方称为 jumbo chunk:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>该块无法被 MongoDB 拆分，也不能被均衡器迁移
 故久而久之会导致 chunk 在分片服务器上分布不均匀
@@ -869,7 +863,7 @@ chunk size 的可调整范围为 1-1024MB。</p>
 </div>
 </div>
 <div class="section" id="balancer">
-<h2><a class="toc-backref" href="#id12">Balancer(均衡器)</a><a class="headerlink" href="#balancer" title="Permalink to this headline">¶</a></h2>
+<h2>Balancer(均衡器)<a class="headerlink" href="#balancer" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p>MongoDB 的 balancer （均衡器）是监视每个分片的 chunk 数的一个后台进程。</p></li>
 <li><p>当分片上的 chunk 数达到特定迁移阈值时，均衡器会尝试在分片之间自动迁移块，使得每个分片的块的数量达到平衡。</p></li>
@@ -977,7 +971,8 @@ chunk size 的可调整范围为 1-1024MB。</p>
   </script>
 
 
-<script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script>
+<script type="text/javascript" src="../../../_static/js/table-of-contents-sidebar.js"></script>
+<!-- <script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script> -->
 <script type="text/javascript">
     window.onload = function(e){
         TableOfContents.init({

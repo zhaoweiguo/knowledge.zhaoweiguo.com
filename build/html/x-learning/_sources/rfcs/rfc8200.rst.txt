@@ -1,0 +1,164 @@
+RFC8200 Internet Protocol, Version 6 (IPv6) Specification
+#########################################################
+
+* July 2017
+* Obsoletes: 2460(December 1998)
+* Obsoletes: 1883(December 1995)
+* Check Point Software
+
+
+
+
+1.  Introduction
+================
+
+changes from IPv4 to IPv6
+-------------------------
+
+* Expanded Addressing Capabilities::
+
+    a. increases the IP address size from 32 bits to 128 bits
+    b. scalability of multicast routing is improved 
+        by adding a "scope" field to multicast addresses.
+    c. a new type of address called an "anycast address" is defined
+
+* Header Format Simplification::
+
+    Some IPv4 header fields have been dropped or made optional, to
+         reduce the common-case processing cost of packet handling and
+         to limit the bandwidth cost of the IPv6 header.
+
+* Improved Support for Extensions and Options
+* Flow Labeling Capability
+* Authentication and Privacy Capabilities
+
+related RFC
+-----------
+
+* The format and semantics of IPv6 addresses are specified separately in [RFC4291]
+* The IPv6 version of ICMP, which all IPv6 implementations are required to include, is specified in [RFC4443]
+* The data transmission order for IPv6 is the same as for IPv4 as defined in Appendix B of [RFC791].
+
+
+2.  Terminology
+===============
+
+* node         a device that implements IPv6.
+* router       a node that forwards IPv6 packets not explicitly addressed to itself.  (See Note below.)
+* host         any node that is not a router.  (See Note below.)
+* upper layer  a protocol layer immediately above IPv6::
+
+      a. transport protocols such as TCP and UDP, 
+      b. control protocols such as ICMP, 
+      c. routing protocols such as OSPF,
+      d. internet-layer or lower-layer protocols being "tunneled" over (i.e., encapsulated in) IPv6 such as:
+        Internetwork Packet Exchange (IPX),
+        AppleTalk,
+        IPv6 itself.
+
+* link         a communication facility or medium over which nodes can communicate at the link layer(the layer immediately below IPv6)::
+
+    a. Ethernets (simple or bridged); 
+    b. PPP links; 
+    c. X.25, Frame Relay, ATM networks;
+    d. internet-layer or higher-layer "tunnels", such as tunnels over IPv4 or IPv6 itself.
+
+* neighbors    nodes attached to the same link.
+* interface    a node's attachment to a link.
+* address      an IPv6-layer identifier for an interface or a set of interfaces.
+* packet       an IPv6 header plus payload.
+* link MTU     the maximum transmission unit, i.e., maximum packet size in octets, that can be conveyed over a link.
+* path MTU     the minimum link MTU of all the links in a path between a source node and a destination node.
+
+
+
+
+
+
+3.  IPv6 Header Format
+======================
+
+::
+
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |Version| Traffic Class |           Flow Label                  |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |         Payload Length        |  Next Header  |   Hop Limit   |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |                                                               |
+    +                                                               +
+    |                                                               |
+    +                         Source Address                        +
+    |                                                               |
+    +                                                               +
+    |                                                               |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |                                                               |
+    +                                                               +
+    |                                                               |
+    +                      Destination Address                      +
+    |                                                               |
+    +                                                               +
+    |                                                               |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+说明::
+
+    Version             4-bit
+                        Internet Protocol version number = 6.
+
+    Traffic Class       8-bit
+                        Traffic Class field.
+                        See Section 7.
+
+    Flow Label          20-bit
+                        flow label.
+                        See Section 6.
+
+    Payload Length      16-bit
+                        unsigned integer.
+                        Length of the IPv6 payload, i.e., 
+                        the rest of the packet following this IPv6 header, in octets.
+                        Note that: 
+                          any extension headers (see Section 4) present are considered part of the payload,
+                          i.e., included in the length count.)
+
+    Next Header         8-bit
+                        selector. 
+                        Identifies the type of header
+                        immediately following the IPv6 header.
+                        Uses the same values as the IPv4 Protocol field [IANA-PN].
+
+    Hop Limit           8-bit
+                        unsigned integer. 
+                        Decremented by 1 by each node that forwards the packet.  
+                        When forwarding, the packet is discarded if Hop Limit was zero when received or is decremented to zero.  
+                        A node that is the destination of a packet should not discard a packet with Hop Limit equal to zero; 
+                        it should process the packet normally.
+
+    Source Address      128-bit
+                        address of the originator of the packet.  See [RFC4291].
+
+    Destination Address 128-bit
+                        address of the intended recipient of the packet 
+                        (possibly not the ultimate recipient, if a Routing header is present).
+                        See [RFC4291] and Section 4.4.
+
+
+
+4.  IPv6 Extension Headers
+==========================
+
+
+
+
+
+
+
+参考
+====
+
+* https://www.rfc-editor.org/rfc/rfc8200.html
+  
+
+

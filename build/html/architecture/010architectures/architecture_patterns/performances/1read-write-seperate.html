@@ -400,7 +400,22 @@
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
+            <nav id="local-table-of-contents" role="navigation" aria-labelledby="local-table-of-contents-title">
+              <h4 id="local-table-of-contents-title">On This Page</h4>
+              <ul>
+<li><a class="reference internal" href="#">读写分离</a><ul>
+<li><a class="reference internal" href="#id3">复制延迟</a></li>
+<li><a class="reference internal" href="#id4">分配机制</a><ul>
+<li><a class="reference internal" href="#id5">程序代码封装</a></li>
+<li><a class="reference internal" href="#id6">中间件封装</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id8">思考</a></li>
+</ul>
+</li>
+</ul>
+
+            </nav>
   <table class="docutils align-default">
 <colgroup>
 <col style="width: 32%" />
@@ -416,29 +431,8 @@
 </tr>
 </tbody>
 </table>
-<details>
-<summary>目录</summary><div class="sidebar">
-<p class="sidebar-title">目录</p>
-<div class="contents topic" id="contents">
-<p class="topic-title">Contents</p>
-<ul class="simple">
-<li><p><a class="reference internal" href="#id2" id="id10">读写分离</a></p>
-<ul>
-<li><p><a class="reference internal" href="#id3" id="id11">复制延迟</a></p></li>
-<li><p><a class="reference internal" href="#id4" id="id12">分配机制</a></p>
-<ul>
-<li><p><a class="reference internal" href="#id5" id="id13">程序代码封装</a></p></li>
-<li><p><a class="reference internal" href="#id6" id="id14">中间件封装</a></p></li>
-</ul>
-</li>
-<li><p><a class="reference internal" href="#id8" id="id15">思考</a></p></li>
-</ul>
-</li>
-</ul>
-</div>
-</div>
-</details><div class="section" id="id2">
-<h1><a class="toc-backref" href="#id10">读写分离</a><a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id2">
+<h1>读写分离<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h1>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>读写分离的基本原理是将数据库读写操作分散到不同的节点上</p>
@@ -460,7 +454,7 @@
 <p>读写分离的实现逻辑并不复杂，但有两个细节点将引入设计复杂度：主从复制延迟和分配机制。</p>
 </div>
 <div class="section" id="id3">
-<h2><a class="toc-backref" href="#id11">复制延迟</a><a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<h2>复制延迟<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
 <p>解决主从复制延迟有几种常见的方法:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 写操作后的读操作指定发给数据库主服务器
     这种方式和业务强绑定，对业务的侵入和影响较大
@@ -478,10 +472,10 @@
 </div>
 </div>
 <div class="section" id="id4">
-<h2><a class="toc-backref" href="#id12">分配机制</a><a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<h2>分配机制<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
 <p>将读写操作区分开来，然后访问不同的数据库服务器，一般有两种方式：程序代码封装和中间件封装。</p>
 <div class="section" id="id5">
-<h3><a class="toc-backref" href="#id13">程序代码封装</a><a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<h3>程序代码封装<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">程序代码封装</span></code> 指在代码中抽象一数据访问层（所以有的文章也称这种方式为“中间层封装”），实现读写操作分离和数据库服务器连接的管理。</p>
 <img alt="https://img.zhaoweiguo.com/knowledge/images/architectures/performances/read-write-separate2.png" src="https://img.zhaoweiguo.com/knowledge/images/architectures/performances/read-write-separate2.png" />
 <p>程序代码封装的方式具备几个特点:</p>
@@ -492,7 +486,7 @@
 </div>
 </div>
 <div class="section" id="id6">
-<h3><a class="toc-backref" href="#id14">中间件封装</a><a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<h3>中间件封装<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
 <p>中间件封装指的是独立一套系统出来，实现读写操作分离和数据库服务器连接的管理。中间件对业务服务器提供 SQL 兼容的协议，业务服务器无须自己进行读写分离。对于业务服务器来说，访问中间件和访问数据库没有区别，事实上在业务服务器看来，中间件就是一个数据库服务器。</p>
 <img alt="https://img.zhaoweiguo.com/knowledge/images/architectures/performances/read-write-separate3.png" src="https://img.zhaoweiguo.com/knowledge/images/architectures/performances/read-write-separate3.png" />
 <p>数据库中间件的方式具备的特点是:</p>
@@ -523,7 +517,7 @@
 </div>
 </div>
 <div class="section" id="id8">
-<h2><a class="toc-backref" href="#id15">思考</a><a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h2>
+<h2>思考<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h2>
 <p>数据库读写分离一般应用于什么场景？能支撑多大的业务规模:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>读写分离适用单机并发无法支撑并且读的请求更多的情形。
 在单机数据库情况下，表上加索引一般对查询有优化作用却影响写入速度
@@ -646,7 +640,8 @@
   </script>
 
 
-<script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script>
+<script type="text/javascript" src="../../../_static/js/table-of-contents-sidebar.js"></script>
+<!-- <script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script> -->
 <script type="text/javascript">
     window.onload = function(e){
         TableOfContents.init({

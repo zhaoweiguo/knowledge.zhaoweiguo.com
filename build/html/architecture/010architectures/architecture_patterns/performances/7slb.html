@@ -400,7 +400,31 @@
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
+            <nav id="local-table-of-contents" role="navigation" aria-labelledby="local-table-of-contents-title">
+              <h4 id="local-table-of-contents-title">On This Page</h4>
+              <ul>
+<li><a class="reference internal" href="#">高性能负载均衡: 分类&amp;架构&amp;算法</a><ul>
+<li><a class="reference internal" href="#id3">负载均衡分类</a><ul>
+<li><a class="reference internal" href="#dns">DNS 负载均衡</a></li>
+<li><a class="reference internal" href="#id4">硬件负载均衡</a></li>
+<li><a class="reference internal" href="#id5">软件负载均衡</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id6">负载均衡典型架构</a></li>
+<li><a class="reference internal" href="#id7">负载均衡算法</a><ul>
+<li><a class="reference internal" href="#id8">轮询</a></li>
+<li><a class="reference internal" href="#id9">加权轮询</a></li>
+<li><a class="reference internal" href="#id10">负载最低优先</a></li>
+<li><a class="reference internal" href="#id11">性能最优类</a></li>
+<li><a class="reference internal" href="#hash">Hash 类</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id12">思考</a></li>
+</ul>
+</li>
+</ul>
+
+            </nav>
   <table class="docutils align-default">
 <colgroup>
 <col style="width: 32%" />
@@ -416,39 +440,8 @@
 </tr>
 </tbody>
 </table>
-<details>
-<summary>目录</summary><div class="sidebar">
-<p class="sidebar-title">目录</p>
-<div class="contents topic" id="contents">
-<p class="topic-title">Contents</p>
-<ul class="simple">
-<li><p><a class="reference internal" href="#id2" id="id14">高性能负载均衡: 分类&amp;架构&amp;算法</a></p>
-<ul>
-<li><p><a class="reference internal" href="#id3" id="id15">负载均衡分类</a></p>
-<ul>
-<li><p><a class="reference internal" href="#dns" id="id16">DNS 负载均衡</a></p></li>
-<li><p><a class="reference internal" href="#id4" id="id17">硬件负载均衡</a></p></li>
-<li><p><a class="reference internal" href="#id5" id="id18">软件负载均衡</a></p></li>
-</ul>
-</li>
-<li><p><a class="reference internal" href="#id6" id="id19">负载均衡典型架构</a></p></li>
-<li><p><a class="reference internal" href="#id7" id="id20">负载均衡算法</a></p>
-<ul>
-<li><p><a class="reference internal" href="#id8" id="id21">轮询</a></p></li>
-<li><p><a class="reference internal" href="#id9" id="id22">加权轮询</a></p></li>
-<li><p><a class="reference internal" href="#id10" id="id23">负载最低优先</a></p></li>
-<li><p><a class="reference internal" href="#id11" id="id24">性能最优类</a></p></li>
-<li><p><a class="reference internal" href="#hash" id="id25">Hash 类</a></p></li>
-</ul>
-</li>
-<li><p><a class="reference internal" href="#id12" id="id26">思考</a></p></li>
-</ul>
-</li>
-</ul>
-</div>
-</div>
-</details><div class="section" id="id2">
-<h1><a class="toc-backref" href="#id14">高性能负载均衡: 分类&amp;架构&amp;算法</a><a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id2">
+<h1>高性能负载均衡: 分类&amp;架构&amp;算法<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h1>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>高性能集群的本质很简单，通过增加更多的服务器来提升系统整体的计算能力。由于计算本身存在一个特点：同样的输入数据和逻辑，无论在哪台服务器上执行，都应该得到相同的输出。因此高性能集群设计的复杂度主要体现在任务分配这部分，需要设计合理的任务分配策略，将计算任务分配到多台服务器上执行。</p>
@@ -465,7 +458,7 @@
 </pre></div>
 </div>
 <div class="section" id="id3">
-<h2><a class="toc-backref" href="#id15">负载均衡分类</a><a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<h2>负载均衡分类<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
 <p>常见的负载均衡系统包括 3 种:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mf">1.</span> <span class="n">DNS</span> <span class="n">负载均衡</span>
 <span class="mf">2.</span> <span class="n">硬件负载均衡</span>
@@ -473,7 +466,7 @@
 </pre></div>
 </div>
 <div class="section" id="dns">
-<h3><a class="toc-backref" href="#id16">DNS 负载均衡</a><a class="headerlink" href="#dns" title="Permalink to this headline">¶</a></h3>
+<h3>DNS 负载均衡<a class="headerlink" href="#dns" title="Permalink to this headline">¶</a></h3>
 <p>优点:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 简单、成本低
     负载均衡工作交给 DNS 服务器处理，无须自己开发或者维护负载均衡设备
@@ -499,7 +492,7 @@
 </div>
 </div>
 <div class="section" id="id4">
-<h3><a class="toc-backref" href="#id17">硬件负载均衡</a><a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<h3>硬件负载均衡<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
 <p>目前业界典型的硬件负载均衡设备有两款:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">F5</span> <span class="n">和</span> <span class="n">A10</span>
 </pre></div>
@@ -523,7 +516,7 @@
 </div>
 </div>
 <div class="section" id="id5">
-<h3><a class="toc-backref" href="#id18">软件负载均衡</a><a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<h3>软件负载均衡<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
 <p>常见的有 Nginx 和 LVS:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Nginx</span> <span class="n">是软件的</span> <span class="mi">7</span> <span class="n">层负载均衡</span>
 <span class="n">LVS</span> <span class="n">是</span> <span class="n">Linux</span> <span class="n">内核的</span> <span class="mi">4</span> <span class="n">层负载均衡</span>
@@ -552,7 +545,7 @@ LVS 的性能是十万级，据说可达到 80 万 / 秒；
 </div>
 </div>
 <div class="section" id="id6">
-<h2><a class="toc-backref" href="#id19">负载均衡典型架构</a><a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h2>
+<h2>负载均衡典型架构<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h2>
 <p>组合的基本原则为:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. DNS 负载均衡用于实现地理级别的负载均衡；
 2. 硬件负载均衡用于实现集群级别的负载均衡；
@@ -562,7 +555,7 @@ LVS 的性能是十万级，据说可达到 80 万 / 秒；
 <img alt="https://img.zhaoweiguo.com/knowledge/images/architectures/performances/slb-type1.png" src="https://img.zhaoweiguo.com/knowledge/images/architectures/performances/slb-type1.png" />
 </div>
 <div class="section" id="id7">
-<h2><a class="toc-backref" href="#id20">负载均衡算法</a><a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h2>
+<h2>负载均衡算法<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h2>
 <p>算法大体上可以分为下面几类:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 任务平分类
     负载均衡系统将收到的任务平均分配给服务器进行处理
@@ -580,21 +573,21 @@ LVS 的性能是十万级，据说可达到 80 万 / 秒；
 </pre></div>
 </div>
 <div class="section" id="id8">
-<h3><a class="toc-backref" href="#id21">轮询</a><a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
+<h3>轮询<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>负载均衡系统收到请求后，按照顺序轮流分配到服务器上。只要服务器在运行，运行状态是不关注的。</p>
 </div>
 </div>
 <div class="section" id="id9">
-<h3><a class="toc-backref" href="#id22">加权轮询</a><a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h3>
+<h3>加权轮询<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h3>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>加权轮询是轮询的一种特殊形式，其主要目的就是为了解决不同服务器处理能力有差异的问题。</p>
 </div>
 </div>
 <div class="section" id="id10">
-<h3><a class="toc-backref" href="#id23">负载最低优先</a><a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h3>
+<h3>负载最低优先<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h3>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>负载均衡系统将任务分配给当前负载最低的服务器，这里的负载根据不同的任务类型和业务场景，</p>
@@ -630,7 +623,7 @@ LVS 的性能是十万级，据说可达到 80 万 / 秒；
 </div>
 </div>
 <div class="section" id="id11">
-<h3><a class="toc-backref" href="#id24">性能最优类</a><a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h3>
+<h3>性能最优类<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h3>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>负载最低优先类算法是站在服务器的角度来进行分配的，而性能最优优先类算法则是站在客户端的角度来进行分配的，优先将任务分配给处理速度最快的服务器，通过这种方式达到最快响应客户端的目的。</p>
@@ -651,7 +644,7 @@ LVS 的性能是十万级，据说可达到 80 万 / 秒；
 </div>
 </div>
 <div class="section" id="hash">
-<h3><a class="toc-backref" href="#id25">Hash 类</a><a class="headerlink" href="#hash" title="Permalink to this headline">¶</a></h3>
+<h3>Hash 类<a class="headerlink" href="#hash" title="Permalink to this headline">¶</a></h3>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>负载均衡系统根据任务中的某些关键信息进行 Hash 运算，将相同 Hash 值的请求分配到同一台服务器上</p>
@@ -666,7 +659,7 @@ LVS 的性能是十万级，据说可达到 80 万 / 秒；
 </div>
 </div>
 <div class="section" id="id12">
-<h2><a class="toc-backref" href="#id26">思考</a><a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h2>
+<h2>思考<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h2>
 <p>负载均衡还包括以下处理:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 集群调度平台（PaaS）平台
     例如 k8s 、docker， 可以实现动态扩容和缩减，根据事实的并发量进行处理
@@ -780,7 +773,8 @@ LVS 的性能是十万级，据说可达到 80 万 / 秒；
   </script>
 
 
-<script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script>
+<script type="text/javascript" src="../../../_static/js/table-of-contents-sidebar.js"></script>
+<!-- <script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script> -->
 <script type="text/javascript">
     window.onload = function(e){
         TableOfContents.init({

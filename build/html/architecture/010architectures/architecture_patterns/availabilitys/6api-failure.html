@@ -400,7 +400,24 @@
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
+            <nav id="local-table-of-contents" role="navigation" aria-labelledby="local-table-of-contents-title">
+              <h4 id="local-table-of-contents-title">On This Page</h4>
+              <ul>
+<li><a class="reference internal" href="#">接口级故障&amp;应对</a><ul>
+<li><a class="reference internal" href="#id3">降级</a></li>
+<li><a class="reference internal" href="#id4">熔断</a></li>
+<li><a class="reference internal" href="#id5">限流</a><ul>
+<li><a class="reference internal" href="#id6">1. 基于请求限流</a></li>
+<li><a class="reference internal" href="#id7">2. 基于资源限流</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id8">排队</a></li>
+<li><a class="reference internal" href="#id9">思考</a></li>
+</ul>
+</li>
+</ul>
+
+            </nav>
   <table class="docutils align-default">
 <colgroup>
 <col style="width: 32%" />
@@ -416,31 +433,8 @@
 </tr>
 </tbody>
 </table>
-<details>
-<summary>目录</summary><div class="sidebar">
-<p class="sidebar-title">目录</p>
-<div class="contents topic" id="contents">
-<p class="topic-title">Contents</p>
-<ul class="simple">
-<li><p><a class="reference internal" href="#id2" id="id11">接口级故障&amp;应对</a></p>
-<ul>
-<li><p><a class="reference internal" href="#id3" id="id12">降级</a></p></li>
-<li><p><a class="reference internal" href="#id4" id="id13">熔断</a></p></li>
-<li><p><a class="reference internal" href="#id5" id="id14">限流</a></p>
-<ul>
-<li><p><a class="reference internal" href="#id6" id="id15">1. 基于请求限流</a></p></li>
-<li><p><a class="reference internal" href="#id7" id="id16">2. 基于资源限流</a></p></li>
-</ul>
-</li>
-<li><p><a class="reference internal" href="#id8" id="id17">排队</a></p></li>
-<li><p><a class="reference internal" href="#id9" id="id18">思考</a></p></li>
-</ul>
-</li>
-</ul>
-</div>
-</div>
-</details><div class="section" id="id2">
-<h1><a class="toc-backref" href="#id11">接口级故障&amp;应对</a><a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id2">
+<h1>接口级故障&amp;应对<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h1>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>异地多活方案主要应对系统级的故障，例如，机器宕机、机房故障、网络故障等问题，这些系统级的故障虽然影响很大，但发生概率较小。接口级故障影响可能没有系统级那么大，但发生的概率较高。</p>
@@ -466,7 +460,7 @@
 <p>解决接口级故障的核心思想和异地多活基本类似：优先保证核心业务和优先保证绝大部分用户。</p>
 </div>
 <div class="section" id="id3">
-<h2><a class="toc-backref" href="#id12">降级</a><a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<h2>降级<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>降级指系统将某些业务或者接口的功能降低，可以是只提供部分功能，也可以是完全停掉所有功能。核心思想就是丢车保帅，优先保证核心业务。</p>
@@ -497,14 +491,14 @@
 </div>
 </div>
 <div class="section" id="id4">
-<h2><a class="toc-backref" href="#id13">熔断</a><a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<h2>熔断<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>熔断机制实现的关键是需要有一个统一的 API 调用层，由 API 调用层来进行采样或者统计。熔断机制实现的另外一个关键是阈值的设计，例如 1 分钟内 30% 的请求响应时间超过 1 秒就熔断，这个策略中的 “1 分钟”“30%”“1 秒” 都对最终的熔断效果有影响。实践中一般都是先根据分析确定阈值，然后上线观察效果，再进行调优。</p>
 </div>
 </div>
 <div class="section" id="id5">
-<h2><a class="toc-backref" href="#id14">限流</a><a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
+<h2>限流<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>降级是从系统功能优先级的角度考虑如何应对故障，而限流则是从用户访问压力的角度来考虑如何应对故障。限流指只允许系统能够承受的访问量进来，超出系统访问能力的请求将被丢弃。</p>
@@ -515,7 +509,7 @@
 </pre></div>
 </div>
 <div class="section" id="id6">
-<h3><a class="toc-backref" href="#id15">1. 基于请求限流</a><a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<h3>1. 基于请求限流<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>基于请求限流指从外部访问的请求角度考虑限流。</p>
@@ -561,7 +555,7 @@
 </div>
 </div>
 <div class="section" id="id7">
-<h3><a class="toc-backref" href="#id16">2. 基于资源限流</a><a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+<h3>2. 基于资源限流<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>基于请求限流是从系统外部考虑的，而基于资源限流是从系统内部考虑的，即：找到系统内部影响性能的关键资源，对其使用上限进行限制。</p>
@@ -588,14 +582,14 @@
 </div>
 </div>
 <div class="section" id="id8">
-<h2><a class="toc-backref" href="#id17">排队</a><a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h2>
+<h2>排队<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h2>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>排队实际上是限流的一个变种，限流是直接拒绝用户，排队是让用户等待一段时间，全世界最有名的排队当属 12306 网站排队了。</p>
 </div>
 </div>
 <div class="section" id="id9">
-<h2><a class="toc-backref" href="#id18">思考</a><a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h2>
+<h2>思考<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h2>
 <p>设计一个整点限量秒杀系统，包括登录、抢购、支付（依赖支付宝）等功能，你会如何设计接口级的故障应对手段:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 对于用户服务，在抢购期间可以准备降级策略，压力过大时保证用户登录的可用，注册和修改信息可以做降级处理
 2. 抢购下单涉及到订单，库存，和商品查询。可通过请求排队来限流，超出库存的请求直接返回。
@@ -720,7 +714,8 @@
   </script>
 
 
-<script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script>
+<script type="text/javascript" src="../../../_static/js/table-of-contents-sidebar.js"></script>
+<!-- <script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script> -->
 <script type="text/javascript">
     window.onload = function(e){
         TableOfContents.init({

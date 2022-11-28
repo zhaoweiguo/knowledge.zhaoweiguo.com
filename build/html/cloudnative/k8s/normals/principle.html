@@ -430,7 +430,26 @@
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
+            <nav id="local-table-of-contents" role="navigation" aria-labelledby="local-table-of-contents-title">
+              <h4 id="local-table-of-contents-title">On This Page</h4>
+              <ul>
+<li><a class="reference internal" href="#">3.1.4. 原理</a><ul>
+<li><a class="reference internal" href="#id3">更新原理</a><ul>
+<li><a class="reference internal" href="#update">Update 机制</a></li>
+<li><a class="reference internal" href="#patch">Patch 机制</a><ul>
+<li><a class="reference internal" href="#json-patch-rfc-6902">json patch[RFC 6902]</a></li>
+<li><a class="reference internal" href="#merge-patch-rfc-7386">merge patch[RFC 7386]</a></li>
+<li><a class="reference internal" href="#strategic-merge-patch">strategic merge patch</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id4">参考</a></li>
+</ul>
+</li>
+</ul>
+
+            </nav>
   <table class="docutils align-default">
 <colgroup>
 <col style="width: 32%" />
@@ -446,40 +465,14 @@
 </tr>
 </tbody>
 </table>
-<details>
-<summary>目录</summary><div class="sidebar">
-<p class="sidebar-title">目录</p>
-<div class="contents topic" id="contents">
-<p class="topic-title">Contents</p>
-<ul class="simple">
-<li><p><a class="reference internal" href="#id2" id="id6">原理</a></p>
-<ul>
-<li><p><a class="reference internal" href="#id3" id="id7">更新原理</a></p>
-<ul>
-<li><p><a class="reference internal" href="#update" id="id8">Update 机制</a></p></li>
-<li><p><a class="reference internal" href="#patch" id="id9">Patch 机制</a></p>
-<ul>
-<li><p><a class="reference internal" href="#json-patch-rfc-6902" id="id10">json patch[RFC 6902]</a></p></li>
-<li><p><a class="reference internal" href="#merge-patch-rfc-7386" id="id11">merge patch[RFC 7386]</a></p></li>
-<li><p><a class="reference internal" href="#strategic-merge-patch" id="id12">strategic merge patch</a></p></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p><a class="reference internal" href="#id4" id="id13">参考</a></p></li>
-</ul>
-</li>
-</ul>
-</div>
-</div>
-</details><div class="section" id="id2">
-<h1><a class="toc-backref" href="#id6"><span class="section-number">3.1.4. </span>原理</a><a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id2">
+<h1><span class="section-number">3.1.4. </span>原理<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h1>
 <p>kubectl命令创建pod流程:</p>
 <img alt="https://img.zhaoweiguo.com/knowledge/images/k8s/principle.png" src="https://img.zhaoweiguo.com/knowledge/images/k8s/principle.png" />
 <div class="section" id="id3">
-<h2><a class="toc-backref" href="#id7">更新原理</a><a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<h2>更新原理<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="update">
-<h3><a class="toc-backref" href="#id8">Update 机制</a><a class="headerlink" href="#update" title="Permalink to this headline">¶</a></h3>
+<h3>Update 机制<a class="headerlink" href="#update" title="Permalink to this headline">¶</a></h3>
 <p>一次完整的 update 操作流程是:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 从 K8s 中拿到一个已经存在的对象（可以选择直接从 K8s 中查询；如果在客户端做了 list watch，推荐从本地 informer 中获取）；
 2. 基于这个取出来的对象做一些修改，比如将 Deployment 中的 replicas 做增减，或是将 image 字段修改为一个新版本的镜像；
@@ -504,7 +497,7 @@
 </div>
 </div>
 <div class="section" id="patch">
-<h3><a class="toc-backref" href="#id9">Patch 机制</a><a class="headerlink" href="#patch" title="Permalink to this headline">¶</a></h3>
+<h3>Patch 机制<a class="headerlink" href="#patch" title="Permalink to this headline">¶</a></h3>
 <p>相比于 update 的版本控制，K8s 的 patch 机制则显得更加简单。当用户对某个资源对象提交一个 patch 请求时，kube-apiserver 不会考虑版本问题，而是“无脑”地接受用户的请求（只要请求发送的 patch 内容合法），也就是将 patch 打到对象上、同时更新版本号。</p>
 <p>patch 的复杂点在于，目前 K8s 提供了 4 种 patch 策略:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>json patch、
@@ -520,7 +513,7 @@ apply patch（从 K8s 1.14 支持 server-side apply 开始）
 </pre></div>
 </div>
 <div class="section" id="json-patch-rfc-6902">
-<h4><a class="toc-backref" href="#id10">json patch[RFC 6902]</a><a class="headerlink" href="#json-patch-rfc-6902" title="Permalink to this headline">¶</a></h4>
+<h4>json patch[RFC 6902]<a class="headerlink" href="#json-patch-rfc-6902" title="Permalink to this headline">¶</a></h4>
 <p>实例1-新增容器:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ kubectl patch deployment/foo --type=&#39;json&#39; -p \
   &#39;[{&quot;op&quot;:&quot;add&quot;,&quot;path&quot;:&quot;/spec/template/spec/containers/1&quot;,&quot;value&quot;:{&quot;name&quot;:&quot;nginx&quot;,&quot;image&quot;:&quot;nginx:alpine&quot;}}]&#39;
@@ -537,7 +530,7 @@ apply patch（从 K8s 1.14 支持 server-side apply 开始）
 </div>
 </div>
 <div class="section" id="merge-patch-rfc-7386">
-<h4><a class="toc-backref" href="#id11">merge patch[RFC 7386]</a><a class="headerlink" href="#merge-patch-rfc-7386" title="Permalink to this headline">¶</a></h4>
+<h4>merge patch[RFC 7386]<a class="headerlink" href="#merge-patch-rfc-7386" title="Permalink to this headline">¶</a></h4>
 <p>实例1:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ kubectl patch deployment/foo --type=&#39;merge&#39; -p \
   &#39;{&quot;spec&quot;:{&quot;template&quot;:{&quot;spec&quot;:{&quot;containers&quot;:[
@@ -556,7 +549,7 @@ merge patch 无法单独更新一个列表中的某个元素，
 </div>
 </div>
 <div class="section" id="strategic-merge-patch">
-<h4><a class="toc-backref" href="#id12">strategic merge patch</a><a class="headerlink" href="#strategic-merge-patch" title="Permalink to this headline">¶</a></h4>
+<h4>strategic merge patch<a class="headerlink" href="#strategic-merge-patch" title="Permalink to this headline">¶</a></h4>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>这种 patch 策略并没有一个通用的 RFC 标准，而是 K8s 独有的，不过相比前两种而言却更为强大的。</p>
@@ -577,7 +570,7 @@ merge patch 无法单独更新一个列表中的某个元素，
 </div>
 </div>
 <div class="section" id="id4">
-<h2><a class="toc-backref" href="#id13">参考</a><a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<h2>参考<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p><a class="reference external" href="https://mp.weixin.qq.com/s/Vg-x2X86zblIXBoieMi3QA">https://mp.weixin.qq.com/s/Vg-x2X86zblIXBoieMi3QA</a></p></li>
 <li><p><a class="reference external" href="https://developer.aliyun.com/article/763325">https://developer.aliyun.com/article/763325</a></p></li>
@@ -680,7 +673,8 @@ merge patch 无法单独更新一个列表中的某个元素，
   </script>
 
 
-<script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script>
+<script type="text/javascript" src="../../_static/js/table-of-contents-sidebar.js"></script>
+<!-- <script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script> -->
 <script type="text/javascript">
     window.onload = function(e){
         TableOfContents.init({
