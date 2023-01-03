@@ -1,0 +1,188 @@
+RFC4291: IP Version 6 Addressing Architecture
+#############################################
+
+* February 2006
+* Updated by: 5952, 6052, 7136, 7346, 7371, 8064
+* Obsoletes::
+  
+    Obsoletes: 3513(April 2003)
+    Obsoletes: 2373(July 1998)
+    Obsoletes: 1884(December 1995)
+
+* Cisco Systems
+* Category: Standards Track
+
+
+1.  Introduction
+================
+
+basic formats for the various types of IPv6 addresses::
+
+    unicast
+    anycast
+    multicast
+
+
+2.  IPv6 Addressing
+===================
+
+There are three types of addresses::
+
+    a. Unicast:   An identifier for a single interface.
+        The packet is delivered to the interface identified by that address.
+
+    b. Anycast:   An identifier for a set of interfaces
+        The packet is delivered to one of the interfaces identified by that address
+         (the "nearest" one, according to the routing protocols' measure of distance).
+
+    c. Multicast: An identifier for a set of interfaces
+        The packet is delivered to all interfaces identified by that address.
+
+
+2.1.  Addressing Model
+----------------------
+
+* IPv6 addresses of all types are assigned to interfaces, not nodes.
+
+2.2.  Text Representation of Addresses
+--------------------------------------
+
+three conventional forms for representing IPv6 addresses::
+
+    1. x:x:x:x:x:x:x:x, where the 'x's are one to four hexadecimal digits
+
+        Examples:
+         ABCD:EF01:2345:6789:ABCD:EF01:2345:6789
+         2001:DB8:0:0:8:800:200C:417A
+
+    2. "::" indicates one or more groups of 16 bits of zeros
+        "::" can only appear once in an address
+
+        Examples:
+         2001:DB8:0:0:8:800:200C:417A   a unicast address
+            => 2001:DB8::8:800:200C:417A
+         FF01:0:0:0:0:0:0:101           a multicast address
+            => FF01::101
+         0:0:0:0:0:0:0:1                the loopback address
+            => ::1
+         0:0:0:0:0:0:0:0                the unspecified address
+            => ::
+
+    3. x:x:x:x:x:x:d.d.d.d, mixed environment of IPv4 and IPv6
+
+        Examples:
+        0:0:0:0:0:0:13.1.68.3
+            => ::13.1.68.3
+        0:0:0:0:0:FFFF:129.144.52.38
+            => ::FFFF:129.144.52.38
+
+
+2.3.  Text Representation of Address Prefixes
+---------------------------------------------
+
+Classless Inter-Domain Routing (CIDR)::
+
+    格式: ipv6-address/prefix-length
+    Examples:
+        2001:0DB8:0000:CD30:0000:0000:0000:0000/60
+        2001:0DB8::CD30:0:0:0:0/60
+        2001:0DB8:0:CD30::/60
+
+The two can be combined as follows::
+
+      the node address      2001:0DB8:0:CD30:123:4567:89AB:CDEF
+      and its subnet number 2001:0DB8:0:CD30::/60
+
+      can be abbreviated as 2001:0DB8:0:CD30:123:4567:89AB:CDEF/60
+
+
+2.4. Address Type Identification
+--------------------------------
+
+The type of an IPv6 address::
+
+      Address type         Binary prefix        IPv6 notation   Section
+      ------------         -------------        -------------   -------
+      Unspecified          00...0  (128 bits)   ::/128          2.5.2
+      Loopback             00...1  (128 bits)   ::1/128         2.5.3
+      Multicast            1111 1111            FF00::/8        2.7
+      Link-Local unicast   1111 1110 10         FE80::/10       2.5.6
+      Global Unicast       (everything else)
+
+.. note:: Anycast addresses are taken from the unicast address spaces (of any scope) and are not syntactically distinguishable from unicast addresses.
+
+2.5.  Unicast Addresses
+-----------------------
+
+types of unicast addresses in IPv6::
+
+    1. Global Unicast
+    2. site-local unicast (deprecated)
+    3. Link-Local unicast
+
+different addresses may have different values for n::
+
+   +-------------------------------+---------------------------------+
+   |          n bits               |           128-n bits            |
+   +-------------------------------+---------------------------------+
+   |       subnet prefix           |           interface ID          |
+   +-------------------------------+---------------------------------+
+
+
+2.5.1.  Interface Identifiers
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Interface identifiers in IPv6 unicast addresses are used to identify interfaces on a link.
+
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/KbqsQN.jpg
+
+IEEE EUI-64 地址代表网络接口寻址的一种标准::
+  
+    1. 一台电脑的 MAC 是 00:0C:85:AB:50:01
+    2. 中间插入 FFFE-> 00:0C:85:FF:FE:AB:50:01
+    3. 由左到右第七位置位-> 02:0C:85:FF:FE:AB:50:01
+    4. 这台电脑的 EUI-64就是-> 020C:85FF:FEAB:5001
+
+    EUI-64 是 IPv6 用来在没有 DHCP 服务器的情况下用于自动制 IPv6 地址的
+    一般由子网内的路由器通告 64 位的前缀，
+    然后电脑再用前缀配合 64 位的 EUI-64 组合成一个全球唯一的可聚合单播地址
+
+
+
+
+
+2.5.2.  The Unspecified Address
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+2.5.3.  The Loopback Address
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+2.5.4.  Global Unicast Addresses
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+2.5.5.  IPv6 Addresses with Embedded IPv4 Addresses
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+2.5.6.  Link-Local IPv6 Unicast Addresses
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+2.5.7.  Site-Local IPv6 Unicast Addresses
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+
+
+2.6.  Anycast Addresses
+=======================
+
+
+参考
+====
+
+* https://www.rfc-editor.org/rfc/rfc4291.html
+  
+
+
