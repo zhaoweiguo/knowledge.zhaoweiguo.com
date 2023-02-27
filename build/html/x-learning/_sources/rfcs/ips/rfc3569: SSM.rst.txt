@@ -1,0 +1,258 @@
+RFC3569: An Overview of Source-Specific Multicast (SSM)
+#######################################################
+
+* July 2003
+* Category: Informational
+
+1.  Introduction
+================
+
+* This document provides an overview of the Source-Specific Multicast (SSM) service and its deployment using the PIM-SM and IGMP/MLD protocols. 
+* The network layer service provided by SSM is a "channel", identified by an SSM destination IP address (G) and a source IP address S.  
+* An IPv4 address range has been reserved by IANA for use by the SSM service.  An SSM destination address range already exists for IPv6. 
+* A source S transmits IP datagrams to an SSM destination address G.  
+* A receiver can receive these datagrams by subscribing to the channel (Source, Group) or (S,G).  
+* Channel subscription is supported by version 3 of the IGMP protocol for IPv4 and version2 of the MLD protocol for IPv6.  
+* The interdomain tree for forwarding IP multicast datagrams is rooted at the source S, and is constructed using the PIM Sparse Mode [9] protocol.
+
+.. note:: This document is not intended to be a standard for Source-Specific Multicast (SSM).  Instead, its goal is to serve as an introduction to SSM and its benefits for anyone interested in deploying SSM services.
+
+
+
+
+
+2.  Terminology
+===============
+
+Any-Source Multicast (ASM)
+--------------------------
+  
+普通的多播
+
+Source-Specific Multicast (SSM)
+-------------------------------
+
+* An IP datagram is transmitted by a source S to an SSM destination address G, and receivers can receive this datagram by subscribing to channel (S,G).  SSM provides host applications with a "channel" abstraction, in which each channel has exactly one source and any number of receivers.
+* The address range 232/8 has been assigned by IANA for SSM service in IPv4.  
+* For IPv6, the range FF3x::/96 is defined for SSM services.
+
+Source-Filtered Multicast (SFM)
+-------------------------------
+
+* This is a variant of the ASM service model, and uses the same address range as ASM (224.0.0.0-239.255.255.255).
+* It extends the ASM service model as follows.  Each "upper layer protocol module" can now request data sent to a host group G by only a specific set of sources, or can request data sent to host group G from all BUT a specific set of sources.
+* Support for source filtering is provided by version 3 of the Internet Group Management Protocol (or IGMPv3) for IPv4, and version 2 of the Multicast Listener Discovery (or MLDv2) protocol for IPv6.  
+* We shall henceforth refer to these two protocols as "SFM-capable".  Earlier versions of these protocols - IGMPv1/IGMPv2 and MLDv1 - do not provide support for source-filtering, and are referred to as "non-SFM-capable".  
+* Note that while SFM is a different model than ASM from a receiver standpoint, there is no distinction between the two for a sender.
+
+
+3.  The IGMP/PIM-SM/MSDP/MBGP Protocol Suite for ASM
+====================================================
+
+* One of the most common multicast protocol suites for supporting ASM consists of ``IGMP`` version 2 [2], ``PIM-SM`` [8,9], ``MSDP`` [13] and ``MBGP`` [26].
+* IGMPv2 is the most commonly used protocol for hosts to specify membership in a multicast group
+* PIM-SM [8,9] is the most widely used protocol for building multicast tree among all receivers and sources in the same administrative domain
+* Inter-domain multicast service (i.e., where sources and receivers are located in different domains) requires additional protocols - ``MSDP`` [13] and ``MBGP`` [26] are the most commonly used ones.
+
+
+4.  Problems with Current Architecture
+======================================
+
+* Address Allocation: The current multicast architecture does not provide a deployable solution to prevent address collisions among multiple applications.
+* Lack of Access control: In the ASM service model, a receiver cannot specify which specific sources it would like to receive when it joins a given group.
+* Inefficient handling of well-known sources
+
+
+
+5.  Source Specific Multicast (SSM): Benefits and Requirements
+==============================================================
+
+The SSM service model alleviates all of the deployment problems described earlier::
+
+    - Address Allocation: SSM defines channels on a per-source basis
+        i.e., the channel (S1,G) is distinct from the channel (S2,G)
+
+    - Access Control: When a receiver subscribes to an (S,G) channel, it receives data sent only by the source S.
+
+    - Handling of well-known sources: SSM requires only source-based forwarding trees;
+        This implies that neither the RP-based shared tree infrastructure of PIM-SM nor the MSDP protocol is required.
+        Thus the complexity of the multicast routing infrastructure for SSM is low
+
+
+6.  SSM Framework
+=================
+
+SSM Framework: elements in end-to-end model::
+
+      --------------------------------------------------------------
+       IANA assigned 232/8 for IPv4             ADDRESS ALLOCATION
+            FF3x::/96 for IPv6
+      --------------------------------------------------------------
+                   |
+                   v
+          +--------------+ session directory/web page
+          | source,group |                      SESSION DESCRIPTION
+      --------------------------------------------------------------
+                 ^ |
+           Query | | (S,G)
+                 | v
+        +-----------------+ host
+        |   SSM-aware app |                     CHANNEL DISCOVERY
+      --------------------------------------------------------------
+        |   SSM-aware app |                   SSM-AWARE APPLICATION
+      --------------------------------------------------------------
+        |   IGMPv3/MLDv2  |              IGMPv3/MLDv2 HOST REPORTING
+        +-----------------+
+                  |(source specific host report)
+      --------------------------------------------------------------
+                  v
+        +-----------------+  Querier Router
+        |   IGMPv3/MLDv2  |                         QUERIER
+      --------------------------------------------------------------
+          |   PIM-SSM  |                        PIM-SSM ROUTING
+          +------------+     Designated Router
+                  |
+                  | (S,G) Join only
+                  v
+            +-----------+  Backbone Router
+            |  PIM-SSM  |
+            +-----------+
+                  |
+                  | (S,G) Join only
+                  V
+
+6.1.  Address Allocation
+------------------------
+
+* For IPv4, the address range of ``232/8`` has been assigned by IANA for SSM.
+* In case of IPv6, [23] has defined an extension to the addressing architecture to allow for unicast prefix-based multicast addresses. See ``RFC 3306`` for details.
+
+6.2.  Session Description and Channel Discovery
+-----------------------------------------------
+
+* An SSM receiver application must know both the SSM destination address G and the source address S before subscribing to a channel.
+
+6.3.  SSM-Aware Applications
+----------------------------
+
+There are two main issues in making multicast applications "SSM-aware"::
+
+    -  An application that wants to receive an SSM session must first discover the channel address in use.
+    -  A receiving application must be able to specify 
+        both a source address and a destination address to the network layer protocol module on the end-host.
+
+
+6.4.  IGMPv3/MLDv2 Host Reporting and Querier
+---------------------------------------------
+
+The ability to specify an SSM channel address c is provided by IGMP version 3 [3] and MLD version 2 [20].
+
+6.5.  PIM-SSM Routing
+---------------------
+
+Provides guidelines for how a PIM-SM implementation should handle source-specific host reports as required by SSM.
+
+
+7.  Interoperability with Existing Multicast Service Models
+===========================================================
+
+.. note:: 旨在解决在现有的IP多播模型与SSM之间的互操作性问题。
+
+
+
+
+应用
+====
+
+.. note:: SSM协议可用于各种应用场景，如点对点视频会议、流媒体传输、网络游戏等
+
+
+
+SSM示例
+-------
+
+
+场景示例::
+
+    A streaming video service that wants to multicast a live sports event to a select group of viewers. 
+    The service knows the IP address of the source and the IP addresses of the viewers who have subscribed to this particular event. 
+
+    multicast address生成示例:
+    ff3e::1:2:3:4 (source IP address) + ff31::1234 (group address) 
+    => 
+    ff3e::1:2:3:4:ff31:1234 (SSM multicast address)
+
+    The streaming service would then send the multicast stream to this SSM address. 
+    The subscribers would receive the stream by subscribing to this specific SSM address, rather than a broader multicast address.
+
+
+场景示例2::
+
+    A company with multiple offices located around the world. 
+    The company wants to use multicast to distribute internal training videos to employees in different offices. 
+    However, the company is concerned about the security of the multicast transmissions 
+        and wants to ensure that the videos can only be accessed by employees in specific offices.
+
+    The company would assign a unique SSM multicast group address for each office that needs to receive the training videos. 
+    For example:
+        Office A: ff3e::1:2:3:4:ff31:1234
+        Office B: ff3e::1:2:3:4:ff31:5678
+        Office C: ff3e::1:2:3:4:ff31:9abc
+
+    The training videos would be streamed to these SSM addresses, 
+        and only employees in the specific offices with access to the SSM group address 
+        would be able to receive the multicast transmission. 
+    This helps to ensure the security of the transmission and prevent unauthorized access.
+
+场景示例3::
+
+    A research institute that wants to use multicast to distribute scientific data to researchers around the world. 
+    The data is highly specialized and only a specific group of researchers need to access it. 
+    The data is time-sensitive and needs to be transmitted quickly to ensure that researchers can analyze it in a timely manner.
+
+
+地址转换示例::
+
+    源地址: 2001:db8::1
+    多播地址: ff31::8000:1234
+    =>
+    源定多播: ff3e::8000:1234:800:1234
+
+
+
+地址转换示例::
+
+    源地址: 2001:db8:1234:5678:9abc:def0:1234:5678
+    多播地址: ff31::8000:1234
+    =>
+    源定多播: ff33::1234:5678
+
+地址转换示例2::
+
+    192.0.2.1
+    239.255.0.1
+    =>
+    ff3e::c000:201
+
+
+地址转换示例3::
+
+    2001:db8:85a3::8a2e:370:7334
+    ff3a::c
+    =>
+    ff3f::8a2e:370:7334
+
+
+
+
+
+
+
+
+
+参考
+====
+
+* https://www.rfc-editor.org/rfc/rfc3569
+
+

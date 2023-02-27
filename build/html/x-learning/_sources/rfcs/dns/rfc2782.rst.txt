@@ -1,0 +1,99 @@
+RFC2782: DNS SRV
+################
+
+* February 2000
+* Category: Standards Track
+* Obsoletes: 2052
+* Company::
+
+    * Microsoft Corp.
+    * Troll Technologies
+    * Internet Software Consortium
+
+* SRV 记录是 DNS 服务器的数据库中支持的一种资源记录的类型，它记录了哪台计算机提供了哪个服务这么一个简单的信息。
+
+
+
+The format of the SRV RR::
+
+    _Service._Proto.Name TTL Class SRV Priority Weight Port Target
+
+SRV RR字段说明::
+
+    Service: 
+        The symbolic name of the desired service, as defined in Assigned Numbers [STD 2] or locally.
+
+    Proto: 
+        The symbolic name of the desired protocol
+        _TCP and _UDP are at present the most useful values for this field
+
+    Name:
+        The domain this RR refers to.
+
+    TTL:
+        Standard DNS meaning [RFC 1035].
+
+    Class:
+        Standard DNS meaning [RFC 1035].
+        SRV records occur in the IN Class.
+
+    Priority:
+        The priority of this target host.
+        The range is 0-65535.
+
+    Weight:
+        A server selection mechanism.
+
+    Port:
+        The port on this target host of this service.
+
+    Target:
+        The domain name of the target host.
+        There MUST be one or more address records for this name, the name MUST NOT be an alias
+        A Target of "." means that the service is decidedly not available at this domain.
+
+SRV 格式::
+
+    _Service._Proto.Name TTL Class SRV Priority Weight Port Target
+
+
+Fictional example::
+    
+    This example uses fictional service "foobar" as an aid in understanding SRV records. 
+
+      $ORIGIN example.com.
+      @               SOA server.example.com. root.example.com. ( 1995032001 3600 3600 604800 86400 )
+                      NS  server.example.com.
+                      NS  ns1.ip-provider.net.
+                      NS  ns2.ip-provider.net.
+
+      ; foobar - use old-slow-box or new-fast-box if either is
+      ; available, make three quarters of the logins go to
+      ; new-fast-box.
+      _foobar._tcp     SRV 0 1 9 old-slow-box.example.com.
+                       SRV 0 3 9 new-fast-box.example.com.
+
+      ; if neither old-slow-box or new-fast-box is up, switch to
+      ; using the sysdmin's box and the server
+                       SRV 1 0 9 sysadmins-box.example.com.
+                       SRV 1 0 9 server.example.com.
+
+      server           A   172.30.79.10
+      old-slow-box     A   172.30.79.11
+      sysadmins-box    A   172.30.79.12
+      new-fast-box     A   172.30.79.13
+
+      ; NO other services are supported
+      *._tcp          SRV  0 0 0 .
+      *._udp          SRV  0 0 0 .
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,138 @@
+RFC4007: IPv6 Scoped Address Architecture
+#########################################
+
+* Category: Standards Track
+* March 2005
+* Updated by: 7346
+
+Abstract
+========
+
+This document specifies the architectural characteristics, expected behavior, textual representation, and usage of IPv6 addresses of different scopes.
+
+
+1.  Introduction
+================
+
+* This document specifies the architectural characteristics, expected behavior, textual representation, and usage of IPv6 addresses of different scopes.
+* This document intentionally focuses on link-local and multicast scopes only.
+
+4.  Address Scope
+=================
+
+*  For unicast scopes, link-local is a smaller scope than global.
+
+* For multicast addresses, there are fourteen possible scopes, ranging from interface-local to global.
+* For multicast scopes, scopes with lesser values in the "scop" subfield of the multicast address are smaller than scopes with greater values, with interface-local being the smallest and global being the largest.
+
+5.  Scope Zones
+===============
+
+* A scope zone, or simply a zone, is a connected region of topology of a given scope.  For example, the set of links connected by routers within a particular (multicast) site, and the interfaces attached to those links, comprise a single zone of multicast site-local scope.
+* Scope Zones用于定义IPv6地址的范围，决定其在特定网络环境中的可见性和可访问性。
+
+6.  Zone Indices
+================
+
+* `Zone Indices` are used to identify the scope zone of an IPv6 address.
+* Zone Indices Example::
+
+      |  /--------------------site1--------------------\ /--site2--\  |
+      |                                                               |
+      |  /-------------------admin1--------------------\ /-admin2--\  |
+      |                                                               |
+      |  /--link1--\ /--------link2--------\ /--link3--\ /--link4--\  |
+      |                                                               |
+      |  /--intf1--\ /--intf2--\ /--intf3--\ /--intf4--\ /--intf5--\  |
+       ---------------------------------------------------------------
+              :           |           |           |           |
+              :           |           |           |           |
+              :           |           |           |           |
+          (imaginary    =================      a point-       a
+           loopback        an Ethernet         to-point     tunnel
+             link)                               link
+
+
+
+
+
+7.  Sending Packets
+===================
+
+发送具有范围地址的IPv6数据包的过程类似于发送常规IPv6数据包的过程，但需要额外关注地址范围和下一跳选择。
+
+
+8.  Receiving Packets
+=====================
+
+IPv6接收具有范围地址的数据包的过程需要接收节点对地址范围、区域索引和附加标头进行适当的处理和判断，以确保数据包能够正确到达目标节点并被正确处理。
+
+9.  Forwarding
+==============
+
+IPv6数据包转发的过程涉及路由器维护路由表、识别目标地址和下一跳路由器、根据地址范围和区域索引选择正确的下一跳路由器，以及处理转发过程中可能出现的错误或异常情况。
+
+10.  Routing
+============
+
+IPv6路由选择和配置涉及静态和动态路由协议的选择和部署，以及路由选择算法和路由表的管理。
+
+11.  Textual Representation
+===========================
+
+To specify an IPv6 non-global address without ambiguity, an intended scope zone should be specified as well::
+
+    <address>%<zone_id>
+
+    其中:
+    <address> is a literal IPv6 address,
+    <zone_id> is a string identifying the zone of the address, and
+    `%` is a delimiter character to distinguish between <address> and <zone_id>.
+
+
+
+
+* 在IPv6地址的文本表示形式中，<zone_id>部分可以用不同的方式表示，具体取决于操作系统和应用程序。在某些操作系统中，<zone_id>部分被表示为接口名或接口索引号；在其他操作系统中，<zone_id>部分可能是数字、字母或其他符号。
+* 在IPv6地址的文本表示形式中，<zone_id>部分通常用百分号（%）分隔。例如，fe80::1%eth0是一个链路本地地址，其中eth0是接口名称。
+
+
+Examples
+--------
+
+The following addresses::
+
+     fe80::1234 (on the 1st link of the node)
+     ff02::5678 (on the 5th link of the node)
+     ff08::9abc (on the 10th organization of the node)
+
+would be represented as follows::
+
+     fe80::1234%1
+     ff02::5678%5
+     ff08::9abc%10
+
+If we use interface names as <zone_id>, those addresses could also be represented as follows::
+
+      fe80::1234%ne0
+      ff02::5678%pvc1.3
+      ff08::9abc%interface10
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+参考
+====
+
+
+* https://www.rfc-editor.org/rfc/rfc4007
+
