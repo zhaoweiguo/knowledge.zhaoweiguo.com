@@ -1,0 +1,47 @@
+临时
+####
+
+
+检查账户目录中是否存在高危文件.netrc、.rhosts::
+
+	for DIR in `cut -d":" -f6 /etc/passwd`; do
+	if [[-e $DIR/.netrc]]; then
+	echo "$DIR/,netrc"
+	fi
+	if [[-e $DIR/.rhosts]]; then
+	echo "$DIR/,netrc"
+	fi
+	done
+
+
+关闭 NFS 服务::
+
+	检查是否存在敏感进程
+	$ ps aux \ grep -E "lockd|nfsd|statd|mountd"
+
+	检查关闭 NFS 相关服务服务
+	$ .systemctl list-unit-files | grep nfs
+	$ systemctl disable nfs-client.target
+
+
+建议关闭的服务::
+
+	$ rpm -qa l grep -E "^amanda|^chargen|^chargen-udp|^cups|^cups-lpd|^daytime|^daytime-udp|^echo|^echo-udp|^eklogin|^ekrb5-telnet|^finger|^gssftp|^imap|^imaps|^ipop2|^ipop3|^klogin|^krb5-telnet|^kshell|^ktalk|^ntalk|^rexec|^rlogin|^rsh|^rsync|^talk|^tcpmux-server|^telnet|^tftp|^time-dgram|^time-stream|^uucp"
+
+
+
+
+
+
+
+
+
+
+
+
+
+参考
+====
+
+* https://blog.csdn.net/weixin_42974824/article/details/125055221
+

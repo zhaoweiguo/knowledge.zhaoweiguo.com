@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Dockerfile命令说明 &mdash; 新溪-gordon V1.7.0 documentation</title>
+  <title>常用 &mdash; 新溪-gordon V1.7.0 documentation</title>
   
 
   
@@ -31,7 +31,7 @@
   <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
-    <link rel="next" title="常用的Docker镜像" href="pub.html" />
+    <link rel="next" title="Dockerfile命令说明" href="param.html" />
     <link rel="prev" title="2.2.3. Dockerfile" href="../docker_Dockerfile.html" /> 
 
   
@@ -106,7 +106,8 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../docker_hub.html">2.2.2. 常用Docker镜像</a></li>
 <li class="toctree-l3 current"><a class="reference internal" href="../docker_Dockerfile.html">2.2.3. Dockerfile</a><ul class="current">
-<li class="toctree-l4 current"><a class="current reference internal" href="#">Dockerfile命令说明 </a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="param.html">Dockerfile命令说明 </a></li>
 <li class="toctree-l4"><a class="reference internal" href="pub.html">常用的Docker镜像</a></li>
 <li class="toctree-l4"><a class="reference internal" href="example.html">Dockerfile文件实例</a></li>
 <li class="toctree-l4"><a class="reference internal" href="entrypoint.html">ENTRYPOINT场景</a></li>
@@ -174,6 +175,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../question.html">2.2.9. 常见问题</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../practice.html">2.2.10. docker实战</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../practices/registry.html">运行自己的Docker私有镜像仓库 Registry</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../practices/时区.html">时区</a></li>
 </ul>
 </li>
 </ul>
@@ -414,7 +416,7 @@
         
           <li><a href="../docker_Dockerfile.html"><span class="section-number">2.2.3. </span>Dockerfile</a> &raquo;</li>
         
-      <li>Dockerfile命令说明 </li>
+      <li>常用</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -432,6 +434,17 @@
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
+            <nav id="local-table-of-contents" role="navigation" aria-labelledby="local-table-of-contents-title">
+              <h4 id="local-table-of-contents-title">On This Page</h4>
+              <ul>
+<li><a class="reference internal" href="#">常用</a><ul>
+<li><a class="reference internal" href="#hostname">hostname</a></li>
+<li><a class="reference internal" href="#etc-hosts">/etc/hosts镜像</a></li>
+</ul>
+</li>
+</ul>
+
+            </nav>
   <table class="docutils align-default">
 <colgroup>
 <col style="width: 32%" />
@@ -447,290 +460,38 @@
 </tr>
 </tbody>
 </table>
-<div class="section" id="dockerfile-1">
-<h1>Dockerfile命令说明 <a class="footnote-reference brackets" href="#id3" id="id2">1</a><a class="headerlink" href="#dockerfile-1" title="Permalink to this headline">¶</a></h1>
-<p>FROM:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>每个Dockerfile的第一条指令都应该是FROM,
-FROM指令指定一个已经存在的镜像，后续指令都是将基于该镜像进行，
-这个镜像被称为基础镜像（base iamge）
-
-格式:
-FROM &lt;image&gt;
-FROM &lt;image&gt;:&lt;tag&gt;
-
-实例:
-FROM zhaoweiguo/utuntu:12.02
-FROM python:2.7-slim
+<div class="section" id="id2">
+<h1>常用<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="hostname">
+<h2>hostname<a class="headerlink" href="#hostname" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>不能直接在容器内修改 /etc/hostname 文件，因为容器 stop/restart 后会重置，导致配置丢失</p></li>
+<li><p>使用时修改:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ docker run -itd --hostname $host --name $name yourimage
 </pre></div>
 </div>
-<p>MAINTAINER:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># 这条指令会告诉Docker该镜像的作者是谁，以及作者的邮箱地址。这有助于表示镜像的所有者和联系方式</span>
-<span class="n">MAINTAINER</span> <span class="o">&lt;</span><span class="n">name</span><span class="o">&gt;</span>
+</li>
+<li><p>修改Dockerfile❌:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">RUN</span> <span class="n">hostname</span> <span class="n">xxxx</span>
+<span class="n">报错</span><span class="p">:</span> <span class="n">hostname</span><span class="p">:</span> <span class="n">you</span> <span class="n">must</span> <span class="n">be</span> <span class="n">root</span> <span class="n">to</span> <span class="n">change</span> <span class="n">the</span> <span class="n">host</span> <span class="n">name</span>
 </pre></div>
 </div>
-<p>RUN:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>每条RUN指令都会创建一个新的镜像层，如果该指令执行成功，就会将此镜像层提交
-之后继续执行Dockerfile中的下一个指令
-
-实例:
-1. shell 格式
-格式: RUN &lt;command&gt;
-
-默认情况下，RUN指令会在shell里使用命令包装器/bin/sh -c 来执行
-RUN apt-get update
-RUN apt-get install -y nginx
-RUN echo &#39;Hi, I am in your container&#39; &gt; /usr/share/nginx/html/index.html
-
-2. exec 格式
-格式: RUN [&quot;executable&quot;, &quot;param1&quot;, &quot;param2&quot;]
-
-如果是在一个不支持shell的平台上运行或者不希望在shell中运行
-也可以使用exec格式的RUN指令，通过一个数组的方式指定要运行的命令和传递给该命令的每个参数
-RUN [&quot;/bin/bash&quot;, &quot;-c&quot;, &quot;echo hello&quot;]
-RUN [&quot;apt-get&quot;, &quot;install&quot;, &quot;-y&quot;, &quot;nginx&quot;]
+</li>
+</ul>
+</div>
+<div class="section" id="etc-hosts">
+<h2>/etc/hosts镜像<a class="headerlink" href="#etc-hosts" title="Permalink to this headline">¶</a></h2>
+<p>增加 hosts记录:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ docker run -itd --network $netname --add-host=$host:$ip --name $name yourimage
 </pre></div>
 </div>
-<p>CMD:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>CMD 指令就是用于指定默认的容器主进程的启动命令的
-
-在运行时可以指定新的命令来替代镜像设置中的这个默认命令，比如:
-    ubuntu 镜像默认的 CMD 是 /bin/bash
-我们可使用如下命令直接进入 bash:
-    $ docker run -it ubuntu
-我们也可以在运行时指定运行别的命令，如:
-    $ docker run -it ubuntu cat /etc/
-
-CMD 指令的格式和 RUN 相似，也是两种格式:
-1. shell格式
-2. exec格式
-
-
-格式:
-# The main purpose of a CMD is to provide defaults for an executing container.
-CMD [&quot;executable&quot;, &quot;param1&quot;, &quot;param2&quot;]    # (like an exec, this is the preferred form)
-CMD [&quot;param1&quot;,&quot;param2&quot;]       #  (as default parameters to ENTRYPOINT)
-CMD command param1 param2     #  (as a shell)
-
-实例:
-e.g. CMD echo &quot;This is a test.&quot; | wc -
-e.g. CMD [&quot;/usr/bin/wc&quot;,&quot;--help&quot;]
-Note: don&#39;t confuse RUN with CMD. RUN actually runs a command and commits the result; CMD does not execute anything at build time, but specifies the intended command for the image.
+<p>通过 docker-compose 方式，则需要通过 extra_hosts 参数:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># docker-compose.yml</span>
+<span class="n">extra_hosts</span><span class="p">:</span>
+ <span class="o">-</span> <span class="s2">&quot;host1:172.18.0.3&quot;</span>
+ <span class="o">-</span> <span class="s2">&quot;host2:172.18.0.4&quot;</span>
 </pre></div>
 </div>
-<p>ENTRYPOINT:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>ENTRYPOINT 的格式和 RUN 指令格式一样，分为 exec 格式和 shell 格式
-
-# 一个Dockerfile文件中只能有一个ENTRYPOINT
-# 如果有ENTRYPOINT那么整个container可看作一个executable文件
-# 执行的命令不会被docker run覆盖(与CMD不同)
-
-样例1:
-ENTRYPOINT  [&quot;executable&quot;, &quot;param1&quot;, &quot;param2&quot;]   # (like an exec, the preferred form)
-// exec形式: 主进程(Pid 1)是node进程
-$&gt; docker exec &lt;xxx&gt; ps x
-Pid TTY STAT    COMMAND
-1   ?   Ssl     node app.js
-12  ?   Rs      ps x
-
-样例2:
-ENTRYPOINT command param1 param2    # (as a shell)
-// shell形式: 主进程(Pid 1)是shell进程而非node进程
-$&gt; docker exec &lt;xxx&gt; ps x
-Pid TTY STAT    COMMAND
-1   ?   Ss     /bin/sh -c node app.js
-7   ?   Sl     node app.js
-12  ?   Rs      ps x
-
-ENTRYPOINT 在运行时也可以替代，不过比 CMD 要略显繁琐:
-    需要通过 docker run 的参数 --entrypoint 来指定
-    如:
-    $ docker run --entrypoint=/bin/sh --rm -it plugins/docker
-</pre></div>
-</div>
-<p>EXPOSE:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>EXPOSE 指令是声明运行时容器提供服务端口，这只是一个声明，在运行时并不会因为这个声明应用就会开启这个端口的服务。
-在 Dockerfile 中写入这样的声明有两个好处:
-    1. 帮助镜像使用者理解这个镜像服务的守护端口，以方便配置映射；
-    2. 在运行时使用随机端口映射时，也就是 docker run -P 时，会自动随机映射 EXPOSE 的端口。
-
-而是需要你在使用docker run运行容器时来指定需要打开哪些端口
-可以指定多个EXPOSE指令来向外部公开多个端口，Docker也使用EXPOSE指令来帮助将多个容器
-
-格式:
-EXPOSE &lt;port&gt; [&lt;port&gt;...]
-
-实例:
-</pre></div>
-</div>
-<p>ARG:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>格式:
-ARG &lt;参数名&gt;[=&lt;默认值&gt;]
-
-构建参数和 ENV 的效果一样，都是设置环境变量
-以在构建命令 docker build 中用 --build-arg &lt;参数名&gt;=&lt;值&gt; 来覆盖
-</pre></div>
-</div>
-<p>ENV:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span># 设定环境变量environment
-ENV &lt;key&gt; &lt;value&gt;
-# 可以通过docker inspect查看这些值
-# 可以通过docker run --env &lt;key&gt;=&lt;value&gt;修改这些值
-e.g. ENV DEBIAN_FRONTEND noninteractive   # will persist when the container is run interactively; for example: docker run -t -i image bash
-
-下列指令可以支持环境变量展开: ADD、COPY、ENV、EXPOSE、LABEL、USER、WORKDIR、VOLUME、STOPSIGNAL、ONBUILD。
-
-# 实例(官方 node):
-ENV NODE_VERSION 7.2.0
-RUN curl -SLO &quot;https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.xz&quot; \
-  &amp;&amp; curl -SLO &quot;https://nodejs.org/dist/v$NODE_VERSION/SHASUMS256.txt.asc&quot; \
-  &amp;&amp; gpg --batch --decrypt --output SHASUMS256.txt SHASUMS256.txt.asc \
-  &amp;&amp; grep &quot; node-v$NODE_VERSION-linux-x64.tar.xz\$&quot; SHASUMS256.txt | sha256sum -c - \
-  &amp;&amp; tar -xJf &quot;node-v$NODE_VERSION-linux-x64.tar.xz&quot; -C /usr/local --strip-components=1 \
-  &amp;&amp; rm &quot;node-v$NODE_VERSION-linux-x64.tar.xz&quot; SHASUMS256.txt.asc SHASUMS256.txt \
-  &amp;&amp; ln -s /usr/local/bin/node /usr/local/bin/nodejs
-</pre></div>
-</div>
-<p>ADD:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span># 拷贝一个宿主机上的文件&lt;src&gt;到container的&lt;dest&gt;目录下
-ADD &lt;src&gt; &lt;dest&gt;
-类似: mount到指定位置
-
-ADD 指令和 COPY 的格式和性质基本一致。但是在 COPY 基础上增加了一些功能:
-比如: &lt;源路径&gt; 可以是一个 URL,下载后的文件权限自动设置为 600
-
-注:
-如果 &lt;源路径&gt; 为一个 tar 压缩文件的话，压缩格式为 gzip, bzip2 以及 xz 的情况下
-    ADD 指令将会自动解压缩这个压缩文件到 &lt;目标路径&gt; 去
-但在某些情况下，如果我们真的是希望复制个压缩文件进去，而不解压缩，这时就不可以使用 ADD 命令了。
-
-在 Docker 官方的 Dockerfile 最佳实践文档 中要求，尽可能的使用 COPY
-    因为 COPY 的语义很明确，就是复制文件而已，而 ADD 则包含了更复杂的功能，其行为也不一定很清晰。
-    最适合使用 ADD 的场合，就是所提及的需要自动解压缩的场合
-另外需要注意的是，ADD 指令会令镜像构建缓存失效，从而可能会令镜像构建变得比较缓慢。
-</pre></div>
-</div>
-<p>COPY:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>// 建议使用copy，少用add
-COPY &lt;src&gt; &lt;dest&gt;
-类似cp命令
-</pre></div>
-</div>
-<p>VOLUME:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>格式:
-VOLUME [&quot;&lt;路径1&gt;&quot;, &quot;&lt;路径2&gt;&quot;...]
-VOLUME &lt;路径&gt;
-
-# 磁盘挂载
-VOLUME [&quot;/data&quot;]
-VOLUME /data
-这里的 /data 目录就会在运行时自动挂载为匿名卷，
-任何向 /data 中写入的信息都不会记录进容器存储层，从而保证了容器存储层的无状态化。
-当然，运行时可以覆盖这个挂载设置。比如:
-docker run -d -v mydata:/data xxxx
-</pre></div>
-</div>
-<p>USER:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>指定当前用户
-格式：USER &lt;用户名&gt;
-USER 指令和 WORKDIR 相似，都是改变环境状态并影响以后的层。
-WORKDIR 是改变工作目录，USER 则是改变之后层的执行 RUN, CMD 以及 ENTRYPOINT 这类命令的身份
-
-# sets the user name or UID
-USER daemon
-</pre></div>
-</div>
-<p>WORKDIR:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">格式</span><span class="p">:</span>
-<span class="n">WORKDIR</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">workdir</span>
-
-<span class="n">实例</span><span class="p">:</span>
-<span class="n">WORKDIR</span> <span class="o">/</span><span class="n">a</span>
-<span class="n">WORKDIR</span> <span class="n">b</span>
-<span class="n">WORKDIR</span> <span class="n">c</span>
-<span class="n">RUN</span> <span class="n">pwd</span>
-<span class="c1"># /a/b/c</span>
-</pre></div>
-</div>
-<p>ONBUILD:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>格式: ONBUILD [INSTRUCTION]
-
-ONBUILD 是一个特殊的指令，它后面跟的是其它指令，比如 RUN, COPY 等
-而这些指令，在当前镜像构建时并不会被执行。只有当以当前镜像为基础镜像，去构建下一级镜像的时候才会被执行
-
-实例:
-1. 基础镜像:
-FROM node:slim
-RUN mkdir /app
-WORKDIR /app
-ONBUILD COPY ./package.json /app
-ONBUILD RUN [ &quot;npm&quot;, &quot;install&quot; ]
-ONBUILD COPY . /app/
-CMD [ &quot;npm&quot;, &quot;start&quot; ]
-
-# 基于基础镜像
-FROM &lt;baseMirror&gt;
-它等同于:
-FROM node:slim
-RUN mkdir /app
-WORKDIR /app
-COPY ./package.json /app
-RUN [ &quot;npm&quot;, &quot;install&quot; ]
-COPY . /app/
-CMD [ &quot;npm&quot;, &quot;start&quot; ]
-</pre></div>
-</div>
-<p>HEALTHCHECK:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>格式:
-HEALTHCHECK [选项] CMD &lt;命令&gt;：设置检查容器健康状况的命令
-HEALTHCHECK NONE：如果基础镜像有健康检查指令，使用这行可以屏蔽掉其健康检查指令
-
-HEALTHCHECK 指令是告诉 Docker 应该如何进行判断容器的状态是否正常，这是 Docker 1.12 引入的新指令。
-用这行命令来判断容器主进程的服务状态是否还正常，从而比较真实的反应容器实际状态。
-
-初始状态会为 starting
-检查成功后变为 healthy
-连续一定次数失败，则会变为 unhealthy
-
-HEALTHCHECK 支持下列选项:
---interval=&lt;间隔&gt;：两次健康检查的间隔，默认为 30 秒；
---timeout=&lt;时长&gt;：健康检查命令运行超时时间，如果超过这个时间，本次健康检查就被视为失败，默认 30 秒；
---retries=&lt;次数&gt;：当连续失败指定次数后，则将容器状态视为 unhealthy，默认 3 次。
-
-和 CMD, ENTRYPOINT 一样，HEALTHCHECK 只可以出现一次，如果写了多个，只有最后一个生效。
-命令的返回值决定了该次健康检查的成功与否：0：成功；1：失败；2：保留，不要使用这个值
-
-实例:
-FROM nginx
-RUN apt-get update &amp;&amp; apt-get install -y curl &amp;&amp; rm -rf /var/lib/apt/lists/*
-HEALTHCHECK --interval=5s --timeout=3s \
-  CMD curl -fs http://localhost/ || exit 1
-</pre></div>
-</div>
-<p>实例:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># This is a comment</span>
-<span class="n">FROM</span> <span class="n">ubuntu</span><span class="p">:</span><span class="mf">14.04</span>
-<span class="n">MAINTAINER</span> <span class="n">Kate</span> <span class="n">Smith</span> <span class="o">&lt;</span><span class="n">ksmith</span><span class="nd">@example</span><span class="o">.</span><span class="n">com</span><span class="o">&gt;</span>
-<span class="n">RUN</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">update</span> <span class="o">&amp;&amp;</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="o">-</span><span class="n">y</span> <span class="n">ruby</span> <span class="n">ruby</span><span class="o">-</span><span class="n">dev</span>
-<span class="n">RUN</span> <span class="n">gem</span> <span class="n">install</span> <span class="n">sinatra</span>
-</pre></div>
-</div>
-<p>实例-时区:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">实例1</span><span class="p">:</span>
-<span class="o">//</span> <span class="n">前提宿主机有文件</span><span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">share</span><span class="o">/</span><span class="n">zoneinfo</span><span class="o">/</span><span class="n">Asia</span><span class="o">/</span><span class="n">Shanghai</span>
-<span class="o">//</span> <span class="n">使用docker镜像的</span><span class="p">,</span> <span class="n">要求镜像有此文件</span>
-<span class="n">RUN</span> <span class="n">copy</span> <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">share</span><span class="o">/</span><span class="n">zoneinfo</span><span class="o">/</span><span class="n">Asia</span><span class="o">/</span><span class="n">Shanghai</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">localtime</span> <span class="o">&amp;&amp;</span> <span class="n">echo</span> <span class="s2">&quot;Asia/Shanghai&quot;</span> <span class="o">&gt;</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">timezone</span>
-
-<span class="n">实例2</span><span class="p">:</span>
-<span class="n">RUN</span> <span class="n">apk</span> <span class="n">add</span> <span class="n">tzdata</span> <span class="o">&amp;&amp;</span> <span class="n">cp</span> <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">share</span><span class="o">/</span><span class="n">zoneinfo</span><span class="o">/</span><span class="n">Asia</span><span class="o">/</span><span class="n">Shanghai</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">localtime</span> \
-    <span class="o">&amp;&amp;</span> <span class="n">echo</span> <span class="s2">&quot;Asia/Shanghai&quot;</span> <span class="o">&gt;</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">timezone</span> \
-    <span class="o">&amp;&amp;</span> <span class="n">apk</span> <span class="k">del</span> <span class="n">tzdata</span>
-</pre></div>
-</div>
-<dl class="footnote brackets">
-<dt class="label" id="id3"><span class="brackets"><a class="fn-backref" href="#id2">1</a></span></dt>
-<dd><p><a class="reference external" href="https://docs.docker.com/reference/builder/">https://docs.docker.com/reference/builder/</a></p>
-</dd>
-</dl>
 <table class="docutils align-default">
 <colgroup>
 <col style="width: 32%" />
@@ -747,6 +508,7 @@ HEALTHCHECK --interval=5s --timeout=3s \
 </tbody>
 </table>
 </div>
+</div>
 
 
            </div>
@@ -756,7 +518,7 @@ HEALTHCHECK --interval=5s --timeout=3s \
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="pub.html" class="btn btn-neutral float-right" title="常用的Docker镜像" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="param.html" class="btn btn-neutral float-right" title="Dockerfile命令说明" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="../docker_Dockerfile.html" class="btn btn-neutral" title="2.2.3. Dockerfile" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>

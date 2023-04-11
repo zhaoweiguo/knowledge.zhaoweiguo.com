@@ -1,3 +1,5 @@
+.. _rfc7826:
+
 RFC7826: Real-Time Streaming Protocol
 #####################################
 
@@ -20,6 +22,14 @@ RTSP协议提供了一种可靠、高效的控制协议，可以控制实时媒�
     总的来说，RTSP协议提供了一种可靠、高效的控制协议，可以控制实时媒体流的传输，并且具有良好的可扩展性，可以适应不同的应用场景。
 
 
+* It defines the RTSP 2.0 protocol, which is an application-layer protocol used for controlling the delivery of media data over the Internet.
+* It supports a wide range of media formats and delivery methods, including live streaming and video-on-demand.
+* It provides a flexible and extensible framework for controlling the delivery of media data, including support for advanced features such as server push and client pull.
+*It includes support for authentication and encryption to ensure secure and private communication between clients and servers.
+*It defines a number of new RTSP methods, headers, and response codes to support the new features and capabilities of the RTSP 2.0 protocol.
+
+
+
 Abstract
 ========
 
@@ -34,7 +44,7 @@ Abstract
 ================
 
 * RTSP acts as a "network remote control" for multimedia servers.
-* The protocol operates between RTSP 2.0 clients and servers. 
+* The protocol operates between RTSP 2.0 clients and servers, but it also supports the use of proxies placed between clients and servers.
 * Clients can request information about streaming media from servers by asking for a description of the media or use media description provided externally.  
 * The media delivery protocol is used to establish the media streams described by the media description. 
 * Clients can then request to play out the media, pause it, or stop it completely.  
@@ -44,6 +54,833 @@ Abstract
 
 2.  Protocol Overview
 =====================
+
+* RTSP 2.0 is a bidirectional request and response protocol that first establishes a context including content resources (the media) and then controls the delivery of these content resources from the provider to the consumer.  
+* RTSP has three fundamental parts::
+
+    Session Establishment, 
+    Media Delivery Control, 
+    an extensibility model described below.
+
+* The protocol is based on some assumptions about existing functionality to provide a complete solution for client-controlled real-time media delivery.
+
+* RTSP uses text-based messages, requests and responses, that may contain a binary message body.
+* RTSP 2.0 requires clients and servers to implement TCP and TLS over TCP as mandatory transports for RTSP messages.
+
+2.1.  Presentation Description
+------------------------------
+
+* RTSP exists to provide access to multimedia presentations and content but tries to be agnostic about the media type or the actual media delivery protocol that is used. 
+* To enable a client to implement a complete system, an RTSP-external mechanism for describing the presentation and the delivery protocol(s) is used.  
+* RTSP assumes that this description is either delivered completely out of band or as a data object in the response to a client's request using the DESCRIBE method (Section 13.2).
+
+Parameters that commonly have to be included in the presentation description are the following::
+
+   1. The number of media streams
+   2. the resource identifier for each media stream/resource that is to be controlled by RTSP
+   3. the protocol that will be used to deliver each media stream
+   4. the transport protocol parameters that are not negotiated or vary with each client
+   5. the media-encoding information enabling a client to correctly decode the media upon reception
+   6. an aggregate control resource identifier
+
+
+2.2.  Session Establishment
+---------------------------
+
+* The RTSP client can request the establishment of an RTSP session after having used the presentation description to determine which media streams are available, which media delivery protocol is used, and the resource identifiers of the media streams.  
+* The RTSP session is a common context between the client and the server that consists of one or more media resources that are to be under common media delivery control.
+
+
+* The client creates an RTSP session by sending a request using the SETUP method (Section 13.3) to the server.
+
+2.3.  Media Delivery Control
+----------------------------
+
+* The basic operations are "begin playback", using the PLAY method (Section 13.4) and "suspend (pause) playback" by using the PAUSE method (Section 13.6).
+
+several different time formats::
+
+    1. Normal Play Time (NPT) (Section 4.4.2), 
+    2. Society of Motion Picture and Television Engineers (SMPTE) Timestamps (Section 4.4.1),
+    3. absolute time (Section 4.4.3)
+
+
+* The support for positioning/searching within media content depends on the content's media properties.
+* The properties applicable for the RTSP session are provided by the server in the SETUP response using the Media-Properties header (Section 18.29).
+
+Content exists in a number of different types, such as::
+
+    on-demand,
+    live,
+    live with simultaneous recording
+
+
+
+2.4. Session Parameter Manipulations
+------------------------------------
+
+* A session may have additional state or functionality that affects how the server or client treats the session or content, how it functions, or feedback on how well the session works.  
+* Such extensions are not defined in this specification, but they may be covered in various extensions.
+
+* RTSP has two methods for retrieving and setting parameter values on either the client or the server: GET_PARAMETER (Section 13.8) and SET_PARAMETER (Section 13.9).
+* 
+
+
+
+2.5. Media Delivery
+-------------------
+
+* This document specifies how media is delivered with RTP [RFC3550] over UDP [RFC768], TCP [RFC793], or the RTSP connection.
+
+2.5.1.  Media Delivery Manipulations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* RTSP is a protocol that enables the delivery of requested content to the client at the pace intended by the content's creator. 
+* However, RTSP can also manipulate the delivery to the client in two ways::
+
+   1. Scale:  The ratio of media-content time delivered per unit of playback time.
+        => media-content time / playback time
+   2. Speed:  The ratio of playback time delivered per unit of wallclock time.
+        => playback time / wallclock time
+
+.. note:: Both affect the media delivery per time unit.  However, they manipulate two independent timescales and the effects are possible to combine.
+
+
+Scale
+'''''
+
+* Scale (Section 18.46)
+* Scale = 1.0 is the default value that is used if no scale is specified, i.e., playback at the content's original rate.
+* Scale > 1.0, means fast forward, e.g., scale = 2.0 results in that 2 seconds of content being played back every second of playback.
+* Scale values between 0 and 1.0 provide for slow motion.
+* Scale can be negative to allow for reverse playback in either regular pace (scale = -1.0), fast backwards (scale < -1.0), or slow-motion backwards (-1.0 < scale < 0).
+* Scale = 0 would be equal to pause and is not allowed.
+
+
+.. note:: In most cases, the realization of scale means server-side manipulation of the media to ensure that the client can actually play it back. The nature of these media manipulations and when they are needed is highly media-type dependent.
+
+* For audio, it is very difficult to modify the playback rate.
+* Typically, no more than a factor of two is possible while maintaining intelligibility by changing the pitch and rate of speech.
+* Music goes out of tune if one tries to manipulate the playback rate by resampling it.
+* This is a well-known problem, and audio is commonly muted or played back in short segments with skips to keep up with the current playback point.
+
+* For video, it is possible to manipulate the frame rate
+
+
+Speed
+'''''
+
+* Speed (Section 18.50)
+* Speed = 1(default) which means to deliver at the same rate the media is consumed.
+* Speed > 1 means that the receiver will get content faster than it regularly would consume it. 
+* Speed < 1 means that delivery is slower than the regular media rate.
+* Speed values of 0 or lower have no meaning and are not allowed.
+
+
+
+2.6. Session Maintenance and Termination
+----------------------------------------
+
+The session context that has been established is kept alive by having the client show liveness.  This is done in two main ways::
+
+   1. Media-transport protocol keep-alive. 
+        RTP Control Protocol (RTCP) may be used when using RTP.
+   2. Any RTSP request referencing the session context.
+
+* If the client fails to show liveness for more than the established session timeout value (normally 60 seconds), the server may terminate the context.
+* The session context is normally terminated by the client sending a ``TEARDOWN`` request (Section 13.7) to the server referencing the aggregated control URI.
+* An individual media resource can be removed from a session context by a TEARDOWN request referencing that particular media resource.  
+* If all media resources are removed from a session context, the session context is terminated
+
+* It is recommended that the client terminate the session before ten times the session timeout value has passed.
+* A server may terminate the session after one session timeout period without any client activity beyond keep-alive.
+
+
+
+2.7. Extending RTSP
+-------------------
+
+* RTSP is quite a versatile protocol that supports extensions in many different directions.
+
+The RTSP, in itself, can be extended in three ways::
+
+    1. Existing methods can be extended with new parameters
+    2. New methods can be added
+    3. A new version of the protocol can be defined
+
+
+
+3. Document Conventions
+=======================
+
+3.2. Terminology
+----------------
+
+* Aggregate control: The concept of controlling multiple streams using a single timeline, generally one maintained by the server.【示例】A client uses aggregate control when it issues a single play or pause message to simultaneously control both the audio and video in a movie.
+* Aggregated session: A session that is under aggregate control is referred to as an "aggregated session".
+* Aggregate control URI: The URI used in an RTSP request to refer to and control an aggregated session.
+* Non-aggregated control:  Control of a single media stream.
+* IRI:  An Internationalized Resource Identifier is similar to a URI but allows characters from the whole Universal Character Set (Unicode/ISO 10646), rather than the US-ASCII only.
+
+
+
+4. Protocol Parameters
+======================
+
+4.1.  RTSP Version
+------------------
+
+::
+
+    <major>.<minor>
+    例:
+        RTSP/2.13
+
+
+4.2.  RTSP IRI and URI
+----------------------
+
+three URI schemes::
+
+    1. rtsp
+        port: 554
+    2. rtsps
+        port: 322
+    3. rtspu
+        indicates unspecified transport of the RTSP messages over unreliable transport means (UDP in RTSP 1.0)
+
+RTSP URI::
+
+    rtsp://media.example.com:554/twister/audiotrack
+        may identify the audio stream within the presentation "twister"
+
+    rtsp://media.example.com:554/twister
+        may be composed of audio and video streams, 
+        but could also be something else, such as a random media redirector.
+
+4.3.  Session Identifiers
+-------------------------
+
+* Session identifiers are strings of a length between 8-128 characters.
+
+
+4.4.  Media-Time Formats
+------------------------
+
+* RTSP currently supports three different media-time formats defined below.
+
+4.4.1.  SMPTE-Relative Timestamps
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* A timestamp may use a format derived from a Society of Motion Picture and Television Engineers (SMPTE) specification and expresses time offsets anchored at the start of the media clip.  
+* Relative timestamps are expressed as SMPTE time codes [SMPTE-TC] for frame-level access accuracy.
+
+* The time code has the format::
+
+    hours:minutes:seconds:frames.subframes
+
+* The default SMPTE format is "SMPTE 30 drop" format, with a frame rate of 29.97 frames per second.  
+* For SMPTE 30, the "frames" field in the time value can assume the values 0 through 29.  
+* The difference between 30 and 29.97 frames per second is handled by dropping the first two frame indices (values 00 and 01) of every minute, except every tenth minute.
+* If the frame and the subframe values are zero, they may be omitted.
+* Subframes are measured in hundredths of a frame.
+
+Examples::
+
+    smpte=10:12:33:20-
+    smpte=10:07:33-
+    smpte=10:07:00-10:07:33:05.01
+
+Other SMPTE codes MAY be supported (such as "SMPTE 25") through the use of "smpte-type"
+
+    smpte-25=10:07:00-10:07:33:05.01
+
+4.4.2.  Normal Play Time
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Normal Play Time (NPT) indicates the stream-absolute position relative to the beginning of the presentation.  
+* The timestamp consists of two parts: 
+* The mandatory first part may be expressed in either seconds only or in hours, minutes, and seconds.  
+* The optional second part consists of a decimal point and decimal figures and indicates fractions of a second.
+
+* The special constant "now" is defined as the current instant of a live event.  It MAY only be used for live events and MUST NOT be used for on-demand (i.e., non-live) content.
+
+
+Examples:
+
+    npt=123.45-125
+    npt=12:05:35.3-
+    npt=now-
+
+* In accordance with the requirements of the ISO 8601 time format, the hours, minutes, and seconds MUST all be present, with two digits used for minutes and for seconds and with at least two digits for hours.  
+* An NPT of 7 minutes and 0 seconds is represented as "00:07:00", and an NPT of 392 hours, 0 minutes, and 6 seconds is represented as "392:00:06".
+
+4.4.3.  Absolute Time
+^^^^^^^^^^^^^^^^^^^^^
+
+* Absolute time is expressed using a timestamp based on ISO 8601 [ISO.8601.2000].
+
+* Below are three examples of media time formats:
+* ``clock=19961108T143720.25Z-19961108T144725.25Z``: a request for a clock format range request for a starting time of November 8, 1996 at 14 h 37 min and 20 1/4 seconds UTC playing for 10 min and 5 seconds
+* ``Time-Limited=20141224T1500Z``: a Media-Properties header's "Time-Limited" UTC property for the 24th of December 2014 at 15 hours and 00 minutes
+* ``time=20130618T161256Z``: a Terminate-Reason header "time" property for the 18th of June 2013 at 16 hours, 12 minutes, and 56 seconds
+
+
+4.5.  Feature Tags
+------------------
+
+* Feature tags are unique identifiers used to designate features in RTSP
+* These tags are used in Require (Section 18.43), Proxy-Require (Section 18.37), Proxy-Supported (Section 18.38), Supported (Section 18.51), and Unsupported (Section 18.55) header fields.
+* A feature tag definition MUST indicate which combination of clients, servers, or proxies to which it applies.
+
+4.6.  Message Body Tags
+-----------------------
+
+* Message body tags are opaque strings that are used to compare two message bodies from the same resource, for example, in caches or to optimize setup after a redirect.
+* Message body tags can be carried in the MTag header (see Section 18.31) or in SDP (see Appendix D.1.9). 
+* MTag is similar to ETag in HTTP/1.1 (see Section 3.11 of [RFC2068]).
+
+4.7.  Media Properties
+----------------------
+
+* When an RTSP server handles media, it is important to consider the different properties a media instance for delivery and playback can have.
+* They are derived from the differences between a number of supported usages::
+
+    1. On-demand:
+    2. Dynamic On-demand:
+    3. Live:
+    4. Live with Recording:
+
+4.7.1.  Random Access and Seeking
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Random access is the ability to specify and get media delivered starting from any time (instant) within the content, an operation called "seeking".
+* The Media-Properties header will indicate the general capability for a media resource to perform random access::
+
+    1. Random-Access
+    2. Beginning-Only
+    3. No-Seeking
+
+
+4.7.2. Retention
+^^^^^^^^^^^^^^^^
+
+The following retention policies are used by media to limit possible protocol operations::
+
+    1. Unlimited: The media will not be removed as long as the RTSP session is in existence
+    2. Time-Limited: The media will not be removed before the given wallclock time.
+    3. Time-Duration: The media (on fragment or unit basis) will be retained for the specified duration.
+
+4.7.3.  Content Modifications
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+media property for content modifications is needed and the following initial values are defined::
+
+    1. Immutable
+    2. Dynamic
+    3. Time-Progressing
+
+
+4.7.4.  Supported Scale Factors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* The attribute is named "Scales".
+
+
+4.7.5.  Mapping to the Attributes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* This section shows examples of how one would map the above usages to the properties and their values.
+
+Example of On-Demand::
+
+    Random Access: Random-Access=5.0, 
+    Content Modifications: Immutable, 
+    Retention: Unlimited or Time-Limited.
+
+Example of Dynamic On-Demand::
+
+    Random Access: Random-Access=3.0, 
+    Content Modifications: Dynamic,
+    Retention: Unlimited or Time-Limited.
+
+Example of Live::
+
+    Random Access: No-Seeking, 
+    Content Modifications: Time-Progressing, 
+    Retention: Time-Duration=0.0
+
+Example of Live with Recording::
+
+    Random Access: Random-Access=3.0, 
+    Content Modifications: Time-Progressing, 
+    Retention: Time-Duration=7200.0
+
+
+
+
+5. RTSP Message
+===============
+
+* RTSP is a text-based protocol that uses the ISO 10646 character set in UTF-8 encoding
+
+5.1. Message Types
+------------------
+
+* RTSP messages are either requests from client to server or from server to client, and responses in the reverse direction.
+
+Both types of messages consist of::
+
+    1. a start-line, 
+    2. zero or more header fields (also known as "headers"), 
+    3. an empty line (i.e., a line with nothing preceding the CRLF) indicating the end of the headers,
+    4. possibly the data of the message body. 
+
+ABNF::
+
+    generic-message = start-line
+                   *(rtsp-header CRLF)
+                     CRLF
+                   [ message-body-data ]
+    start-line = Request-Line / Status-Line
+
+
+5.2. Message Headers
+--------------------
+
+* RTSP header fields (see Section 18) include::
+
+    1. general-header,
+    2. request-header,
+    3. response-header,
+    4. message body header fields.
+
+
+5.3. Message Body
+-----------------
+
+* The message body (if any) of an RTSP message is used to carry further information for a particular resource associated with the request or response.  
+* An example of a message body is an SDP message.
+
+
+5.4. Message Length
+-------------------
+
+* An RTSP message that does not contain any message body is terminated by the first empty line after the header fields
+* The length of that body is determined by the value of the ``Content-Length`` header
+
+
+
+6. General-Header Fields
+========================
+
+The general-headers are listed in Table 1::
+
+    +--------------------+----------------+
+    | Header Name        | Defined in     |
+    +--------------------+----------------+
+    | Accept-Ranges      | Section 18.5   |
+    |                    |                |
+    | Cache-Control      | Section 18.11  |
+    |                    |                |
+    | Connection         | Section 18.12  |
+    |                    |                |
+    | CSeq               | Section 18.20  |
+    |                    |                |
+    | Date               | Section 18.21  |
+    |                    |                |
+    | Media-Properties   | Section 18.29  |
+    |                    |                |
+    | Media-Range        | Section 18.30  |
+    |                    |                |
+    | Pipelined-Requests | Section 18.33  |
+    |                    |                |
+    | Proxy-Supported    | Section 18.38  |
+    |                    |                |
+    | Range              | Section 18.40  |
+    |                    |                |
+    | RTP-Info           | Section 18.45  |
+    |                    |                |
+    | Scale              | Section 18.46  |
+    |                    |                |
+    | Seek-Style         | Section 18.47  |
+    |                    |                |
+    | Server             | Section 18.48  |
+    |                    |                |
+    | Session            | Section 18.49  |
+    |                    |                |
+    | Speed              | Section 18.50  |
+    |                    |                |
+    | Supported          | Section 18.51  |
+    |                    |                |
+    | Timestamp          | Section 18.53  |
+    |                    |                |
+    | Transport          | Section 18.54  |
+    |                    |                |
+    | User-Agent         | Section 18.56  |
+    |                    |                |
+    | Via                | Section 18.57  |
+    +--------------------+----------------+
+
+
+
+
+7. Request
+==========
+
+A request message uses the format outlined below regardless of the direction of a request, whether client to server or server to client::
+
+    1. Request line, 
+        containing:
+            the method to be applied to the resource, 
+            the identifier of the resource,
+            the protocol version in use; 
+    2. Zero or more Header lines, 
+        which can be of the following types:
+            general-headers (Section 6), 
+            request-headers (Section 7.2), 
+            message body headers (Section 9.1); 
+    3. One empty line (CRLF) 
+        to indicate the end of the header section; 
+    4. Optionally, a message body, 
+        consisting of one or more lines. 
+        The length of the message body in octets is indicated by the Content- Length message header.
+
+
+7.1.  Request Line
+------------------
+
+The syntax of the RTSP request line has the following::
+
+      <Method> SP <Request-URI> SP <RTSP-Version> CRLF
+
+
+
+The methods that are defined by this specification are listed in Table 2::
+
+    +---------------+----------------+
+    | Method        | Defined in     |
+    +---------------+----------------+
+    | DESCRIBE      | Section 13.2   |
+    |               |                |
+    | GET_PARAMETER | Section 13.8   |
+    |               |                |
+    | OPTIONS       | Section 13.1   |
+    |               |                |
+    | PAUSE         | Section 13.6   |
+    |               |                |
+    | PLAY          | Section 13.4   |
+    |               |                |
+    | PLAY_NOTIFY   | Section 13.5   |
+    |               |                |
+    | REDIRECT      | Section 13.10  |
+    |               |                |
+    | SETUP         | Section 13.3   |
+    |               |                |
+    | SET_PARAMETER | Section 13.9   |
+    |               |                |
+    | TEARDOWN      | Section 13.7   |
+    +---------------+----------------+
+
+* An asterisk "*" can be used instead of an absolute URI in the Request-URI part to indicate that the request does not apply to a particular resource but to the server or proxy itself, and is only allowed when the request method does not necessarily apply to a resource::
+
+   For example:
+      OPTIONS * RTSP/2.0
+
+7.2.  Request-Header Fields
+---------------------------
+
+::
+
+    +---------------------+----------------+
+    | Header              | Defined in     |
+    +---------------------+----------------+
+    | Accept              | Section 18.1   |
+    |                     |                |
+    | Accept-Credentials  | Section 18.2   |
+    |                     |                |
+    | Accept-Encoding     | Section 18.3   |
+    |                     |                |
+    | Accept-Language     | Section 18.4   |
+    |                     |                |
+    | Authorization       | Section 18.8   |
+    |                     |                |
+    | Bandwidth           | Section 18.9   |
+    |                     |                |
+    | Blocksize           | Section 18.10  |
+    |                     |                |
+    | From                | Section 18.23  |
+    |                     |                |
+    | If-Match            | Section 18.24  |
+    |                     |                |
+    | If-Modified-Since   | Section 18.25  |
+    |                     |                |
+    | If-None-Match       | Section 18.26  |
+    |                     |                |
+    | Notify-Reason       | Section 18.32  |
+    |                     |                |
+    | Proxy-Authorization | Section 18.36  |
+    |                     |                |
+    | Proxy-Require       | Section 18.37  |
+    |                     |                |
+    | Referrer            | Section 18.41  |
+    |                     |                |
+    | Request-Status      | Section 18.42  |
+    |                     |                |
+    | Require             | Section 18.43  |
+    |                     |                |
+    | Terminate-Reason    | Section 18.52  |
+    +---------------------+----------------+
+
+
+
+8. Response
+===========
+
+
+8.1.  Status-Line
+-----------------
+
+::
+
+    <RTSP-Version> SP <Status-Code> SP <Reason Phrase> CRLF
+
+Status Code and Reason Phrase::
+
+   +------+---------------------------------+--------------------------+
+   | Code | Reason                          | Method                   |
+   +------+---------------------------------+--------------------------+
+   | 100  | Continue                        | all                      |
+   |      |                                 |                          |
+   | 200  | OK                              | all                      |
+   |      |                                 |                          |
+   | 301  | Moved Permanently               | all                      |
+   | 302  | Found                           | all                      |
+   | 303  | See Other                       | n/a                      |
+   | 304  | Not Modified                    | all                      |
+   | 305  | Use Proxy                       | all                      |
+   |      |                                 |                          |
+   | 400  | Bad Request                     | all                      |
+   | 401  | Unauthorized                    | all                      |
+   | 402  | Payment Required                | all                      |
+   | 403  | Forbidden                       | all                      |
+   | 404  | Not Found                       | all                      |
+   | 405  | Method Not Allowed              | all                      |
+   | 406  | Not Acceptable                  | all                      |
+   | 407  | Proxy Authentication Required   | all                      |
+   | 408  | Request Timeout                 | all                      |
+   | 410  | Gone                            | all                      |
+   | 412  | Precondition Failed             | DESCRIBE, SETUP          |
+   | 413  | Request Message Body Too Large  | all                      |
+   | 414  | Request-URI Too Long            | all                      |
+   | 415  | Unsupported Media Type          | all                      |
+   | 451  | Parameter Not Understood        | SET_PARAMETER, GET_PARAMETER          |
+   | 452  | reserved                        | n/a                      |
+   | 453  | Not Enough Bandwidth            | SETUP                    |
+   | 454  | Session Not Found               | all                      |
+   | 455  | Method Not Valid in This State  | all                      |
+   | 456  | Header Field Not Valid          | all                      |
+   | 457  | Invalid Range                   | PLAY, PAUSE              |
+   | 458  | Parameter Is Read-Only          | SET_PARAMETER            |
+   | 459  | Aggregate Operation Not Allowed | all                      |
+   | 460  | Only Aggregate Operation Allowed| all                      |
+   | 461  | Unsupported Transport           | all                      |
+   | 462  | Destination Unreachable         | all                      |
+   | 463  | Destination Prohibited          | SETUP                    |
+   | 464  | Data Transport Not Ready Yet    | PLAY                     |
+   | 465  | Notification Reason Unknown     | PLAY_NOTIFY              |
+   | 466  | Key Management Error            | all                      |
+   | 470  |Connection Authorization Required| all                      |
+   | 471  |Connection Credentials Not Accept| all                      |
+   | 472  | Failure to Establish Secure Conn| all                      |
+   |      |                                 |                          |
+   | 500  | Internal Server Error           | all                      |
+   | 501  | Not Implemented                 | all                      |
+   | 502  | Bad Gateway                     | all                      |
+   | 503  | Service Unavailable             | all                      |
+   | 504  | Gateway Timeout                 | all                      |
+   | 505  | RTSP Version Not Supported      | all                      |
+   | 551  | Option Not Supported            | all                      |
+   | 553  | Proxy Unavailable               | all                      |
+   +------+---------------------------------+--------------------------+
+
+8.2.  Response Headers
+----------------------
+
+The RTSP Response Headers::
+
+    +------------------------+----------------+
+    | Header                 | Defined in     |
+    +------------------------+----------------+
+    | Authentication-Info    | Section 18.7   |
+    |                        |                |
+    | Connection-Credentials | Section 18.13  |
+    |                        |                |
+    | Location               | Section 18.28  |
+    |                        |                |
+    | MTag                   | Section 18.31  |
+    |                        |                |
+    | Proxy-Authenticate     | Section 18.34  |
+    |                        |                |
+    | Public                 | Section 18.39  |
+    |                        |                |
+    | Retry-After            | Section 18.44  |
+    |                        |                |
+    | Unsupported            | Section 18.55  |
+    |                        |                |
+    | WWW-Authenticate       | Section 18.58  |
+    +------------------------+----------------+
+
+
+9. Message Body
+===============
+
+9.1.  Message Body Header Fields
+--------------------------------
+
+The RTSP Message Body Headers::
+
+    +------------------+----------------+
+    | Header           | Defined in     |
+    +------------------+----------------+
+    | Allow            | Section 18.6   |
+    |                  |                |
+    | Content-Base     | Section 18.14  |
+    |                  |                |
+    | Content-Encoding | Section 18.15  |
+    |                  |                |
+    | Content-Language | Section 18.16  |
+    |                  |                |
+    | Content-Length   | Section 18.17  |
+    |                  |                |
+    | Content-Location | Section 18.18  |
+    |                  |                |
+    | Content-Type     | Section 18.19  |
+    |                  |                |
+    | Expires          | Section 18.22  |
+    |                  |                |
+    | Last-Modified    | Section 18.27  |
+    +------------------+----------------+
+
+
+
+9.2. Message Body
+-----------------
+
+* An RTSP message with a message body MUST include the Content-Type and Content-Length headers.
+
+
+9.3. Message Body Format Negotiation
+------------------------------------
+
+* The content format of the message body is provided using the Content-Type header
+
+
+
+10. Connections
+===============
+
+RTSP requests can be transmitted using the two different connection scenarios listed below::
+
+    1. persistent - a transport connection is used for several request/response transactions;
+    2. transient - a transport connection is used for each single request/response transaction.
+
+10.1. Reliability and Acknowledgements
+--------------------------------------
+
+* Since RTSP messages are transmitted using reliable transport protocols, they MUST NOT be retransmitted at the RTSP level. 
+* Instead, the implementation must rely on the underlying transport to provide reliability.
+
+10.2. Using Connections
+-----------------------
+
+* A TCP transport can be used for both persistent connections (for several message exchanges) and transient connections (for a single message exchange).
+* Implementations of this specification MUST support RTSP over TCP.
+* The registered default ports: 554(rtsp), 322(rtsps), 8554(alternative)
+
+* A server MUST handle both persistent and transient connections.
+
+10.3. Closing Connections
+-------------------------
+
+
+
+
+
+11. Capability Handling
+=======================
+
+
+
+12. Pipelining Support
+======================
+
+
+
+13. Method Definitions
+======================
+
+
+
+14. Embedded (Interleaved) Binary Data
+======================================
+
+
+
+
+15. Proxies
+===========
+
+
+
+16. Caching
+===========
+
+
+
+17. Status Code Definitions
+===========================
+
+
+
+
+
+
+18. Header Field Definitions
+============================
+
+
+
+
+19. Security Framework
+======================
+
+
+
+20. Syntax
+==========
+
+
+
+21. Security Considerations
+===========================
+
+
+
+
+22. IANA Considerations
+=======================
+
+
+Appendix D. Use of SDP for RTSP Session Descriptions
+====================================================
+
+
+
+
+
+Appendix E. RTSP Use Cases
+==========================
 
 
 
