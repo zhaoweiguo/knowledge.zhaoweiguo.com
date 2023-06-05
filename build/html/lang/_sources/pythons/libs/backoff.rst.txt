@@ -1,0 +1,86 @@
+backoff
+#######
+
+
+::
+
+	pip install backoff
+
+* backoff是Python中的一个重试库。它提供了一些装饰器和上下文管理器来实现重试逻辑。
+
+
+主要功能
+========
+
+1. 重试装饰器:可以将任意函数装饰为重试函数。可以指定重试次数、重试间隔、重试条件等::
+
+	from backoff import backoff
+
+	@backoff(tries=5, delay=1)
+	def unreliable_func():
+	    print('Trying...')
+	    raise ValueError
+
+	unreliable_func()  
+	# Trying...
+	# Trying... 
+	# Trying...
+	# Trying...
+	# Trying...
+
+2. 重试上下文管理器:可以将代码块设置为重试代码块::
+
+	from backoff import Backoff
+
+	with Backoff(tries=5, delay=1) as backoff: 
+	    unreliable_func()
+
+3. 自定义重试条件:不仅可以指定重试次数,还可以传入一个函数来自定义重试条件::
+
+	from backoff import backoff
+
+	def should_retry(tries, exception):
+	    return tries < 5 and isinstance(exception, ValueError)
+
+	@backoff(should_retry)  
+	def unreliable_func():
+	    print('Trying...')  
+	    raise ValueError  # Retried 4 times
+
+	unreliable_func()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

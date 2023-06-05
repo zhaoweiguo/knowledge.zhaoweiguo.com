@@ -28,6 +28,8 @@ Usage::
     or
     $ go mod init github.com/zhaoweiguo/abc/v2
 
+
+
 移除mod::
 
     1. 移出所有代码中不需要的包
@@ -76,8 +78,60 @@ Usage::
     go命令(‘go build’, ‘go test’, 甚至 ‘go list’)执行时，会自己去修改go.mod文件
 
 
+go.sum 文件
+===========
+
+go.sum 文件中每行记录由 module 名、版本和哈希组成，并由空格分开::
+
+    <module> <version>[/go.mod] <hash>
 
 
+示例::
+
+    github.com/google/uuid v1.1.1 h1:Gkbcsh/GbpXz7lPftLA3P6TYMwjCLYm83jiFQZF/3gY=  
+    github.com/google/uuid v1.1.1/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGEw/LqOeaOT+nhxU+yHo=
+    说明:
+        v1.1.1 表示该依赖包版本整体
+        v1.1.1/go.mod 表示该依赖包版本中 go.mod 文件
+
+
+incompatible 机制
+-----------------
+
+示例::
+
+    require (...    github.com/blang/semver v3.5.0+incompatible    ...）
+
+
+* 如果 major 版本号大于 1 时，其版本号还需要体现在 Module 名字中。比如 Module github.com/RainbowMango/m，如果其版本号增长到 v2.x.x 时，其 Module 名字也需要相应的改变为: ``github.com/RainbowMango/m/v2`` 即: 如果 major 版本号大于 1 时，需要在 Module 名字中体现版本
+* 如果 Module 的 major 版本号虽然变成了 v2.x.x，但 Module 名字仍保持原样就会出现 +incompatible，说明你引用了一个不规范的 Module，正常情况下，只能说明这个 Module 版本未遵循版本化语义规范。引用这个会有一定的风险
+
+
+伪版本
+------
+
+伪版本的版本号格式::
+
+    vx.y.z-yyyymmddhhmmss-abcdefabcdef
+    示例:
+        v0.0.0-20191023171146-3cf2f69b5738
+
+
+
+下载指定库::
+
+    go get github.com/zhaoweiguo/demo@v1.5.0
+    go get github.com/zhaoweiguo/demo@6eb27062747a458a27fb05fceff6e3175e5eca95
+
+exclude
+-------
+
+::
+
+    require github.com/go-logr/logr v0.4.0
+    exclude github.com/go-logr/logr v1.0.0
+
+.. note:: 如果有多个版本存在依赖问题时，可以用这种排除法某个库的指定版本。
 
 
 
@@ -85,5 +139,9 @@ Usage::
 ====
 
 * `Go Modules : v2 及更高版本 <https://juejin.im/post/5de7c00d518825122b0f7113>`_
+
+
+
+
 
 

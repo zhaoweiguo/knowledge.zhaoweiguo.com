@@ -167,7 +167,8 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="get.html">1.2.6. go get命令</a></li>
 <li class="toctree-l3 current"><a class="current reference internal" href="#">1.2.7. go mod命令</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#id2">参考</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#go-sum">go.sum 文件</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id3">参考</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="install.html">1.2.8. go install命令</a></li>
@@ -477,6 +478,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../pythons/collects/compare.html#x">判断一个数据类型 X 是不是可变类型</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../pythons/collects/tmp.html">2.1.8. 临时</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../pythons/kernel.html">2.2. 核心方法</a><ul>
@@ -509,6 +511,14 @@
 <li class="toctree-l2"><a class="reference internal" href="../../pythons/lib.html">2.3. python标准库</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../pythons/libs/sys.html">2.3.1. sys模块</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../pythons/libs/time.html">2.3.2. python日期</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../pythons/libs/backoff.html">2.3.3. backoff</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../pythons/libs/backoff.html#id2">主要功能</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../pythons/libs/gradio.html">2.3.4. gradio(界面渲染)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../pythons/libs/gradio.html#demo">最简单Demo</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../pythons/normal.html">2.4. 常用</a><ul>
@@ -542,8 +552,9 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../pythons/tool.html">2.6. Python包管理工具</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../pythons/tools/pip.html">2.6.1. pip的使用</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../pythons/tools/pip.html#id2">镜像源</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pythons/tools/pip.html#requirements-txt">requirements.txt</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../pythons/tools/pip.html#id2">实战</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pythons/tools/pip.html#id3">实战</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../pythons/tools/easyinstall.html">2.6.2. easyinstall命令</a></li>
@@ -1296,7 +1307,13 @@
               <h4 id="local-table-of-contents-title">On This Page</h4>
               <ul>
 <li><a class="reference internal" href="#">1.2.7. go mod命令</a><ul>
-<li><a class="reference internal" href="#id2">参考</a></li>
+<li><a class="reference internal" href="#go-sum">go.sum 文件</a><ul>
+<li><a class="reference internal" href="#incompatible">incompatible 机制</a></li>
+<li><a class="reference internal" href="#id2">伪版本</a></li>
+<li><a class="reference internal" href="#exclude">exclude</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id3">参考</a></li>
 </ul>
 </li>
 </ul>
@@ -1389,8 +1406,59 @@ $ go mod edit --module=github.com/islishude/gomodtest/v2
 go命令(‘go build’, ‘go test’, 甚至 ‘go list’)执行时，会自己去修改go.mod文件
 </pre></div>
 </div>
+<div class="section" id="go-sum">
+<h2>go.sum 文件<a class="headerlink" href="#go-sum" title="Permalink to this headline">¶</a></h2>
+<p>go.sum 文件中每行记录由 module 名、版本和哈希组成，并由空格分开:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">module</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">version</span><span class="o">&gt;</span><span class="p">[</span><span class="o">/</span><span class="n">go</span><span class="o">.</span><span class="n">mod</span><span class="p">]</span> <span class="o">&lt;</span><span class="nb">hash</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>示例:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">google</span><span class="o">/</span><span class="n">uuid</span> <span class="n">v1</span><span class="o">.</span><span class="mf">1.1</span> <span class="n">h1</span><span class="p">:</span><span class="n">Gkbcsh</span><span class="o">/</span><span class="n">GbpXz7lPftLA3P6TYMwjCLYm83jiFQZF</span><span class="o">/</span><span class="mi">3</span><span class="n">gY</span><span class="o">=</span>
+<span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">google</span><span class="o">/</span><span class="n">uuid</span> <span class="n">v1</span><span class="o">.</span><span class="mf">1.1</span><span class="o">/</span><span class="n">go</span><span class="o">.</span><span class="n">mod</span> <span class="n">h1</span><span class="p">:</span><span class="n">TIyPZe4MgqvfeYDBFedMoGGEw</span><span class="o">/</span><span class="n">LqOeaOT</span><span class="o">+</span><span class="n">nhxU</span><span class="o">+</span><span class="n">yHo</span><span class="o">=</span>
+<span class="n">说明</span><span class="p">:</span>
+    <span class="n">v1</span><span class="o">.</span><span class="mf">1.1</span> <span class="n">表示该依赖包版本整体</span>
+    <span class="n">v1</span><span class="o">.</span><span class="mf">1.1</span><span class="o">/</span><span class="n">go</span><span class="o">.</span><span class="n">mod</span> <span class="n">表示该依赖包版本中</span> <span class="n">go</span><span class="o">.</span><span class="n">mod</span> <span class="n">文件</span>
+</pre></div>
+</div>
+<div class="section" id="incompatible">
+<h3>incompatible 机制<a class="headerlink" href="#incompatible" title="Permalink to this headline">¶</a></h3>
+<p>示例:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>require (...    github.com/blang/semver v3.5.0+incompatible    ...）
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>如果 major 版本号大于 1 时，其版本号还需要体现在 Module 名字中。比如 Module github.com/RainbowMango/m，如果其版本号增长到 v2.x.x 时，其 Module 名字也需要相应的改变为: <code class="docutils literal notranslate"><span class="pre">github.com/RainbowMango/m/v2</span></code> 即: 如果 major 版本号大于 1 时，需要在 Module 名字中体现版本</p></li>
+<li><p>如果 Module 的 major 版本号虽然变成了 v2.x.x，但 Module 名字仍保持原样就会出现 +incompatible，说明你引用了一个不规范的 Module，正常情况下，只能说明这个 Module 版本未遵循版本化语义规范。引用这个会有一定的风险</p></li>
+</ul>
+</div>
 <div class="section" id="id2">
-<h2>参考<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<h3>伪版本<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>伪版本的版本号格式:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">vx</span><span class="o">.</span><span class="n">y</span><span class="o">.</span><span class="n">z</span><span class="o">-</span><span class="n">yyyymmddhhmmss</span><span class="o">-</span><span class="n">abcdefabcdef</span>
+<span class="n">示例</span><span class="p">:</span>
+    <span class="n">v0</span><span class="o">.</span><span class="mf">0.0</span><span class="o">-</span><span class="mi">20191023171146</span><span class="o">-</span><span class="mi">3</span><span class="n">cf2f69b5738</span>
+</pre></div>
+</div>
+<p>下载指定库:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">go</span> <span class="n">get</span> <span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">zhaoweiguo</span><span class="o">/</span><span class="n">demo</span><span class="nd">@v1</span><span class="o">.</span><span class="mf">5.0</span>
+<span class="n">go</span> <span class="n">get</span> <span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">zhaoweiguo</span><span class="o">/</span><span class="n">demo</span><span class="o">@</span><span class="mi">6</span><span class="n">eb27062747a458a27fb05fceff6e3175e5eca95</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="exclude">
+<h3>exclude<a class="headerlink" href="#exclude" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">require</span> <span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">go</span><span class="o">-</span><span class="n">logr</span><span class="o">/</span><span class="n">logr</span> <span class="n">v0</span><span class="o">.</span><span class="mf">4.0</span>
+<span class="n">exclude</span> <span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">go</span><span class="o">-</span><span class="n">logr</span><span class="o">/</span><span class="n">logr</span> <span class="n">v1</span><span class="o">.</span><span class="mf">0.0</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>如果有多个版本存在依赖问题时，可以用这种排除法某个库的指定版本。</p>
+</div>
+</div>
+</div>
+<div class="section" id="id3">
+<h2>参考<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p><a class="reference external" href="https://juejin.im/post/5de7c00d518825122b0f7113">Go Modules : v2 及更高版本</a></p></li>
 </ul>

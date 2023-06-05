@@ -1,0 +1,403 @@
+.. _rfc3551:
+
+RFC3551: RTP Profile for Audio and Video Conferences with Minimal Control
+#########################################################################
+
+* Category: Standards Track
+* Obsoletes: ``RFC1890`` 
+* July 2003
+
+Abstract
+========
+
+* This document describes a profile called "RTP/AVP" for the use of the real-time transport protocol (RTP), version 2, and the associated control protocol, RTCP, within audio and video multiparticipant conferences with minimal control.
+* This document also describes how audio and video data may be carried within RTP.
+
+
+1. Introduction
+===============
+
+* This profile defines aspects of RTP left unspecified in the RTP Version 2 protocol definition (RFC 3550)
+* This document also defines a set of encodings and payload formats for audio and video.
+
+2. RTP and RTCP Packet Forms and Protocol Behavior
+==================================================
+
+Same like ``chapter 13`` of :ref:`rfc3550`
+
+3.  Registering Additional Encodings
+====================================
+
+* This profile lists a set of encodings, each of which is comprised of a particular media data compression or representation plus a payload format for encapsulation within RTP.
+
+
+4.  Audio
+=========
+
+4.1  Encoding-Independent Rules
+-------------------------------
+
+For more than two channels, the convention followed by the AIFF-C audio interchange format SHOULD be followed::
+
+      l  left
+      r  right
+      c  center
+      S  surround
+      F  front
+      R  rear
+
+      channels  description  channel
+                                1     2   3   4   5   6
+      _________________________________________________
+      2         stereo          l     r
+      3                         l     r   c
+      4                         l     c   r   S
+      5                        Fl     Fr  Fc  Sl  Sr
+      6                         l     lc  c   r   rc  S
+
+
+
+4.2  Operating Recommendations
+------------------------------
+
+* For packetized audio, the default packetization interval SHOULD have a duration of 20 ms or one frame, whichever is longer, unless otherwise noted in Table 1 (column "ms/packet").
+* The packetization interval determines the minimum end-to-end delay; longer packets introduce less header overhead but higher delay and make packet loss more noticeable.
+* A receiver SHOULD accept packets representing between 0 and 200 ms of audio data.
+
+
+4.3  Guidelines for Sample-Based Audio Encodings
+------------------------------------------------
+
+``Sample-Based Audio Encodings`` 与`` Frame-Based Audio Encodings`` 说明::
+
+	总体来说:
+		- Sample-based更简单,数据量大,不利于传输
+		- Frame-based更复杂,可以有效压缩数据,更适合用于网络传输。
+		Frame-based编码的出现正是为了弥补Sample-based编码数据量太大的缺点,以适应数字音频在网络上的传输需求。
+
+	Sample-Based Audio Encodings:
+		- 直接对音频信号的采样点进行编码,没有帧的概念。
+			如PCM编码就是一种sample-based编码,它直接对音频的每个采样点进行编码。
+		- 编码和解码简单,但数据量较大,不太适合用于网络传输。
+
+	Frame-Based Audio Encodings:
+		- 将若干个采样点组成一帧,然后对每帧的数据进行编码,有帧的概念。
+			如MP3、AAC都是frame-based编码。
+		- 通过在每帧内使用频域变换、量化、熵编码等手段可以有效压缩音频数据,更适合用于网络传输。
+		- 编码和解码过程相对复杂,需要进行频域变换、量化等步骤。
+
+
+.. note:: channel 指的是声音的通道,例如左声道(left channel)和右声道(right channel)。sample 指的是音频信号中的采样点。对音频信号进行数字化编码时,会定期对音频信号采样,获得音频波形的瞬间值,这些瞬间值就是sample。
+
+
+* The duration of an audio packet is determined by the number of samples in the packet.
+* An RTP audio packet may contain any number of audio samples, subject to the constraint that the number of bits per sample times the number of samples per packet yields an integral octet count. Fractional encodings produce less than one octet per sample.
+* The duration of an audio packet is determined by the number of samples in the packet.
+
+* For sample-based encodings producing one or more octets per sample, samples from different channels sampled at the same sampling instant SHOULD be packed in consecutive octets.  For example, for a two-channel encoding, the octet sequence is (left channel, first sample), (right channel, first sample), (left channel, second sample), (right channel, second sample), ....  
+* For multi-octet encodings, octets SHOULD be transmitted in network byte order
+
+
+4.4  Guidelines for Frame-Based Audio Encodings
+-----------------------------------------------
+
+* Frame-based encodings encode a fixed-length block of audio into another block of compressed data, typically also of fixed length. For frame-based encodings, the sender MAY choose to combine several such frames into a single RTP packet.  The receiver can tell the number of frames contained in an RTP packet, if all the frames have the same length
+* For frame-based codecs, the channel order is defined for the whole block. That is, for two-channel audio, right and left samples SHOULD be coded independently, with the encoded frame for the left channel preceding that for the right channel.
+* All frame-oriented audio codecs SHOULD be able to encode and decode several consecutive frames within a single packet.
+
+
+4.5 Audio Encodings
+-------------------
+
+Table 1: Properties of Audio Encodings (N/A: not applicable; var.: variable)::
+
+	name of                              sampling              default
+	encoding  sample/frame  bits/sample      rate  ms/frame  ms/packet
+	__________________________________________________________________
+	DVI4      sample        4                var.                   20
+	G722      sample        8              16,000                   20
+	G723      frame         N/A             8,000        30         30
+	G726-40   sample        5               8,000                   20
+	G726-32   sample        4               8,000                   20
+	G726-24   sample        3               8,000                   20
+	G726-16   sample        2               8,000                   20
+	G728      frame         N/A             8,000       2.5         20
+	G729      frame         N/A             8,000        10         20
+	G729D     frame         N/A             8,000        10         20
+	G729E     frame         N/A             8,000        10         20
+	GSM       frame         N/A             8,000        20         20
+	GSM-EFR   frame         N/A             8,000        20         20
+	L8        sample        8                var.                   20
+	L16       sample        16               var.                   20
+	LPC       frame         N/A             8,000        20         20
+	MPA       frame         N/A              var.      var.
+	PCMA      sample        8                var.                   20
+	PCMU      sample        8                var.                   20
+	QCELP     frame         N/A             8,000        20         20
+	VDVI      sample        var.             var.                   20
+
+
+
+说明::
+
+	- DVI4、L8、L16:较老的编码,数据压缩率低,已较少使用
+	- GSM、GSM-EFR:用于GSM数字信号中传输语音,EFR版本的音质较高。
+	- MPA:即MP3,广泛用于数字音乐的存储和流播。
+	- PCMA、PCMU:简单的脉码调制编码,用于VoIP中传输音频数据。质量高但码率也高。
+	- QCELP:QUALCOMM公司开发,用于CDMA数字信号中的语音传输,质量适中,码率为8kbps。
+	- VDVI:是一个变差脉冲编码调制,用于数字语音传输,码率4.8kbps,质量较低。
+
+
+ITU(国际电信联盟)制定的主要音频编码有::
+
+	- G.711:脉码调制编码,2种码率64kbps(PCMU)和56kbps(PCMA),用于VoIP
+	- G.722:7kHz采样率,64kbps码率,用于VoIP,能提供更宽的频率范围和更高的音质
+	- G.722.1:G.722的扩展,48kbps和32kbps两种码率可选,音质接近G.722
+	- G.722.2:G.722.1的改进版,23.85kbps码率,频率范围7kHz,用于VoIP
+	- G.723.1:5.3kbps和6.3kbps两种码率,频率范围3.4kHz,用于VoIP
+	- G.726:提供16kbps、24kbps、32kbps和40kbps四种码率可选,频率范围3.4kHz,用于VoIP
+	- G.728:用于VoIP,16kbps码率,频率范围7kHz,提供很高的语音质量
+	- G.729:用于VoIP,8kbps码率,频率范围4kHz,是ITU最复杂的语音编码标准
+	- G.729.1:32kbps扩展版,用于VoIP,支持更宽的频率范围和更高的音质
+
+	G.711：这是一种采样编码（Sample-Based Audio Encoding），也称为脉冲编码调制（PCM）。G.711 主要有两种变体：μ-law（用于北美和日本）和 A-law（用于其他国家和地区）。
+	G.721/G.726：这是一种自适应差分脉冲编码调制（ADPCM）的音频编码标准，属于帧编码（Frame-Based Audio Encoding）。G.726 有四种比特率：16、24、32 和 40 kbit/s。
+	G.722：这是一种子带编码（Sub-Band Coding）技术，属于帧编码。G.722 提供了 7 kHz 的音频宽带，主要用于高质量语音通信。
+	G.729：这是一种采用编码线性预测（CELP）技术的低比特率音频编码标准，属于帧编码。G.729 主要有两种变体：G.729A（8 kbit/s）和 G.729B（6.4 kbit/s）。
+	G.723.1：这是一种使用多脉冲最大似然量化（MP-MLQ）和代数码元最大似然量化（ACELP）技术的低比特率音频编码标准，属于帧编码。
+		G.723.1 有两种比特率：5.3 kbit/s（MP-MLQ）和 6.3 kbit/s（ACELP）。
+
+	Frame-based编码通过采用频域编码(如MPE)、时间域编码(如ADPCM、CS-ACELP)等技术,实现更高的压缩率,更适合在带宽受限的网络上传输
+
+
+.. note:: 语音编码的英文是 "Speech coding" 或 "Voice coding"，音频编码的英文是"Audio coding"。📝语音编码是一种专门用于压缩人类语音信号的编码技术。语音编码通常会对语音信号进行一些预处理，如降噪、语音检测、语音分段等，然后采用一些特定的算法对语音信号进行压缩。由于语音信号具有一定的特殊性，在压缩过程中可以采用一些特定的技术，如线性预测编码（Linear Predictive Coding，LPC）和代数编码激励线性预测（Algebraic Code Excited Linear Prediction，ACELP）等。常见的语音编码格式包括 G.711、G.729、AMR 等。📝音频编码则是一种用于压缩音频信号的编码技术。音频信号通常包括语音、音乐、效果音等，与语音信号相比，音频信号通常具有更广的频率范围和更高的动态范围。因此，在音频编码中需要采用更为复杂的算法，如基于子带的编码（Subband Coding）、MDCT 编码（Modified Discrete Cosine Transform）、可变比特率编码（Variable Bitrate Coding）等。常见的音频编码格式包括 MP3、AAC、FLAC、Vorbis 等。📎应用场景: - 语音编码主要用于电话通信等对实时性要求较高的语音传输场景。如电话网络、VoIP等。 - 音频编码主要用于音乐、视频等对高保真度要求较高的数据存储和流播场景。📔总的来说:语音编码着眼于实时性和交互性,采用简单而高效的算法,以在低码率下提供基本可接受的语音质量。音频编码更注重高保真和高质量,可以采用更高码率和更复杂的算法来获取高保真的音频体验。
+
+最常用的音频编码格式包括以下几种::
+
+	1. MP3
+		这是一种广泛使用的音频编码格式，也被称为 MPEG-1 Audio Layer 3。
+		MP3 可以提供相对较高的音频质量和较高的压缩比，因此在数字音乐、网络音乐、数字广播等领域得到了广泛的应用。
+	2. AAC
+		这是一种广泛使用的音频编码格式，也被称为 Advanced Audio Coding。
+		AAC 可以提供更好的音频质量和更高的压缩比，相比于 MP3，AAC 在相同比特率下可以提供更好的音频质量。
+	3. Opus
+		这是一种开放、免费、无专利限制的音频编码格式，
+		可以提供高质量的音频和低延迟的音频传输，因此在网络电话、在线游戏、网络音乐等领域得到了广泛的应用。
+	4. FLAC
+		这是一种无损音频编码格式，也被称为 Free Lossless Audio Codec。
+		FLAC 可以提供和原始音频文件相同的音频质量，但是压缩后文件大小要比原始音频文件小很多，因此在数字音乐、音乐制作等领域得到了广泛的应用。
+	5. WMA
+		这是一种由微软开发的音频编码格式，也被称为 Windows Media Audio。
+		WMA 可以提供较高的音频质量和较高的压缩比，因此在 Windows 操作系统上得到了广泛的应用，例如 Windows Media Player 等软件中使用。
+
+	6. PCM（Pulse Code Modulation）是一种十分基础的音频编码格式，常用于将模拟音频信号转换成数字音频信号。
+		PCM 编码不需要数据压缩，因为它可以准确地记录每个采样值，因此可以提供无损的音频质量。
+		在数字音频领域，PCM 被广泛应用于音频录制、音频编辑、数字音乐制作、音频传输等方面。
+		此外，许多其他音频编码格式（如 WAV、AIFF 等）实际上也是基于 PCM 编码的。
+
+	其他:
+		- WMA(Windows Media Audio):微软开发的专有音频格式,用于Windows Media Player。质量和体积介于MP3与AAC之间。
+		- WAV:无损音频格式,主要用于Windows平台,音频质量与PCM同级。体积较大,不适合网络传输。
+
+最常用的语音编码主要有::
+
+	- G.711:ITU标准,提供64kbps的PCM编码,是VoIP中最常用的语音编码。
+		质量最高但体积也最大。
+	- G.722:ITU标准,采用子带编码,提供64kbps的码率。
+		用于VoIP和会议电话,可以提供7kHz的频率范围。
+	- G.723.1:ITU标准,采用MPE技术,提供5.3kbps和6.3kbps两种码率。
+		用于VoIP,质量一般但体积最小。
+	- G.726:ITU标准,采用ADPCM技术,提供16、24、32和40kbps码率。
+		用于VoIP,质量较高且压缩率也较高。
+	- G.728:ITU标准,采用LPC技术,码率16kbps。
+		用于VoIP,提供很高的语音质量。
+	- G.729:ITU标准,采用CS-ACELP技术,码率8kbps。
+		用于VoIP,是ITU最复杂的语音编码,质量较高。
+	- AMR(GSM-AMR):3GPP标准,提供12.2kbps到4.75kbps的多种码率。
+		用于GSM和UMTS语音通信,可以根据网络适配码率。
+	- iLBC:IETF标准,提供15.2kbps和13.3kbps两种码率。
+		用于VoIP,开源实现,质量一般,但体积较小。 
+	- Opus:IETF标准,集成SILK和CELT编码,提供8-510kbps的码率范围。
+		用于VoIP和WebRTC,是一种新型的广谱语音编码标准,可以提供更高的质量与更广的应用场景。
+
+
+
+5.  Video
+=========
+
+* While 90 kHz is the RECOMMENDED rate for future video encodings used within this profile, other rates MAY be used.
+
+
+
+
+6.  Payload Type Definitions
+============================
+
+* Tables 4 and 5 define this profile's static payload type values for the PT field of the RTP data header.  In addition, payload type values in the range 96-127 MAY be defined dynamically through a conference control protocol, which is beyond the scope of this document.  For example, a session directory could specify that for a given session, payload type 96 indicates PCMU encoding, 8,000 Hz sampling rate, 2 channels. 
+* The payload types currently defined in this profile are assigned to exactly one of three categories or media types:  ``audio only``, ``video only`` and those ``combining audio and video``.  The media types are marked in Tables 4 and 5 as "A", "V" and "AV", respectively.  Payload types of different media types SHALL NOT be interleaved or multiplexed within a single RTP session, but multiple RTP sessions MAY be used in parallel to send multiple media types.  An RTP source MAY change payload types within the same media type during a session.
+
+
+Table 4: Payload types (PT) for audio encodings::
+
+       PT   encoding    media type  clock rate   channels
+            name                    (Hz)
+       ___________________________________________________
+       0    PCMU        A            8,000       1
+       1    reserved    A
+       2    reserved    A
+       3    GSM         A            8,000       1
+       4    G723        A            8,000       1
+       5    DVI4        A            8,000       1
+       6    DVI4        A           16,000       1
+       7    LPC         A            8,000       1
+       8    PCMA        A            8,000       1
+       9    G722        A            8,000       1
+       10   L16         A           44,100       2
+       11   L16         A           44,100       1
+       12   QCELP       A            8,000       1
+       13   CN          A            8,000       1
+       14   MPA         A           90,000       (see text)
+       15   G728        A            8,000       1
+       16   DVI4        A           11,025       1
+       17   DVI4        A           22,050       1
+       18   G729        A            8,000       1
+       19   reserved    A
+       20   unassigned  A
+       21   unassigned  A
+       22   unassigned  A
+       23   unassigned  A
+       dyn  G726-40     A            8,000       1
+       dyn  G726-32     A            8,000       1
+       dyn  G726-24     A            8,000       1
+       dyn  G726-16     A            8,000       1
+       dyn  G729D       A            8,000       1
+       dyn  G729E       A            8,000       1
+       dyn  GSM-EFR     A            8,000       1
+       dyn  L8          A            var.        var.
+       dyn  RED         A                        (see text)
+       dyn  VDVI        A            var.        1
+
+Table 5: Payload types (PT) for video and combined encodings::
+
+       PT      encoding    media type  clock rate
+               name                    (Hz)
+       _____________________________________________
+       24      unassigned  V
+       25      CelB        V           90,000
+       26      JPEG        V           90,000
+       27      unassigned  V
+       28      nv          V           90,000
+       29      unassigned  V
+       30      unassigned  V
+       31      H261        V           90,000
+       32      MPV         V           90,000
+       33      MP2T        AV          90,000
+       34      H263        V           90,000
+       35-71   unassigned  ?
+       72-76   reserved    N/A         N/A
+       77-95   unassigned  ?
+       96-127  dynamic     ?
+       dyn     H263-1998   V           90,000
+
+
+在RTP中,Payload type有以下几个主要作用::
+
+	1. 表示载荷格式。
+		不同的载荷格式使用不同的Payload type进行识别。
+		例如,
+			G.711语音码流使用Payload type 0,
+			H.264视频码流使用Payload type 96-100等。
+	2. 区分媒体通道。
+		当一个RTP会话中传输不同的媒体,如音视频混合,可以使用不同的Payload type将不同媒体的码流区分开来,以方便接收端的选择和处理。
+	3. 标识动态载荷类型。
+		在RTP会话开始前,参与方可以协商载荷格式及其对应的Payload type。
+		如果会话中需要加入新的媒体格式,可以再协商一个未使用的Payload type来表示,而不需要修改接收方的解码器等。
+		这为RTP提供了良好的可扩展性。
+	4. 区分相同格式的不同配置。
+		例如H.264视频可以有不同的packetization模式,这可以使用不同的Payload type(96-100)进行标识,而编码和profile等其它参数相同。
+	5. 标识相同格式的不同级别/层。
+		例如SVC可扩展视频编码可以使用不同的Payload type区分基础层和增强层,以进行优先度处理等。
+	6. 兼容早期标准。
+		对于某些早期的RTP Payload格式,其格式具体结构并未在标准中详细定义。
+		为了兼容,会指定这些Payload type来指代这些早期格式,
+		但由于其格式定义不清晰或不存在,导致这些Payload的格式需要接收端自行推测和解析
+	所以,RTP Payload type的主要作用是识别和区分不同的载荷格式、媒体通道、配置模式或层级等。
+	它为RTP的多媒体通信及其可扩展性提供了基础。同时它也用于兼容一些较早的RTP Payload格式。
+
+
+
+
+
+7.  RTP over TCP and Similar Byte Stream Protocols
+==================================================
+
+* Under special circumstances, it may be necessary to carry RTP in protocols offering a byte stream abstraction, such as TCP, possibly multiplexed with other data.
+* The application MUST define its own method of delineating RTP and RTCP packets (RTSP provides an example of such an encapsulation specification).
+
+
+
+8.  Port Assignment
+===================
+
+Port numbers 5004 and 5005 have been registered for use with this profile for those applications that choose to use them as the default pair.
+
+
+9.  Changes from RFC 1890
+=========================
+
+
+总的来说,RFC3551主要::
+
+	1) 添加对新兴语音编码格式的支持;
+	2) 增加对信道编码的定义;
+	3) 详细指定各语音格式的RTP载荷格式;
+	4) 增加其他规定;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

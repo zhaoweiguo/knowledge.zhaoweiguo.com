@@ -1,0 +1,184 @@
+Swagger
+#######
+
+
+
+* SPEC: https://swagger.io/
+
+.. note:: 我开始一直不理解，浪费很多时间的地方，swagger对业务侵入比较大，这样做的目的是：通过 Swagger UI 页面,API 使用者可以更直观地查看 API、进行调试与调用,而不仅仅是阅读文字文档。另外，好多使用方法是根据配置文件来自动生成对应代码。
+
+降低耦合的方法::
+
+	1. 将 Swagger 相关逻辑提取出来,放在单独的文件中,仅在 main() 中加载调用
+	2. 使用中间件而非在主函数直接加载 Swagger
+	3. Swagger 文档作为独立服务部署
+	4. 采用 OpenAPI 规范,而不 tight 绑定到 Swagger
+
+
+
+swaggo✅
+=========
+
+
+安装::
+
+	go get -u github.com/swaggo/swag/cmd/swag
+
+使用::
+
+	$ swag -v
+
+	$ swag init -g <filename>.go -d <folder>
+	// 说明:
+		生成目录 docs
+		-g/--generalInfo: 指定入口文件名(默认main.go)
+		-d/--dir: 指定入口文件路径(默认.)
+
+
+	// 生成MarkDown文档
+	$ swag init --md .
+
+
+.. note:: 要想生成gin等框架的项目，需要特别处理。
+
+
+
+参考
+----
+
+* https://github.com/swaggo/swag
+
+
+
+go-swagger
+==========
+
+安装::
+
+	docker pull quay.io/goswagger/swagger
+	alias swagger='docker run --rm -it  --user $(id -u):$(id -g) -e GOPATH=$(go env GOPATH):/go -v $HOME:$HOME -w $(pwd) quay.io/goswagger/swagger'
+
+
+	安装go-swagger工具:
+	go install github.com/go-swagger/go-swagger/cmd/swagger
+
+
+实例化::
+
+	swagger init spec \
+	  --title "A Todo list application" \
+	  --description "From the todo list tutorial on goswagger.io" \
+	  --version 1.0.0 \
+	  --scheme http
+
+验证::
+
+	swagger validate ./swagger.yml
+
+生成::
+
+	// 生成 Swagger 文档
+	swagger generate spec -o ./swagger.json 
+	swagger generate spec -f ./swagger.yml -o ./swagger.json
+
+基于配置文件生成服务器golang代码::
+
+	$ swagger generate server -A <name> -f ./swagger.yml
+
+Generate spec markdown spec::
+
+	swagger generate markdown -f {spec} --output swagger.mode
+
+
+基于swagger.yml启动文档服务::
+
+	$ swagger serve  -p 7777 --path=docs ./folder/swagger.yaml
+
+
+
+示例
+----
+
+初使化配置&生成服务器代码::
+
+	1. 生成文件swagger.yml
+	$ swagger init spec \
+	  --title "A Todo list application" \
+	  --description "From the todo list tutorial on goswagger.io" \
+	  --version 1.0.0 \
+	  --scheme http \
+	  --consumes application/io.goswagger.examples.todo-list.v1+json \
+	  --produces application/io.goswagger.examples.todo-list.v1+json
+
+	2. 修改swagger.yml 添加相关接口
+	3. 生成相关代码::
+	$ swagger generate server -A <name> -f ./swagger.yml
+
+	生成代码目录结构:
+	├── cmd
+	│   └── todo-list-server
+	│       └── main.go
+	├── models
+	│   ├── error.go
+	│   ├── get_okbody.go
+	│   └── item.go
+	├── restapi
+	│   ├── configure_todo_list.go
+	│   ├── doc.go
+	│   ├── embedded_spec.go
+	│   ├── operations
+	│   │   ├── todo_list_api.go
+	│   │   └── todos
+	│   │       ├── get.go
+	│   │       ├── get_parameters.go
+	│   │       ├── get_responses.go
+	│   │       └── get_urlbuilder.go
+	│   └── server.go
+	└── swagger.yml
+
+
+
+参考
+----
+
+* go-swagger: https://github.com/go-swagger/go-swagger
+* https://goswagger.io
+
+
+Swagger UI
+==========
+
+* https://github.com/swagger-api/swagger-ui
+
+使用::
+
+	docker run -p 7080:8080 -e SWAGGER_JSON=/foo/swagger.json -v ${pwd}:/foo swaggerapi/swagger-ui
+
+	docker run -p 7080:8080 -e SWAGGER_JSON_URL=https://petstore3.swagger.io/api/v3/openapi.json swaggerapi/swagger-ui
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
