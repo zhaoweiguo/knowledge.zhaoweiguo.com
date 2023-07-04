@@ -34,6 +34,7 @@ Usage::
 
     1. 移出所有代码中不需要的包
     $ go mod tidy
+    $ go mod tidy -go=1.16    // 指定golang版本
 
     2. 仅仅修改 go.mod 配置文件的内容
     $ go mod edit --droprequire=golang.org/x/crypto
@@ -132,6 +133,47 @@ exclude
     exclude github.com/go-logr/logr v1.0.0
 
 .. note:: 如果有多个版本存在依赖问题时，可以用这种排除法某个库的指定版本。
+
+
+go mod vender
+=============
+
+* 如果是那种开发环境受限，因无法访问外部代理而无法通过 go 命令自动解决依赖和下载依赖的环境下，我们通过 vendor 来辅助解决。
+* go mod vendor 命令在 vendor 目录下，创建了一份这个项目的依赖包的副本，并且通过 vendor/modules.txt 记录了 vendor 下的 module 以及版本。
+* 要基于 vendor 构建，而不是基于本地缓存的 Go Module 构建，我们需要在 go build 后面加上 -mod=vendor 参数
+* 在 Go 1.14 及以后版本中，如果 Go 项目的顶层目录下存在 vendor 目录，那么 go build 默认也会优先基于 vendor 构建，除非你给 go build 传入 -mod=mod 的参数
+
+retract/Deprecated标识
+======================
+
+* 从 Go 1.16 版本开始，Go Module 作者还可以在 go.mod 中使用新增加的retract 指示符，标识出哪些版本是作废的且不推荐使用的
+* retracted 仅仅是一个提示作用，并不影响 go build 的结果
+* retract 指示符适合标记要作废的独立的 minor 和 patch 版本，如果要提示用某个 module 的某个大版本整个作废，我们用 Go 1.17 版本引入的 Deprecated 注释行更适合。
+
+retract示例::
+
+    // go.mod
+    retract v1.0.0           // 作废v1.0.0版本
+    retract [v1.1.0, v1.2.0] // 作废v1.1.0和v1.2.0两个版本
+
+retract使用显示::
+
+    go list -m -u all
+    ... ...
+    github.com/zhaoweiguo/m1 v1.0.2 (retracted) [v1.0.3]
+
+Deprecated示例::
+
+    // Deprecated: use github.com/zhaoweiguo/m1/v2 instead.
+    module github.com/zhaoweiguo/m1
+
+Deprecated使用显示::
+
+    $go get github.com/zhaoweiguo/m1@latest
+    go: downloading github.com/zhaoweiguo/m1 v1.0.3
+    go: module github.com/zhaoweiguo/m1 is deprecated: use github.com/zhaoweiguo/m1/v2 instead.
+    ... ...
+
 
 
 
