@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>2.6.5. conda的使用 &mdash; 新溪-gordon V1.7.4 documentation</title>
+  <title>2.6.5. conda的使用 &mdash; 新溪-gordon V1.7.5 documentation</title>
   
 
   
@@ -32,7 +32,7 @@
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="2.7. 爬虫相关" href="../crawler.html" />
-    <link rel="prev" title="2.6.4. virtualenv" href="virtualenv.html" /> 
+    <link rel="prev" title="2.6.4. virtualenv &amp; venv" href="virtualenv.html" /> 
 
   
   <script src="../../_static/js/modernizr.min.js"></script>
@@ -63,7 +63,7 @@
             
             
               <div class="version">
-                V1.7.4
+                V1.7.5
               </div>
             
           
@@ -528,8 +528,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../libs/backoff.html#id2">主要功能</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../libs/gradio.html">2.3.4. gradio(界面渲染)</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../libs/gradio.html#demo">最简单Demo</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../libs/web.html">2.3.4. web相关</a><ul class="simple">
 </ul>
 </li>
 </ul>
@@ -565,21 +564,33 @@
 </li>
 <li class="toctree-l2 current"><a class="reference internal" href="../tool.html">2.6. Python包管理工具</a><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="pip.html">2.6.1. pip的使用</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="pip.html#id2">镜像源</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pip.html#id2">安装Pip</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pip.html#id3">使用Pip</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pip.html#id4">查询路径</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pip.html#id5">环境变量</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pip.html#id6">镜像源</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pip.html#id7">常见问题</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pip.html#requirements-txt">requirements.txt</a></li>
-<li class="toctree-l4"><a class="reference internal" href="pip.html#id3">实战</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pip.html#id8">实战</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pip.html#id9">对比</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="easyinstall.html">2.6.2. easyinstall命令</a></li>
 <li class="toctree-l3"><a class="reference internal" href="distribute.html">2.6.3. distribute的使用</a></li>
-<li class="toctree-l3"><a class="reference internal" href="virtualenv.html">2.6.4. virtualenv</a></li>
+<li class="toctree-l3"><a class="reference internal" href="virtualenv.html">2.6.4. virtualenv &amp; venv</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="virtualenv.html#venv">venv</a></li>
+<li class="toctree-l4"><a class="reference internal" href="virtualenv.html#virtualenv">virtualenv</a></li>
+<li class="toctree-l4"><a class="reference internal" href="virtualenv.html#id2">对比</a></li>
+</ul>
+</li>
 <li class="toctree-l3 current"><a class="current reference internal" href="#">2.6.5. conda的使用</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#id2">安装</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#id3">环境相关命令</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#id4">安装命令</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#id5">频道</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#id6">镜像</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id7">参考</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id7">对比</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id8">参考</a></li>
 </ul>
 </li>
 </ul>
@@ -1329,7 +1340,8 @@
 <li><a class="reference internal" href="#id4">安装命令</a></li>
 <li><a class="reference internal" href="#id5">频道</a></li>
 <li><a class="reference internal" href="#id6">镜像</a></li>
-<li><a class="reference internal" href="#id7">参考</a></li>
+<li><a class="reference internal" href="#id7">对比</a></li>
+<li><a class="reference internal" href="#id8">参考</a></li>
 </ul>
 </li>
 </ul>
@@ -1547,7 +1559,36 @@ $ conda config --get channels
 </ul>
 </div>
 <div class="section" id="id7">
-<h2>参考<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h2>
+<h2>对比<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h2>
+<p>当在conda环境中,使用pip安装的包与直接从conda通道安装的包,主要有以下几点不同:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 安装路径不同
+从conda通道安装的包位于conda环境的lib/site-packages路径下。
+使用pip安装的包位于conda环境的lib/pythonX.X/site-packages路径下。
+
+2. 依赖管理不同
+conda可以跟踪并管理各个包之间的依赖关系。
+pip安装无法跟踪到conda环境中已有的依赖,可能导致依赖冲突。
+
+3. 环境隔离不同
+conda环境可以很好地隔离不同版本的Python解释器和依赖库。
+pip安装的库不能做到与conda环境完全隔离。
+
+4. 升级管理不同
+conda可以直接管理每个环境内的所有包,进行升级等操作。
+pip只管理pip安装的库,升级需要重新安装。
+
+5. 二进制兼容性
+conda的二进制包可在不同平台运行。
+pip编译生成的文件通常与系统相关,不能跨平台直接使用。
+
+6. 通道和来源
+conda安装通过添加各种通道,安装源比较丰富。
+pip主要通过PyPI来源安装Python库。
+</pre></div>
+</div>
+</div>
+<div class="section" id="id8">
+<h2>参考<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p><a class="reference external" href="https://zhuanlan.zhihu.com/p/25198543">https://zhuanlan.zhihu.com/p/25198543</a></p></li>
 <li><p><a class="reference external" href="https://www.zhihu.com/question/58033789/answer/254673663">https://www.zhihu.com/question/58033789/answer/254673663</a></p></li>
@@ -1581,7 +1622,7 @@ $ conda config --get channels
         <a href="../crawler.html" class="btn btn-neutral float-right" title="2.7. 爬虫相关" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="virtualenv.html" class="btn btn-neutral" title="2.6.4. virtualenv" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="virtualenv.html" class="btn btn-neutral" title="2.6.4. virtualenv &amp; venv" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -1613,7 +1654,7 @@ $ conda config --get channels
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../',
-            VERSION:'V1.7.4',
+            VERSION:'V1.7.5',
             LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',

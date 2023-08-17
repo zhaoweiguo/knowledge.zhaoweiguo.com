@@ -1,17 +1,23 @@
 pip的使用
 #########
 
+安装Pip
+=======
 
-
-安装Pip：
 
 * ``Pip`` 是安装python包的工具, 提供了安装包, 列出已经安装的包, 升级包以及卸载包的功能
-* ``Pip`` 是对 ``easy_install`` 的取代, 提供了和easy_install相同的查找包的功能, 因此可以使用easy_install安装的包也同样可以使用pip进行安装
 
+python命令安装::
 
-* 通过easy_install来安装::
+    python -m ensurepip --default-pip
 
-    $ easy_install pip
+系统包管理器安装::
+
+    sudo apt install python-pip
+
+    sudo yum install python-pip
+
+    brew install pip
 
 * get_pip.py 脚本安装::
 
@@ -25,8 +31,14 @@ pip的使用
     $ cd pip-0.7.2
     $ python setup.py install
 
+* 通过easy_install来安装::
 
-Pip的使用：
+    $ easy_install pip
+
+
+
+使用Pip
+=======
 
 * 安装package::
 
@@ -59,8 +71,50 @@ Pip的使用：
 
     $ pip search "Markdown"
 
+* 查看一个包的详细信息,包括其安装路径::
 
-PS -- 包安装后的py文件路径：/usr/local/lib/python2.7/dist-packages
+   pip show pkgname
+
+
+查询路径
+========
+
+* 增加查询路径::
+
+    sys.path.insert(0, '/usr/local/lib')
+
+    sys.path.append('/usr/local/lib')
+
+
+* 默认路径优先级::
+
+    1. 当前工作目录(可以通过导入的包名直接使用)
+    2. PYTHONPATH目录(环境变量指定的目录)
+    3. 标准库目录(Python安装目录里的Lib)
+    4. site-packages目录(第三方模块安装目录)
+    5. 用户目录(主目录下的.local/lib/pythonX.X/site-packages)
+    6. /usr/local/lib/pythonX.X/dist-packages
+    7. /usr/lib/pythonX.X/dist-packages
+
+
+
+
+
+环境变量
+========
+
+* 包安装后的py文件路径: Linux/macOS:venv/lib/pythonX.X/site-packages
+
+修改安装目录::
+
+    方法1:
+    pip install -t /content/notebooks numpy
+
+    方法2:
+    export PYTHONUSERBASE=/content/notebooks
+    pip install numpy
+
+
 
 
 
@@ -76,6 +130,10 @@ PS -- 包安装后的py文件路径：/usr/local/lib/python2.7/dist-packages
     https://pypi.mirrors.ustc.edu.cn/simple/ 中国科学技术大学
     https://pypi.tuna.tsinghua.edu.cn/simple 清华
 
+选项::
+
+    -i,--index-url <url>
+          Base URL of Python Package Index (default https://pypi.python.org/simple/).
 
 使用示例::
 
@@ -93,6 +151,30 @@ PS -- 包安装后的py文件路径：/usr/local/lib/python2.7/dist-packages
     # 重置
     $ pip config unset global.index-url
 
+
+使用不同镜像源示例::
+
+    // cuda 11.7
+    pip3 install torch torchvision torchaudio
+
+    // cuda 11.8
+    pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
+    // cpu
+    pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+
+
+
+常见问题
+========
+
+较老版本的pip 中括号[]在 pip 安装命令中有特殊含义::
+
+    $ pip install huggingface-hub[cli]
+    zsh: no matches found: huggingface-hub[cli]
+
+    正确的做法:
+    $ pip install 'huggingface-hub[cli]'
 
 
 
@@ -128,8 +210,26 @@ requirements.txt
 
 
 
+对比
+====
+
+* ``Pip`` 是对 ``easy_install`` 的取代, 提供了和easy_install相同的查找包的功能, 因此可以使用easy_install安装的包也同样可以使用pip进行安装
 
 
+site-packages和dist-packages的区别::
+
+    site-packages目录更适合本地编译安装的Python库。
+    dist-packages目录更适合系统包管理工具(如apt、yum等)全局安装的库。
+
+
+    site-packages目录需要当前用户有写入权限。
+    dist-packages目录需要root/管理员权限才能写入。
+
+    导入模块时,Python会先搜索site-packages目录,然后是dist-packages目录。
+
+
+    一些Linux发行版默认使用dist-packages,如Ubuntu。
+    一些使用site-packages,如CentOS。
 
 
 
