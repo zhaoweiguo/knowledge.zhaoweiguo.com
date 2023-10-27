@@ -1,6 +1,86 @@
 使用聚合
 ########
 
+● MongoDB 聚合框架(Aggregation Framework)是一个计算框架，它可以::
+
+    • 作用在一个或几个集合上;
+    • 对集合中的数据进行的一系列运算;
+    • 将这些数据转化为期望的形式;
+
+● 从效果而言，聚合框架相当于 SQL 查询中的::
+
+    • GROUP BY
+    • LEFT OUTER JOIN
+    • AS等
+
+聚合运算的基本格式::
+
+    pipeline = [$stage1, $stage2, ...$stageN];
+    db.<COLLECTION>.aggregate(
+        pipeline, { options } 
+    );
+
+
+
+管道(Pipeline)和步骤(Stage)
+===========================
+
+整个聚合运算过程称为管道（Pipeline），它是由多个步骤（Stage）组成的，每个管道::
+
+    • 接受一系列文档（原始数据）；
+    • 每个步骤对这些文档进行一系列运算；
+    • 结果文档输出给下一个步骤
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/10/LUn0XO.png
+
+常见步骤(Stage)::
+
+    步骤            作用          SQL等价运算符
+    ===             ===          ===
+    $match          过滤          WHERE
+    $project        投影          AS
+    $sort           排序          ORDER BY
+    $group          分组          GROUP BY
+    $skip/$limit    结果限制       SKIP/LIMIT
+    $lookup         左外连接       LEFT OUTER JOIN
+    $unwind         展开数组       N/A
+    $graphLookup    图搜索        N/A
+    $facet/$bucket  分面搜索       N/A
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/10/OcIKCu.png
+
+    常见步骤中的运算符
+
+
+示例
+====
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/10/f52rv7.png
+
+    $project(投影)示例
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/10/grqODG.png
+
+    $match(过滤)示例
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/10/jDH3S2.png
+
+    $unwind(展开数组)示例
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/10/zXMQ58.png
+
+    $bucket(分面搜索)示例
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/10/cnjBMM.png
+
+    $facet(分面搜索)示例
+
+
+实例
+====
+
 统计笔画数为 10 的字有多少个::
 
     db.getCollection("word").aggregate([{
@@ -15,10 +95,6 @@
             }
         }
     }])
-
-
-实例
-====
 
 一个集合::
 

@@ -1,19 +1,18 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<!--[if IE 8]><html class="no-js lt-ie9" lang="zh-CN" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="zh-CN" > <!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Jenkinsfile &mdash; 新溪-gordon V1.7.5 documentation</title>
+  <title>Jenkinsfile &mdash; 新溪-gordon V1.7.7 文档</title>
   
 
   
-  
-    <link rel="shortcut icon" href="../../../_static/favicon-16x16.ico"/>
   
   
   
@@ -28,9 +27,12 @@
 
   <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
-    <link rel="index" title="Index" href="../../../genindex.html" />
-    <link rel="search" title="Search" href="../../../search.html" />
+  <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
+    <link rel="index" title="索引" href="../../../genindex.html" />
+    <link rel="search" title="搜索" href="../../../search.html" />
     <link rel="next" title="2.3.2. drone" href="../drone.html" />
     <link rel="prev" title="常用" href="normal.html" /> 
 
@@ -63,7 +65,7 @@
             
             
               <div class="version">
-                V1.7.5
+                V1.7.7
               </div>
             
           
@@ -87,7 +89,7 @@
               
             
             
-              <p class="caption"><span class="caption-text">关键知识</span></p>
+              <p class="caption" role="heading"><span class="caption-text">关键知识</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../../../normal.html">1. 常用</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../normals/normal.html">1.1. 常用</a></li>
@@ -266,250 +268,238 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
   <table class="docutils align-default">
-<colgroup>
-<col style="width: 32%" />
-<col style="width: 24%" />
-<col style="width: 24%" />
-<col style="width: 21%" />
-</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
-<td><p><a class="reference internal" href="../../../genindex.html"><span class="std std-ref">Index</span></a></p></td>
-<td><p><a class="reference internal" href="../../../py-modindex.html"><span class="std std-ref">Module Index</span></a></p></td>
-<td><p><a class="reference internal" href="../../../search.html"><span class="std std-ref">Search Page</span></a></p></td>
+<td><p><a class="reference internal" href="../../../genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../../py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../../search.html"><span class="std std-ref">搜索页面</span></a></p></td>
 </tr>
 </tbody>
 </table>
-<div class="section" id="jenkinsfile">
-<h1>Jenkinsfile<a class="headerlink" href="#jenkinsfile" title="Permalink to this headline">¶</a></h1>
+<section id="jenkinsfile">
+<h1>Jenkinsfile<a class="headerlink" href="#jenkinsfile" title="此标题的永久链接">¶</a></h1>
 <ul class="simple">
 <li><p>java语言+docker+超时,循环+状态判断</p></li>
 </ul>
-<div class="highlight-Groovy notranslate"><div class="highlight"><pre><span></span><span class="n">pipeline</span> <span class="o">{</span>
-    <span class="n">agent</span> <span class="o">{</span>
-        <span class="n">docker</span> <span class="o">{</span> <span class="c1">// 下载 maven:3-apline Docker镜像,并将该镜像作为单独的容器运行</span>
-            <span class="n">image</span> <span class="s1">&#39;maven:3-alpine&#39;</span>    <span class="c1">// 在Docker中本地运行相互独立的Jenkins和Maven容器</span>
-            <span class="n">args</span> <span class="s1">&#39;-v /root/.m2:/root/.m2&#39;</span> 
-            <span class="c1">// Maven容器成为了Jenkins用来运行你的流水线项目的 agent </span>
-            <span class="c1">// 这个容器寿命很短——它的寿命只是你的流水线的执行时间</span>
-    <span class="o">}</span>
-    <span class="n">stages</span> <span class="o">{</span>
-        <span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Build&#39;</span><span class="o">)</span> <span class="o">{</span>
-            <span class="n">steps</span> <span class="o">{</span>
-                <span class="n">sh</span> <span class="s1">&#39;mvn -B -DskipTests clean package&#39;</span>
-            <span class="o">}</span>
-        <span class="o">}</span>
-        <span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Test&#39;</span><span class="o">)</span> <span class="o">{</span>
-            <span class="n">steps</span> <span class="o">{</span>
-                <span class="n">sh</span> <span class="s1">&#39;mvn test&#39;</span>
-            <span class="o">}</span>
-            <span class="n">post</span> <span class="o">{</span>
-                <span class="n">always</span> <span class="o">{</span>
-                    <span class="n">junit</span> <span class="s1">&#39;target/surefire-reports/*.xml&#39;</span>
-                <span class="o">}</span>
-            <span class="o">}</span>
-        <span class="o">}</span>
-        <span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Deliver&#39;</span><span class="o">)</span> <span class="o">{</span> 
-            <span class="n">steps</span> <span class="o">{</span>
-                <span class="n">sh</span> <span class="s1">&#39;./jenkins/scripts/deliver.sh&#39;</span> 
-            <span class="o">}</span>
-        <span class="o">}</span>
+<div class="highlight-Groovy notranslate"><div class="highlight"><pre><span></span><span class="n">pipeline</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span><span class="n">agent</span><span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="n">docker</span><span class="w"> </span><span class="o">{</span><span class="w"> </span><span class="c1">// 下载 maven:3-apline Docker镜像,并将该镜像作为单独的容器运行</span>
+<span class="w">            </span><span class="n">image</span><span class="w"> </span><span class="s1">&#39;maven:3-alpine&#39;</span><span class="w">    </span><span class="c1">// 在Docker中本地运行相互独立的Jenkins和Maven容器</span>
+<span class="w">            </span><span class="n">args</span><span class="w"> </span><span class="s1">&#39;-v /root/.m2:/root/.m2&#39;</span><span class="w"> </span>
+<span class="w">            </span><span class="c1">// Maven容器成为了Jenkins用来运行你的流水线项目的 agent </span>
+<span class="w">            </span><span class="c1">// 这个容器寿命很短——它的寿命只是你的流水线的执行时间</span>
+<span class="w">    </span><span class="o">}</span>
+<span class="w">    </span><span class="n">stages</span><span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Build&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">            </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;mvn -B -DskipTests clean package&#39;</span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">        </span><span class="o">}</span>
+<span class="w">        </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Test&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">            </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;mvn test&#39;</span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">            </span><span class="n">post</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                </span><span class="n">always</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                    </span><span class="n">junit</span><span class="w"> </span><span class="s1">&#39;target/surefire-reports/*.xml&#39;</span>
+<span class="w">                </span><span class="o">}</span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">        </span><span class="o">}</span>
+<span class="w">        </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Deliver&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span><span class="w"> </span>
+<span class="w">            </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;./jenkins/scripts/deliver.sh&#39;</span><span class="w"> </span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">        </span><span class="o">}</span>
 
-        <span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Deploy&#39;</span><span class="o">)</span> <span class="o">{</span>   <span class="c1">// 超时,循环</span>
-            <span class="n">steps</span> <span class="o">{</span>
-                <span class="n">timeout</span><span class="o">(</span><span class="nl">time:</span> <span class="mi">3</span><span class="o">,</span> <span class="nl">unit:</span> <span class="s1">&#39;MINUTES&#39;</span><span class="o">)</span> <span class="o">{</span>
-                    <span class="n">retry</span><span class="o">(</span><span class="mi">5</span><span class="o">)</span> <span class="o">{</span>
-                        <span class="n">sh</span> <span class="s1">&#39;./flakey-deploy.sh&#39;</span>
-                    <span class="o">}</span>
-                <span class="o">}</span>
-            <span class="o">}</span>
-        <span class="o">}</span>
-        <span class="n">post</span> <span class="o">{</span>      <span class="c1">// 状态判断</span>
-            <span class="n">always</span> <span class="o">{</span>
-                <span class="n">echo</span> <span class="s1">&#39;This will always run&#39;</span>
-            <span class="o">}</span>
-            <span class="n">success</span> <span class="o">{</span>
-                <span class="n">echo</span> <span class="s1">&#39;This will run only if successful&#39;</span>
-            <span class="o">}</span>
-            <span class="n">failure</span> <span class="o">{</span>
-                <span class="n">echo</span> <span class="s1">&#39;This will run only if failed&#39;</span>
-            <span class="o">}</span>
-            <span class="n">unstable</span> <span class="o">{</span>
-                <span class="n">echo</span> <span class="s1">&#39;This will run only if the run was marked as unstable&#39;</span>
-            <span class="o">}</span>
-            <span class="n">changed</span> <span class="o">{</span>
-                <span class="n">echo</span> <span class="s1">&#39;This will run only if the state of the Pipeline has changed&#39;</span>
-                <span class="n">echo</span> <span class="s1">&#39;For example, if the Pipeline was previously failing but is now successful&#39;</span>
-            <span class="o">}</span>
-        <span class="o">}</span>
-    <span class="o">}</span>
+<span class="w">        </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Deploy&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span><span class="w">   </span><span class="c1">// 超时,循环</span>
+<span class="w">            </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                </span><span class="n">timeout</span><span class="o">(</span><span class="nl">time:</span><span class="w"> </span><span class="mi">3</span><span class="o">,</span><span class="w"> </span><span class="nl">unit:</span><span class="w"> </span><span class="s1">&#39;MINUTES&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                    </span><span class="n">retry</span><span class="o">(</span><span class="mi">5</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                        </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;./flakey-deploy.sh&#39;</span>
+<span class="w">                    </span><span class="o">}</span>
+<span class="w">                </span><span class="o">}</span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">        </span><span class="o">}</span>
+<span class="w">        </span><span class="n">post</span><span class="w"> </span><span class="o">{</span><span class="w">      </span><span class="c1">// 状态判断</span>
+<span class="w">            </span><span class="n">always</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                </span><span class="n">echo</span><span class="w"> </span><span class="s1">&#39;This will always run&#39;</span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">            </span><span class="n">success</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                </span><span class="n">echo</span><span class="w"> </span><span class="s1">&#39;This will run only if successful&#39;</span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">            </span><span class="n">failure</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                </span><span class="n">echo</span><span class="w"> </span><span class="s1">&#39;This will run only if failed&#39;</span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">            </span><span class="n">unstable</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                </span><span class="n">echo</span><span class="w"> </span><span class="s1">&#39;This will run only if the run was marked as unstable&#39;</span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">            </span><span class="n">changed</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                </span><span class="n">echo</span><span class="w"> </span><span class="s1">&#39;This will run only if the state of the Pipeline has changed&#39;</span>
+<span class="w">                </span><span class="n">echo</span><span class="w"> </span><span class="s1">&#39;For example, if the Pipeline was previously failing but is now successful&#39;</span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">        </span><span class="o">}</span>
+<span class="w">    </span><span class="o">}</span>
 <span class="o">}</span>
 </pre></div>
 </div>
 <ul class="simple">
 <li><p>node+docker+环境变量</p></li>
 </ul>
-<div class="highlight-Groovy notranslate"><div class="highlight"><pre><span></span><span class="n">pipeline</span> <span class="o">{</span>
-    <span class="n">agent</span> <span class="o">{</span>
-        <span class="n">docker</span> <span class="o">{</span> <span class="c1">// 下载 maven:3-apline Docker镜像,并将该镜像作为单独的容器运行</span>
-            <span class="n">image</span> <span class="s1">&#39;maven:3-alpine&#39;</span>    <span class="c1">// 在Docker中本地运行相互独立的Jenkins和Maven容器</span>
-            <span class="n">args</span> <span class="s1">&#39;-v /root/.m2:/root/.m2&#39;</span> 
-            <span class="c1">// Maven容器成为了Jenkins用来运行你的流水线项目的 agent </span>
-            <span class="c1">// 这个容器寿命很短——它的寿命只是你的流水线的执行时间</span>
-    <span class="o">}</span>
-    <span class="n">stages</span> <span class="o">{</span>
-        <span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Build&#39;</span><span class="o">)</span> <span class="o">{</span>
-            <span class="n">steps</span> <span class="o">{</span>
-                <span class="n">sh</span> <span class="s1">&#39;mvn -B -DskipTests clean package&#39;</span>
-            <span class="o">}</span>
-        <span class="o">}</span>
-        <span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Test&#39;</span><span class="o">)</span> <span class="o">{</span>
-            <span class="n">steps</span> <span class="o">{</span>
-                <span class="n">sh</span> <span class="s1">&#39;mvn test&#39;</span>
-            <span class="o">}</span>
-            <span class="n">post</span> <span class="o">{</span>
-                <span class="n">always</span> <span class="o">{</span>
-                    <span class="n">junit</span> <span class="s1">&#39;target/surefire-reports/*.xml&#39;</span>
-                <span class="o">}</span>
-            <span class="o">}</span>
-        <span class="o">}</span>
-        <span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Deliver&#39;</span><span class="o">)</span> <span class="o">{</span> 
-            <span class="n">steps</span> <span class="o">{</span>
-                <span class="n">sh</span> <span class="s1">&#39;./jenkins/scripts/deliver.sh&#39;</span> 
-            <span class="o">}</span>
-        <span class="o">}</span>
+<div class="highlight-Groovy notranslate"><div class="highlight"><pre><span></span><span class="n">pipeline</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span><span class="n">agent</span><span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="n">docker</span><span class="w"> </span><span class="o">{</span><span class="w"> </span><span class="c1">// 下载 maven:3-apline Docker镜像,并将该镜像作为单独的容器运行</span>
+<span class="w">            </span><span class="n">image</span><span class="w"> </span><span class="s1">&#39;maven:3-alpine&#39;</span><span class="w">    </span><span class="c1">// 在Docker中本地运行相互独立的Jenkins和Maven容器</span>
+<span class="w">            </span><span class="n">args</span><span class="w"> </span><span class="s1">&#39;-v /root/.m2:/root/.m2&#39;</span><span class="w"> </span>
+<span class="w">            </span><span class="c1">// Maven容器成为了Jenkins用来运行你的流水线项目的 agent </span>
+<span class="w">            </span><span class="c1">// 这个容器寿命很短——它的寿命只是你的流水线的执行时间</span>
+<span class="w">    </span><span class="o">}</span>
+<span class="w">    </span><span class="n">stages</span><span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Build&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">            </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;mvn -B -DskipTests clean package&#39;</span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">        </span><span class="o">}</span>
+<span class="w">        </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Test&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">            </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;mvn test&#39;</span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">            </span><span class="n">post</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                </span><span class="n">always</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                    </span><span class="n">junit</span><span class="w"> </span><span class="s1">&#39;target/surefire-reports/*.xml&#39;</span>
+<span class="w">                </span><span class="o">}</span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">        </span><span class="o">}</span>
+<span class="w">        </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Deliver&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span><span class="w"> </span>
+<span class="w">            </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;./jenkins/scripts/deliver.sh&#39;</span><span class="w"> </span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">        </span><span class="o">}</span>
 
-        <span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Deploy&#39;</span><span class="o">)</span> <span class="o">{</span>   <span class="c1">// 超时,循环</span>
-            <span class="n">steps</span> <span class="o">{</span>
-                <span class="n">timeout</span><span class="o">(</span><span class="nl">time:</span> <span class="mi">3</span><span class="o">,</span> <span class="nl">unit:</span> <span class="s1">&#39;MINUTES&#39;</span><span class="o">)</span> <span class="o">{</span>
-                    <span class="n">retry</span><span class="o">(</span><span class="mi">5</span><span class="o">)</span> <span class="o">{</span>
-                        <span class="n">sh</span> <span class="s1">&#39;./flakey-deploy.sh&#39;</span>
-                    <span class="o">}</span>
-                <span class="o">}</span>
-            <span class="o">}</span>
-        <span class="o">}</span>
-        <span class="n">post</span> <span class="o">{</span>      <span class="c1">// 状态判断</span>
-            <span class="n">always</span> <span class="o">{</span>
-                <span class="n">echo</span> <span class="s1">&#39;This will always run&#39;</span>
-            <span class="o">}</span>
-            <span class="n">success</span> <span class="o">{</span>
-                <span class="n">echo</span> <span class="s1">&#39;This will run only if successful&#39;</span>
-            <span class="o">}</span>
-            <span class="n">failure</span> <span class="o">{</span>
-                <span class="n">echo</span> <span class="s1">&#39;This will run only if failed&#39;</span>
-            <span class="o">}</span>
-            <span class="n">unstable</span> <span class="o">{</span>
-                <span class="n">echo</span> <span class="s1">&#39;This will run only if the run was marked as unstable&#39;</span>
-            <span class="o">}</span>
-            <span class="n">changed</span> <span class="o">{</span>
-                <span class="n">echo</span> <span class="s1">&#39;This will run only if the state of the Pipeline has changed&#39;</span>
-                <span class="n">echo</span> <span class="s1">&#39;For example, if the Pipeline was previously failing but is now successful&#39;</span>
-            <span class="o">}</span>
-        <span class="o">}</span>
-    <span class="o">}</span>
+<span class="w">        </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Deploy&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span><span class="w">   </span><span class="c1">// 超时,循环</span>
+<span class="w">            </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                </span><span class="n">timeout</span><span class="o">(</span><span class="nl">time:</span><span class="w"> </span><span class="mi">3</span><span class="o">,</span><span class="w"> </span><span class="nl">unit:</span><span class="w"> </span><span class="s1">&#39;MINUTES&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                    </span><span class="n">retry</span><span class="o">(</span><span class="mi">5</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                        </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;./flakey-deploy.sh&#39;</span>
+<span class="w">                    </span><span class="o">}</span>
+<span class="w">                </span><span class="o">}</span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">        </span><span class="o">}</span>
+<span class="w">        </span><span class="n">post</span><span class="w"> </span><span class="o">{</span><span class="w">      </span><span class="c1">// 状态判断</span>
+<span class="w">            </span><span class="n">always</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                </span><span class="n">echo</span><span class="w"> </span><span class="s1">&#39;This will always run&#39;</span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">            </span><span class="n">success</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                </span><span class="n">echo</span><span class="w"> </span><span class="s1">&#39;This will run only if successful&#39;</span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">            </span><span class="n">failure</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                </span><span class="n">echo</span><span class="w"> </span><span class="s1">&#39;This will run only if failed&#39;</span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">            </span><span class="n">unstable</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                </span><span class="n">echo</span><span class="w"> </span><span class="s1">&#39;This will run only if the run was marked as unstable&#39;</span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">            </span><span class="n">changed</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                </span><span class="n">echo</span><span class="w"> </span><span class="s1">&#39;This will run only if the state of the Pipeline has changed&#39;</span>
+<span class="w">                </span><span class="n">echo</span><span class="w"> </span><span class="s1">&#39;For example, if the Pipeline was previously failing but is now successful&#39;</span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">        </span><span class="o">}</span>
+<span class="w">    </span><span class="o">}</span>
 <span class="o">}</span>
 </pre></div>
 </div>
 <ul class="simple">
 <li><p>python+archiveArtifacts+junit</p></li>
 </ul>
-<div class="highlight-Groovy notranslate"><div class="highlight"><pre><span></span><span class="n">pipeline</span> <span class="o">{</span>
-    <span class="n">agent</span> <span class="n">none</span>
-    <span class="n">stages</span> <span class="o">{</span>
-        <span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Deliver&#39;</span><span class="o">)</span> <span class="o">{</span> 
-            <span class="n">agent</span> <span class="o">{</span>
-                <span class="n">docker</span> <span class="o">{</span>
-                    <span class="n">image</span> <span class="s1">&#39;cdrx/pyinstaller-linux:python2&#39;</span> 
-                <span class="o">}</span>
-            <span class="o">}</span>
-            <span class="n">steps</span> <span class="o">{</span>
-                <span class="n">sh</span> <span class="s1">&#39;pyinstaller --onefile sources/add2vals.py&#39;</span> 
-            <span class="o">}</span>
-            <span class="n">post</span> <span class="o">{</span>
-                <span class="n">success</span> <span class="o">{</span>
-                    <span class="n">archiveArtifacts</span> <span class="s1">&#39;dist/add2vals&#39;</span> 
-                <span class="o">}</span>
-            <span class="o">}</span>
-        <span class="o">}</span>
-    <span class="o">}</span>
+<div class="highlight-Groovy notranslate"><div class="highlight"><pre><span></span><span class="n">pipeline</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span><span class="n">agent</span><span class="w"> </span><span class="n">none</span>
+<span class="w">    </span><span class="n">stages</span><span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Deliver&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span><span class="w"> </span>
+<span class="w">            </span><span class="n">agent</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                </span><span class="n">docker</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                    </span><span class="n">image</span><span class="w"> </span><span class="s1">&#39;cdrx/pyinstaller-linux:python2&#39;</span><span class="w"> </span>
+<span class="w">                </span><span class="o">}</span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">            </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;pyinstaller --onefile sources/add2vals.py&#39;</span><span class="w"> </span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">            </span><span class="n">post</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                </span><span class="n">success</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                    </span><span class="n">archiveArtifacts</span><span class="w"> </span><span class="s1">&#39;dist/add2vals&#39;</span><span class="w"> </span>
+<span class="w">                </span><span class="o">}</span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">        </span><span class="o">}</span>
+<span class="w">    </span><span class="o">}</span>
 
-    <span class="n">post</span> <span class="o">{</span>
-        <span class="n">always</span> <span class="o">{</span>
-            <span class="n">archiveArtifacts</span> <span class="nl">artifacts:</span> <span class="s1">&#39;build/libs/**/*.jar&#39;</span><span class="o">,</span> <span class="nl">fingerprint:</span> <span class="kc">true</span>
-            <span class="n">junit</span> <span class="s1">&#39;build/reports/**/*.xml&#39;</span>
-        <span class="o">}</span>
-    <span class="o">}</span>
+<span class="w">    </span><span class="n">post</span><span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="n">always</span><span class="w"> </span><span class="o">{</span>
+<span class="w">            </span><span class="n">archiveArtifacts</span><span class="w"> </span><span class="nl">artifacts:</span><span class="w"> </span><span class="s1">&#39;build/libs/**/*.jar&#39;</span><span class="o">,</span><span class="w"> </span><span class="nl">fingerprint:</span><span class="w"> </span><span class="kc">true</span>
+<span class="w">            </span><span class="n">junit</span><span class="w"> </span><span class="s1">&#39;build/reports/**/*.xml&#39;</span>
+<span class="w">        </span><span class="o">}</span>
+<span class="w">    </span><span class="o">}</span>
 <span class="o">}</span>
 </pre></div>
 </div>
 <ul class="simple">
 <li><p>multibranch+input</p></li>
 </ul>
-<div class="highlight-Groovy notranslate"><div class="highlight"><pre><span></span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Deliver for development&#39;</span><span class="o">)</span> <span class="o">{</span>
-    <span class="n">when</span> <span class="o">{</span>
-        <span class="n">branch</span> <span class="s1">&#39;development&#39;</span>
-    <span class="o">}</span>
-    <span class="n">steps</span> <span class="o">{</span>
-        <span class="n">sh</span> <span class="s1">&#39;./jenkins/scripts/deliver-for-development.sh&#39;</span>
-        <span class="n">input</span> <span class="nl">message:</span> <span class="s1">&#39;Finished using the web site? (Click &quot;Proceed&quot; to continue)&#39;</span>
-        <span class="n">sh</span> <span class="s1">&#39;./jenkins/scripts/kill.sh&#39;</span>
-    <span class="o">}</span>
+<div class="highlight-Groovy notranslate"><div class="highlight"><pre><span></span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Deliver for development&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span><span class="n">when</span><span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="n">branch</span><span class="w"> </span><span class="s1">&#39;development&#39;</span>
+<span class="w">    </span><span class="o">}</span>
+<span class="w">    </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;./jenkins/scripts/deliver-for-development.sh&#39;</span>
+<span class="w">        </span><span class="n">input</span><span class="w"> </span><span class="nl">message:</span><span class="w"> </span><span class="s1">&#39;Finished using the web site? (Click &quot;Proceed&quot; to continue)&#39;</span>
+<span class="w">        </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;./jenkins/scripts/kill.sh&#39;</span>
+<span class="w">    </span><span class="o">}</span>
 <span class="o">}</span>
-<span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Deploy for production&#39;</span><span class="o">)</span> <span class="o">{</span>
-    <span class="n">when</span> <span class="o">{</span>
-        <span class="n">branch</span> <span class="s1">&#39;production&#39;</span>
-    <span class="o">}</span>
-    <span class="n">steps</span> <span class="o">{</span>
-        <span class="n">sh</span> <span class="s1">&#39;./jenkins/scripts/deploy-for-production.sh&#39;</span>
-        <span class="n">input</span> <span class="nl">message:</span> <span class="s1">&#39;Finished using the web site? (Click &quot;Proceed&quot; to continue)&#39;</span>
-        <span class="n">sh</span> <span class="s1">&#39;./jenkins/scripts/kill.sh&#39;</span>
-    <span class="o">}</span>
+<span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Deploy for production&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span><span class="n">when</span><span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="n">branch</span><span class="w"> </span><span class="s1">&#39;production&#39;</span>
+<span class="w">    </span><span class="o">}</span>
+<span class="w">    </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;./jenkins/scripts/deploy-for-production.sh&#39;</span>
+<span class="w">        </span><span class="n">input</span><span class="w"> </span><span class="nl">message:</span><span class="w"> </span><span class="s1">&#39;Finished using the web site? (Click &quot;Proceed&quot; to continue)&#39;</span>
+<span class="w">        </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;./jenkins/scripts/kill.sh&#39;</span>
+<span class="w">    </span><span class="o">}</span>
 <span class="o">}</span>
 </pre></div>
 </div>
 <ul class="simple">
 <li><p>多个容器</p></li>
 </ul>
-<div class="highlight-Groovy notranslate"><div class="highlight"><pre><span></span><span class="n">Jenkinsfile</span> <span class="o">(</span><span class="n">Declarative</span> <span class="n">Pipeline</span><span class="o">)</span>
-<span class="n">pipeline</span> <span class="o">{</span>
-    <span class="n">agent</span> <span class="n">none</span>
-    <span class="n">stages</span> <span class="o">{</span>
-        <span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Back-end&#39;</span><span class="o">)</span> <span class="o">{</span>
-            <span class="n">agent</span> <span class="o">{</span>
-                <span class="n">docker</span> <span class="o">{</span> <span class="n">image</span> <span class="s1">&#39;maven:3-alpine&#39;</span> <span class="o">}</span>
-            <span class="o">}</span>
-            <span class="n">steps</span> <span class="o">{</span>
-                <span class="n">sh</span> <span class="s1">&#39;mvn --version&#39;</span>
-            <span class="o">}</span>
-        <span class="o">}</span>
-        <span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Front-end&#39;</span><span class="o">)</span> <span class="o">{</span>
-            <span class="n">agent</span> <span class="o">{</span>
-                <span class="n">docker</span> <span class="o">{</span> <span class="n">image</span> <span class="s1">&#39;node:7-alpine&#39;</span> <span class="o">}</span>
-            <span class="o">}</span>
-            <span class="n">steps</span> <span class="o">{</span>
-                <span class="n">sh</span> <span class="s1">&#39;node --version&#39;</span>
-            <span class="o">}</span>
-        <span class="o">}</span>
-    <span class="o">}</span>
+<div class="highlight-Groovy notranslate"><div class="highlight"><pre><span></span><span class="n">Jenkinsfile</span><span class="w"> </span><span class="o">(</span><span class="n">Declarative</span><span class="w"> </span><span class="n">Pipeline</span><span class="o">)</span>
+<span class="n">pipeline</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span><span class="n">agent</span><span class="w"> </span><span class="n">none</span>
+<span class="w">    </span><span class="n">stages</span><span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Back-end&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">            </span><span class="n">agent</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                </span><span class="n">docker</span><span class="w"> </span><span class="o">{</span><span class="w"> </span><span class="n">image</span><span class="w"> </span><span class="s1">&#39;maven:3-alpine&#39;</span><span class="w"> </span><span class="o">}</span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">            </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;mvn --version&#39;</span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">        </span><span class="o">}</span>
+<span class="w">        </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Front-end&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">            </span><span class="n">agent</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                </span><span class="n">docker</span><span class="w"> </span><span class="o">{</span><span class="w"> </span><span class="n">image</span><span class="w"> </span><span class="s1">&#39;node:7-alpine&#39;</span><span class="w"> </span><span class="o">}</span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">            </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;node --version&#39;</span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">        </span><span class="o">}</span>
+<span class="w">    </span><span class="o">}</span>
 <span class="o">}</span>
 </pre></div>
 </div>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 32%" />
-<col style="width: 24%" />
-<col style="width: 24%" />
-<col style="width: 21%" />
-</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
-<td><p><a class="reference internal" href="../../../genindex.html"><span class="std std-ref">Index</span></a></p></td>
-<td><p><a class="reference internal" href="../../../py-modindex.html"><span class="std std-ref">Module Index</span></a></p></td>
-<td><p><a class="reference internal" href="../../../search.html"><span class="std std-ref">Search Page</span></a></p></td>
+<td><p><a class="reference internal" href="../../../genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../../py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../../search.html"><span class="std std-ref">搜索页面</span></a></p></td>
 </tr>
 </tbody>
 </table>
-</div>
+</section>
 
 
            </div>
@@ -554,18 +544,21 @@
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../../',
-            VERSION:'V1.7.5',
-            LANGUAGE:'None',
+            VERSION:'V1.7.7',
+            LANGUAGE:'zh-CN',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
             SOURCELINK_SUFFIX: '.txt'
         };
     </script>
-      <script type="text/javascript" src="../../../_static/jquery.js"></script>
-      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
       <script type="text/javascript" src="../../../_static/doctools.js"></script>
-      <script type="text/javascript" src="../../../_static/language_data.js"></script>
+      <script type="text/javascript" src="../../../_static/sphinx_highlight.js"></script>
+      <script type="text/javascript" src="../../../_static/clipboard.min.js"></script>
+      <script type="text/javascript" src="../../../_static/copybutton.js"></script>
+      <script type="text/javascript" src="../../../_static/translations.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
 
   
 

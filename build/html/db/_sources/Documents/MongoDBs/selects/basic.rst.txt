@@ -48,3 +48,65 @@
     db.<tableName>.find({"$or" : [{<key1>:<value1>}, {<key2>:<value2>}]})
 
 ``$not`` 是元条件句, 即可以用在任何其他条件之上
+
+
+
+使用 find 搜索子文档
+====================
+
+find 支持使用“field.sub_field”的形式查询子文档。假设有一个文档::
+
+    db.fruit.insertOne({
+        name: "apple",
+        from: {
+            country: "China",
+            province: "Guangdon"
+        } 
+    })
+
+查询::
+
+    db.fruit.find( { "from.country" : "China" } )
+    db.fruit.find( { "from" : {country: "China"} } )
+
+
+
+使用 find 搜索数组
+==================
+
+● find 支持对数组中的元素进行搜索。假设有一个文档::
+
+    db.fruit.insert([
+      { "name" : "Apple", color: ["red", "green" ] },
+      { "name" : "Mango", color: ["yellow", "green"] }
+    ])
+
+● 考虑以下查询的意义::
+
+    db.fruit.find({color: "red"})
+    db.fruit.find({$or: [{color: "red"}, {color: "yellow"}]} )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

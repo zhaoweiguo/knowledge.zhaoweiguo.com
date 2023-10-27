@@ -1,0 +1,159 @@
+yield
+#####
+
+迭代器(iterator)
+================
+
+函数::
+
+	def data():
+	    for i in range(100):
+	        yield f"My example {i}"
+
+使用::
+
+	generator = data() # 获取生成器对象 
+
+	print(next(generator)) # 打印第一个结果 'My example 0'
+
+	for x in generator: 
+	    print(x) # 打印剩余结果 'My example 1' 到 'My example 999'
+
+
+.. note:: 这个函数定义了一个生成器函数 data(),它可以用来生成 1000 个字符串 "My example 0" 到 "My example 999"。生成器函数的特点是使用 yield 语句来逐个产生结果,而不是像普通函数那样直接返回结果。调用生成器函数并不会真正执行函数,而是返回一个生成器对象。必须通过next() 或 for 循环来获取生成器的下一个结果。
+
+
+
+惰性计算(Lazy evaluation)
+=========================
+
+函数::
+
+	def squares(n):
+	    for i in range(n):
+	        yield i**2
+
+使用::
+
+	list = squares(10)
+	next(list)
+
+	for x in list:
+	    print(x) 
+
+实现协程(Coroutines)
+====================
+
+函数::
+
+	def countdown(n):
+	    print("Counting down from", n)
+	    while n > 0:
+	        newvalue = (yield n)
+	        if newvalue is not None:
+	            n = newvalue
+	        else:
+	            n -= 1
+	    print("Done counting down!")
+
+	c = countdown(5)	# 本句只是创建对象，但还没有执行
+	print(next(c)) 		# 第一次调用，执行到yield n处暂停
+	print(c.send(3)) 	# 发送新值3给n
+	print(next(c)) 		# 打印 2
+	print(next(c)) 		# 打印 1
+	print(next(c)) 		# 最后一次next(c)试图重启已经结束的生成器,所以触发StopIteration异常
+
+输出::
+
+	Counting down from 5
+	5
+	3
+	2
+	1
+	Done counting down!
+	---------------------------------------------------------------------------
+	StopIteration                             Traceback (most recent call last)
+	Cell In[173], line 16
+	     14 print(next(c)) # 打印 2
+	     15 print(next(c)) # 打印 1
+	---> 16 print(next(c)) # 打印 done
+
+	StopIteration:
+
+
+.. note:: 调用countdown创建一个生成器对象c,多次调用next()会从yield处继续执行。调用c.send(value)可以向yield语句位置发送一个新的值,重新赋值给n。yield既可以产出值,又可以接收发送的值。这使得协程可以通信、交换数据,实现协作程序。
+
+
+.. note:: yield实现的异常机制 - 当生成器结束时,会 Raises StopIteration异常。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,19 +1,18 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<!--[if IE 8]><html class="no-js lt-ie9" lang="zh-CN" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="zh-CN" > <!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>PBKDF(Password-Based Key Derivation Function) &mdash; 新溪-gordon V1.7.5 documentation</title>
+  <title>PBKDF(Password-Based Key Derivation Function) &mdash; 新溪-gordon V1.7.7 文档</title>
   
 
   
-  
-    <link rel="shortcut icon" href="../../../_static/favicon-16x16.ico"/>
   
   
   
@@ -28,9 +27,12 @@
 
   <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
-    <link rel="index" title="Index" href="../../../genindex.html" />
-    <link rel="search" title="Search" href="../../../search.html" />
+  <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
+    <link rel="index" title="索引" href="../../../genindex.html" />
+    <link rel="search" title="搜索" href="../../../search.html" />
     <link rel="next" title="bcrypt" href="bcrypt.html" />
     <link rel="prev" title="PAKE" href="PAKE.html" /> 
 
@@ -63,7 +65,7 @@
             
             
               <div class="version">
-                V1.7.5
+                V1.7.7
               </div>
             
           
@@ -87,7 +89,7 @@
               
             
             
-              <p class="caption"><span class="caption-text">安全相关</span></p>
+              <p class="caption" role="heading"><span class="caption-text">安全相关</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../../../normal.html">常用</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../normals/normal.html">常用</a></li>
@@ -164,9 +166,9 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../0knowledge-proof.html">零知识证明(zero-knowledge proof)</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../0knowledge-proofs/normal.html">常用</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../0knowledge-proofs/Proof of knowledge.html">Proof of knowledge</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../0knowledge-proofs/Interactive proof system.html">Interactive proof system</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../0knowledge-proofs/Zero-knowledge proof.html">Zero-knowledge proof</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../0knowledge-proofs/Proof%20of%20knowledge.html">Proof of knowledge</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../0knowledge-proofs/Interactive%20proof%20system.html">Interactive proof system</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../0knowledge-proofs/Zero-knowledge%20proof.html">Zero-knowledge proof</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../0knowledge-proofs/Sigma.html">Sigma</a></li>
 </ul>
 </li>
@@ -327,36 +329,30 @@
 
             </nav>
   <table class="docutils align-default">
-<colgroup>
-<col style="width: 32%" />
-<col style="width: 24%" />
-<col style="width: 24%" />
-<col style="width: 21%" />
-</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
-<td><p><a class="reference internal" href="../../../genindex.html"><span class="std std-ref">Index</span></a></p></td>
-<td><p><a class="reference internal" href="../../../py-modindex.html"><span class="std std-ref">Module Index</span></a></p></td>
-<td><p><a class="reference internal" href="../../../search.html"><span class="std std-ref">Search Page</span></a></p></td>
+<td><p><a class="reference internal" href="../../../genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../../py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../../search.html"><span class="std std-ref">搜索页面</span></a></p></td>
 </tr>
 </tbody>
 </table>
-<div class="section" id="pbkdf-password-based-key-derivation-function">
-<h1>PBKDF(Password-Based Key Derivation Function)<a class="headerlink" href="#pbkdf-password-based-key-derivation-function" title="Permalink to this headline">¶</a></h1>
+<section id="pbkdf-password-based-key-derivation-function">
+<h1>PBKDF(Password-Based Key Derivation Function)<a class="headerlink" href="#pbkdf-password-based-key-derivation-function" title="此标题的永久链接">¶</a></h1>
 <ul class="simple">
 <li><p>In cryptography, PBKDF1 and PBKDF2 (Password-Based Key Derivation Function 1 and 2) are key derivation functions with a sliding computational cost, used to reduce vulnerabilities of brute-force attacks.</p></li>
 <li><p>PBKDF2 is part of RSA Laboratories’ Public-Key Cryptography Standards (PKCS) series, specifically PKCS #5 v2.0, also published as Internet Engineering Task Force’s RFC 2898. It supersedes PBKDF1, which could only produce derived keys up to 160 bits long. RFC 8018 (PKCS #5 v2.1), published in 2017, recommends PBKDF2 for password hashing.</p></li>
 </ul>
-<div class="section" id="purpose-and-operation">
-<h2>Purpose and operation<a class="headerlink" href="#purpose-and-operation" title="Permalink to this headline">¶</a></h2>
+<section id="purpose-and-operation">
+<h2>Purpose and operation<a class="headerlink" href="#purpose-and-operation" title="此标题的永久链接">¶</a></h2>
 <ul class="simple">
 <li><p>PBKDF2 applies a pseudorandom function, such as hash-based message authentication code (HMAC), to the input password or passphrase along with a salt value and repeats the process many times to produce a derived key, which can then be used as a cryptographic key in subsequent operations. The added computational work makes password cracking much more difficult, and is known as key stretching.</p></li>
 <li><p>When the standard was written in the year 2000 the recommended minimum number of iterations was 1,000, but the parameter is intended to be increased over time as CPU speeds increase. A Kerberos standard in 2005 recommended 4,096 iterations; Apple reportedly used 2,000 for iOS 3, and 10,000 for iOS 4; while LastPass in 2011 used 5,000 iterations for JavaScript clients and 100,000 iterations for server-side hashing. In 2021, OWASP recommended to use 310,000 iterations for PBKDF2-HMAC-SHA256 and 120,000 for PBKDF2-HMAC-SHA512.</p></li>
 <li><p>Having a salt added to the password reduces the ability to use precomputed hashes (rainbow tables) for attacks, and means that multiple passwords have to be tested individually, not all at once. The standard recommends a salt length of at least 64 bits. The US National Institute of Standards and Technology recommends a salt length of 128 bits.</p></li>
 </ul>
-</div>
-<div class="section" id="key-derivation-process">
-<h2>Key derivation process<a class="headerlink" href="#key-derivation-process" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="key-derivation-process">
+<h2>Key derivation process<a class="headerlink" href="#key-derivation-process" title="此标题的永久链接">¶</a></h2>
 <p>The PBKDF2 key derivation function has five input parameters:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>DK = PBKDF2(PRF, Password, Salt, c, dkLen)
 参数说明:
@@ -393,20 +389,22 @@ where:
   Uc = PRF(Password, Uc−1)
 </pre></div>
 </div>
-<div class="figure align-default" id="id6">
+<figure class="align-default" id="id6">
 <img alt="https://img.zhaoweiguo.com/uPic/2022/11/wgVX2t.jpg" src="https://img.zhaoweiguo.com/uPic/2022/11/wgVX2t.jpg" />
-<p class="caption"><span class="caption-text">SHA-256 算法流程图</span><a class="headerlink" href="#id6" title="Permalink to this image">¶</a></p>
-</div>
-</div>
-<div class="section" id="id2">
-<h2>说明<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<figcaption>
+<p><span class="caption-text">SHA-256 算法流程图</span><a class="headerlink" href="#id6" title="此图像的永久链接">¶</a></p>
+</figcaption>
+</figure>
+</section>
+<section id="id2">
+<h2>说明<a class="headerlink" href="#id2" title="此标题的永久链接">¶</a></h2>
 <ul class="simple">
 <li><p>PBKDF1使用DES算法，</p></li>
 <li><p>PBKDF2使用伪随机数算法(PKCS#5建议为HMAC—SHAl)</p></li>
 </ul>
-</div>
-<div class="section" id="id3">
-<h2>应用<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="id3">
+<h2>应用<a class="headerlink" href="#id3" title="此标题的永久链接">¶</a></h2>
 <ol class="arabic simple">
 <li><p>无线局域网802．11协议</p></li>
 <li><p>著名的压缩软件WinZ—ip</p></li>
@@ -414,9 +412,9 @@ where:
 <li><p>iOS系统加密</p></li>
 <li><p>Android系统加密</p></li>
 </ol>
-</div>
-<div class="section" id="pbkdf2">
-<h2>PBKDF2 算法的产生背景<a class="headerlink" href="#pbkdf2" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="pbkdf2">
+<h2>PBKDF2 算法的产生背景<a class="headerlink" href="#pbkdf2" title="此标题的永久链接">¶</a></h2>
 <p>用户密码加密的方法演变:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 明文保存
 2. 对称加密算法来保存
@@ -429,29 +427,23 @@ where:
     随机盐使得彩虹表的建表难度大幅增加，而多次 HASH 也使得建表和破解的难度都大幅增加
 </pre></div>
 </div>
-</div>
-<div class="section" id="id4">
-<h2>参考<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="id4">
+<h2>参考<a class="headerlink" href="#id4" title="此标题的永久链接">¶</a></h2>
 <ul class="simple">
 <li><p><a class="reference external" href="https://en.wikipedia.org/wiki/PBKDF2">https://en.wikipedia.org/wiki/PBKDF2</a></p></li>
 </ul>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 32%" />
-<col style="width: 24%" />
-<col style="width: 24%" />
-<col style="width: 21%" />
-</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
-<td><p><a class="reference internal" href="../../../genindex.html"><span class="std std-ref">Index</span></a></p></td>
-<td><p><a class="reference internal" href="../../../py-modindex.html"><span class="std std-ref">Module Index</span></a></p></td>
-<td><p><a class="reference internal" href="../../../search.html"><span class="std std-ref">Search Page</span></a></p></td>
+<td><p><a class="reference internal" href="../../../genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../../py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../../search.html"><span class="std std-ref">搜索页面</span></a></p></td>
 </tr>
 </tbody>
 </table>
-</div>
-</div>
+</section>
+</section>
 
 
            </div>
@@ -496,18 +488,21 @@ where:
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../../',
-            VERSION:'V1.7.5',
-            LANGUAGE:'None',
+            VERSION:'V1.7.7',
+            LANGUAGE:'zh-CN',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
             SOURCELINK_SUFFIX: '.txt'
         };
     </script>
-      <script type="text/javascript" src="../../../_static/jquery.js"></script>
-      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
       <script type="text/javascript" src="../../../_static/doctools.js"></script>
-      <script type="text/javascript" src="../../../_static/language_data.js"></script>
+      <script type="text/javascript" src="../../../_static/sphinx_highlight.js"></script>
+      <script type="text/javascript" src="../../../_static/clipboard.min.js"></script>
+      <script type="text/javascript" src="../../../_static/copybutton.js"></script>
+      <script type="text/javascript" src="../../../_static/translations.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
 
   
 

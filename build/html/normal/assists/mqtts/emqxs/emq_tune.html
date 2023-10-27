@@ -1,19 +1,18 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<!--[if IE 8]><html class="no-js lt-ie9" lang="zh-CN" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="zh-CN" > <!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Emqtt优化相关 &mdash; 新溪-gordon V1.7.5 documentation</title>
+  <title>Emqtt优化相关 &mdash; 新溪-gordon V1.7.7 文档</title>
   
 
   
-  
-    <link rel="shortcut icon" href="../../../_static/favicon-16x16.ico"/>
   
   
   
@@ -28,9 +27,12 @@
 
   <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
-    <link rel="index" title="Index" href="../../../genindex.html" />
-    <link rel="search" title="Search" href="../../../search.html" />
+  <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
+    <link rel="index" title="索引" href="../../../genindex.html" />
+    <link rel="search" title="搜索" href="../../../search.html" />
     <link rel="next" title="Emqtt使用命令" href="emq_command.html" />
     <link rel="prev" title="Emqtt基本" href="emq_basic.html" /> 
 
@@ -63,7 +65,7 @@
             
             
               <div class="version">
-                V1.7.5
+                V1.7.7
               </div>
             
           
@@ -87,7 +89,7 @@
               
             
             
-              <p class="caption"><span class="caption-text">零碎未整理</span></p>
+              <p class="caption" role="heading"><span class="caption-text">零碎未整理</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="../../../assist.html">辅助技术文档</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="../../concept.html">概念</a><ul>
@@ -267,33 +269,27 @@
 
             </nav>
   <table class="docutils align-default">
-<colgroup>
-<col style="width: 32%" />
-<col style="width: 24%" />
-<col style="width: 24%" />
-<col style="width: 21%" />
-</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
-<td><p><a class="reference internal" href="../../../genindex.html"><span class="std std-ref">Index</span></a></p></td>
-<td><p><a class="reference internal" href="../../../py-modindex.html"><span class="std std-ref">Module Index</span></a></p></td>
-<td><p><a class="reference internal" href="../../../search.html"><span class="std std-ref">Search Page</span></a></p></td>
+<td><p><a class="reference internal" href="../../../genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../../py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../../search.html"><span class="std std-ref">搜索页面</span></a></p></td>
 </tr>
 </tbody>
 </table>
-<div class="section" id="emqtt">
-<h1>Emqtt优化相关<a class="headerlink" href="#emqtt" title="Permalink to this headline">¶</a></h1>
+<section id="emqtt">
+<h1>Emqtt优化相关<a class="headerlink" href="#emqtt" title="此标题的永久链接">¶</a></h1>
 <dl class="field-list simple" id="index-0">
-<dt class="field-odd">作者</dt>
+<dt class="field-odd">作者<span class="colon">:</span></dt>
 <dd class="field-odd"><p>新溪-gordon &lt;programfan.info#gmail.com&gt;</p>
 </dd>
-<dt class="field-even">时间</dt>
+<dt class="field-even">时间<span class="colon">:</span></dt>
 <dd class="field-even"><p>2018-07-03</p>
 </dd>
 </dl>
 <p>EMQ 消息服务器1.x版本 MQTT 连接压力测试到130万，在一台8核心、32G内存的 CentOS 服务器上</p>
-<div class="section" id="id2">
-<h2>Emqtt优化步骤<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<section id="id2">
+<h2>Emqtt优化步骤<a class="headerlink" href="#id2" title="此标题的永久链接">¶</a></h2>
 <p>一、Linux Kernel Tuning:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">//</span><span class="n">The</span> <span class="n">system</span><span class="o">-</span><span class="n">wide</span> <span class="n">limit</span> <span class="n">on</span> <span class="nb">max</span> <span class="n">opened</span> <span class="n">file</span> <span class="n">handles</span><span class="p">:</span>
 <span class="c1"># 2M:系统所有进程可打开的文件数量</span>
@@ -374,7 +370,7 @@
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">Tune</span> <span class="n">the</span> <span class="n">acceptor</span> <span class="n">pool</span><span class="p">,</span> <span class="n">max_clients</span> <span class="n">limit</span> <span class="ow">and</span> <span class="n">sockopts</span> <span class="k">for</span> <span class="n">TCP</span> <span class="n">listener</span> <span class="ow">in</span> <span class="n">etc</span><span class="o">/</span><span class="n">emqttd</span><span class="o">.</span><span class="n">config</span><span class="p">:</span>
 <span class="c1">## TCP Listener</span>
 <span class="c1"># 设置 TCP 监听器的 Acceptor 池大小，最大允许连接数。配置文件 emqttd/etc/emq.conf:</span>
-<span class="n">listener</span><span class="o">.</span><span class="n">tcp</span><span class="o">.</span><span class="n">external</span> <span class="o">=</span> <span class="mf">0.0</span><span class="o">.</span><span class="mf">0.0</span><span class="p">:</span><span class="mi">1883</span>
+<span class="n">listener</span><span class="o">.</span><span class="n">tcp</span><span class="o">.</span><span class="n">external</span> <span class="o">=</span> <span class="mf">0.0.0.0</span><span class="p">:</span><span class="mi">1883</span>
 <span class="n">listener</span><span class="o">.</span><span class="n">tcp</span><span class="o">.</span><span class="n">external</span><span class="o">.</span><span class="n">acceptors</span> <span class="o">=</span> <span class="mi">64</span>
 <span class="n">listener</span><span class="o">.</span><span class="n">tcp</span><span class="o">.</span><span class="n">external</span><span class="o">.</span><span class="n">max_clients</span> <span class="o">=</span> <span class="mi">1000000</span>
 </pre></div>
@@ -386,9 +382,9 @@
 <span class="n">ulimit</span> <span class="o">-</span><span class="n">n</span> <span class="mi">100000</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="benchmark">
-<h2>Benchmark使用<a class="headerlink" href="#benchmark" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="benchmark">
+<h2>Benchmark使用<a class="headerlink" href="#benchmark" title="此标题的永久链接">¶</a></h2>
 <p>并发连接测试工具: <a class="reference external" href="http://github.com/emqtt/emqtt_benchmark">http://github.com/emqtt/emqtt_benchmark</a>:</p>
 <p>安装:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span>
@@ -399,13 +395,13 @@
 <span class="o">//</span> <span class="o">-</span><span class="n">i</span><span class="p">,</span> <span class="o">--</span><span class="n">interval</span><span class="p">:</span> <span class="n">连接broker的间隔</span><span class="p">,</span><span class="n">默认为10</span>
 <span class="o">//</span> <span class="o">-</span><span class="n">t</span><span class="p">,</span> <span class="o">--</span><span class="n">topic</span>
 <span class="o">//</span> <span class="o">-</span><span class="n">q</span><span class="p">,</span> <span class="o">--</span><span class="n">qos</span><span class="p">:</span> <span class="n">默认为0</span>
-<span class="o">./</span><span class="n">emqtt_bench_sub</span> <span class="o">-</span><span class="n">h</span> <span class="mf">10.140</span><span class="o">.</span><span class="mf">2.6</span> <span class="o">-</span><span class="n">c</span> <span class="mi">50000</span> <span class="o">-</span><span class="n">i</span> <span class="mi">10</span> <span class="o">-</span><span class="n">t</span> <span class="n">bench</span><span class="o">/%</span><span class="n">i</span> <span class="o">-</span><span class="n">q</span> <span class="mi">2</span>
+<span class="o">./</span><span class="n">emqtt_bench_sub</span> <span class="o">-</span><span class="n">h</span> <span class="mf">10.140.2.6</span> <span class="o">-</span><span class="n">c</span> <span class="mi">50000</span> <span class="o">-</span><span class="n">i</span> <span class="mi">10</span> <span class="o">-</span><span class="n">t</span> <span class="n">bench</span><span class="o">/%</span><span class="n">i</span> <span class="o">-</span><span class="n">q</span> <span class="mi">2</span>
 </pre></div>
 </div>
 <p>emqtt_bench_pub的使用:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="o">-</span><span class="n">s</span><span class="p">,</span> <span class="o">--</span><span class="n">size</span><span class="p">:</span> <span class="n">payload</span> <span class="n">size</span> <span class="p">[</span><span class="n">default</span><span class="p">:</span> <span class="mi">256</span><span class="p">]</span>
 <span class="o">//</span> <span class="o">-</span><span class="n">I</span><span class="p">,</span> <span class="o">--</span><span class="n">interval_of_msg</span><span class="p">:</span> <span class="n">发布消息的间隔</span><span class="p">,</span><span class="n">默认为1000</span>
-<span class="o">./</span><span class="n">emqtt_bench_pub</span> <span class="o">-</span><span class="n">h</span> <span class="mf">10.140</span><span class="o">.</span><span class="mf">2.6</span> <span class="o">-</span><span class="n">c</span> <span class="mi">100</span> <span class="o">-</span><span class="n">I</span> <span class="mi">10</span> <span class="o">-</span><span class="n">t</span> <span class="n">bench</span><span class="o">/%</span><span class="n">i</span> <span class="o">-</span><span class="n">s</span> <span class="mi">256</span>
+<span class="o">./</span><span class="n">emqtt_bench_pub</span> <span class="o">-</span><span class="n">h</span> <span class="mf">10.140.2.6</span> <span class="o">-</span><span class="n">c</span> <span class="mi">100</span> <span class="o">-</span><span class="n">I</span> <span class="mi">10</span> <span class="o">-</span><span class="n">t</span> <span class="n">bench</span><span class="o">/%</span><span class="n">i</span> <span class="o">-</span><span class="n">s</span> <span class="mi">256</span>
 </pre></div>
 </div>
 <p>认证相关:</p>
@@ -417,8 +413,8 @@
 </div>
 <p>Local interface:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="o">--</span><span class="n">ifaddr</span><span class="p">:</span> <span class="n">local</span> <span class="n">ipaddress</span> <span class="ow">or</span> <span class="n">interface</span> <span class="n">address</span>
-<span class="o">./</span><span class="n">emqtt_bench_pub</span> <span class="o">--</span><span class="n">ifaddr</span> <span class="mf">192.168</span><span class="o">.</span><span class="mf">1.10</span>
-<span class="o">./</span><span class="n">emqtt_bench_sub</span> <span class="o">--</span><span class="n">ifaddr</span> <span class="mf">192.168</span><span class="o">.</span><span class="mf">2.10</span>
+<span class="o">./</span><span class="n">emqtt_bench_pub</span> <span class="o">--</span><span class="n">ifaddr</span> <span class="mf">192.168.1.10</span>
+<span class="o">./</span><span class="n">emqtt_bench_sub</span> <span class="o">--</span><span class="n">ifaddr</span> <span class="mf">192.168.2.10</span>
 </pre></div>
 </div>
 <p>One-way SSL Socket:</p>
@@ -434,22 +430,16 @@
 </pre></div>
 </div>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 32%" />
-<col style="width: 24%" />
-<col style="width: 24%" />
-<col style="width: 21%" />
-</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
-<td><p><a class="reference internal" href="../../../genindex.html"><span class="std std-ref">Index</span></a></p></td>
-<td><p><a class="reference internal" href="../../../py-modindex.html"><span class="std std-ref">Module Index</span></a></p></td>
-<td><p><a class="reference internal" href="../../../search.html"><span class="std std-ref">Search Page</span></a></p></td>
+<td><p><a class="reference internal" href="../../../genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../../py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../../search.html"><span class="std std-ref">搜索页面</span></a></p></td>
 </tr>
 </tbody>
 </table>
-</div>
-</div>
+</section>
+</section>
 
 
            </div>
@@ -494,18 +484,21 @@
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../../',
-            VERSION:'V1.7.5',
-            LANGUAGE:'None',
+            VERSION:'V1.7.7',
+            LANGUAGE:'zh-CN',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
             SOURCELINK_SUFFIX: '.txt'
         };
     </script>
-      <script type="text/javascript" src="../../../_static/jquery.js"></script>
-      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
       <script type="text/javascript" src="../../../_static/doctools.js"></script>
-      <script type="text/javascript" src="../../../_static/language_data.js"></script>
+      <script type="text/javascript" src="../../../_static/sphinx_highlight.js"></script>
+      <script type="text/javascript" src="../../../_static/clipboard.min.js"></script>
+      <script type="text/javascript" src="../../../_static/copybutton.js"></script>
+      <script type="text/javascript" src="../../../_static/translations.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
 
   
 
