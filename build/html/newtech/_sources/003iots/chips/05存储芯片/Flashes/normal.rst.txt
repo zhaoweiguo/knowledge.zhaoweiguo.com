@@ -1,0 +1,79 @@
+Flash Memory
+############
+
+Flash Memory 是一种非易失性的存储器，通常在嵌入式系统中用于存放系统、应用和数据等，类似与 PC 系统中的硬盘。目前，绝大部分手机和平板等移动设备中所使用的 eMMC 内部的 Flash Memory 都属于 NAND Flash
+
+根据硬件上存储原理的不同，Flash Memory 主要可以分为 NOR Flash 和 NAND Flash 两类。 主要的差异如下所示::
+
+    1. NAND Flash 读取速度与 NOR Flash 相近，根据接口的不同有所差异
+    2. NAND Flash 的写入速度比 NOR Flash 快很多
+    3. NAND Flash 的擦除速度比 NOR Flash 快很多
+    4. NAND Flash 最大擦次数比 NOR Flash 多
+    5. NOR Flash 支持片上执行，可以在上面直接运行代码
+    6. NOR Flash 软件驱动比 NAND Flash 简单
+    7. NOR Flash 可以随机按字节读取数据，NAND Flash 需要按块进行读取
+    8. 大容量下 NAND Flash 比 NOR Flash 成本要低很多，体积也更小
+
+    NOR Flash 和 NAND Flash 的擦除都是按块块进行的，
+    执行一个擦除或者写入操作时，NOR Flash 大约需要 5s，而 NAND Flash 通常不超过 4ms
+
+
+
+Raw Flash 和 Managed Flash
+==========================
+
+由于 Flash Memory 存在按块擦写、擦写次数的限制、读写干扰、电荷泄露等的局限，为了最大程度的发挥 Flash Memory 的价值，通常需要有一个特殊的软件层次，实现坏块管理、擦写均衡、ECC、垃圾回收等的功能，这一个软件层次称为 FTL（Flash Translation Layer）。
+
+根据 FTL 所在的位置的不同，可以把 Flash Memory 分为::
+
+    1. Raw Flash
+    2. Managed Flash
+
+
+Raw Flash
+---------
+
+在此类应用中，在 Host 端通常有专门的 FTL 或者 Flash 文件系统来实现坏块管理、擦写均衡等的功能。Host 端的软件复杂度较高，但是整体方案的成本较低，常用于价格敏感的嵌入式产品中。
+
+产品::
+
+    NOR Flash
+    NAND Flash
+
+Managed Flash
+-------------
+
+Managed Flash 在其内部集成了 Flash Controller，用于完成擦写均衡、坏块管理、ECC 校验等功能。相比于直接将 Flash 接入到 Host 端，Managed Flash 屏蔽了 Flash 的物理特性，对 Host 提供标准化的接口，可以减少 Host 端软件的复杂度，让 Host 端专注于上层业务，省去对 Flash 进行特殊的处理。
+
+产品::
+
+    eMMC
+    SD Card
+    UFS
+    U 盘
+
+
+历史
+====
+
+* 1988 年，Intel 首次发出 NOR flash 技术，彻底改变了原先由 EPROM 和 EEPROM 一统天下的局面。NOR 类似于 DRAM, 以存储程序代码为主，可以让微处理器直接读取。因为读取速度较快，晶片容量较低，所以多应用在手机这样的通讯产品中。
+* 1989 年，东芝公司(舛冈富士雄)发表 NAND flash 结构，强调降低每比特的成本，更高的性能，并且像磁盘一样可以通过接口轻松升级。因为 NAND flash 的晶片容量相对于 NOR 大，更像硬盘，写入与清除资料的速度远快于 NOR，所以多应用在小型机以储存资料为主。
+* 2018 年初由固态技术协会（JEDEC）正式发布 UFS 3.0，采用了全新的 HS-G4 规范，一年多后，UFS3.0 才大量上市。
+
+
+
+参考
+====
+
+* eMMC 分区管理: https://linux.codingbelief.com/zh/storage/flash_memory/emmc/emmc_partitions.html
+* Embedded Multi-Media Card (e•MMC) Electrical Standard (5.1) : http://www.jedec.org/sites/default/files/docs/JESD84-B51.pdf
+* ROM、RAM、FLASH、DDR、EMMC、SSD 区别: https://blog.csdn.net/weixin_46199479/article/details/123620774
+* 几种闪存技术：eMMC、UFS2.1、UFS3.0、SSD: https://blog.csdn.net/qq_39111085/article/details/104229196
+
+
+
+
+
+
+
+

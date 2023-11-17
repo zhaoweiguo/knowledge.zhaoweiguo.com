@@ -1,7 +1,9 @@
 .. _curl:
 
 curl命令简析
-=================
+############
+
+
 常见用法::
 
     -v: 调试时用
@@ -95,7 +97,7 @@ multipart/form-data 类型请求::
 
 
 websocket
----------
+=========
 
 ::
 
@@ -118,7 +120,7 @@ websocket
 
 
 选项
---------
+====
 
 通用::
 
@@ -196,7 +198,7 @@ websocket
     curl -i -H "Accept: text/css" http://localhost:8080
 
 HTTP/2
-------------
+======
 ::
 
     nghttp -v http://localhost:8080
@@ -214,11 +216,57 @@ HTTP/2
 
   curl -s -I http://blog.programfan.info | grep Server
 
+性能
+====
+
+查看网站连接的各种时间指标::
+
+    curl -L -w "time_namelookup: %{time_namelookup}
+        time_connect: %{time_connect}
+        time_appconnect: %{time_appconnect}
+        time_pretransfer: %{time_pretransfer}
+        time_redirect: %{time_redirect}
+        time_starttransfer: %{time_starttransfer}
+        time_total: %{time_total}
+        " https://example.com/
+    =>
+    <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+    <html>
+    ...
+    </html>
+    time_namelookup: 0.001403
+    time_connect: 0.245464
+    time_appconnect: 0.757656
+    time_pretransfer: 0.757823
+    time_redirect: 0.000000
+    time_starttransfer: 0.982111
+    time_total: 0.982326
+
+字段说明::
+
+    time_namelookup     从请求开始到域名解析完成的耗时
+    time_connect        从请求开始到 TCP 三次握手完成耗时
+    time_appconnect     从请求开始到 TLS 握手完成的耗时
+    time_pretransfer    从请求开始到向服务器发送第一个 GET/POST 请求开始之前的耗时
+    time_redirect       重定向时间，包括到内容传输前的重定向的 DNS 解析、TCP 连接、内容传输等时间
+    time_starttransfer  从请求开始到内容传输前的时间
+    time_total          从请求开始到完成的总耗时
+
+业务常关注的性能指标::
+
+    域名解析耗时 = time_namelookup    域名 NS 及本地 LocalDNS 解析耗时
+    总耗时 = time_total
+
+    TCP 握手耗时 = time_connect - time_namelookup               建立 TCP 连接时间
+    SSL 耗时 = time_appconnect - time_connect TLS              握手以及加解密处理
+    服务器处理请求耗时 = time_starttransfer - time_pretransfer   服务器响应第一个字节到全部传输完成耗时
+    TTFB = time_starttransfer - time_appconnect               服务器从接收请求到开始到收到第一个字节的耗时
+
 
 
 
 实例
-----------
+====
 
 断点续传::
 
@@ -254,7 +302,7 @@ HTTP/2
 .. warning:: 注意，-X后面的POST是大写
 
 实战
-----
+====
 
 实例1::
 

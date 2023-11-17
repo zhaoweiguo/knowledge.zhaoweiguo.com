@@ -9,7 +9,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>curl命令简析 &mdash; 新溪-gordon V1.7.7 文档</title>
+  <title>curl命令简析 &mdash; 新溪-gordon V1.7.9 文档</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
               <div class="version">
-                V1.7.7
+                V1.7.9
               </div>
             
           
@@ -171,8 +171,9 @@
 <li class="toctree-l4"><a class="reference internal" href="#websocket">websocket</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#id3">选项</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#http-2">HTTP/2</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id4">实例</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id5">实战</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id4">性能</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id5">实例</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id6">实战</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="mail.html">mail命令</a></li>
@@ -281,7 +282,8 @@
 <li class="toctree-l4"><a class="reference internal" href="../normals/ssh.html#id2">选项</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../normals/ssh.html#sshd">sshd命令</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../normals/ssh.html#id3">周边ssh命令</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../normals/ssh.html#id5">常见问题</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../normals/ssh.html#id5">如何使 SSH 会话保持活动状态</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../normals/ssh.html#id6">常见问题</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../normals/awk.html">awk命令</a></li>
@@ -963,8 +965,9 @@
 <li><a class="reference internal" href="#websocket">websocket</a></li>
 <li><a class="reference internal" href="#id3">选项</a></li>
 <li><a class="reference internal" href="#http-2">HTTP/2</a></li>
-<li><a class="reference internal" href="#id4">实例</a></li>
-<li><a class="reference internal" href="#id5">实战</a></li>
+<li><a class="reference internal" href="#id4">性能</a></li>
+<li><a class="reference internal" href="#id5">实例</a></li>
+<li><a class="reference internal" href="#id6">实战</a></li>
 </ul>
 </li>
 </ul>
@@ -1181,7 +1184,53 @@ curl -LO https://fastdl.mongodb.org/osx/mongodb-osx-ssl-x86_64-3.4.9.tgz
 </div>
 </section>
 <section id="id4">
-<h2>实例<a class="headerlink" href="#id4" title="此标题的永久链接">¶</a></h2>
+<h2>性能<a class="headerlink" href="#id4" title="此标题的永久链接">¶</a></h2>
+<p>查看网站连接的各种时间指标:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>curl -L -w &quot;time_namelookup: %{time_namelookup}
+    time_connect: %{time_connect}
+    time_appconnect: %{time_appconnect}
+    time_pretransfer: %{time_pretransfer}
+    time_redirect: %{time_redirect}
+    time_starttransfer: %{time_starttransfer}
+    time_total: %{time_total}
+    &quot; https://example.com/
+=&gt;
+&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.01 Transitional//EN&quot;&gt;
+&lt;html&gt;
+...
+&lt;/html&gt;
+time_namelookup: 0.001403
+time_connect: 0.245464
+time_appconnect: 0.757656
+time_pretransfer: 0.757823
+time_redirect: 0.000000
+time_starttransfer: 0.982111
+time_total: 0.982326
+</pre></div>
+</div>
+<p>字段说明:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>time_namelookup     从请求开始到域名解析完成的耗时
+time_connect        从请求开始到 TCP 三次握手完成耗时
+time_appconnect     从请求开始到 TLS 握手完成的耗时
+time_pretransfer    从请求开始到向服务器发送第一个 GET/POST 请求开始之前的耗时
+time_redirect       重定向时间，包括到内容传输前的重定向的 DNS 解析、TCP 连接、内容传输等时间
+time_starttransfer  从请求开始到内容传输前的时间
+time_total          从请求开始到完成的总耗时
+</pre></div>
+</div>
+<p>业务常关注的性能指标:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">域名解析耗时</span> <span class="o">=</span> <span class="n">time_namelookup</span>    <span class="n">域名</span> <span class="n">NS</span> <span class="n">及本地</span> <span class="n">LocalDNS</span> <span class="n">解析耗时</span>
+<span class="n">总耗时</span> <span class="o">=</span> <span class="n">time_total</span>
+
+<span class="n">TCP</span> <span class="n">握手耗时</span> <span class="o">=</span> <span class="n">time_connect</span> <span class="o">-</span> <span class="n">time_namelookup</span>               <span class="n">建立</span> <span class="n">TCP</span> <span class="n">连接时间</span>
+<span class="n">SSL</span> <span class="n">耗时</span> <span class="o">=</span> <span class="n">time_appconnect</span> <span class="o">-</span> <span class="n">time_connect</span> <span class="n">TLS</span>              <span class="n">握手以及加解密处理</span>
+<span class="n">服务器处理请求耗时</span> <span class="o">=</span> <span class="n">time_starttransfer</span> <span class="o">-</span> <span class="n">time_pretransfer</span>   <span class="n">服务器响应第一个字节到全部传输完成耗时</span>
+<span class="n">TTFB</span> <span class="o">=</span> <span class="n">time_starttransfer</span> <span class="o">-</span> <span class="n">time_appconnect</span>               <span class="n">服务器从接收请求到开始到收到第一个字节的耗时</span>
+</pre></div>
+</div>
+</section>
+<section id="id5">
+<h2>实例<a class="headerlink" href="#id5" title="此标题的永久链接">¶</a></h2>
 <p>断点续传:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>// normal(explicitly specified start AND end)
 curl -v -X GET -H &quot;range: bytes=1-8&quot; http://localhost:8080/bbb/test
@@ -1218,8 +1267,8 @@ $ curl -v -X POST   http://localhost:3000/api/dashboards/db  \
 <p>注意，-X后面的POST是大写</p>
 </div>
 </section>
-<section id="id5">
-<h2>实战<a class="headerlink" href="#id5" title="此标题的永久链接">¶</a></h2>
+<section id="id6">
+<h2>实战<a class="headerlink" href="#id6" title="此标题的永久链接">¶</a></h2>
 <p>实例1:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ curl -v -X POST  https://api.zhaoweiguo.com/hello -d {\&quot;key\&quot;:&quot;\&quot;value\&quot;&quot;}
 Note: Unnecessary use of -X or --request, POST is already inferred.
@@ -1332,7 +1381,7 @@ Note: Unnecessary use of -X or --request, POST is already inferred.
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../',
-            VERSION:'V1.7.7',
+            VERSION:'V1.7.9',
             LANGUAGE:'zh-CN',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',

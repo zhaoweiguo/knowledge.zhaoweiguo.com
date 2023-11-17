@@ -9,7 +9,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>常用 &mdash; 新溪-gordon V1.7.7 文档</title>
+  <title>常用 &mdash; 新溪-gordon V1.7.9 文档</title>
   
 
   
@@ -33,7 +33,7 @@
   <link rel="stylesheet" href="../../_static/copybutton.css" type="text/css" />
     <link rel="index" title="索引" href="../../genindex.html" />
     <link rel="search" title="搜索" href="../../search.html" />
-    <link rel="next" title="protobuf" href="protobuf.html" />
+    <link rel="next" title="常用" href="normals/normal.html" />
     <link rel="prev" title="gRPC" href="../gRPC.html" /> 
 
   
@@ -65,7 +65,7 @@
             
             
               <div class="version">
-                V1.7.7
+                V1.7.9
               </div>
             
           
@@ -140,6 +140,14 @@
 <li class="toctree-l4"><a class="reference internal" href="../../https/normals/http_method.html#id3">实例说明</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../https/normals/http_code.html">http返回码</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../https/normals/http_code.html#xx">1xx-信息提示</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../https/normals/http_code.html#id2">2xx-成功</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../https/normals/http_code.html#id3">3xx-重定向</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../https/normals/http_code.html#id4">4xx-客户端错误</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../https/normals/http_code.html#id5">5xx-服务器错误</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../https/header.html">协议header</a><ul>
@@ -193,14 +201,7 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../../https/http_code.html">http返回码</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../https/http_code.html#xx">1xx-信息提示</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../https/http_code.html#id2">2xx-成功</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../https/http_code.html#id3">3xx-重定向</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../https/http_code.html#id4">4xx-客户端错误</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../https/http_code.html#id5">5xx-服务器错误</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="../../https/CORS.html">CORS</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../https/DNS.html">DNS</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../https/DNS/normal.html">常用</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../https/DNS/normal.html#id3">记录类型</a></li>
@@ -438,7 +439,11 @@
 </ul>
 </li>
 <li class="toctree-l2 current"><a class="reference internal" href="../gRPC.html">gRPC</a><ul class="current">
-<li class="toctree-l3 current"><a class="current reference internal" href="#">常用</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">常用</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="normals/normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="normals/tool.html">工具</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="protobuf.html">protobuf</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="protobuf.html#proto3">proto3</a></li>
 <li class="toctree-l4"><a class="reference internal" href="protobuf.html#proto2">proto2</a></li>
@@ -624,6 +629,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../others/UPnP.html">UPnP 协议</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../others/SSDP.html">SSDP</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../others/HTTPU.html">HTTPU&amp;HTTPMU</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../others/SMTP.html">SMTP</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../others/other.html">其他</a></li>
 </ul>
 </li>
@@ -705,67 +711,15 @@
 </table>
 <section id="id2">
 <h1>常用<a class="headerlink" href="#id2" title="此标题的永久链接">¶</a></h1>
-<p>Protocol Buffers 的主要特性有下面这几个:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 更快的数据传输速度
-    protobuf 在传输时，会将数据序列化为二进制数据
-    和 XML、JSON 的文本传输格式相比，这可以节省大量的 IO 操作，从而提高数据传输速度
-2. 跨平台多语言
-    protobuf 自带的编译工具 protoc 可以基于 protobuf 定义文件
-    编译出不同语言的客户端或者服务端，供程序直接调用，因此可以满足多语言需求的场景
-3. 具有非常好的扩展性和兼容性，可以更新已有的数据结构，而不破坏和影响原有的程序
-4. 基于 IDL 文件定义服务，通过 proto3 工具生成指定语言的数据结构、服务端和客户端接口
-</pre></div>
-</div>
-<p>Protocol Buffers 主要有三个作用:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 可以用来定义数据结构
-    message SecretInfo {
-        string name = 1;
-        string secret_id  = 2;
-        int64 expires = 3;
-    }
-2. 可以用来定义服务接口
-    service Cache{
-      rpc ListSecrets(ListSecretsRequest) returns (ListSecretsResponse) {}
-      rpc ListPolicies(ListPoliciesRequest) returns (ListPoliciesResponse) {}
-    }
-3. 可以通过 protobuf 序列化和反序列化，提升传输效率
-</pre></div>
-</div>
-<p>gRPC 支持定义 4 种类型的服务方法:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 简单模式（Simple RPC）
-    是最简单的 gRPC 模式
-    客户端发起一次请求，服务端响应一个数据
-    定义格式为:
-       rpc SayHello (HelloRequest) returns (HelloReply) {}
-
-2. 服务端数据流模式（Server-side streaming RPC）
-    客户端发送一个请求，服务器返回数据流响应，客户端从流中读取数据直到为空
-    定义格式为:
-       rpc SayHello (HelloRequest) returns (stream HelloReply) {}
-
-3. 客户端数据流模式（Client-side streaming RPC）
-    客户端将消息以流的方式发送给服务器，服务器全部处理完成之后返回一次响应
-    定义格式为:
-       rpc SayHello (stream HelloRequest) returns (HelloReply) {}
-4. 双向数据流模式（Bidirectional streaming RPC）
-    客户端和服务端都可以向对方发送数据流，双方的数据可以同时互相发送，也就是可以实现实时交互 RPC 框架原理
-    定义格式为:
-       rpc SayHello (stream HelloRequest) returns (stream HelloReply) {}
-</pre></div>
-</div>
-<p>RPC 调用具有下面两个特点:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 调用方便
-    RPC 屏蔽了底层的网络通信细节，使得调用 RPC 就像调用本地方法一样方便，
-    调用方式跟大家所熟知的调用类的方法一致：ClassName.ClassFuc(params)。
-2. 不需要打包和解包
-    RPC 调用的入参和返回的结果都是 Go 的结构体，
-    不需要对传入参数进行打包操作，也不需要对返回参数进行解包操作，简化了调用步骤
-</pre></div>
-</div>
-<ul class="simple">
-<li><p>官网: <a class="reference external" href="https://grpc.io/">https://grpc.io/</a></p></li>
-<li><p>golang 版快速使用: <a class="reference external" href="https://grpc.io/docs/languages/go/quickstart/">https://grpc.io/docs/languages/go/quickstart/</a></p></li>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="normals/normal.html">常用</a></li>
+<li class="toctree-l1"><a class="reference internal" href="normals/tool.html">工具</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="normals/tool.html#connect-web">Connect-Web</a></li>
 </ul>
+</li>
+</ul>
+</div>
 <table class="docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
@@ -785,7 +739,7 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="protobuf.html" class="btn btn-neutral float-right" title="protobuf" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="normals/normal.html" class="btn btn-neutral float-right" title="常用" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="../gRPC.html" class="btn btn-neutral" title="gRPC" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
@@ -820,7 +774,7 @@
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../',
-            VERSION:'V1.7.7',
+            VERSION:'V1.7.9',
             LANGUAGE:'zh-CN',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
