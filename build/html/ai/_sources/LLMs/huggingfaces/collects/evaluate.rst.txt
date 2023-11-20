@@ -1,0 +1,394 @@
+evaluate
+########
+
+两种调用方法::
+
+	evaluate.load("seqeval")
+	datasets.load_metric("seqeval")
+
+
+
+evaluate.load("glue")
+=====================
+
+* GLUE, the General Language Understanding Evaluation benchmark (https://gluebenchmark.com/) is a collection of resources for training, evaluating, and analyzing natural language understanding systems.
+* GLUE (General Language Understanding Evaluation) 是一套用于评估自然语言理解模型的套件和 benchmark。
+
+GLUE 包括以下 9 个任务::
+
+	CoLA: 衡量模型是否能够判断句子是否合语法
+	SST-2: 二分类任务，判断句子是否正面
+	MRPC: 判断两个句子是否含义相同
+	STS-B: 判断两个句子的语义相似度
+	QQP: 判断两个问句是否含义相同
+	MNLI: 判断前提句子和结论句子是否一致
+	QNLI: 判断前提句子是否能推断结论句子
+	RTE: 判断两个句子是否表达相同的事实描述
+	WNLI: 判断两个句子在不同文本内是否对应
+
+
+* GLUE 提供了这 9 个任务的官方测试集，通过平均多个任务准确率评估模型的综合语言理解能力。
+* GLUE 是当前 NLP 领域公认的机器阅读理解任务指标，帮助模型开发者衡量和比较不同模型在自然语言理解上的表现水平。
+
+
+
+
+evaluate.load("seqeval")
+========================
+
+seqeval是一个流行的序列标注评估工具,主要用于评估命名实体识别、文本 chunking 等序列标注任务的性能。它的主要特点包括::
+
+	- 支持多种序列标注表示,如BIO、IOB等
+	- 实现了精确匹配和部分匹配两种评估方法
+	- 计算准确率、召回率、F1分数等评估指标
+	- 支持实体、词性、语法等多种序列标注任务的评估
+	- 简单易用的API接口
+	- 支持PyTorch等深度学习框架
+	- 可以直接用于训练过程的评估
+	- 也可以对预测结果生成评估报告
+
+
+其他调用方法::
+
+	metric = datasets.load_metric("seqeval")
+
+
+	1. 来源不同
+	- load_metric来自datasets库
+	- evaluate.load来自evaluate库
+	2. 调用接口不同
+	- load_metric返回一个Metric对象
+	- evaluate.load返回一个SEQEVAL对象
+
+应用于::
+
+	Token classification
+
+
+
+evaluate.load("sacrebleu")
+==========================
+
+
+sacrebleu是用于评估机器翻译质量的一个指标,具有以下特点::
+
+	- 它实现了Bilingual Evaluation Understudy (BLEU)的标准计算方法
+	- 与原始的BLEU实现相比,具有更好的可复现性、一致性和可比较性
+	- 能够消除弃用数据的影响,给出更准确的结果
+	- 支持青蛙文本(WMT)、新语料库(IWSLT)等标准翻译数据集上的结果评价
+	- 直接兼容NMT工具包(OpenNMT、Marian等)的输出结果进行评测
+	- 提供了便捷的命令行调用方式、Python接口和SacréBLEU scorer接口
+	- 可以快速加载使用,方便集成到机器翻译系统中
+
+sacrebleu是机器翻译领域的重要评价指标,可以可靠地衡量翻译质量并给出自动评分,是训练和评估神经网络翻译模型的常用工具。
+
+应用于::
+
+	Translation
+
+
+
+evaluate.load("rouge")
+======================
+
+rouge是一系列用于自动文本摘要和机器翻译评价的指标,主要功能如下::
+
+	- 提供ROUGE-N、ROUGE-L、ROUGE-W、ROUGE-S等多种评价指标
+	- ROUGE-N基于ngram统计文本重合程度
+	- ROUGE-L基于最长公共子序列判断相似度
+	- ROUGE-W加权longest common subsequence
+	- ROUGE-S基于skip-bigram共现统计
+	- 可以评价生成摘要的质量,和人工摘要的相似度
+	- 研究表明,ROUGE指标和人类评价判断相关度高
+	- 在机器翻译、文本摘要任务中被广泛使用
+	- 可以快速加载使用,提供便捷的评价接口
+	- 支持多种编程语言的实现,如Python、Java、Perl等
+
+
+示例::
+
+	rouge = evaluate.load("rouge") 
+
+ROUGE提供了一个自动、快速、可靠的文本生成模型评价解决方案,是NLG系统不可或缺的评测工具。
+
+
+应用于::
+
+	Summarization
+
+
+evaluate.load("accuracy")
+=========================
+
+evaluate.load("accuracy") 加载了一个评估指标Accuracy(正确率)。
+Accuracy指标是针对分类任务的评估指标,通过计算预测类别和真实类别相符的样本数量占总样本数量的比例,来评估模型的分类效果。
+其计算公式为::
+
+	Accuracy = (TP + TN) / (TP + TN + FP + FN)
+	这里:
+	TP - 真正例(真实标签为正类,预测也为正类)
+	TN - 真负例(真实标签为负类,预测也为负类) 
+	FP - 假正例(真实标签为负类,预测为正类)
+	FN - 假负例(真实标签为正类,预测为负类)
+	Accuracy越高,说明模型预测的类别和真实类别越接近,模型效果越好。
+	Accuracy适用于二分类和多分类问题。对于样本分布不均衡的情况,Accuracy可能会过高估计模型效果。
+
+evaluate.load("accuracy")会构建该指标,用于对分类模型预测进行正确率评估。它简单易用,是分类任务评估的首选指标之一。
+
+应用于::
+
+	Text classification
+	Multiple choice
+
+	Audio classification
+
+	Image classification
+
+	Video classification
+
+
+evaluate.load("wer")
+====================
+
+evaluate.load("wer") 加载的是语音识别领域常用的评估指标Word Error Rate(WER)。
+WER表示词错误率,是自动语音识别任务中衡量识别结果质量的主要评估指标之一。
+其计算方式是::
+
+	WER = (S + D + I) / N
+	这里:
+	S - 语音识别结果中的替换(substitution)数 
+	D - 语音识别结果中的删除(deletion)数
+	I - 语音识别结果中的插入(insertion)数
+	N - 参考文本的词数
+	WER直观上表示,要将识别结果转换成参考文本,需要进行的最小编辑距离(通过替换、插入和删除操作的次数)与参考文本词数之比。
+	WER越低表示语音识别效果越好。为0表示完全准确识别。
+
+evaluate.load("wer")会构建WER计算函数,取预测结果和参考文本作为输入,返回WER的值。使用WER可以直观地评估语音识别模型的识别效果,是语音识别任务中一个非常常用的评估指标。 
+
+
+
+应用于::
+
+	Automatic speech recognition
+
+
+evaluate.load("mean_iou")
+=========================
+
+evaluate.load("mean_iou") 加载的是图像语义分割任务中的常用评估指标 mean IoU (交并比均值)。
+IoU (Intersection over Union) 即交并比,是评估图像语义分割的关键指标。
+对于每个类别,IoU计算方式为::
+
+	IoU = TP / (TP + FP + FN)
+	其中:
+	TP - 真正例(真实框与预测框匹配上的像素)
+	FP - 假正例(预测为该类但实际不是的像素) 
+	FN - 假反例(未预测为该类但实际是的像素)
+	mean IoU 对所有类别的IoU取算术平均值,作为模型整体的评估指标。
+	mean IoU 越高,表示模型预测的MASK与真实MASK重合度越好,语义分割效果越佳。
+	evaluate.load("mean_iou") 将加载计算 mean IoU 的函数,可以直接用于评估语义分割模型的预测结果。
+	是图像语义分割任务中非常常用的评估指标。
+
+
+
+应用于::
+
+	Semantic segmentation - 语义分割
+
+
+
+
+
+
+
+其他
+====
+
+查看支持的metrics::
+
+	from datasets import list_metrics
+	metrics_list = list_metrics()
+	print(metrics_list)
+
+全部metrics::
+
+	['accuracy',
+	 'bertscore',
+	 'bleu',
+	 'bleurt',
+	 'brier_score',
+	 'cer',
+	 'character',
+	 'charcut_mt',
+	 'chrf',
+	 'code_eval',
+	 'comet',
+	 'competition_math',
+	 'coval',
+	 'cuad',
+	 'exact_match',
+	 'f1',
+	 'frugalscore',
+	 'glue',
+	 'google_bleu',
+	 'indic_glue',
+	 'mae',
+	 'mahalanobis',
+	 'mape',
+	 'mase',
+	 'matthews_correlation',
+	 'mauve',
+	 'mean_iou',
+	 'meteor',
+	 'mse',
+	 'nist_mt',
+	 'pearsonr',
+	 'perplexity',
+	 'poseval',
+	 'precision',
+	 'r_squared',
+	 'recall',
+	 'rl_reliability',
+	 'roc_auc',
+	 'rouge',
+	 'sacrebleu',
+	 'sari',
+	 'seqeval',
+	 'smape',
+	 'spearmanr',
+	 'squad',
+	 'squad_v2',
+	 'super_glue',
+	 'ter',
+	 'trec_eval',
+	 'wer',
+	 'wiki_split',
+	 'xnli',
+	 'xtreme_s',
+	 'AlhitawiMohammed22/CER_Hu-Evaluation-Metrics',
+	 'BucketHeadP65/confusion_matrix',
+	 'BucketHeadP65/roc_curve',
+	 'DarrenChensformer/eval_keyphrase',
+	 'Drunper/metrica_tesi',
+	 'Felipehonorato/eer',
+	 'He-Xingwei/sari_metric',
+	 'JP-SystemsX/nDCG',
+	 'Josh98/nl2bash_m',
+	 'Muennighoff/code_eval_octopack',
+	 'NCSOFT/harim_plus',
+	 'Natooz/ece',
+	 'NikitaMartynov/spell-check-metric',
+	 'Pipatpong/perplexity',
+	 'Splend1dchan/cosine_similarity',
+	 'Viona/fuzzy_reordering',
+	 'Viona/kendall_tau',
+	 'Vipitis/shadermatch',
+	 'Yeshwant123/mcc',
+	 'abdusah/aradiawer',
+	 'abidlabs/mean_iou',
+	 'abidlabs/mean_iou2',
+	 'agkhalil/ragene_metrics',
+	 'andstor/code_perplexity',
+	 'angelina-wang/directional_bias_amplification',
+	 'aryopg/roc_auc_skip_uniform_labels',
+	 'brian920128/doc_retrieve_metrics',
+	 'bstrai/classification_report',
+	 'chanelcolgate/average_precision',
+	 'ckb/unigram',
+	 'codeparrot/apps_metric',
+	 'cpllab/syntaxgym',
+	 'dvitel/codebleu',
+	 'ecody726/bertscore',
+	 'eperezfmit/my_metric',
+	 'eperezfmit/my_metric_3',
+	 'fastrepl/mean_average_precision',
+	 'fastrepl/mean_reciprocal_rank',
+	 'fschlatt/ner_eval',
+	 'gabeorlanski/bc_eval',
+	 'giulio98/codebleu',
+	 'guydav/restrictedpython_code_eval',
+	 'harshhpareek/bertscore',
+	 'hpi-dhc/FairEval',
+	 'hynky/sklearn_proxy',
+	 'hyperml/balanced_accuracy',
+	 'ingyu/klue_mrc',
+	 'jjkim0807/code_eval',
+	 'jpxkqx/peak_signal_to_noise_ratio',
+	 'jpxkqx/signal_to_reconstruction_error',
+	 'k4black/codebleu',
+	 'kaggle/ai4code',
+	 'kedudzic/charmatch',
+	 'langdonholmes/cohen_weighted_kappa',
+	 'lhy/hamming_loss',
+	 'lhy/ranking_loss',
+	 'lvwerra/accuracy_score',
+	 'manueldeprada/beer',
+	 'mfumanelli/geometric_mean',
+	 'mtc/fragments',
+	 'omidf/squad_precision_recall',
+	 'posicube/mean_reciprocal_rank',
+	 'sakusakumura/bertscore',
+	 'shalakasatheesh/squad',
+	 'sma2023/wil',
+	 'tialaeMceryu/unigram',
+	 'transZ/sbert_cosine',
+	 'transZ/test_parascore',
+	 'transformersegmentation/segmentation_scores',
+	 'unitxt/metric',
+	 'unnati/kendall_tau_distance',
+	 'vichyt/metric-codebleu',
+	 'weiqis/pajm',
+	 'ybelkada/cocoevaluate',
+	 'yonting/average_precision_score',
+	 'yuyijiong/quad_match_score']
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

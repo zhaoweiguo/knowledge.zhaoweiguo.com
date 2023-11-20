@@ -1,0 +1,106 @@
+ChatGLM
+#######
+
+
+ChatGLM-6B
+==========
+
+* ChatGLM-6B 是一个开源的、支持中英双语的对话语言模型，基于 General Language Model (GLM) 架构，具有 62 亿参数。结合模型量化技术，用户可以在消费级的显卡上进行本地部署（INT4 量化级别下最低只需 6GB 显存）。 ChatGLM-6B 使用了和 ChatGPT 相似的技术，针对中文问答和对话进行了优化。经过约 1T 标识符的中英双语训练，辅以监督微调、反馈自助、人类反馈强化学习等技术的加持
+* 同时实现了基于 P-Tuning v2 的高效参数微调方法 (使用指南) ，INT4 量化级别下最低只需 7GB 显存即可启动微调。
+* ChatGLM-6B 权重对学术研究完全开放，在填写问卷进行登记后亦允许免费商业使用。
+
+
+* https://github.com/THUDM/ChatGLM-6B
+* https://github.com/THUDM/CodeGeeX2
+* 官方博客: https://chatglm.cn/blog
+* https://huggingface.co/THUDM/chatglm2-6b
+* https://huggingface.co/THUDM/chatglm2-6b-int4
+
+
+THUDM/chatglm2-6b
+=================
+
+Load model directly::
+
+	from transformers import AutoModel
+	model = AutoModel.from_pretrained("THUDM/chatglm2-6b")
+
+
+
+
+
+示例
+====
+
+::
+
+	!pip install --target=$nb_path transformers==4.30.2 numpy==1.23.5 sentence-transformers cpm_kernels protobuf
+
+	from transformers import AutoTokenizer, AutoModel
+	tokenizer = AutoTokenizer.from_pretrained("THUDM/chatglm-6b-int4", trust_remote_code=True)
+	model = AutoModel.from_pretrained("THUDM/chatglm-6b-int4", trust_remote_code=True).half().cuda()
+	model = model.eval()
+
+	question = """
+	我们支持三款智能设备：窗帘电机、筒灯和插座。其中窗帘电机、筒灯和插座都支持打开、关闭功能。我以下6个设备
+	{
+	  {id:1, name: 卧室灯, type: 筒灯, location:卧室 },
+	  {id:2, name: 厕所灯, type: 筒灯, location:厕所 },
+	  {id:3,name: 客厅灯, type: 筒灯, location:客厅},
+	  {id:4,name: 阳台灯, type: 筒灯, location:阳台},
+	  {id:5,name: 插座, type: 插座, location:客厅},
+	  {id:6,name: 窗帘, type: 窗帘电机, location:客厅},
+	  {id:7,name: 小窗帘, type: 窗帘电机, location:卧室},
+	}
+	当我说关闭所有灯，你输出:
+	{
+	  {id:1, action:off},
+	  {id:2, action:off},
+	  {id:3, action:off},
+	  {id:4, action:off},
+	}
+	当我说关闭卧室的所有设备时，你输出：
+	{
+	  {id:1, action:off}
+	  {id:7, action:off}
+	}
+	Q: 当我说关闭客厅里的所有设备时，你输出？
+	"""
+	response, history = model.chat(tokenizer, question, history=[])
+	print(response)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
