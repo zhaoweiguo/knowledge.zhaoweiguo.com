@@ -964,8 +964,9 @@
 <li><a class="reference internal" href="#">ssh命令</a><ul>
 <li><a class="reference internal" href="#id2">选项</a><ul>
 <li><a class="reference internal" href="#vvvvv">-vvvvv选项</a></li>
-<li><a class="reference internal" href="#l">-L选项</a></li>
-<li><a class="reference internal" href="#d">-D选项</a></li>
+<li><a class="reference internal" href="#l">-L选项(正向代理)</a></li>
+<li><a class="reference internal" href="#r">-R选项(反向代理)</a></li>
+<li><a class="reference internal" href="#d-socket5">-D选项(socket5代理)</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#sshd">sshd命令</a></li>
@@ -996,11 +997,14 @@
 <p>各参数含义:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-C 传输时压缩数据
 -f 输入密码登陆后，ssh进入后台运行
+-n 关闭标准输入
 -N 不执行远程命令，只提供端口转发。仅用于ssh2协议
 -g 允许远程主机连接ssh转发端口
 -D 设置socks代理地址和监听端口，如果是只允许本地访问则指定IP为127.0.0.1
 -l ssh登陆用户名
 -i 指定ssh登陆用的私钥，如果是用公钥、私钥对登陆则需要指定
+-q 安静模式
+-T 禁止远程分配终端
 </pre></div>
 </div>
 <section id="id2">
@@ -1013,23 +1017,80 @@
 </div>
 </section>
 <section id="l">
-<h3>-L选项<a class="headerlink" href="#l" title="此标题的永久链接">¶</a></h3>
+<h3>-L选项(正向代理)<a class="headerlink" href="#l" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>相当于 iptable 的 port forwarding</p></li>
+</ul>
+<p>命令:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">L</span> <span class="p">[</span><span class="n">bind_address</span><span class="p">:]</span><span class="n">port</span><span class="p">:</span><span class="n">host</span><span class="p">:</span><span class="n">hostport</span>
 <span class="o">-</span><span class="n">L</span> <span class="p">[</span><span class="n">bind_address</span><span class="p">:]</span><span class="n">port</span><span class="p">:</span><span class="n">remote_socket</span>
 <span class="o">-</span><span class="n">L</span> <span class="n">local_socket</span><span class="p">:</span><span class="n">host</span><span class="p">:</span><span class="n">hostport</span>
 <span class="o">-</span><span class="n">L</span> <span class="n">local_socket</span><span class="p">:</span><span class="n">remote_socket</span>
 </pre></div>
 </div>
-<ul>
-<li><p>把远端的端口3306影射到本地的3308(把远端的mysql通过本地访问,有bindaddress配置的mysql):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ ssh -L 3308:&lt;ip&gt;:3306 &lt;user&gt;@&lt;host&gt;
+<p>用法1：远程端口映射到其他机器:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>// HostB 上启动一个 PortB 端口，映射到 HostC:PortC 上，在 HostB 上运行：
+$ ssh -L 0.0.0.0:PortB:HostC:PortC user@HostC
+// 访问 HostB:PortB 相当于访问 HostC:PortC（和 iptable 的 port-forwarding 类似）
 </pre></div>
 </div>
-</li>
-</ul>
+<p>用法2：本地端口通过跳板映射到其他机器:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>// 说明
+// HostA不能直接访问HostC，HostB可以访问HostC
+// HostA 上启动一个 PortA 端口，通过 HostB 转发到 HostC:PortC上
+// 在 HostA 上运行
+$ ssh -L 0.0.0.0:PortA:HostC:PortC  user@HostB
+// 这时访问 HostA:PortA 相当于直接访问 HostC:PortC(使用HostB为中介)
+
+
+示例: 把远端的端口3306影射到本地的3308(把远端的mysql通过本地访问):
+$ ssh -L 3308:&lt;ip&gt;:3306 &lt;user&gt;@&lt;host&gt;
+// 因为本机不能访问mysql，但host机能访问mysql
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>两种用法的区别是，第一种用法本地到跳板机 HostB 的数据是明文的，而第二种用法一般本地就是 HostA，访问本地的 PortA，数据被 ssh 加密传输给 HostB 又转发给 HostC:PortC。</p>
+</div>
 </section>
-<section id="d">
-<h3>-D选项<a class="headerlink" href="#d" title="此标题的永久链接">¶</a></h3>
+<section id="r">
+<h3>-R选项(反向代理)<a class="headerlink" href="#r" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>相当于 frp 或者 ngrok</p></li>
+</ul>
+<p>命令:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">R</span> <span class="p">[</span><span class="n">bind_address</span><span class="p">:]</span><span class="n">port</span><span class="p">:</span><span class="n">host</span><span class="p">:</span><span class="n">hostport</span>
+<span class="o">-</span><span class="n">R</span> <span class="p">[</span><span class="n">bind_address</span><span class="p">:]</span><span class="n">port</span><span class="p">:</span><span class="n">local_socket</span>
+<span class="o">-</span><span class="n">R</span> <span class="n">remote_socket</span><span class="p">:</span><span class="n">host</span><span class="p">:</span><span class="n">hostport</span>
+<span class="o">-</span><span class="n">R</span> <span class="n">remote_socket</span><span class="p">:</span><span class="n">local_socket</span>
+<span class="o">-</span><span class="n">R</span> <span class="p">[</span><span class="n">bind_address</span><span class="p">:]</span><span class="n">port</span>
+</pre></div>
+</div>
+<p>“反向代理”就是让远端启动端口，把远端端口数据转发到本地:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>// HostA 将自己可以访问的 HostB:PortB 暴露给外网服务器 HostC:PortC，在 HostA 上运行
+$ ssh -R HostC:PortC:HostB:PortB  user@HostC
+// 链接 HostC:PortC 就相当于链接 HostB:PortB
+</pre></div>
+</div>
+<p>使用时需修改 HostC 的 /etc/ssh/sshd_config 添加:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">GatewayPorts</span> <span class="n">yes</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>相当于内网穿透，比如 HostA 和 HostB 是同一个内网下的两台可以互相访问的机器，HostC是外网跳板机，HostC不能访问 HostA，但是 HostA 可以访问 HostC。那么通过在内网 HostA 上运行 ssh -R 告诉 HostC，创建 PortC 端口监听，把该端口所有数据转发给我（HostA），我会再转发给同一个内网下的 HostB:PortB。同内网下的 HostA/HostB 也可以是同一台机器，换句话说就是内网 HostA 把自己可以访问的端口暴露给了外网 HostC。</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>相当于再 HostA 上启动了 frpc，而再 HostC 上启动了 frps。</p>
+</div>
+</section>
+<section id="d-socket5">
+<h3>-D选项(socket5代理)<a class="headerlink" href="#d-socket5" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>相当于 ss/ssr</p></li>
+</ul>
+<p>命令:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">D</span> <span class="p">[</span><span class="n">bind_address</span><span class="p">:]</span><span class="n">port</span>
 </pre></div>
 </div>

@@ -443,9 +443,16 @@
               <h4 id="local-table-of-contents-title">On This Page</h4>
               <ul>
 <li><a class="reference internal" href="#">Dockerfile文件实例</a><ul>
+<li><a class="reference internal" href="#id2">格式</a><ul>
+<li><a class="reference internal" href="#id3">一个镜像编译一个镜像发布</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id4">实例</a><ul>
 <li><a class="reference internal" href="#ethereum">ethereum实例</a></li>
-<li><a class="reference internal" href="#id2">一个镜像编译一个镜像发布</a></li>
-<li><a class="reference internal" href="#id3">收集</a></li>
+<li><a class="reference internal" href="#docker-netshoot">Docker工具-netshoot</a></li>
+<li><a class="reference internal" href="#id5">收集</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -529,32 +536,10 @@
 <span class="linenos">42</span>
 </pre></div>
 </div>
-<section id="ethereum">
-<h2>ethereum实例<a class="headerlink" href="#ethereum" title="此标题的永久链接">¶</a></h2>
-<ul class="simple">
-<li><p>实例:</p></li>
-</ul>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="c1"># Build Geth in a stock Go builder container</span>
-<span class="linenos"> 2</span><span class="n">FROM</span> <span class="n">golang</span><span class="p">:</span><span class="mf">1.10</span><span class="o">-</span><span class="n">alpine</span> <span class="k">as</span> <span class="n">builder</span>
-<span class="linenos"> 3</span>
-<span class="linenos"> 4</span><span class="n">RUN</span> <span class="n">apk</span> <span class="n">add</span> <span class="o">--</span><span class="n">no</span><span class="o">-</span><span class="n">cache</span> <span class="n">make</span> <span class="n">gcc</span> <span class="n">musl</span><span class="o">-</span><span class="n">dev</span> <span class="n">linux</span><span class="o">-</span><span class="n">headers</span>
-<span class="linenos"> 5</span>
-<span class="linenos"> 6</span><span class="n">ADD</span> <span class="o">.</span> <span class="o">/</span><span class="n">go</span><span class="o">-</span><span class="n">ethereum</span>
-<span class="linenos"> 7</span><span class="n">RUN</span> <span class="n">cd</span> <span class="o">/</span><span class="n">go</span><span class="o">-</span><span class="n">ethereum</span> <span class="o">&amp;&amp;</span> <span class="n">make</span> <span class="n">geth</span>
-<span class="linenos"> 8</span>
-<span class="linenos"> 9</span><span class="c1"># Pull Geth into a second stage deploy alpine container</span>
-<span class="linenos">10</span><span class="n">FROM</span> <span class="n">alpine</span><span class="p">:</span><span class="n">latest</span>
-<span class="linenos">11</span>
-<span class="linenos">12</span><span class="n">RUN</span> <span class="n">apk</span> <span class="n">add</span> <span class="o">--</span><span class="n">no</span><span class="o">-</span><span class="n">cache</span> <span class="n">ca</span><span class="o">-</span><span class="n">certificates</span>
-<span class="linenos">13</span><span class="n">COPY</span> <span class="o">--</span><span class="n">from</span><span class="o">=</span><span class="n">builder</span> <span class="o">/</span><span class="n">go</span><span class="o">-</span><span class="n">ethereum</span><span class="o">/</span><span class="n">build</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">geth</span> <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">local</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span>
-<span class="linenos">14</span>
-<span class="linenos">15</span><span class="n">EXPOSE</span> <span class="mi">8545</span> <span class="mi">8546</span> <span class="mi">30303</span> <span class="mi">30303</span><span class="o">/</span><span class="n">udp</span> <span class="mi">30304</span><span class="o">/</span><span class="n">udp</span>
-<span class="linenos">16</span><span class="n">ENTRYPOINT</span> <span class="p">[</span><span class="s2">&quot;geth&quot;</span><span class="p">]</span>
-</pre></div>
-</div>
-</section>
 <section id="id2">
-<h2>一个镜像编译一个镜像发布<a class="headerlink" href="#id2" title="此标题的永久链接">¶</a></h2>
+<h2>格式<a class="headerlink" href="#id2" title="此标题的永久链接">¶</a></h2>
+<section id="id3">
+<h3>一个镜像编译一个镜像发布<a class="headerlink" href="#id3" title="此标题的永久链接">¶</a></h3>
 <ul class="simple">
 <li><p>实例:</p></li>
 </ul>
@@ -584,8 +569,150 @@
 </pre></div>
 </div>
 </section>
-<section id="id3">
-<h2>收集<a class="headerlink" href="#id3" title="此标题的永久链接">¶</a></h2>
+</section>
+<section id="id4">
+<h2>实例<a class="headerlink" href="#id4" title="此标题的永久链接">¶</a></h2>
+<section id="ethereum">
+<h3>ethereum实例<a class="headerlink" href="#ethereum" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>实例:</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="c1"># Build Geth in a stock Go builder container</span>
+<span class="linenos"> 2</span><span class="n">FROM</span> <span class="n">golang</span><span class="p">:</span><span class="mf">1.10</span><span class="o">-</span><span class="n">alpine</span> <span class="k">as</span> <span class="n">builder</span>
+<span class="linenos"> 3</span>
+<span class="linenos"> 4</span><span class="n">RUN</span> <span class="n">apk</span> <span class="n">add</span> <span class="o">--</span><span class="n">no</span><span class="o">-</span><span class="n">cache</span> <span class="n">make</span> <span class="n">gcc</span> <span class="n">musl</span><span class="o">-</span><span class="n">dev</span> <span class="n">linux</span><span class="o">-</span><span class="n">headers</span>
+<span class="linenos"> 5</span>
+<span class="linenos"> 6</span><span class="n">ADD</span> <span class="o">.</span> <span class="o">/</span><span class="n">go</span><span class="o">-</span><span class="n">ethereum</span>
+<span class="linenos"> 7</span><span class="n">RUN</span> <span class="n">cd</span> <span class="o">/</span><span class="n">go</span><span class="o">-</span><span class="n">ethereum</span> <span class="o">&amp;&amp;</span> <span class="n">make</span> <span class="n">geth</span>
+<span class="linenos"> 8</span>
+<span class="linenos"> 9</span><span class="c1"># Pull Geth into a second stage deploy alpine container</span>
+<span class="linenos">10</span><span class="n">FROM</span> <span class="n">alpine</span><span class="p">:</span><span class="n">latest</span>
+<span class="linenos">11</span>
+<span class="linenos">12</span><span class="n">RUN</span> <span class="n">apk</span> <span class="n">add</span> <span class="o">--</span><span class="n">no</span><span class="o">-</span><span class="n">cache</span> <span class="n">ca</span><span class="o">-</span><span class="n">certificates</span>
+<span class="linenos">13</span><span class="n">COPY</span> <span class="o">--</span><span class="n">from</span><span class="o">=</span><span class="n">builder</span> <span class="o">/</span><span class="n">go</span><span class="o">-</span><span class="n">ethereum</span><span class="o">/</span><span class="n">build</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">geth</span> <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">local</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span>
+<span class="linenos">14</span>
+<span class="linenos">15</span><span class="n">EXPOSE</span> <span class="mi">8545</span> <span class="mi">8546</span> <span class="mi">30303</span> <span class="mi">30303</span><span class="o">/</span><span class="n">udp</span> <span class="mi">30304</span><span class="o">/</span><span class="n">udp</span>
+<span class="linenos">16</span><span class="n">ENTRYPOINT</span> <span class="p">[</span><span class="s2">&quot;geth&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+</section>
+<section id="docker-netshoot">
+<h3>Docker工具-netshoot<a class="headerlink" href="#docker-netshoot" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>a Docker + Kubernetes network trouble-shooting swiss-army container: <a class="reference external" href="https://github.com/nicolaka/netshoot">https://github.com/nicolaka/netshoot</a></p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="linenos">  1</span>FROM debian:stable-slim as fetcher
+<span class="linenos">  2</span>COPY build/fetch_binaries.sh /tmp/fetch_binaries.sh
+<span class="linenos">  3</span>
+<span class="linenos">  4</span>RUN apt-get update &amp;&amp; apt-get install -y \
+<span class="linenos">  5</span>  curl \
+<span class="linenos">  6</span>  wget
+<span class="linenos">  7</span>
+<span class="linenos">  8</span>RUN /tmp/fetch_binaries.sh
+<span class="linenos">  9</span>
+<span class="linenos"> 10</span>FROM alpine:3.18.0
+<span class="linenos"> 11</span>
+<span class="linenos"> 12</span>RUN set -ex \
+<span class="linenos"> 13</span>    &amp;&amp; echo &quot;http://dl-cdn.alpinelinux.org/alpine/edge/main&quot; &gt;&gt; /etc/apk/repositories \
+<span class="linenos"> 14</span>    &amp;&amp; echo &quot;http://dl-cdn.alpinelinux.org/alpine/edge/testing&quot; &gt;&gt; /etc/apk/repositories \
+<span class="linenos"> 15</span>    &amp;&amp; echo &quot;http://dl-cdn.alpinelinux.org/alpine/edge/community&quot; &gt;&gt; /etc/apk/repositories \
+<span class="linenos"> 16</span>    &amp;&amp; apk update \
+<span class="linenos"> 17</span>    &amp;&amp; apk upgrade \
+<span class="linenos"> 18</span>    &amp;&amp; apk add --no-cache \
+<span class="linenos"> 19</span>    apache2-utils \
+<span class="linenos"> 20</span>    bash \
+<span class="linenos"> 21</span>    bind-tools \
+<span class="linenos"> 22</span>    bird \
+<span class="linenos"> 23</span>    bridge-utils \
+<span class="linenos"> 24</span>    busybox-extras \
+<span class="linenos"> 25</span>    conntrack-tools \
+<span class="linenos"> 26</span>    curl \
+<span class="linenos"> 27</span>    dhcping \
+<span class="linenos"> 28</span>    drill \
+<span class="linenos"> 29</span>    ethtool \
+<span class="linenos"> 30</span>    file\
+<span class="linenos"> 31</span>    fping \
+<span class="linenos"> 32</span>    iftop \
+<span class="linenos"> 33</span>    iperf \
+<span class="linenos"> 34</span>    iperf3 \
+<span class="linenos"> 35</span>    iproute2 \
+<span class="linenos"> 36</span>    ipset \
+<span class="linenos"> 37</span>    iptables \
+<span class="linenos"> 38</span>    iptraf-ng \
+<span class="linenos"> 39</span>    iputils \
+<span class="linenos"> 40</span>    ipvsadm \
+<span class="linenos"> 41</span>    httpie \
+<span class="linenos"> 42</span>    jq \
+<span class="linenos"> 43</span>    libc6-compat \
+<span class="linenos"> 44</span>    liboping \
+<span class="linenos"> 45</span>    ltrace \
+<span class="linenos"> 46</span>    mtr \
+<span class="linenos"> 47</span>    net-snmp-tools \
+<span class="linenos"> 48</span>    netcat-openbsd \
+<span class="linenos"> 49</span>    nftables \
+<span class="linenos"> 50</span>    ngrep \
+<span class="linenos"> 51</span>    nmap \
+<span class="linenos"> 52</span>    nmap-nping \
+<span class="linenos"> 53</span>    nmap-scripts \
+<span class="linenos"> 54</span>    openssl \
+<span class="linenos"> 55</span>    py3-pip \
+<span class="linenos"> 56</span>    py3-setuptools \
+<span class="linenos"> 57</span>    scapy \
+<span class="linenos"> 58</span>    socat \
+<span class="linenos"> 59</span>    speedtest-cli \
+<span class="linenos"> 60</span>    openssh \
+<span class="linenos"> 61</span>    oh-my-zsh \
+<span class="linenos"> 62</span>    strace \
+<span class="linenos"> 63</span>    tcpdump \
+<span class="linenos"> 64</span>    tcptraceroute \
+<span class="linenos"> 65</span>    tshark \
+<span class="linenos"> 66</span>    util-linux \
+<span class="linenos"> 67</span>    vim \
+<span class="linenos"> 68</span>    git \
+<span class="linenos"> 69</span>    zsh \
+<span class="linenos"> 70</span>    websocat \
+<span class="linenos"> 71</span>    swaks \
+<span class="linenos"> 72</span>    perl-crypt-ssleay \
+<span class="linenos"> 73</span>    perl-net-ssleay
+<span class="linenos"> 74</span>
+<span class="linenos"> 75</span># Installing ctop - top-like container monitor
+<span class="linenos"> 76</span>COPY --from=fetcher /tmp/ctop /usr/local/bin/ctop
+<span class="linenos"> 77</span>
+<span class="linenos"> 78</span># Installing calicoctl
+<span class="linenos"> 79</span>COPY --from=fetcher /tmp/calicoctl /usr/local/bin/calicoctl
+<span class="linenos"> 80</span>
+<span class="linenos"> 81</span># Installing termshark
+<span class="linenos"> 82</span>COPY --from=fetcher /tmp/termshark /usr/local/bin/termshark
+<span class="linenos"> 83</span>
+<span class="linenos"> 84</span># Installing grpcurl
+<span class="linenos"> 85</span>COPY --from=fetcher /tmp/grpcurl /usr/local/bin/grpcurl
+<span class="linenos"> 86</span>
+<span class="linenos"> 87</span># Installing fortio
+<span class="linenos"> 88</span>COPY --from=fetcher /tmp/fortio /usr/local/bin/fortio
+<span class="linenos"> 89</span>
+<span class="linenos"> 90</span># Setting User and Home
+<span class="linenos"> 91</span>USER root
+<span class="linenos"> 92</span>WORKDIR /root
+<span class="linenos"> 93</span>ENV HOSTNAME netshoot
+<span class="linenos"> 94</span>
+<span class="linenos"> 95</span># ZSH Themes
+<span class="linenos"> 96</span>RUN curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | sh
+<span class="linenos"> 97</span>RUN git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+<span class="linenos"> 98</span>RUN git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
+<span class="linenos"> 99</span>COPY zshrc .zshrc
+<span class="linenos">100</span>COPY motd motd
+<span class="linenos">101</span>
+<span class="linenos">102</span># Fix permissions for OpenShift and tshark
+<span class="linenos">103</span>RUN chmod -R g=u /root
+<span class="linenos">104</span>RUN chown root:root /usr/bin/dumpcap
+<span class="linenos">105</span>
+<span class="linenos">106</span># Running ZSH
+<span class="linenos">107</span>CMD [&quot;zsh&quot;]
+</pre></div>
+</div>
+</section>
+<section id="id5">
+<h3>收集<a class="headerlink" href="#id5" title="此标题的永久链接">¶</a></h3>
 <p>guoxudongdocker/kubectl:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>FROM alpine
 
@@ -619,6 +746,7 @@ CMD [&quot;help&quot;]
 </tr>
 </tbody>
 </table>
+</section>
 </section>
 </section>
 
