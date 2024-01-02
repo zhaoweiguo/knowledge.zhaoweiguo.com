@@ -15,6 +15,7 @@ ssh命令
     -i 指定ssh登陆用的私钥，如果是用公钥、私钥对登陆则需要指定
     -q 安静模式
     -T 禁止远程分配终端
+    -o 指定options
 
 选项
 ======
@@ -114,6 +115,48 @@ ssh命令
 实例::
 
     ssh -CfNg -D 0.0.0.0:1080 -l username xxx.xxx.xxx.xxx
+
+
+-o选项(指定options)
+-------------------
+
+命令::
+
+    -o option
+
+常用options::
+
+    -oPort=6000: 指定连接时使用的端口号为 6000
+    -o 'ProxyCommand ...': 通过代理（proxy）连接到远程主机
+
+
+ProxyCommand详解::
+
+    1. 通过 netcat 进行代理：
+        ssh -o 'ProxyCommand nc -X 5 -x proxy-server:1080 %h %p' user@remote-host
+
+    2. 通过 socat 进行代理：
+        ssh -o 'ProxyCommand socat - PROXY:proxy-server:%h:%p,proxyport=1080' user@remote-host
+
+    3. 通过 sshuttle 进行代理：
+        ssh -o 'ProxyCommand sshuttle -r user@proxy-server %h:%p' user@remote-host
+
+    4. 通过 corkscrew 进行代理：
+        ssh -o 'ProxyCommand corkscrew proxy-server 8080 %h %p' user@remote-host
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 sshd命令
 ============

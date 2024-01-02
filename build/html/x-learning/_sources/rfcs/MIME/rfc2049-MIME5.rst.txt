@@ -1,0 +1,148 @@
+.. _rfc2049:
+
+RFC2049: (MIME) Part Five: Conformance Criteria and Examples
+############################################################
+
+* Obsoletes: `rfc1521`, `rfc1522`, `rfc1590`
+* Category: Standards Track
+* November 1996
+
+
+1. Introduction
+===============
+
+* The first and second documents in this set define MIME header fields and the initial set of MIME media types.  
+* The third document describes extensions to RFC822 formats to allow for character sets other than US-ASCII.  
+* This document describes what portions of MIME must be supported by a conformant MIME implementation.
+
+
+2.  MIME Conformance
+====================
+
+* The mechanisms described in these documents are open-ended.  
+* It is definitely not expected that all implementations will support all available media types, nor that they will all share the same extensions.
+
+
+
+3.  Guidelines for Sending Email Data
+=====================================
+
+* Internet email is not a perfect, homogeneous system.
+* Mail may become corrupted at several stages in its travel to a final destination.
+
+
+4.  Canonical Encoding Model
+============================
+
+* There was some confusion, in earlier versions of these documents, regarding the model for when email data was to be converted to canonical form and encoded, and in particular how this process would affect the treatment of CRLFs, given that the representation of newlines varies greatly from system to system.
+* For this reason, a canonical model for encoding is presented below.
+
+
+
+Appendix A -- A Complex Multipart Example
+=========================================
+
+* What follows is the outline of a complex multipart message. 
+* This message contains five parts that are to be displayed serially::
+
+  	two introductory plain text objects, 
+  	an embedded multipart message, 
+  		The embedded multipart message itself contains two objects to be displayed in parallel, a picture and an audio fragment.
+  	a text/enriched object, 
+  	and a closing encapsulated text message in a non-ASCII character set.  
+
+::
+
+     MIME-Version: 1.0
+     From: Nathaniel Borenstein <nsb@nsb.fv.com>
+     To: Ned Freed <ned@innosoft.com>
+     Date: Fri, 07 Oct 1994 16:15:05 -0700 (PDT)
+     Subject: A multipart example
+     Content-Type: multipart/mixed;
+                   boundary=unique-boundary-1
+
+     This is the preamble area of a multipart message.
+     Mail readers that understand multipart format
+     should ignore this preamble.
+
+     If you are reading this text, you might want to
+     consider changing to a mail reader that understands
+     how to properly display multipart messages.
+
+     --unique-boundary-1
+
+       ... Some text appears here ...
+
+     [Note that the blank between the boundary and the start
+      of the text in this part means no header fields were
+      given and this is text in the US-ASCII character set.
+      It could have been done with explicit typing as in the
+      next part.]
+
+     --unique-boundary-1
+     Content-type: text/plain; charset=US-ASCII
+
+     This could have been part of the previous part, but
+     illustrates explicit versus implicit typing of body
+     parts.
+
+     --unique-boundary-1
+     Content-Type: multipart/parallel; boundary=unique-boundary-2
+
+     --unique-boundary-2
+     Content-Type: audio/basic
+     Content-Transfer-Encoding: base64
+
+       ... base64-encoded 8000 Hz single-channel
+           mu-law-format audio data goes here ...
+
+     --unique-boundary-2
+     Content-Type: image/jpeg
+     Content-Transfer-Encoding: base64
+
+       ... base64-encoded image data goes here ...
+
+     --unique-boundary-2--
+
+     --unique-boundary-1
+     Content-type: text/enriched
+
+     This is <bold><italic>enriched.</italic></bold>
+     <smaller>as defined in RFC 1896</smaller>
+
+     Isn't it
+     <bigger><bigger>cool?</bigger></bigger>
+
+     --unique-boundary-1
+     Content-Type: message/rfc822
+
+     From: (mailbox in US-ASCII)
+     To: (address in US-ASCII)
+     Subject: (subject in US-ASCII)
+     Content-Type: Text/plain; charset=ISO-8859-1
+     Content-Transfer-Encoding: Quoted-printable
+
+       ... Additional text in ISO-8859-1 goes here ...
+
+     --unique-boundary-1--
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

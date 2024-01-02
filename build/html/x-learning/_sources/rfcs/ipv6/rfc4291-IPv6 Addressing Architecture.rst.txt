@@ -1,0 +1,596 @@
+RFC4291: IP Version 6 Addressing Architecture
+#############################################
+
+* February 2006
+* Updated by: 5952, 6052, 7136, 7346, 7371, 8064
+* Obsoletes::
+  
+    Obsoletes: 3513(April 2003)
+    Obsoletes: 2373(July 1998)
+    Obsoletes: 1884(December 1995)
+
+* Cisco Systems
+* Category: Standards Track
+
+
+学习
+====
+
+* 定义IPv6地址的架构和格式，以及规定IPv6地址的分配、路由和管理等方面的标准。
+
+
+RFC4291主要包括以下内容::
+
+    1. IPv6地址格式：定义IPv6地址的格式，包括128位长度、八组16进制数表示、地址类型和范围等
+    2. 地址类型：包括单播、多播和任播等
+    3. 地址范围：包括全局范围、唯一本地范围和链路本地范围等
+    4. 地址分配：包括由Internet号码分配局（IANA）分配全球唯一的前缀，由互联网服务提供商（ISP）分配子网前缀，以及由主机自动配置等
+    5. 地址路由：包括根据前缀、地址类型和范围等进行路由选择
+    6. 地址管理：包括管理全球唯一的前缀、子网前缀、地址类型和范围等
+
+
+keypoints
+---------
+
+* Addressing Types: unicast, multicast, and anycast
+* Address Formats: IPv6 address(three conventional forms), Address Prefixes(CIDR)
+* Address Scopes: link-local, site-local, and global addresses
+* Address Assignment: IANA, RIRs, ISP, DHCPv6(手工)
+* IPv4 <-> IPv6: dual-stack, NAT64
+* Modified EUI-64 Format Interface Identifiers: EUI-64, MAC, other
+
+
+
+地址类型
+--------
+
+* 全局范围（Global Scope）：全局范围的IPv6地址在全球范围内唯一，可以被路由器转发，用于Internet上的全局通信。全局范围的IPv6地址的第一位为1，后面的几位可能是由IANA分配的一些前缀，也可能是由自治系统号（AS号）组成的前缀。
+* 链路本地范围（Link-Local Scope）：链路本地范围的IPv6地址在同一链路（例如，一个局域网或者一个子网）中唯一，不会被路由器转发，通常用于链路层协议中，例如邻居发现协议和路由器通告协议。链路本地范围的IPv6地址的第一位为1111111010(FE80)。
+* 唯一本地范围（Unique Local Scope）：唯一本地范围的IPv6地址在一个私有网络中唯一，不会被路由器转发，通常用于局域网中的内部通信，类似于IPv4的私有地址。唯一本地范围的IPv6地址的开头为11111110(FE)，后面的几位可能是由本地管理员定义的前缀。
+
+
+地址分配
+--------
+
+IPv6地址的分配方式主要有以下几种::
+
+    1. IANA分配：IANA负责全球IPv6地址的分配，
+        它将IPv6地址划分成多个地址块，每个地址块都由一个唯一的IPv6前缀组成。
+        这些地址块分配给RIRs，RIRs再将地址块分配给ISP。
+    2. RIRs分配：RIRs是负责某个地理区域IPv6地址分配的机构，
+        它从IANA获得IPv6地址块后，将地址块分配给ISP，ISP再将地址块分配给客户。
+    3. ISP分配：ISP将获得的IPv6地址块分配给客户，客户可以根据需要将地址块划分为子网，再为设备分配IPv6地址。
+    4. 主机自动配置：IPv6支持自动配置，主机可以根据网络中其他设备的广播信息自动分配IPv6地址。
+        自动配置可以减轻网络管理员的工作负担，但也存在一定的安全风险。
+
+
+
+
+
+1.  Introduction
+================
+
+basic formats for the various types of IPv6 addresses::
+
+    unicast
+    anycast
+    multicast
+
+
+2.  IPv6 Addressing
+===================
+
+There are three types of addresses::
+
+    a. Unicast:   An identifier for a single interface.
+        The packet is delivered to the interface identified by that address.
+
+    b. Anycast:   An identifier for a set of interfaces
+        The packet is delivered to one of the interfaces identified by that address
+         (the "nearest" one, according to the routing protocols' measure of distance).
+
+    c. Multicast: An identifier for a set of interfaces
+        The packet is delivered to all interfaces identified by that address.
+
+
+2.1.  Addressing Model
+----------------------
+
+* IPv6 addresses of all types are assigned to interfaces, not nodes.
+
+2.2.  Text Representation of Addresses
+--------------------------------------
+
+three conventional forms for representing IPv6 addresses::
+
+    1. x:x:x:x:x:x:x:x, where the 'x's are one to four hexadecimal digits
+
+        Examples:
+         ABCD:EF01:2345:6789:ABCD:EF01:2345:6789
+         2001:DB8:0:0:8:800:200C:417A
+
+    2. "::" indicates one or more groups of 16 bits of zeros
+        "::" can only appear once in an address
+
+        Examples:
+         2001:DB8:0:0:8:800:200C:417A   a unicast address
+            => 2001:DB8::8:800:200C:417A
+         FF01:0:0:0:0:0:0:101           a multicast address
+            => FF01::101
+         0:0:0:0:0:0:0:1                the loopback address
+            => ::1
+         0:0:0:0:0:0:0:0                the unspecified address
+            => ::
+
+    3. x:x:x:x:x:x:d.d.d.d, mixed environment of IPv4 and IPv6
+
+        Examples:
+        0:0:0:0:0:0:13.1.68.3
+            => ::13.1.68.3
+        0:0:0:0:0:FFFF:129.144.52.38
+            => ::FFFF:129.144.52.38
+
+
+2.3.  Text Representation of Address Prefixes
+---------------------------------------------
+
+Classless Inter-Domain Routing (CIDR)::
+
+    格式: ipv6-address/prefix-length
+    Examples:
+        2001:0DB8:0000:CD30:0000:0000:0000:0000/60
+        2001:0DB8::CD30:0:0:0:0/60
+        2001:0DB8:0:CD30::/60
+
+The two can be combined as follows::
+
+      the node address      2001:0DB8:0:CD30:123:4567:89AB:CDEF
+      and its subnet number 2001:0DB8:0:CD30::/60
+
+      can be abbreviated as 2001:0DB8:0:CD30:123:4567:89AB:CDEF/60
+
+
+2.4. Address Type Identification
+--------------------------------
+
+The type of an IPv6 address::
+
+      Address type         Binary prefix        IPv6 notation   Section
+      ------------         -------------        -------------   -------
+      Unspecified          00...0  (128 bits)   ::/128          2.5.2
+      Loopback             00...1  (128 bits)   ::1/128         2.5.3
+      Multicast            1111 1111            FF00::/8        2.7
+      Link-Local unicast   1111 1110 10         FE80::/10       2.5.6
+      Global Unicast       (everything else)
+
+.. note:: Anycast addresses are taken from the unicast address spaces (of any scope) and are not syntactically distinguishable from unicast addresses.
+
+2.5.  Unicast Addresses
+-----------------------
+
+types of unicast addresses in IPv6::
+
+    1. Global Unicast
+    2. site-local unicast (deprecated)
+    3. Link-Local unicast
+
+different addresses may have different values for n::
+
+   +-------------------------------+---------------------------------+
+   |          n bits               |           128-n bits            |
+   +-------------------------------+---------------------------------+
+   |       subnet prefix           |           interface ID          |
+   +-------------------------------+---------------------------------+
+
+
+2.5.1.  Interface Identifiers
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Interface identifiers in IPv6 unicast addresses are used to identify interfaces on a link.
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/KbqsQN.jpg
+
+   In EUI-64 format, the MAC address is modified by inserting the hexadecimal value "FFFE" in the middle, creating a 64-bit value. The seventh bit of the first byte is then flipped from 0 to 1, creating a unique 64-bit interface identifier. This process is called ``"Modified EUI-64 format."``
+
+
+.. note:: [风险]While EUI-64 format is a convenient way to create interface identifiers, it has some privacy concerns. Since the interface identifier is derived from the MAC address, it can be used to track the device as it moves around the network. As a result, some operating systems and networking equipment may generate randomized interface identifiers instead of using EUI-64 format, to enhance privacy.
+
+
+IEEE EUI-64 地址代表网络接口寻址的一种标准::
+  
+    1. 一台电脑的 MAC 是 00:0C:85:AB:50:01
+    2. 中间插入 FFFE-> 00:0C:85:FF:FE:AB:50:01
+    3. 由左到右第七位置位-> 02:0C:85:FF:FE:AB:50:01
+    4. 这台电脑的 EUI-64就是-> 020C:85FF:FEAB:5001
+
+
+.. note:: EUI-64 是 IPv6 用来在没有 DHCP 服务器的情况下用于自动制 IPv6 地址的。一般由子网内的路由器通告 64 位的前缀，然后电脑再用前缀配合 64 位的 EUI-64 组合成一个全球唯一的可聚合单播地址
+
+.. note:: 更多有关 ``EUI-64`` 参见附录一
+
+
+
+
+
+2.5.2.  The Unspecified Address
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* The address 0:0:0:0:0:0:0:0 is called the unspecified address.
+
+
+
+2.5.3.  The Loopback Address
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* The unicast address 0:0:0:0:0:0:0:1 is called the loopback address.
+
+
+2.5.4.  Global Unicast Addresses
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The general format for IPv6 Global Unicast addresses is as follows::
+
+   |         n bits         |   m bits  |       128-n-m bits         |
+   +------------------------+-----------+----------------------------+
+   | global routing prefix  | subnet ID |       interface ID         |
+   +------------------------+-----------+----------------------------+
+
+
+* The first 3 bits of a global unicast address are always set to the value 001. This indicates that the address is a global unicast address.
+* The next 45 bits are the global routing prefix, which is assigned by an ISP or other network administrator.
+* The following 16 bits are the subnet ID, which identifies a specific subnet within the assigned global routing prefix.
+* The remaining 64 bits are the interface identifier, which uniquely identifies a particular interface on a given subnet. This can be derived from the EUI-64 format or generated randomly to enhance privacy.
+
+
+
+
+2.5.5.  IPv6 Addresses with Embedded IPv4 Addresses
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+2.5.5.1.  IPv4-Compatible IPv6 Address
+''''''''''''''''''''''''''''''''''''''
+
+The format of the "IPv4-Compatible IPv6 address" is as follows::
+
+   |                80 bits               | 16 |      32 bits        |
+   +--------------------------------------+--------------------------+
+   |0000..............................0000|0000|    IPv4 address     |
+   +--------------------------------------+----+---------------------+
+
+example::
+
+    ::192.0.2.1
+
+
+
+.. warning:: The "IPv4-Compatible IPv6 address" is now deprecated because the current IPv6 transition mechanisms no longer use these addresses. New or updated implementations are not required to support this address type.
+
+
+2.5.5.2.  IPv4-Mapped IPv6 Address
+''''''''''''''''''''''''''''''''''
+
+The format of the "IPv4-mapped IPv6 address" is as follows::
+
+   |                80 bits               | 16 |      32 bits        |
+   +--------------------------------------+--------------------------+
+   |0000..............................0000|FFFF|    IPv4 address     |
+   +--------------------------------------+----+---------------------+
+
+example::
+
+    ::ffff:c000:0201
+    =>
+    ::ffff:192.0.2.1
+    =>
+    192.0.2.1
+
+.. warning:: The use of IPv4-mapped addresses is not recommended for new IPv6 deployments, and newer technologies such as dual-stack and NAT64 are recommended instead.
+
+
+Dual-stack
+++++++++++
+
+* This is a method of implementing both IPv4 and IPv6 on the same network infrastructure. Dual-stack allows hosts to communicate using either IPv4 or IPv6, depending on the availability of each protocol. In a dual-stack network, each host is assigned both an IPv4 and an IPv6 address, and routing is configured to support both protocols. Dual-stack is widely considered to be the preferred approach for transitioning to IPv6, as it allows for native IPv6 support and does not require any translation or encapsulation of packets.
+* Dual-stack is generally considered to be the most straightforward approach, as it provides native support for both IPv4 and IPv6. However, it can be more complex to implement, and may require additional address space to accommodate both protocols.
+
+NAT64
++++++
+
+* This is a mechanism for translating IPv6 packets to IPv4 packets, and vice versa. NAT64 is used when an IPv6-only host needs to communicate with an IPv4-only host, or vice versa. In a NAT64 environment, an IPv6 packet is encapsulated within an IPv4 packet, and then translated into an IPv4 packet before being sent over the IPv4 network. The reverse translation is performed when an IPv4 packet is received by the NAT64 device. NAT64 can be implemented in a number of ways, but one common approach is to use a stateless translation mechanism that maps the IPv6 address to an IPv4 address in a predictable way.
+* NAT64 can be simpler to deploy, as it enables IPv6-only hosts to communicate with IPv4-only hosts without requiring any changes to the IPv4 network. However, NAT64 introduces additional overhead and may not be as transparent as a dual-stack approach.
+
+
+
+2.5.6.  Link-Local IPv6 Unicast Addresses
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Link-Local addresses are for use on a single link.  Link-Local addresses have the following format::
+
+       | 10bits   |         54 bits         |          64 bits           |
+       +----------+-------------------------+----------------------------+
+       |1111111010|           0             |       interface ID         |
+       +----------+-------------------------+----------------------------+
+
+       FE80::<interface ID>
+       prefix: FE80::/10
+
+.. note:: Link-Local addresses are designed to be used for addressing on a single link for purposes such as automatic address configuration, neighbor discovery, or when no routers are present.
+
+
+
+
+
+2.5.7.  Site-Local IPv6 Unicast Addresses
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. note:: Site-local addresses are now deprecated
+
+Site-Local addresses were originally designed to be used for addressing inside of a site without the need for a global prefix.
+
+Site-Local addresses have the following format::
+
+   | 10bits   |         54 bits         |         64 bits            |
+   +----------+-------------------------+----------------------------+
+   |1111111011|        subnet ID        |       interface ID         |
+   +----------+-------------------------+----------------------------+
+
+   FEC0:<subnetID>:<interfaceID>
+   prefix: fec0::/10
+
+.. note:: Site-Local addresses can be identified by the prefix "fc00::/7", which is reserved for Unique Local Unicast Addresses.
+
+
+
+2.6.  Anycast Addresses
+=======================
+
+The Subnet-Router anycast address is predefined.  Its format is as follows::
+
+    |                         n bits                 |   128-n bits   |
+    +------------------------------------------------+----------------+
+    |                   subnet prefix                | 00000000000000 |
+    +------------------------------------------------+----------------+
+
+* Anycast地址的可用性和可靠性取决于路由协议和网络拓扑结构。如果网络拓扑结构发生变化，可能会影响路由路径和可用性。
+* Anycast addresses are used to identify a group of interfaces that can all receive packets sent to a particular address.
+* Anycast addresses are used to provide load balancing and fault tolerance in network applications.
+* Anycast addresses are used extensively in the Internet for services such as DNS, routing protocols, and content distribution networks.
+
+* Anycast address is a type of address used in computer networks to identify a group of devices that share a single IP address. Unlike unicast addresses, which are used to identify a single device, anycast addresses are used to identify a group of devices that provide the same service or function. When a packet is sent to an anycast address, it is delivered to the nearest member of the anycast group, based on the routing protocol's rules. Anycast addresses are commonly used for load balancing, where multiple servers provide the same service, and the anycast address is used to distribute traffic among them.
+
+* Anycast addresses are typically used in routing protocols, where the address is assigned to a group of routers. When a router needs to send a packet to the anycast address, it sends the packet to the nearest router in the anycast group. This helps to reduce network congestion and improve routing efficiency. Anycast addresses can also be used in other applications, such as Domain Name System (DNS) servers, where the same IP address is assigned to multiple servers that provide the same service.
+
+* 在IPv6中，任播地址是一个预留的地址范围，它可以被多个接口共享，并且可以被多个设备使用。当数据包被发送到一个任播地址时，它将被路由到最近的（通常是最接近的）设备，该设备已经绑定到该任播地址上。这使得服务可以在多个位置上部署，而不需要每个位置都有唯一的IP地址，从而提高了网络的可用性和灵活性。
+
+
+
+2.7.  Multicast Addresses
+=========================
+
+
+* Multicast addresses are used to identify a group of interfaces that can all receive packets sent to a particular address.
+* Multicast addresses are assigned to a specific multicast group, which is identified by a 32-bit multicast group ID.
+* Multicast addresses are assigned from a special block of the IPv6 address space, with the prefix "FF00::/8".
+* Multicast communication is used extensively in multimedia applications, such as video and audio streaming.
+
+* 多播地址的第二个字节用于标识地址范围，例如链路本地、站点本地或全局范围。链路本地多播地址的前缀为FF02，站点本地多播地址的前缀为FF05，全局范围多播地址的前缀为FF0E。
+
+
+Multicast addresses have the following format::
+
+    |   8     |  4 |  4 |                  112 bits                   |
+    +---------+----+----+---------------------------------------------+
+    |1111,1111|flgs|scop|                  group ID                   |
+    +--------+----+----+---------------------------------------------+
+
+ ``flgs`` is a set of 4 flags::
+
+    |0|R|P|T|
+
+    1. The high-order flag is reserved, and must be initialized to 0.
+    2. The P flag's definition and usage can be found in [``RFC3306``].
+        => prefix flag
+        0(默认): 
+        1: 表示此组播地址是一个基于单播前缀的 ipv6 组播地址
+            如果 P 位设置为 1，那么 T 位必须为 1
+    3. The R flag's definition and usage can be found in [``RFC3956``].
+        => Rendezvous Point (RP) flag
+        0(默认): 
+        1: 表示此组播地址是一个内嵌 RP 地址的 ipv6 组播地址
+    4. T = 0 indicates a permanently-assigned ("well-known") multicast address, assigned by IANA.
+       T = 1 indicates a non-permanently-assigned ("transient" or "dynamically" assigned) multicast address.
+
+``scop`` is a 4-bit multicast scope value used to limit the scope of the multicast group::
+
+    0  reserved
+    1  Interface-Local scope
+    2  Link-Local scope
+    3  reserved
+    4  Admin-Local scope
+    5  Site-Local scope
+    6  (unassigned)
+    7  (unassigned)
+    8  Organization-Local scope
+    9  (unassigned)
+    A  (unassigned)
+    B  (unassigned)
+    C  (unassigned)
+    D  (unassigned)
+    E  Global scope
+    F  reserved
+
+
+* ``Interface-Local scope`` spans only a single interface on a node and is useful only for loopback transmission of multicast. Multicast packets with an Interface-Local scope are delivered to all interfaces on the local host, but are not forwarded to any other hosts or routers. 
+* ``Link-Local multicast scope`` spans the same topological region as the corresponding unicast scope.
+* ``Admin-Local scope`` is the smallest scope that must be administratively configured, i.e., not automatically derived from physical connectivity or other, non-multicast-related configuration.
+* ``Site-Local scope`` is intended to span a single site.
+* ``Organization-Local scope`` is intended to span multiple sites belonging to a single organization.
+* scopes labeled "(unassigned)" are available for administrators to define additional multicast regions.
+
+
+所以::
+
+    1. ``链路本地``多播地址的前缀为``FF02``
+    2. ``站点本地``多播地址的前缀为``FF05``
+    3. ``全局范围``多播地址的前缀为``FF0E``
+
+The "meaning" of a permanently-assigned multicast address is independent of the scope value.  For example, if the "NTP servers group" is assigned a permanent multicast address with a group ID of 101 (hex), then::
+
+      FF01:0:0:0:0:0:0:101 means all NTP servers on the same interface (i.e., the same node) as the sender.
+
+      FF02:0:0:0:0:0:0:101 means all NTP servers on the same link as the sender.
+
+      FF05:0:0:0:0:0:0:101 means all NTP servers in the same site as the sender.
+
+      FF0E:0:0:0:0:0:0:101 means all NTP servers in the Internet.
+
+Non-permanently-assigned multicast addresses are meaningful only within a given scope.  For example, a group identified by the non-permanent, site-local multicast address FF15:0:0:0:0:0:0:101 at one site bears no relationship to a group using the same address at a different site, nor to a non-permanent group using the same group ID with a different scope, nor to a permanent group with the same group ID.
+
+
+.. note:: 关于组播地址的格式，部分在RFC3306中
+
+
+
+2.7.1.  Pre-Defined Multicast Addresses
+---------------------------------------
+
+All Nodes Addresses::
+
+    FF01:0:0:0:0:0:0:1
+    FF02:0:0:0:0:0:0:1
+
+All Routers Addresses::
+
+    FF01:0:0:0:0:0:0:2
+    FF02:0:0:0:0:0:0:2
+    FF05:0:0:0:0:0:0:2
+
+
+Solicited-Node Address::
+
+    FF02:0:0:0:0:1:FFXX:XXXX
+    =>
+    FF02:0:0:0:0:1:FF00::/104
+
+    range
+         FF02:0:0:0:0:1:FF00:0000
+    to
+         FF02:0:0:0:0:1:FFFF:FFFF
+
+    For example:
+            4037::01:800:200E:8C6C
+        对应的`Solicited-Node multicast address`
+            FF02::1:FF0E:8C6C
+
+
+
+2.8. A Node's Required Addresses
+================================
+
+A host is required to recognize the following addresses as identifying itself::
+
+    - Its required `Link-Local` address for each interface.
+    - Any additional Unicast and Anycast addresses that have been configured for the node's interfaces (manually or automatically).
+    - The loopback address.
+    - The All-Nodes multicast addresses defined in Section 2.7.1.
+    - The Solicited-Node multicast address for each of its unicast and anycast addresses.
+    - Multicast addresses of all other groups to which the node belongs.
+
+A router is required to recognize all addresses that a host is required to recognize, plus the following addresses as identifying itself::
+
+    - The Subnet-Router Anycast addresses for all interfaces for which it is configured to act as a router.
+    - All other Anycast addresses with which the router has been configured.
+    - The All-Routers multicast addresses defined in Section 2.7.1.
+
+
+
+
+3. Security Considerations
+==========================
+
+
+IPv6 addressing documents do not have any direct impact on Internet infrastructure security.  Authentication of IPv6 packets is defined in [``RFC 2402``].
+
+
+
+
+
+Appendix A: Creating Modified EUI-64 Format Interface Identifiers
+=================================================================
+
+.. note:: Depending on the characteristics of a specific link or node, there are a number of approaches for creating Modified EUI-64 format interface identifiers.
+
+Links or Nodes with IEEE EUI-64 Identifiers
+-------------------------------------------
+
+The only change needed to transform an IEEE EUI-64 identifier to an interface identifier is to invert the "u" (universal/local) bit::
+
+    Example:
+    |0              1|1              3|3              4|4              6|
+    |0              5|6              1|2              7|8              3|
+    +----------------+----------------+----------------+----------------+
+    |cccccc0gcccccccc|ccccccccmmmmmmmm|mmmmmmmmmmmmmmmm|mmmmmmmmmmmmmmmm|
+    +----------------+----------------+----------------+----------------+
+    说明:
+        "c" is the bits of the assigned company_id, 
+        "0" is the value of the universal/local bit to indicate universal scope, 
+        "g" is individual/group bit,
+        "m" is the bits of the manufacturer-selected extension identifier.
+
+    =>
+
+    The IPv6 interface identifier would be of the form:
+    |0              1|1              3|3              4|4              6|
+    |0              5|6              1|2              7|8              3|
+    +----------------+----------------+----------------+----------------+
+    |cccccc1gcccccccc|ccccccccmmmmmmmm|mmmmmmmmmmmmmmmm|mmmmmmmmmmmmmmmm|
+    +----------------+----------------+----------------+----------------+
+
+Links or Nodes with IEEE 802 48-bit MACs
+----------------------------------------
+
+[EUI64] defines a method to create an IEEE EUI-64 identifier from an IEEE 48-bit MAC identifier::
+
+
+    Example:
+    |0              1|1              3|3              4|
+    |0              5|6              1|2              7|
+    +----------------+----------------+----------------+
+    |cccccc0gcccccccc|ccccccccmmmmmmmm|mmmmmmmmmmmmmmmm|
+    +----------------+----------------+----------------+
+
+    =>
+
+    The interface identifier would be of the form:
+    |0              1|1              3|3              4|4              6|
+    |0              5|6              1|2              7|8              3|
+    +----------------+----------------+----------------+----------------+
+    |cccccc1gcccccccc|cccccccc11111111|11111110mmmmmmmm|mmmmmmmmmmmmmmmm|
+    +----------------+----------------+----------------+----------------+
+
+
+Links with Other Kinds of Identifiers
+-------------------------------------
+
+There are a number of types of links that have link-layer interface identifiers other than IEEE EUI-64 or IEEE 802 48-bit MACs.  Examples include LocalTalk and Arcnet.
+
+
+Links without Identifiers
+-------------------------
+
+There are a number of links that do not have any type of built-in identifier.  The most common of these are serial links and configured tunnels.  Interface identifiers that are unique within a subnet prefix must be chosen.
+
+
+
+
+
+
+
+参考
+====
+
+* https://www.rfc-editor.org/rfc/rfc4291.html
+  
+
+

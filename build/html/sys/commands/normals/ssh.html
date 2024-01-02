@@ -247,8 +247,9 @@
 <li class="toctree-l3"><a class="reference internal" href="../networks/telnet.html">telnet命令</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../networks/nslookup.html">nslookup命令</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../networks/slurm.html">slurm命令</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../networks/network_other.html">网络相关其他命令</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../networks/network_other.html#arp-scan">arp-scan命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../networks/tmp.html">临时</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../networks/tmp.html#trippy">Trippy</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../networks/tmp.html#arp-scan">arp-scan命令</a></li>
 </ul>
 </li>
 </ul>
@@ -674,9 +675,15 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../oses/windows/windows_command.html">windows命令</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../oses/windows/commands/normal.html">常用命令</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../oses/windows/commands/route.html">route命令</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../oses/windows/commands/other.html">其他命令</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../oses/windows/commands/temp.html">开始运行命令DOS</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../oses/windows/PowerShell.html">PowerShell</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../oses/windows/PowerShell.html#sshd">安装&amp;启动sshd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../oses/windows/PowerShell.html#ssh">ssh免登录</a></li>
 </ul>
 </li>
 </ul>
@@ -967,6 +974,7 @@
 <li><a class="reference internal" href="#l">-L选项(正向代理)</a></li>
 <li><a class="reference internal" href="#r">-R选项(反向代理)</a></li>
 <li><a class="reference internal" href="#d-socket5">-D选项(socket5代理)</a></li>
+<li><a class="reference internal" href="#o-options">-o选项(指定options)</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#sshd">sshd命令</a></li>
@@ -1005,6 +1013,7 @@
 -i 指定ssh登陆用的私钥，如果是用公钥、私钥对登陆则需要指定
 -q 安静模式
 -T 禁止远程分配终端
+-o 指定options
 </pre></div>
 </div>
 <section id="id2">
@@ -1103,6 +1112,32 @@ $ ssh -R HostC:PortC:HostB:PortB  user@HostC
 </ul>
 <p>实例:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ssh</span> <span class="o">-</span><span class="n">CfNg</span> <span class="o">-</span><span class="n">D</span> <span class="mf">0.0.0.0</span><span class="p">:</span><span class="mi">1080</span> <span class="o">-</span><span class="n">l</span> <span class="n">username</span> <span class="n">xxx</span><span class="o">.</span><span class="n">xxx</span><span class="o">.</span><span class="n">xxx</span><span class="o">.</span><span class="n">xxx</span>
+</pre></div>
+</div>
+</section>
+<section id="o-options">
+<h3>-o选项(指定options)<a class="headerlink" href="#o-options" title="此标题的永久链接">¶</a></h3>
+<p>命令:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">o</span> <span class="n">option</span>
+</pre></div>
+</div>
+<p>常用options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-oPort=6000: 指定连接时使用的端口号为 6000
+-o &#39;ProxyCommand ...&#39;: 通过代理（proxy）连接到远程主机
+</pre></div>
+</div>
+<p>ProxyCommand详解:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 通过 netcat 进行代理：
+    ssh -o &#39;ProxyCommand nc -X 5 -x proxy-server:1080 %h %p&#39; user@remote-host
+
+2. 通过 socat 进行代理：
+    ssh -o &#39;ProxyCommand socat - PROXY:proxy-server:%h:%p,proxyport=1080&#39; user@remote-host
+
+3. 通过 sshuttle 进行代理：
+    ssh -o &#39;ProxyCommand sshuttle -r user@proxy-server %h:%p&#39; user@remote-host
+
+4. 通过 corkscrew 进行代理：
+    ssh -o &#39;ProxyCommand corkscrew proxy-server 8080 %h %p&#39; user@remote-host
 </pre></div>
 </div>
 </section>

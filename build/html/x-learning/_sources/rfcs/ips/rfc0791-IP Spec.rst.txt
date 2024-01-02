@@ -1,0 +1,723 @@
+RFC791: IP: INTERNET PROTOCOL
+#############################
+
+* Updated by: 1349, 2474, 6864
+* September 1981
+* Information Sciences Institute, University of Southern California
+
+PREFACE
+=======
+
+* This document is based on six earlier editions of the ``ARPA`` Internet Protocol Specification
+
+
+1.  INTRODUCTION
+================
+
+* Such a system has been called a "catenet"
+* The internet protocol implements two basic functions::
+
+    1. addressing
+    2. fragmentation
+
+The internet protocol uses four key mechanisms in providing its service::
+
+    1. Type of Service, 
+    2. Time to Live, 
+    3. Options, 
+    4. Header Checksum.
+
+
+
+2.  OVERVIEW
+============
+
+2.1.  Relation to Other Protocols
+---------------------------------
+
+Protocol Relationships::
+
+    +------+ +-----+ +-----+     +-----+
+    |Telnet| | FTP | | TFTP| ... | ... |
+    +------+ +-----+ +-----+     +-----+
+         |   |         |           |
+        +-----+     +-----+     +-----+
+        | TCP |     | UDP | ... | ... |
+        +-----+     +-----+     +-----+
+           |           |           |
+        +--------------------------+----+
+        |    Internet Protocol & ICMP   |
+        +--------------------------+----+
+                       |
+          +---------------------------+
+          |   Local Network Protocol  |
+          +---------------------------+
+
+2.2.  Model of Operation
+------------------------
+
+Transmission Path::
+
+    Application                                           Application
+       Program                                                   Program
+             \                                                   /
+           Internet Module      Internet Module      Internet Module
+                 \                 /       \                /
+                 LNI-1          LNI-1      LNI-2         LNI-2
+                    \           /             \          /
+                   Local Network 1           Local Network 2
+
+2.3.  Function Description
+--------------------------
+
+
+Addressing::
+
+    A `distinction` is made between `names`, `addresses`, and `routes`:
+       A name indicates what we seek.
+       An address indicates where it is.
+       A route indicates how to get there.
+
+
+Fragmentation::
+
+    The identification field is used to distinguish the fragments of one datagram from those of another. 
+
+    1. identification,
+    2. source,
+    3. destination,
+    4. protocol,
+
+
+2.4.  Gateways
+--------------
+
+* Gateways implement internet protocol to forward datagrams between networks.
+* Gateways also implement the Gateway to Gateway Protocol (GGP) to coordinate routing and other internet control information.
+
+
+Gateway Protocols::
+
+    +-------------------------------+
+     | Internet Protocol & ICMP & GGP|
+     +-------------------------------+
+             |                 |
+    +---------------+   +---------------+
+    |   Local Net   |   |   Local Net   |
+    +---------------+   +---------------+
+
+
+
+3.  SPECIFICATION
+=================
+
+3.1.  Internet Header Format
+----------------------------
+
+* The maximal internet header is 60 octets(60\*8bit)
+* and a typical internet header is 20 octets(20\*8bit)
+
+Example Internet Datagram Header::
+
+     0                   1                   2                   3
+     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |Version|  IHL  |Type of Service|          Total Length         |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |         Identification        |Flags|      Fragment Offset    |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |  Time to Live |    Protocol   |         Header Checksum       |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |                       Source Address                          |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |                    Destination Address                        |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |                    Options                    |    Padding    |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+
+    Version:  4 bits
+        indicates the format of the internet header
+
+    IHL:  4 bits
+        Internet Header Length
+        the length of the internet header in 32 bit words
+
+    Type of Service:  8 bits
+        Bits 0-2:  Precedence.
+        Bit    3:  0 = Normal Delay,      1 = Low Delay.
+        Bits   4:  0 = Normal Throughput, 1 = High Throughput.
+        Bits   5:  0 = Normal Relibility, 1 = High Relibility.
+        Bit  6-7:  Reserved for Future Use.
+           0     1     2     3     4     5     6     7
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |                 |     |     |     |     |     |
+        |   PRECEDENCE    |  D  |  T  |  R  |  0  |  0  |
+        |                 |     |     |     |     |     |
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+          Precedence:
+            111 - Network Control
+            110 - Internetwork Control
+            101 - CRITIC/ECP
+            100 - Flash Override
+            011 - Flash
+            010 - Immediate
+            001 - Priority
+            000 - Routine
+
+    Total Length:  16 bits
+        length of the datagram, measured in octets, including internet header and data
+        This field allows the length of a datagram to be up to 65,535 octets.
+        But, all hosts must be prepared to accept datagrams of up to 576 octets 
+          hosts only send datagrams larger than 576 octets if they have assurance that 
+            the destination is prepared to accept the larger datagrams.
+
+    Identification:  16 bits
+        An identifying value assigned by the sender to aid in assembling the fragments of a datagram.
+
+    Flags:  3 bits
+        Bit 0: reserved, must be zero
+        Bit 1: (DF) 0 = May Fragment,  1 = Don't Fragment.
+        Bit 2: (MF) 0 = Last Fragment, 1 = More Fragments.
+            0   1   2
+          +---+---+---+
+          |   | D | M |
+          | 0 | F | F |
+          +---+---+---+
+
+    Fragment Offset:  13 bits
+        indicates where in the datagram this fragment belongs.
+        is measured in units of 8 octets (64 bits).
+        The first fragment has offset zero.
+
+    Time to Live:  8 bits
+        indicates the maximum time the datagram is allowed to remain in the internet system.
+        If this field contains the value zero, then the datagram must be destroyed.
+        This field is modified in internet header processing.
+
+    Protocol:  8 bits
+        indicates the next level protocol used in the data portion of the internet datagram.
+
+    Header Checksum:  16 bits
+        A checksum on the header only.
+        Since some header fields change (e.g., time to live), 
+          this is recomputed and verified at each point that the internet header is processed.
+
+    Source Address:  32 bits
+        The source address.
+
+    Destination Address:  32 bits
+        The destination address.
+
+    Options:  variable
+        may appear or not in datagrams.
+        The option field is variable in length.  There may be zero or more options.
+        detailed below...
+
+    Padding:  variable
+        is used to ensure that the internet header ends on a 32 bit boundary.
+        The padding is zero.
+
+Options
+^^^^^^^
+
+There are two cases for the format of an option::
+
+      Case 1:  A single octet of option-type.
+
+      Case 2:  An `option-type` octet, 
+                an `option-length` octet, 
+                and the actual `option-data` octets.
+
+The ``option-type`` octet is viewed as having 3 fields::
+
+        0      1     2      3     4     5     6     7     8
+        +------+-----+------+-----+-----+-----+-----+-----+
+        |copied|option class|       option number         |
+        +------+-----+------+-----+-----+-----+-----+-----+
+
+
+      1 bit   copied flag,
+          indicates that IF this option is copied into all fragments on fragmentation.
+      2 bits  option class,
+          00 = control
+          01 = reserved for future use
+          10 = debugging and measurement
+          11 = reserved for future use
+      5 bits  option number.
+
+The following internet options are defined::
+
+      CLASS NUMBER LENGTH DESCRIPTION
+      ----- ------ ------ -----------
+        0     0      -    End of Option list.  
+                          This option occupies only 1 octet; 
+                          it has no length octet.
+
+        0     1      -    No Operation.  
+                          This option occupies only 1 octet; 
+                          it has no length octet.
+
+        0     2     11    Security.
+                          Used to carry Security, Compartmentation, User Group (TCC), 
+                          and Handling Restriction Codes compatible with DOD requirements.
+
+        0     3     var.  Loose Source Routing.
+                          Used to route the internet datagram based on information supplied by the source.
+
+        0     9     var.  Strict Source Routing.
+                          Used to route the internet datagram based on information supplied by the source.
+
+        0     7     var.  Record Route.
+                          Used to trace the route an internet datagram takes.
+
+        0     8      4    Stream ID.
+                          Used to carry the stream identifier.
+
+        2     4     var.  Internet Timestamp.
+
+
+Specific Option Definitions::
+
+    1. End of Option List
+        +--------+
+        |00000000|
+        +--------+
+          Type=0
+
+      This is used at the end of all options
+
+    2. No Operation
+        +--------+
+        |00000001|
+        +--------+
+          Type=1
+      This option may be used between options
+
+    3. Security
+        +--------+--------+---//---+---//---+---//---+---//---+
+        |10000010|00001011|SSS  SSS|CCC  CCC|HHH  HHH|  TCC   |
+        +--------+--------+---//---+---//---+---//---+---//---+
+         Type=130 Length=11
+
+
+        a. Security (S field):  16 bits
+            00000000 00000000 - Unclassified
+            11110001 00110101 - Confidential
+            01111000 10011010 - EFTO
+            10111100 01001101 - MMMM
+            01011110 00100110 - PROG
+            10101111 00010011 - Restricted
+            11010111 10001000 - Secret
+            01101011 11000101 - Top Secret
+            00110101 11100010 - (Reserved for future use)
+            10011010 11110001 - (Reserved for future use)
+            01001101 01111000 - (Reserved for future use)
+            00100100 10111101 - (Reserved for future use)
+            00010011 01011110 - (Reserved for future use)
+            10001001 10101111 - (Reserved for future use)
+            11000100 11010110 - (Reserved for future use)
+            11100010 01101011 - (Reserved for future use)
+
+        b. Compartments (C field):  16 bits
+            An all zero value is used when the information transmitted is not compartmented.
+
+        c. Handling Restrictions (H field):  16 bits
+
+
+        d. Transmission Control Code (TCC field):  24 bits
+
+
+
+    4. Loose Source and Record Route
+        +--------+--------+--------+---------//--------+
+        |10000011| length | pointer|     route data    |
+        +--------+--------+--------+---------//--------+
+         Type=131
+
+    5. Strict Source and Record Route
+        +--------+--------+--------+---------//--------+
+        |10001001| length | pointer|     route data    |
+        +--------+--------+--------+---------//--------+
+         Type=137
+
+    6. Record Route
+        +--------+--------+--------+---------//--------+
+        |00000111| length | pointer|     route data    |
+        +--------+--------+--------+---------//--------+
+          Type=7
+        provides a means to record the route of an internet datagram.
+
+    7. Stream Identifier
+        +--------+--------+--------+--------+
+        |10001000|00000010|    Stream ID    |
+        +--------+--------+--------+--------+
+         Type=136 Length=4
+
+    8. Internet Timestamp
+        +--------+--------+--------+--------+
+        |01000100| length | pointer|oflw|flg|
+        +--------+--------+--------+--------+
+        |         internet address          |
+        +--------+--------+--------+--------+
+        |             timestamp             |
+        +--------+--------+--------+--------+
+        |                 .                 |
+                          .
+                          .
+        Type = 68
+
+        The Overflow (oflw) [4 bits]
+            is the number of IP modules that cannot register timestamps due to lack of space.
+        The Flag (flg) [4 bits]
+            0 -- time stamps only, stored in consecutive 32-bit words,
+            1 -- each timestamp is preceded with internet address of the
+                 registering entity,
+            3 -- the internet address fields are prespecified.
+
+
+
+
+3.2  Discussion
+---------------
+
+Addressing
+^^^^^^^^^^
+
+
+Address Formats::
+
+      High Order Bits   Format                           Class
+      ---------------   -------------------------------  -----
+            0            7 bits of net, 24 bits of host    a
+            10          14 bits of net, 16 bits of host    b
+            110         21 bits of net,  8 bits of host    c
+            111         escape to extended addressing mode
+
+
+Fragmentation and Reassembly
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* The ``internet identification field (ID)`` is used together with the ``source address`` and ``destination address``, and the ``protocol fields``, to identify datagram fragments for reassembly.
+* Every internet module must be able to forward a datagram of 68 octets without further fragmentation. This is because an internet header may be up to 60 octets, and the minimum fragment is 8 octets.
+* Every internet destination must be able to receive a datagram of 576 octets either in one piece or in fragments to be reassembled.
+
+
+An Example Fragmentation Procedure
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+General notation::
+
+    "=<" means "less than or equal", 
+    "#" means "not equal", 
+    "=" means "equal", 
+    "<-" means "is set to".
+    "x to y" includes x and excludes y; 
+        for example,
+        "4 to 7" would include 4, 5, and 6 (but not 7).
+
+Notation::
+
+        FO    -  Fragment Offset
+        IHL   -  Internet Header Length
+        DF    -  Don't Fragment flag
+        MF    -  More Fragments flag
+        TL    -  Total Length
+        OFO   -  Old Fragment Offset
+        OIHL  -  Old Internet Header Length
+        OMF   -  Old More Fragments flag
+        OTL   -  Old Total Length
+        NFB   -  Number of Fragment Blocks
+        MTU   -  Maximum Transmission Unit
+
+Procedure::
+
+        IF TL =< MTU THEN 
+            Submit this datagram to the next step in datagram processing 
+        ELSE IF DF = 1 THEN 
+            discard the datagram 
+        ELSE
+          To produce the first fragment:
+          (1)  Copy the original internet header;
+          (2)  OIHL <- IHL; OTL <- TL; OFO <- FO; OMF <- MF;
+          (3)  NFB <- (MTU-IHL\*4)/8;
+          (4)  Attach the first NFB\*8 data octets;
+          (5)  Correct the header:
+               MF <- 1;  TL <- MTU;
+               Recompute Checksum;
+          (6)  Submit this fragment to the next step in
+               datagram processing;
+
+          To produce the second fragment:
+          (7)  Selectively copy the internet header (some options
+               are not copied, see option definitions);
+          (8)  Append the remaining data;
+          (9)  Correct the header:
+               IHL <- (((OIHL\*4)-(length of options not copied))+3)/4;
+               TL <- OTL - NFB\*8 - (length of options not copied))+3);
+               FO <- OFO + NFB;  MF <- OMF;  
+               Recompute Checksum;
+          (10) Submit this fragment to the fragmentation test; DONE.
+
+
+An Example Reassembly Procedure
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Notation::
+
+        FO    -  Fragment Offset
+        IHL   -  Internet Header Length
+        MF    -  More Fragments flag
+        TTL   -  Time To Live
+        NFB   -  Number of Fragment Blocks
+        TL    -  Total Length
+        TDL   -  Total Data Length
+        BUFID -  Buffer Identifier
+        RCVBT -  Fragment Received Bit Table
+        TLB   -  Timer Lower Bound
+
+Procedure::
+
+        (1)  BUFID <- source|destination|protocol|identification;
+        (2)  IF FO = 0 AND MF = 0
+        (3)     THEN IF buffer with BUFID is allocated
+        (4)             THEN flush all reassembly for this BUFID;
+        (5)          Submit datagram to next step; DONE.
+        (6)     ELSE IF no buffer with BUFID is allocated
+        (7)             THEN allocate reassembly resources with BUFID;
+                             TIMER <- TLB; TDL <- 0;
+        (8)          put data from fragment into data buffer with BUFID
+                      from octet `FO*8` to octet `(TL-(IHL*4))+FO*8`;
+        (9)          set RCVBT bits from `FO` to `FO+((TL-(IHL*4)+7)/8)`;
+        (10)         IF MF = 0 THEN TDL <- `TL-(IHL*4)+(FO*8)`
+        (11)         IF FO = 0 THEN put header in header buffer
+        (12)         IF TDL # 0
+        (13)          AND all RCVBT bits from 0 to (TDL+7)/8 are set
+        (14)            THEN TL <- TDL+(IHL\*4)
+        (15)                 Submit datagram to next step;
+        (16)                 free all reassembly resources for this BUFID; 
+        (17)                 DONE.
+        (18)         TIMER <- MAX(TIMER,TTL);
+        (19)         give up until next fragment or timer expires;
+        (20) timer expires: flush all reassembly with this BUFID; DONE.
+
+
+
+3.3  Interfaces
+---------------
+
+* The functional description of user interfaces to the IP is fictional, since every operating system will have different facilities.
+* However, all IPs must provide a certain minimum set of services to guarantee that all IP implementations can support the same protocol hierarchy.
+
+
+
+An Example Upper Level Interface
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. note:: The following two example calls satisfy the requirements for the user to internet protocol module communication
+
+SEND (src, dst, prot, TOS, TTL, BufPTR, len, Id, DF, opt => result)::
+
+    where:
+
+      src = source address
+      dst = destination address
+      prot = protocol
+      TOS = type of service
+      TTL = time to live
+      BufPTR = buffer pointer
+      len = length of buffer
+      Id  = Identifier
+      DF = Don't Fragment
+      opt = option data
+      result = response
+        OK = datagram sent ok
+        Error = error in arguments or local network error
+
+RECV (BufPTR, prot, => result, src, dst, TOS, len, opt)::
+
+    where:
+
+      BufPTR = buffer pointer
+      prot = protocol
+      result = response
+        OK = datagram received ok
+        Error = error in arguments
+      len = length of buffer
+      src = source address
+      dst = destination address
+      TOS = type of service
+      opt = option data
+
+
+
+APPENDIX A:  Examples & Scenarios
+=================================
+
+minimal data carrying internet datagram
+---------------------------------------
+
+Example Internet Datagram::
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |Ver= 4 |IHL= 5 |Type of Service|        Total Length = 21      |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |      Identification = 111     |Flg=0|   Fragment Offset = 0   |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |   Time = 123  |  Protocol = 1 |        header checksum        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                         source address                        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                      destination address                      |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     data      |
+   +-+-+-+-+-+-+-+-+
+
+moderate size internet datagram (452 data octets)
+-------------------------------------------------
+
+Example Internet Datagram::
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |Ver= 4 |IHL= 5 |Type of Service|       Total Length = 472      |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Identification = 111      |Flg=0|     Fragment Offset = 0 |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |   Time = 123  | Protocol = 6  |        header checksum        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                         source address                        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                      destination address                      |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                             data                              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                             data                              |
+   \                                                               \
+   \                                                               \
+   |                             data                              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |             data              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+.. note:: two internet fragments that might result from the fragmentation of this datagram if the maximum sized transmission allowed were 280 octets.
+
+first fragment::
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |Ver= 4 |IHL= 5 |Type of Service|       Total Length = 276      |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Identification = 111      |Flg=1|     Fragment Offset = 0 |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |   Time = 119  | Protocol = 6  |        Header Checksum        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                         source address                        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                      destination address                      |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                             data                              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                             data                              |
+   \                                                               \
+   \                                                               \
+   |                             data                              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                             data                              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+second fragment::
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |Ver= 4 |IHL= 5 |Type of Service|       Total Length = 216      |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Identification = 111      |Flg=0|  Fragment Offset  =  32 |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |   Time = 119  | Protocol = 6  |        Header Checksum        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                         source address                        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                      destination address                      |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                             data                              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                             data                              |
+   \                                                               \
+   \                                                               \
+   |                             data                              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |            data               |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+datagram containing options
+---------------------------
+
+Example Internet Datagram::
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |Ver= 4 |IHL= 8 |Type of Service|       Total Length = 576      |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |       Identification = 111    |Flg=0|     Fragment Offset = 0 |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |   Time = 123  |  Protocol = 6 |       Header Checksum         |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                        source address                         |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                      destination address                      |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   | Opt. Code = x | Opt.  Len.= 3 | option value  | Opt. Code = x |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   | Opt. Len. = 4 |           option value        | Opt. Code = 1 |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   | Opt. Code = y | Opt. Len. = 3 |  option value | Opt. Code = 0 |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                             data                              |
+   \                                                               \
+   \                                                               \
+   |                             data                              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                             data                              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+
+APPENDIX B:  Data Transmission Order
+====================================
+
+Transmission Order of Bytes::
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |       1       |       2       |       3       |       4       |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |       5       |       6       |       7       |       8       |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |       9       |      10       |      11       |      12       |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+Significance of Bits::
+
+      0 1 2 3 4 5 6 7
+     +-+-+-+-+-+-+-+-+
+     |1 0 1 0 1 0 1 0|
+     +-+-+-+-+-+-+-+-+
+
+     代表: 170 (decimal)
+     single-octet field: 第0位是最高位
+     multi-octet field: 第1个octet的第0位是最高位
+
+
+参考
+====
+
+* https://www.rfc-editor.org/rfc/rfc791.html
+
+
