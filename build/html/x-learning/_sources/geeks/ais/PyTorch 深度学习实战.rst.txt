@@ -672,132 +672,14 @@ ResNet
 分词
 ^^^^
 
-
-NLP 分词工具::
-
-	开源版:
-	jieba、HanLP、THULAC
-
-	腾讯、百度、阿里等公司也有相应的商业付费工具
+.. note:: 参见【分词】章节
 
 
-jieba 的使用示例::
-
-	// 分词
-	import jieba
-	text = "极客时间棒呆啦"
-	# jieba.cut 得到的是 generator 形式的结果
-	seg = jieba.cut(text)  
-	print(' '.join(seg)) 
-	# Get： 极客 时间 棒呆 啦
-
-
-	// 词性标注
-	import jieba.posseg as posseg
-	text = "一天不看极客时间我就浑身难受"
-	# 形如 pair ('word, 'pos') 的结果
-	seg = posseg.cut(text)  
-	print([se for se in seg]) 
-	# Get [pair (' 一天 ', 'm'), pair (' 不 ', 'd'), pair (' 看 ', 'v'), pair (' 极客 ', 'n'), pair (' 时间 ', 'n'), pair (' 我 ', 'r'), pair (' 就 ', 'd'), pair (' 浑身 ', 'n'), pair (' 难受 ', 'v')]
 
 关键词的提取
 ^^^^^^^^^^^^
 
-基于统计特征的方法
-""""""""""""""""""
-
-* 这种类型的方法最为经典的就是 TF-IDF（term frequency–inverse document frequency，词频 - 逆向文件频率）。该方法最核心的思想非常简单：一个单词在文件中出现的次数越多，它的重要性越高；但它在语料库中出现的频率越高，它的重要性反而越小。
-
-.. figure:: https://img.zhaoweiguo.com/uPic/2023/06/C7SiaR.png
-
-	在 TF-IDF 中，词频（TF）表示关键字在文本中出现的频率。而逆向文件频率 (IDF)  是由包含该词语的文件的数目除以总文件数目得到的，一般情况下还会取对数对结果进行缩放。
-
-.. note:: 基于统计的方法的特点在于，对单词出现的次数以及分布进行数学上的统计，从而发现相应的规律和重要性（权重），并以此作为关键词提取的依据。
-
-
-* 跟分词一样，关键词的提取目前也有很多集成工具包，比如 NLTK（Natural Language Toolkit），它是一个非常著名的自然语言处理工具包，是 NLP 研究领域常用的 Python 库。我们仍旧可以使用 pip install nltk 命令来进行安装。
-
-使用 ``NLTK`` 来计算 TF-IDF::
-
-	from nltk import word_tokenize
-	from nltk import TextCollection
-	sents=['i like jike','i want to eat apple','i like lady gaga']
-
-	# 首先进行分词
-	sents=[word_tokenize(sent) for sent in sents]
-	# 构建语料库
-	corpus=TextCollection(sents)
-	# 计算 TF
-	tf=corpus.tf('one',corpus)
-	# 计算 IDF
-	idf=corpus.idf('one')
-	# 计算任意一个单词的 TF-IDF
-	tf_idf=corpus.tf_idf('one',corpus)
-
-
-
-基于词图模型的关键词提取
-""""""""""""""""""""""""
-
-* 首先要构建文本一个图结构，用来表示语言的词语网络。然后对语言进行网络图分析，在这个图上寻找具有重要作用的词或者短语，即关键词。
-* 最经典的就是 TextRank 算法了，它脱胎于更为经典的网页排序算法 PageRank。
-
-PageRank 算法的核心内容有两点::
-
-	如果一个网页被很多其他网页链接到的话，就说明这个网页比较重要，也就是 PageRank 值会相对较高。
-	如果一个 PageRank 值很高的网页，链接到一个其他的网页，那么被链接到的网页的 PageRank 值会相应地因此而提高。
-
-
-.. figure:: https://img.zhaoweiguo.com/uPic/2023/06/IAirlW.jpg
-
-	TextRank 的基本流程
-
-jieba 也有了相应的集成算法::
-
-	jieba.analyse.textrank(sentence, topK=20, withWeight=False, allowPOS=('ns', 'n', 'vn', 'v'), withFlag=False)
-	// 重要参数
-	sentence 是待处理的文本
-	topK 是选择最重要的 K 个关键词
-
-
-
-基于主题模型的关键词提取
-""""""""""""""""""""""""
-
-* 实际上它也是一种基于统计的模型，只不过它会 “发现” 文档集合中出现的抽象的 “主题”，并用于挖掘文本中隐藏的语义结构。
-* LDA（Latent Dirichlet Allocation）文档主题生成模型，是最典型的基于主题模型的算法。
-
-利用已经集成好的工具包 ``gensim`` 来实现使用这个模型::
-
-	from gensim import corpora, models
-	import jieba.posseg as jp
-	import jieba
-
-	texts = [line.strip() for line open ('input.txt', 'r')]
-
-	# 老规矩，先分词
-	words_list = []
-	for text in texts:
-	  words = [w.word for w in jp.cut(text)]
-	  words_list.append(words)
-
-	# 构建文本统计信息，遍历所有的文本，为每个不重复的单词分配序列 id，同时收集该单词出现的次数
-	dictionary = corpora.Dictionary(words_list)
-
-	# 构建语料，将 dictionary 转化为一个词袋。
-	# corpus 是一个向量的列表，向量的个数就是文档数。你可以输出看一下它内部的结构是怎样的。
-	corpus = [dictionary.doc2bow(words) for words in words_list]
-
-	# 开始训练 LDA 模型
-	lda_model = models.ldamodel.LdaModel(corpus=corpus, num_topics=8, id2word=dictionary, passes=10)
-
-
-	参数:
-		num_topics 代表生成的主题的个数
-		id2word 即为 dictionary，它把 id 都映射成为字符串
-		passes 相当于深度学习中的 epoch，表示模型遍历语料库的次数
-
-
+.. note:: 参见【关键词提取】章节
 
 
 
@@ -807,63 +689,21 @@ jieba 也有了相应的集成算法::
 语言模型
 ^^^^^^^^
 
-* 语言模型是根据语言客观事实而进行的语言抽象数学建模，是一种对应关系。
-* 可以使用概率统计的方法来建立一个语言模型，这种模型我们称之为统计语言模型。
-
-统计语言模型
-""""""""""""
-
-* 统计语言模型的原理，简单来说就是计算一句话是自然语言（也就是一个正常句子）的概率。
-* 最为经典的就是基于马尔可夫假设 n-gram 语言模型，它也是被广泛采用的模型之一。
-
-统计语言模型示例讲解::
-
-	给定一个句子 S=w1,w2,w3,…,wn，
-	则生成该句子的概率为：p (S)=p (w1,w2,w3,w4,w5,…,wn)，
-	再由链式法则我们可以继续得到：p (S)=p (w1) p (w2|w1) p (w3|w1,w2)…p (wn|w1,w2,…,wn-1)
-	那么这个 p (S) 就是我们所要的统计语言模型。
-
-.. note:: 但这样参数量真的实在是太大了，语料中数据存在稀疏的问题，基于此问题，我们假设：对于文本中的一个词，它出现的概率，很大程度上是由这个单词前面的一个或者几个单词决定的，这就是马尔可夫假设。
-
-几种马尔可夫假设::
-
-	unigram（一元模型）
-		单词的出现仅由其本身决定的，与其他单词无关，就变成了最简单的形式：p (wn)
-	bigram
-		只由前面的一个单词决定，那它就是 p (wn|wn-1)
-	trigram
-		由前面两个单词决定，则变为 p (wn|wn-2wn-1)
-
-
-
-神经网络语言模型
-""""""""""""""""
-
-* ngram 模型一定程度上减少了参数的数量，但是如果 n 比较大，或者相关语料比较少的时候，数据稀疏问题仍然不能得到很好地解决。如：把水浒传的文本放入模型中进行统计训练，最后却问模型林冲和潘金莲的关系，因为基于 ngram 的统计模型实在是收集不到两者共现的文本。
-
-.. note:: 从本质上说，神经网络语言模型也是通过 ngram 来进行语言的建模，但是神经网络的学习不是通过计数统计的方法，而是通过神经网络内部神经元针对数据不断更新。
-
-.. figure:: https://img.zhaoweiguo.com/uPic/2023/06/j3B88T.jpg
-
-	需要建立一个 M*N 大小的矩阵，并随机初始化里面的每一个数值，其中 M 表示的是词语的数量，N 表示词语的维度。
-
-.. figure:: https://img.zhaoweiguo.com/uPic/2023/06/3cfs5Q.jpg
-
-	让这个矩阵学到内容
-
-.. note:: 统计语言模型的本质是基于词与词共现频次的统计，而神经网络语言模型则是给每个词分别赋予了向量空间的位置作为表征，从而计算它们在高维连续空间中的依赖关系。
+.. note:: 参见【语言模型】章节
 
 
 注意力机制
 ^^^^^^^^^^
 
-* 对于一个由 n 个单词组成的句子来说，不同位置的单词，重要性是不一样的。因此，我们需要让模型 “注意” 到那些相对更加重要的单词，这种方式我们称之为注意力机制，也称作 Attention 机制。
-* 关于注意力机制最经典的论文就是大名鼎鼎的《`Attention Is All You Need <https://arxiv.org/abs/1706.03762>`_》
+.. note:: 参见【注意力机制】章节
+
 
 小结
 ^^^^
 
 * 通过语言模型，我们可以将语言文字变成可以计算的形式，让文字之间有了更为直接的关联。有了注意力机制，我们可以让模型了解到哪些是应该被更加关注的内容，从而提高语言模型的效果。
+
+
 
 23 _ 情感分析: 如何使用LSTM进行情感分析
 ---------------------------------------
@@ -887,6 +727,24 @@ jieba 也有了相应的集成算法::
 
 * BERT 还有多语言的优势，通过基于字符、字符片段、单词等不同粒度的 token 覆盖并作 ``WordPiece``，能够覆盖上百种语言，甚至可以说，只要你能够发明出一种逻辑上自洽的语言，BERT 就能够处理。
 
+思考题
+^^^^^^
+
+* BERT 处理文本是有最大长度要求的（512），那么遇到长文本，该怎么办呢？
+* 1. 截断法::
+
+	截断法是非常常用办法，大致分为三种，head 截断，tail 截断，head+tail 截断。
+	head 截断即从文本开头直到限制的字数。
+	tail 截断是从结尾开始往前截断。
+	head+tail 截断，开头和结尾各保留一部分，比例参数是一个可以调节超参数。
+	缺点：处理方法较为暴力，不是太长的文本
+
+* 2.Pooling 法，缺点性能较差
+* 3. 压缩法，提取文本中有限 segment，但压缩效果可能会很有限。
+
+
+
+
 
 25 _ 摘要: 如何快速实现自动文摘生成
 -----------------------------------
@@ -902,14 +760,16 @@ jieba 也有了相应的集成算法::
 
 自动文摘有两种解决方案::
 
-	一种是抽取式（Extractive）的，就是从原文中提取一些关键的句子，组合成一篇摘要
-	一种是生成式（Abstractive）
+	一种是抽取式(Extractive)的，就是从原文中提取一些关键的句子，组合成一篇摘要
+	一种是生成式(Abstractive)
 
 
 评价指标
 """"""""
 
 * 评价自动摘要的效果通常使用 ROUGE（Recall Oriented Understudy for Gisting Evaluation）评价。
+* ROUGE 评价法参考了机器翻译自动评价方法，并且考虑了 N-gram 共同出现的程度。这个方法具体是这样设计的：首先由多个专家分别生成人工摘要，构成标准摘要集；然后对比系统生成的自动摘要与人工生成的标准摘要，通过统计二者之间重叠的基本单元（n 元语法、词序或词对）的数目，来评价摘要的质量。通过与多专家人工摘要的对比，提高评价系统的稳定性和健壮性。
+
 
 ROUGE 主要包括以下 4 种评价指标::
 
@@ -918,25 +778,10 @@ ROUGE 主要包括以下 4 种评价指标::
 	3.ROUGE-S，基于顺序词对统计
 	4.ROUGE-W，在 ROUGE-L 的基础上，考虑串的连续匹配。
 
-* BART 的全称是 Bidirectional and Auto-Regressive Transformers（双向自回归变压器）。它是由 Facebook AI 在 2019 年提出的一个新的预训练模型，结合了双向 Transformer 和自回归 Transformer，在文本生成相关任务中达到了 SOTA 的结果
-* BART 论文: https://arxiv.org/abs/1910.13461
+BART
+^^^^
 
-BART 原理与特点分析
-^^^^^^^^^^^^^^^^^^^
-
-.. figure:: https://img.zhaoweiguo.com/uPic/2023/06/I3T7mR.jpg
-
-	Transformer 左半边为 Encoder，右半边为 Decoder。Encoder 和 Decoder 的结构
-
-
-* Encoder 负责将原始文本进行 self-attention，并获得句子中每个词的词向量，最经典的 Encoder 架构就是上节课所学习的 BERT，但是单独 Encoder 结构不适用于文本生成任务。
-* Decoder 的输入与输出之间错开一个位置，这是为了模拟文本生成时，不能让模型看到未来的词，这种方式称为 Auto-Regressive（自回归）。例如 GPT 等基于 Decoder 结构的模型通常适用于做文本生成任务，但是无法学习双向的上下文语境信息。
-
-
-.. figure:: https://img.zhaoweiguo.com/uPic/2023/06/kR1qxa.jpg
-
-	BART 模型的结构看似与 Transformer 没什么不同，主要区别在于 BART 的预训练阶段。首先在 Encoder 端使用多种噪声对原始文本进行破坏，然后再使用 Decoder 重建原始文本。由于 BART 本身就是在 sequence-to-sequence 的基础上构建并且进行预训练，它天然就适合做序列生成的任务，例如：问答、文本摘要、机器翻译等。在生成任务上获得进步的同时，在一些文本理解类任务上它也可以取得很好的效果。
-
+.. note:: 参见【BART】章节
 
 快速文摘生成
 ^^^^^^^^^^^^

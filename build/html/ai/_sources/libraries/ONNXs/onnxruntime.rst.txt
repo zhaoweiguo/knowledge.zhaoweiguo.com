@@ -1,0 +1,152 @@
+onnxruntime
+###########
+
+* 官网: https://onnxruntime.ai/
+* GitHub(MIT License): https://github.com/microsoft/onnxruntime
+* 文档: https://onnxruntime.ai/docs
+* Youtube: https://www.youtube.com/@ONNXRuntime
+* [example]inference: https://github.com/microsoft/onnxruntime-inference-examples
+* [example]training: https://github.com/microsoft/onnxruntime-training-examples
+
+简介
+====
+
+* ``ONNX Runtime`` is a cross-platform inference and training machine-learning accelerator.
+* ``ONNX Runtime inference`` can enable faster customer experiences and lower costs, supporting models from deep learning frameworks such as PyTorch and TensorFlow/Keras as well as classical machine learning libraries such as scikit-learn, LightGBM, XGBoost, etc. ONNX Runtime is compatible with different hardware, drivers, and operating systems, and provides optimal performance by leveraging hardware accelerators where applicable alongside graph optimizations and transforms
+* ``ONNX Runtime training`` can accelerate the model training time on multi-node NVIDIA GPUs for transformer models with a one-line addition for existing PyTorch training scripts.
+
+
+
+安装
+====
+
+::
+
+    pip install onnxruntime-gpu
+    or
+    pip install onnxruntime
+
+使用
+====
+
+PyTorch CV
+----------
+
+Export the model using ``torch.onnx.export`` ::
+
+    torch.onnx.export(model,                                # model being run
+                      torch.randn(1, 28, 28).to(device),    # model input (or a tuple for multiple inputs)
+                      "fashion_mnist_model.onnx",           # where to save the model (can be a file or file-like object)
+                      input_names = ['input'],              # the model's input names
+                      output_names = ['output'])            # the model's output names
+
+Load the onnx model with ``onnx.load``::
+
+    import onnx
+    onnx_model = onnx.load("fashion_mnist_model.onnx")
+    onnx.checker.check_model(onnx_model)
+
+
+Create inference session using ort.InferenceSession::
+
+    import onnxruntime as ort
+    import numpy as np
+    x, y = test_data[0][0], test_data[0][1]
+    ort_sess = ort.InferenceSession('fashion_mnist_model.onnx')
+    outputs = ort_sess.run(None, {'input': x.numpy()})
+
+    # Print Result
+    predicted, actual = classes[outputs[0][0].argmax(0)], classes[y]
+    print(f'Predicted: "{predicted}", Actual: "{actual}"')
+
+PyTorch NLP
+-----------
+
+Export Model::
+
+    # Export the model
+    torch.onnx.export(model,                     # model being run
+                    (text, offsets),           # model input (or a tuple for multiple inputs)
+                    "ag_news_model.onnx",      # where to save the model (can be a file or file-like object)
+                    export_params=True,        # store the trained parameter weights inside the model file
+                    opset_version=10,          # the ONNX version to export the model to
+                    do_constant_folding=True,  # whether to execute constant folding for optimization
+                    input_names = ['input', 'offsets'],   # the model's input names
+                    output_names = ['output'], # the model's output names
+                    dynamic_axes={'input' : {0 : 'batch_size'},    # variable length axes
+                                  'output' : {0 : 'batch_size'}})
+
+Load the model using onnx.load::
+
+    import onnx
+    onnx_model = onnx.load("ag_news_model.onnx")
+    onnx.checker.check_model(onnx_model)
+
+Create inference session with ort.infernnce::
+
+    import onnxruntime as ort
+    import numpy as np
+    ort_sess = ort.InferenceSession('ag_news_model.onnx')
+    outputs = ort_sess.run(None, {'input': text.numpy(),
+                                'offsets':  torch.tensor([0]).numpy()})
+    # Print Result
+    result = outputs[0].argmax(axis=1)+1
+    print("This is a %s news" %ag_news_label[result[0]])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

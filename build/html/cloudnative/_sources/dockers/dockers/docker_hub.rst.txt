@@ -121,6 +121,35 @@ scratch::
     $ docker pull mysql:5.7.28
     $ docker pull mysql:8
 
+    # Starting a MySQL instance
+    $ docker run --name mysql-server -e MYSQL_ROOT_PASSWORD=pwd -d mysql:tag
+
+    # client
+    $ docker run -it --rm mysql mysql -h<host> -u<user> -p
+
+
+    # docker-compose:
+    # Use root/example as user/password credentials
+    version: '3.1'
+
+    services:
+
+      db:
+        image: mysql
+        # NOTE: use of "mysql_native_password" is not recommended: https://dev.mysql.com/doc/refman/8.0/en/upgrading-from-previous-series.html#upgrade-caching-sha2-password
+        # (this is just an example, not intended to be a production configuration)
+        command: --default-authentication-plugin=mysql_native_password
+        restart: always
+        environment:
+          MYSQL_ROOT_PASSWORD: example
+
+      adminer:
+        image: adminer
+        restart: always
+        ports:
+          - 8080:8080
+
+
 * key/value数据库`redis <https://hub.docker.com/_/redis>`_::
     
     $ docker pull redis:5.0   # FROM debian:buster-slim

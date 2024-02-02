@@ -14,35 +14,54 @@ Anaconda是Python的一个开源发行版本，主要面向科学计算。包管
 
 Conda是一种通用包管理系统，旨在构建和管理任何语言的任何类型的软件。因此，它也适用于Python包。　　因为conda来自于Python(更具体地说是PyData)社区，许多人错误地认为它基本上是一个Python包管理器。情况并非如此：conda旨在管理任何软件堆栈中的包和依赖关系。在这个意义上，它不像pip，更像是apt或yum等跨平台版本。
 
+
+
+conda分为anaconda和miniconda::
+
+    anaconda是包含一些常用包
+    miniconda则是精简版，需要啥装啥
+
+
 安装
 ====
+
+下载网站:
+---------
+
+* miniconda: https://conda.io/miniconda.html
+* anaconda: https://www.anaconda.com/distribution/
+
 
 ::
 
     安装过程: 印象笔记(20200229Docker安装Conda)
 
-    conda分为anaconda和miniconda
-    anaconda是包含一些常用包
-    miniconda则是精简版，需要啥装啥
-    
-    下载网站:
-    miniconda:
-    https://conda.io/miniconda.html
-    
-    anaconda:
-    https://www.anaconda.com/distribution/
 
     下载后直接执行sh命令,如:
     ./Miniconda3-latest-MacOSX-x86_64.sh
 
 
+升级conda::
 
-Docker::
+    // 
+    $ conda update conda
+
+If you'd prefer that conda's base environment not be activated on startup::
+
+    $ conda config --set auto_activate_base false
+
+
+
+Docker
+------
+
+::
 
     $ docker pull continuumio/miniconda3
     $ docker pull continuumio/miniconda2
     $ docker pull continuumio/anaconda2
     $ docker pull continuumio/anaconda3
+
 
 
 环境相关命令
@@ -80,6 +99,9 @@ Docker::
     conda activate venv
     conda install pip
 
+    e. 基于指定环境创建新环境
+    $ conda create -n <new> --clone <old>
+
 
     # 注：对已经创建了虚拟环境,也可以手动安装 Python 开发文件和编译工具
     # 1. 安装 Python 开发文件
@@ -104,54 +126,76 @@ Docker::
 
     $ conda remove -n myenv --all
 
-6. 重命名环境(把一个原来叫做py2的环境重新命名成python2)::
-
-    $ conda create -n python2 --clone py2
 
 
 
 
-安装命令
-========
+包操作命令
+==========
 
-::
+搜索需要的安装包::
+
+    $  conda search gatk
+
+安装包::
 
     $ conda install pytorch torchvision -c pytorch
 
 
-安装命令::
-
     $ conda install gatk
+
     # 安装到指定channel
     $ conda install gatk -c channel
-    搜索需要的安装包:
-    $  conda search gatk
     
     如需要安装特定的版本:
     $ conda install 软件名=版本号
     $ conda install gatk=3.7
 
-    查看已安装软件:
+
+    指定channel安装包
+    $ conda install -c https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge/ numpy
+
+
+指定文件安装包::
+
+    $ conda install --file FILE
+
+查看已安装软件::
+
     $ conda list
 
-    更新指定软件:
+更新指定软件::
+
     $ conda update gatk
-    卸载指定软件:
+
+卸载指定软件::
+
     $ conda remove gatk
 
-
-::
-
-    // 升级conda
-    $ conda update conda
-
-If you'd prefer that conda's base environment not be activated on startup::
-
-    $ conda config --set auto_activate_base false
+show_channel_urls
+=================
 
 
-频道
-====
+设置是否显示每个包的来源 channel 的 URL::
+
+    // 当 show_channel_urls 设置为 "yes" 时
+    // conda list 命令将显示每个包的来源 channel 的 URL
+    // 开启:
+    $  conda config --set show_channel_urls yes
+    // 关闭:
+    $  conda config --set show_channel_urls no
+
+
+
+频道 channels
+=============
+
+
+查看已经添加的channels::
+
+    $ conda config --get channels
+
+
 
 添加频道::
 
@@ -166,19 +210,21 @@ If you'd prefer that conda's base environment not be activated on startup::
     $ conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge/
     $ conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/bioconda/
 
-    显示安装的频道
-    $  conda config --set show_channel_urls yes
 
-    查看已经添加的channels:
-    $ conda config --get channels
-
-文件::
-
-    已添加的channel在哪里查看
-    ~/.condarc
+    $ conda config --prepend channels new_channel
+    说明:
+        --add 是将指定的 new_channel 添加到 channels 列表的最前面
+        --prepend 是将指定的 new_channel 添加到 channels 列表的最后面
 
 
-镜像
+清除索引缓存::
+
+    conda clean -i
+
+.. warning:: 有时你明明看到channel已经配置好了，就是很慢，原因就是没有清除索引
+
+
+文件
 ====
 
 直接修改文件 ``~/.condarc`` ::
@@ -236,6 +282,31 @@ If you'd prefer that conda's base environment not be activated on startup::
     6. 通道和来源
     conda安装通过添加各种通道,安装源比较丰富。
     pip主要通过PyPI来源安装Python库。
+
+
+常见问题
+========
+
+ERROR: Could not build wheels for uwsgi, which is required to install pyproject.toml-based projects
+---------------------------------------------------------------------------------------------------
+
+
+*  在使用 Anaconda 虚拟环境时遇到这个问题，可能是因为 Anaconda 环境中没有完整的 Python 开发工具链::
+
+    conda install python=3.x-dev
+    # x换成你要安装的 Python 版本
+    # 如:
+    conda install python=3.8.16-dev
+
+ImportError: Tornado requires an up-to-date SSL module.
+-------------------------------------------------------
+
+* 原因: 缺少 SSL 模块::
+
+    $ conda install -c conda-forge openssl
+
+* 结论：怀疑可能的原因是版本冲突，最终是修改python版本从3.14改为3.6解决的
+
 
 
 

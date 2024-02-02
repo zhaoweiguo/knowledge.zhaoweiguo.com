@@ -2,6 +2,180 @@ Tutorials: Learning Oriented Lessons
 ####################################
 
 
+Learning-oriented lessons that introduce a particular gensim feature, e.g. a model (Word2Vec, FastText) or technique (similarity queries or text summarization).
+
+
+
+Word2Vec Model
+==============
+
+* Introduces Gensim’s Word2Vec model and demonstrates its use on the `Lee Evaluation Corpus <https://hekyll.services.adelaide.edu.au/dspace/bitstream/2440/28910/1/hdl_28910.pdf>`_
+* Word2Vec 是一种广泛使用的基于神经网络的算法，通常称为 “深度学习”（尽管 word2vec 本身相当浅薄）。 word2vec 使用大量未注释的纯文本，自动学习单词之间的关系。输出是向量，每个单词一个向量，具有显着的线性关系，使我们能够执行以下操作::
+
+    vec(“king”) - vec(“man”) + vec(“woman”) =~ vec(“queen”)
+    vec("中国北京") – vec("中国") + vec("日本") =~ vec("日本东京").
+
+
+Review: Bag-of-words
+--------------------
+
+* bag-of-words model: 将每个文档转换为固定长度的整数向量
+
+如::
+
+    John likes to watch movies. Mary likes movies too.
+    John also likes to watch football games. Mary hates football.
+
+    =>
+
+    [1, 2, 1, 1, 2, 1, 1, 0, 0, 0, 0]
+    [1, 1, 1, 1, 0, 1, 0, 1, 2, 1, 1]
+
+    # 每个元素计算特定单词在文档中出现的次数
+    # 元素的顺序是任意的
+    # 此例中，元素的顺序对应于单词:
+    ["John", "likes", "to", "watch", "movies", "Mary", "too", "also", "football", "games", "hates"]
+
+
+Bag-of-words models are surprisingly effective, but have several weaknesses::
+
+    1. they lose all information about word order
+        n-grams 模型包考虑长度为 n 的单词短语，将文档表示为固定长度的向量，以捕获局部词序，但会受到数据稀疏和高维度的影响
+    2. 该模型不会尝试学习底层单词的含义，因此向量之间的距离并不总是反映含义的差异
+
+.. note:: The ``Word2Vec`` model addresses this second problem.
+
+
+
+
+Introducing: the Word2Vec Model
+-------------------------------
+
+* Word2Vec 是一种更新的模型，它使用浅层神经网络将单词嵌入到低维向量空间中。结果是一组词向量，其中向量空间中靠近的向量根据上下文具有相似的含义，而彼此远离的词向量具有不同的含义。
+* The are two versions of this model and Word2Vec class implements them both::
+
+    1. Skip-grams (SG)
+    2. Continuous-bag-of-words (CBOW)
+
+
+参考
+----
+
+* Original C toolkit and word2vec papers by Google: https://code.google.com/archive/p/word2vec/
+* API docs: gensim.models.word2vec: https://radimrehurek.com/gensim/models/word2vec.html#module-gensim.models.word2vec
+
+
+
+Doc2Vec Model
+=============
+
+* [论文]An Empirical Evaluation of Models of Text Document Similarity: https://hekyll.services.adelaide.edu.au/dspace/bitstream/2440/28910/1/hdl_28910.pdf
+* [论文]Doc2Vec algorithm: https://cs.stanford.edu/~quocle/paragraph_vector.pdf
+
+* Doc2Vec is a Model that represents each Document as a Vector. 
+
+Review: Word2Vec Model
+----------------------
+
+* Word2Vec 是一种更新的模型，它使用浅层神经网络将单词嵌入到低维向量空间中。结果是一组词向量，其中向量空间中靠近的向量根据上下文具有相似的含义，而彼此远离的词向量具有不同的含义。例如， strong 和 powerful 会很近， strong 和 Paris 会相对较远。
+* 使用 Word2Vec 模型，我们可以计算文档中每个单词的向量。但是如果我们想计算整个文档的向量怎么办？我们可以对文档中每个单词的向量进行平均 - 虽然这既快速又粗略，但它通常很有用。然而，还有更好的方法……
+
+
+Introducing: Paragraph Vector
+-----------------------------
+
+* In Gensim, we refer to the Paragraph Vector model as Doc2Vec.
+
+
+There are two implementations::
+
+    Paragraph Vector - Distributed Memory (PV-DM)
+    Paragraph Vector - Distributed Bag of Words (PV-DBOW)
+
+* PV-DM 类似于 Word2Vec CBOW。文档向量是通过训练神经网络来获得的，该神经网络基于上下文词向量和完整文档的文档向量的平均值来预测中心词的综合任务。
+* PV-DBOW 类似于 Word2Vec SG。文档向量是通过训练神经网络来完成从完整文档的文档向量预测目标单词的综合任务而获得的。 
+
+
+
+Ensemble LDA
+============
+
+* EnsembleLda is a method of finding and generating stable topics from the results of multiple topic models, it can be used to remove topics from your results that are noise and are not reproducible.
+* “LDA” 通常指的是 “Latent Dirichlet Allocation”（潜在狄利克雷分配）。这个模型最初由 David Blei、Andrew Ng 和 Michael I. Jordan 于 2003 年提出。
+* LDA 是一种概率主题模型，用于分析文档集合中的主题结构
+* 在 LDA 中，每个文档被看作是多个主题的混合，而每个主题又被看作是多个单词的分布。模型的目标是找到一个能够解释文档中单词分布的主题分布，以及每个文档中主题的分配情况。LDA 的输出包括每个文档的主题分布和每个主题的单词分布。
+
+
+.. note:: 这种多主题的暂没有需求，未来有需求再看
+
+
+
+
+
+FastText Model
+==============
+
+
+与Word2Vec对比
+--------------
+
+* 1. 词形处理
+
+    * The main principle behind fastText is that the morphological structure of a word carries important information about the meaning of the word.
+    * 传统的词嵌入（如 Word2Vec）并不考虑这种结构，因为传统的词嵌入会为每个单词训练唯一的词嵌入。
+    * 对于词形丰富的语言（德语、土耳其语）来说，一个单词可能有大量的词形，而每一种词形都可能很少出现，因此很难训练出好的词嵌入。
+    * fastText 试图通过将每个单词视为其子单词的聚合来解决这个问题。
+
+
+* 2. fastText 在句法任务上的表现明显更好，尤其是当训练语料库规模较小时。不过，Word2Vec 在语义任务上稍微优于 fastText。随着训练语料库规模的增加，差异变得更小。
+
+
+Training models
+---------------
+
+FastText supports the following parameters from the original word2vec::
+
+    1. model:           Training architecture. Allowed values: cbow, skipgram (Default cbow)
+    2. vector_size:     Dimensionality of vector embeddings to be learnt (Default 100)
+    3. alpha:           Initial learning rate (Default 0.025)
+    4. window:          Context window size (Default 5)
+    5. min_count:       Ignore words with number of occurrences below this (Default 5)
+    6. loss:            Training objective. Allowed values: ns, hs, softmax (Default ns)
+    7. sample:          Threshold for downsampling higher-frequency words (Default 0.001)
+    8. negative:        Number of negative words to sample, for ns (Default 5)
+    9. epochs:          Number of epochs (Default 5)
+    10. sorted_vocab:   Sort vocab by descending frequency (Default 1)
+    11. threads:        Number of threads to use (Default 12)
+
+In addition, fastText has three additional parameters::
+
+    1. min_n: min length of char ngrams (Default 3)
+    2. max_n: max length of char ngrams (Default 6)
+    3. bucket: number of buckets used for hashing ngrams (Default 2000000)
+
+
+
+
+
+LDA Model
+=========
+
+* Introduction to Latent Dirichlet Allocation: https://blog.echen.me/2011/08/22/introduction-to-latent-dirichlet-allocation/
+
+
+
+.. note:: 这种多主题的暂没有需求，未来有需求再看
+
+
+
+
+
+
+
+
+
+
+
 
 
 

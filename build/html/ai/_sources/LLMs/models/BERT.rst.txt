@@ -26,6 +26,41 @@ The following BERT models can be used for multilingual tasks::
 	bert-base-multilingual-cased(Masked language modeling+Next sentence prediction,104 langs)
 
 
+* BERT 还有多语言的优势。在以前的算法中，比如 SVM，如果要做多语言的模型，就要涉及分词、提取关键词等操作，而这些操作要求你对该语言有所了解。像阿拉伯文、日语等语言，咱们大概率是看不懂的，这会对我们最后的模型效果产生极大影响。
+* BERT 则不需要担心这个问题，通过基于字符、字符片段、单词等不同粒度的 token 覆盖并作 ``WordPiece``，能够覆盖上百种语言，甚至可以说，只要你能够发明出一种逻辑上自洽的语言，BERT 就能够处理。
+
+
+
+
+模型匹配的格式
+==============
+
+输入的数据不能是直接把词塞到模型里，而是要转化成后面这三种向量::
+
+	1. Token embeddings
+		词向量
+		注意：
+			Token embeddings 的第一个开头的 token 一定得是 “[CLS]”。
+			[CLS] 作为整篇文本的语义表示，用于文本分类等任务
+		如：
+			input_ids
+	2. Segment embeddings
+		这个向量主要是用来将两句话进行区分
+		比如问答任务，会有问句和答句同时输入，这就需要一个能够区分两句话的操作
+		分类任务中，只有一个句子
+		如：
+			token_type_ids
+	3. Position embeddings
+		记录了单词的位置信息
+		如：
+			attention_mask
+
+
+
+
+
+
+
 bert-base-chinese
 =================
 
