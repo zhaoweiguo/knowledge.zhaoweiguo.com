@@ -172,7 +172,8 @@
 <li class="toctree-l4"><a class="reference internal" href="../docker_cmds/cmds/cp.html">docker cp命令</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../docker_compose.html">2.2.6. docker-compose命令</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../gpu.html">2.2.6. GPU专用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../docker_compose.html">2.2.7. docker-compose命令</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../docker_composes/0help.html">帮助</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../docker_composes/0config.html">配置实例</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../docker_composes/0install.html">安装与卸载</a></li>
@@ -184,10 +185,10 @@
 <li class="toctree-l4"><a class="reference internal" href="../docker_composes/question.html">常见问题</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../docker_machine.html">2.2.7. docker-machine命令</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docker_swarm.html">2.2.8. Docker Swarm</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../question.html">2.2.9. 常见问题</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../practice.html">2.2.10. docker实战</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../docker_machine.html">2.2.8. docker-machine命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../docker_swarm.html">2.2.9. Docker Swarm</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../question.html">2.2.10. 常见问题</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../practice.html">2.2.11. docker实战</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../practices/registry.html">运行自己的Docker私有镜像仓库 Registry</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../practices/%E6%97%B6%E5%8C%BA.html">时区</a></li>
 </ul>
@@ -743,6 +744,122 @@ RUN apk add --update ca-certificates \
 WORKDIR /root
 ENTRYPOINT [&quot;kubectl&quot;]
 CMD [&quot;help&quot;]
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span># syntax = docker/dockerfile:experimental
+#
+# NOTE: To build this you will need a docker version &gt; 18.06 with
+#       experimental enabled and DOCKER_BUILDKIT=1
+#
+#       If you do not use buildkit you are not going to have a good time
+#
+#       For reference:
+#           https://docs.docker.com/develop/develop-images/build_enhancements/
+# From: https://github.com/pytorch/pytorch/blob/main/Dockerfile
+
+ARG BASE_IMAGE=ubuntu:20.04
+ARG PYTHON_VERSION=3.8
+
+FROM ${BASE_IMAGE} as dev-base
+RUN apt-get update &amp;&amp; DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        build-essential \
+        ca-certificates \
+        ccache \
+        cmake \
+        curl \
+        git \
+        libjpeg-dev \
+        libpng-dev &amp;&amp; \
+    rm -rf /var/lib/apt/lists/*
+RUN /usr/sbin/update-ccache-symlinks
+RUN mkdir /opt/ccache &amp;&amp; ccache --set-config=cache_dir=/opt/ccache
+ENV PATH /opt/conda/bin:$PATH
+
+FROM dev-base as conda
+ARG PYTHON_VERSION=3.8
+# Automatically set by buildx
+ARG TARGETPLATFORM
+# translating Docker&#39;s TARGETPLATFORM into miniconda arches
+RUN case ${TARGETPLATFORM} in \
+         &quot;linux/arm64&quot;)  MINICONDA_ARCH=aarch64  ;; \
+         *)              MINICONDA_ARCH=x86_64   ;; \
+    esac &amp;&amp; \
+    curl -fsSL -v -o ~/miniconda.sh -O  &quot;https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-${MINICONDA_ARCH}.sh&quot;
+COPY requirements.txt .
+# Manually invoke bash on miniconda script per https://github.com/conda/conda/issues/10431
+RUN chmod +x ~/miniconda.sh &amp;&amp; \
+    bash ~/miniconda.sh -b -p /opt/conda &amp;&amp; \
+    rm ~/miniconda.sh &amp;&amp; \
+    /opt/conda/bin/conda install -y python=${PYTHON_VERSION} cmake conda-build pyyaml numpy ipython &amp;&amp; \
+    /opt/conda/bin/python -mpip install -r requirements.txt &amp;&amp; \
+    /opt/conda/bin/conda clean -ya
+
+FROM dev-base as submodule-update
+WORKDIR /opt/pytorch
+COPY . .
+RUN git submodule update --init --recursive
+
+FROM conda as build
+ARG CMAKE_VARS
+WORKDIR /opt/pytorch
+COPY --from=conda /opt/conda /opt/conda
+COPY --from=submodule-update /opt/pytorch /opt/pytorch
+RUN make triton
+RUN --mount=type=cache,target=/opt/ccache \
+    export eval ${CMAKE_VARS} &amp;&amp; \
+    TORCH_CUDA_ARCH_LIST=&quot;3.5 5.2 6.0 6.1 7.0+PTX 8.0&quot; TORCH_NVCC_FLAGS=&quot;-Xfatbin -compress-all&quot; \
+    CMAKE_PREFIX_PATH=&quot;$(dirname $(which conda))/../&quot; \
+    python setup.py install
+
+FROM conda as conda-installs
+ARG PYTHON_VERSION=3.8
+ARG CUDA_VERSION=12.1
+ARG CUDA_CHANNEL=nvidia
+ARG INSTALL_CHANNEL=pytorch-nightly
+# Automatically set by buildx
+# Note conda needs to be pinned to 23.5.2 see: https://github.com/pytorch/pytorch/issues/106470
+RUN /opt/conda/bin/conda install -c &quot;${INSTALL_CHANNEL}&quot; -y python=${PYTHON_VERSION} conda=23.5.2
+ARG TARGETPLATFORM
+
+# On arm64 we can only install wheel packages.
+RUN case ${TARGETPLATFORM} in \
+         &quot;linux/arm64&quot;)  pip install --extra-index-url https://download.pytorch.org/whl/cpu/ torch torchvision torchaudio ;; \
+         *)              /opt/conda/bin/conda install -c &quot;${INSTALL_CHANNEL}&quot; -c &quot;${CUDA_CHANNEL}&quot; -y &quot;python=${PYTHON_VERSION}&quot; pytorch torchvision torchaudio &quot;pytorch-cuda=$(echo $CUDA_VERSION | cut -d&#39;.&#39; -f 1-2)&quot;  ;; \
+    esac &amp;&amp; \
+    /opt/conda/bin/conda clean -ya
+RUN /opt/conda/bin/pip install torchelastic
+
+FROM ${BASE_IMAGE} as official
+ARG PYTORCH_VERSION
+ARG TRITON_VERSION
+ARG TARGETPLATFORM
+ARG CUDA_VERSION
+LABEL com.nvidia.volumes.needed=&quot;nvidia_driver&quot;
+RUN apt-get update &amp;&amp; DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        ca-certificates \
+        libjpeg-dev \
+        libpng-dev \
+        &amp;&amp; rm -rf /var/lib/apt/lists/*
+COPY --from=conda-installs /opt/conda /opt/conda
+RUN if test -n &quot;${TRITON_VERSION}&quot; -a &quot;${TARGETPLATFORM}&quot; != &quot;linux/arm64&quot;; then \
+        DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends gcc; \
+        rm -rf /var/lib/apt/lists/*; \
+    fi
+ENV PATH /opt/conda/bin:$PATH
+ENV NVIDIA_VISIBLE_DEVICES all
+ENV NVIDIA_DRIVER_CAPABILITIES compute,utility
+ENV LD_LIBRARY_PATH /usr/local/nvidia/lib:/usr/local/nvidia/lib64
+ENV PATH /usr/local/nvidia/bin:/usr/local/cuda/bin:$PATH
+ENV PYTORCH_VERSION ${PYTORCH_VERSION}
+WORKDIR /workspace
+
+FROM official as dev
+# Should override the already installed version from the official-image stage
+COPY --from=build /opt/conda /opt/conda
+
+
+
+
 </pre></div>
 </div>
 <table class="docutils align-default">

@@ -1,0 +1,146 @@
+stats
+#####
+
+Stats 服务器机制，它将 uWSGI 状态作为一个 JSON 对象导出到一个 socket。只需使用 stats 选项，后面跟着一个有效的 socket 地址::
+
+    --stats 127.0.0.1:1717
+    --stats /tmp/statsock
+    --stats :5050
+    --stats @foobar
+
+如果你想通过 HTTP 提供 stats，那么还需要添加 stats-http 选项::
+
+    # Any of the above socket types can also return stats using HTTP
+    --stats 127.0.0.1:1717 --stats-http
+
+示例
+====
+
+启动 uWSGI 服务::
+
+    uwsgi --socket :3031 --stats :1717 --module welcome --master --processes 8
+
+启动udp服务::
+
+    nc 127.0.0.1 1717
+    # or for convenience...
+    uwsgi --connect-and-read 127.0.0.1:1717
+
+
+返回信息::
+
+    {
+      "workers": [{
+        "id": 1,
+        "pid": 31759,
+        "requests": 0,
+        "exceptions": 0,
+        "status": "idle",
+        "rss": 0,
+        "vsz": 0,
+        "running_time": 0,
+        "last_spawn": 1317235041,
+        "respawn_count": 1,
+        "tx": 0,
+        "avg_rt": 0,
+        "apps": [{
+          "id": 0,
+          "modifier1": 0,
+          "mountpoint": "",
+          "requests": 0,
+          "exceptions": 0,
+          "chdir": ""
+        }]
+      }, ...]
+    }
+
+    解释:
+    id: worker 的 ID 标识
+    pid: worker 进程的 PID
+    requests: 处理的请求数量
+    exceptions: 发生的异常数量
+    status: worker 的状态（例如，idle 表示空闲）
+    rss: resident set size，占用的物理内存大小
+    vsz: virtual memory size，占用的虚拟内存大小
+    running_time: worker 运行时间
+    last_spawn: 最后一次重启的时间戳
+    respawn_count: 重启次数
+    tx: 传输字节数
+    avg_rt: 平均响应时间
+    apps: worker 所服务的应用程序的信息，包括
+        应用程序的 ID、修改器、挂载点、处理的请求数量、发生的异常数量和当前目录
+
+
+.. note:: 可以用uwsgitop命令查看
+
+
+
+Pushing statistics (from 1.4)
+=============================
+
+‘file’统计信息推送器::
+
+    [uwsgi]
+    socket = :3031
+    module = foobar
+    master = true
+    stats-push = file:path=/tmp/foobar,freq=10
+    # 每 10 秒附加 JSON 到 /tmp/foobar 文件
+
+
+‘mongodb’统计信息推送器::
+
+    [uwsgi]
+    socket = :3031
+    module = foobar
+    master = true
+
+    plugins = stats_pusher_mongodb
+    stats-push = mongodb:addr=127.0.0.1:5151,collection=uwsgi.mystats,freq=4
+    # 每 4 秒把 JSON 数据插入到 mongodb 服务器 127.0.0.1:5151 上的集合 uwsgi.mystats 中
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

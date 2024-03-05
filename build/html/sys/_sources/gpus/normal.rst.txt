@@ -2,6 +2,162 @@
 #######
 
 
+Basic Commands
+==============
+
+::
+
+    $ lspci | grep VGA      # identify and list the GPUs in your system
+
+
+
+    nvidia-smi      # NVIDIA System Management Interface
+
+    sudo lshw -C display    # provide detailed information about the display controllers including graphics cards.
+
+    inxi -G                 # information about the graphics subsystem, including details about the GPU and the display.
+
+    sudo hwinfo --gfxcard   # obtain detailed information about the graphics cards
+
+
+示例1
+-----
+
+lspci | grep VGA::
+
+    00:02.0 VGA compatible controller: Cirrus Logic GD 5446
+
+sudo lshw -C display::
+
+    *-display:0
+       description: VGA compatible controller
+       product: GD 5446
+       vendor: Cirrus Logic
+       physical id: 2
+       bus info: pci@0000:00:02.0
+       logical name: /dev/fb0
+       version: 00
+       width: 32 bits
+       clock: 33MHz
+       capabilities: vga_controller rom fb
+       configuration: depth=16 driver=cirrus latency=0 resolution=1024,768
+       resources: irq:0 memory:fa000000-fbffffff memory:fe424000-fe424fff memory:c0000-dffff
+    *-display:1
+       description: 3D controller
+       product: GV100GL [Tesla V100 SXM2 32GB]
+       vendor: NVIDIA Corporation
+       physical id: 9
+       bus info: pci@0000:00:09.0
+       version: a1
+       width: 64 bits
+       clock: 33MHz
+       capabilities: pm msi pciexpress bus_master cap_list
+       configuration: driver=nvidia latency=0
+       resources: iomemory:100-ff iomemory:180-17f irq:34 memory:fd000000-fdffffff memory:1000000000-17ffffffff memory:1800000000-1801ffffff
+
+
+nvidia-smi::
+
+    Thu Feb 29 19:54:59 2024
+    +-----------------------------------------------------------------------------+
+    | NVIDIA-SMI 520.61.05    Driver Version: 520.61.05    CUDA Version: 11.8     |
+    |-------------------------------+----------------------+----------------------+
+    | GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+    | Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+    |                               |                      |               MIG M. |
+    |===============================+======================+======================|
+    |   0  Tesla V100-SXM2...  On   | 00000000:00:09.0 Off |                    0 |
+    | N/A   41C    P0    37W / 300W |   4792MiB / 32768MiB |      0%      Default |
+    |                               |                      |                  N/A |
+    +-------------------------------+----------------------+----------------------+
+
+    +-----------------------------------------------------------------------------+
+    | Processes:                                                                  |
+    |  GPU   GI   CI        PID   Type   Process name                  GPU Memory |
+    |        ID   ID                                                   Usage      |
+    |=============================================================================|
+    |    0   N/A  N/A      7562      C   python                            884MiB |
+    |    0   N/A  N/A   1425768      C   ./main                            836MiB |
+    |    0   N/A  N/A   2854007      C   python                           1092MiB |
+    |    0   N/A  N/A   3937597      C   ...3/envs/btc_env/bin/python     1164MiB |
+    |    0   N/A  N/A   4027652      C   ...3/envs/btc_env/bin/python      808MiB |
+    +-----------------------------------------------------------------------------+
+
+
+inxi -G::
+
+    Graphics:
+      Device-1: Cirrus Logic GD 5446 driver: cirrus v: kernel
+      Device-2: NVIDIA GV100GL [Tesla V100 SXM2 32GB] driver: nvidia v: 520.61.05
+      Display: server: X.org v: 1.21.1.4 driver: gpu: cirrus note:  X driver n/a tty: 231x64
+      Message: GL data unavailable in console. Try -G --display
+
+    注:
+        需要安装:
+        sudo apt install inxi
+
+
+sudo hwinfo --gfxcard::
+
+    18: PCI 09.0: 0302 3D controller
+      [Created at pci.386]
+      Unique ID: WL76.hcMmklvUUx9
+      SysFS ID: /devices/pci0000:00/0000:00:09.0
+      SysFS BusID: 0000:00:09.0
+      Hardware Class: graphics card
+      Model: "nVidia GV100GL [Tesla V100 SXM2 32GB]"
+      Vendor: pci 0x10de "nVidia Corporation"
+      Device: pci 0x1db5 "GV100GL [Tesla V100 SXM2 32GB]"
+      SubVendor: pci 0x10de "nVidia Corporation"
+      SubDevice: pci 0x1249
+      Revision: 0xa1
+      Driver: "nvidia"
+      Driver Modules: "nvidia"
+      Memory Range: 0xfd000000-0xfdffffff (rw,non-prefetchable)
+      Memory Range: 0x1000000000-0x17ffffffff (ro,non-prefetchable)
+      Memory Range: 0x1800000000-0x1801ffffff (ro,non-prefetchable)
+      IRQ: 34 (2828758 events)
+      Module Alias: "pci:v000010DEd00001DB5sv000010DEsd00001249bc03sc02i00"
+      Driver Info #0:
+        Driver Status: nvidiafb is not active
+        Driver Activation Cmd: "modprobe nvidiafb"
+      Driver Info #1:
+        Driver Status: nouveau is not active
+        Driver Activation Cmd: "modprobe nouveau"
+      Driver Info #2:
+        Driver Status: nvidia_drm is active
+        Driver Activation Cmd: "modprobe nvidia_drm"
+      Driver Info #3:
+        Driver Status: nvidia is active
+        Driver Activation Cmd: "modprobe nvidia"
+      Config Status: cfg=new, avail=yes, need=no, active=unknown
+
+    19: PCI 02.0: 0300 VGA compatible controller (VGA)
+      [Created at pci.386]
+      Unique ID: _Znp.v67VofT6db4
+      SysFS ID: /devices/pci0000:00/0000:00:02.0
+      SysFS BusID: 0000:00:02.0
+      Hardware Class: graphics card
+      Model: "Red Hat QEMU Virtual Machine"
+      Vendor: pci 0x1013 "Cirrus Logic"
+      Device: pci 0x00b8 "GD 5446"
+      SubVendor: pci 0x1af4 "Red Hat, Inc."
+      SubDevice: pci 0x1100 "QEMU Virtual Machine"
+      Driver: "cirrus"
+      Driver Modules: "cirrus"
+      Memory Range: 0xfa000000-0xfbffffff (ro,non-prefetchable)
+      Memory Range: 0xfe424000-0xfe424fff (rw,non-prefetchable)
+      Memory Range: 0x000c0000-0x000dffff (rw,non-prefetchable,disabled)
+      Module Alias: "pci:v00001013d000000B8sv00001AF4sd00001100bc03sc00i00"
+      Driver Info #0:
+        XFree86 v4 Server Module: cirrus
+      Config Status: cfg=new, avail=yes, need=no, active=unknown
+
+    Primary display adapter: #19
+
+    注：需要安装
+    sudo apt install hwinfo
+
 禁用Nouveau的驱动
 ========================
 

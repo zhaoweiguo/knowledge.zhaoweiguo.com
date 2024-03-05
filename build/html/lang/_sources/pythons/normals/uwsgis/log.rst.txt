@@ -1,0 +1,141 @@
+日志
+####
+
+
+Basic logging
+==============
+
+* uWSGI 中最基本的日志记录的形式是将请求、错误和信息消息写到标准输出 / 标准错误。这是默认配置中使用的方式。
+* 日志重定向的最基本的形式是 --logto / --logto2 / --daemonize 选项，它们允许你重定向日志到文件中。
+
+
+Basic logging to files
+----------------------
+
+要将日志写到文件中，而不是标准输出 / 标准错误，则使用 --logto ，或者同时守护 uWSGI， --daemonize::
+
+    ./uwsgi -s :3031 -w simple_app --daemonize /tmp/mylog.log
+
+    ./uwsgi -s :3031 -w simple_app --logto /tmp/mylog.log
+
+    # logto2 only opens the log file after privileges have been dropped to the specified uid/gid.
+    ./uwsgi -s :3031 -w simple_app --uid 1001 --gid 1002 --logto2 /tmp/mylog.log
+
+
+Basic logging (connected UDP mode)
+-----------------------------------
+
+启用连接 UDP 模式，则传递 UDP 服务器的地址到 --daemonize/--logto 选项::
+
+    ./uwsgi -s :3031 -w simple_app --daemonize 192.168.0.100:1717
+    ./uwsgi -s :3031 -w simple_app --logto 192.168.0.100:1717
+
+需要一个 UDP 服务器，它将管理你的 UDP 消息::
+
+    $ nc -u -p 1717 -s 192.168.0.100 -l
+    or
+    $ ./uwsgi --udp 192.168.0.100:1717
+
+
+
+可插拔记录器
+============
+
+* 要设置一个可插拔记录器，则使用 ``--logger`` 或者 ``--req-logger`` 选项。 
+* ``--logger`` 将为每条消息设置一个记录器，而 ``--req-logger`` 将会为请求信息消息设置一个记录器。
+
+
+语法::
+
+    --logger <plugin>[:options]
+    --logger "<name> <plugin>[:options]" # The quotes are only required on the command line -- config files don't use them
+
+
+示例::
+
+    # 写日志到文件中 
+    req-logger = file:/tmp/reqlog
+    logger = file:/tmp/errlog
+
+    # 写日志到 socket
+    uwsgi --socket :3031 --logger socket:192.168.173.19:5050
+
+    # 写日志到 syslog
+    uwsgi --socket :3031 --logger syslog:uwsgi1234
+
+    # Redis 记录器 
+    --logger redislog[:<host>,<command>,<prefix>]
+    --logger redislog:/tmp/redis.sock,rpush foo,example.com
+
+
+    # MongoDB 记录器 
+    --logger mongodblog[:<host>,<collection>,<node>]
+    --logger mongodblog:127.0.0.1:9090,foo.bar
+
+
+
+
+
+格式化--logformat
+=================
+
+
+offsetof::
+
+    %(uri) -> REQUEST_URI
+    %(method) -> REQUEST_METHOD
+    %(user) -> REMOTE_USER
+    %(addr) -> REMOTE_ADDR
+    %(host) -> HTTP_HOST
+    %(proto) -> SERVER_PROTOCOL
+    %(uagent) -> HTTP_USER_AGENT (自 1.4.5 起)
+    %(referer) -> HTTP_REFERER (自 1.4.5 起)
+
+函数::
+
+    %(status) -> HTTP 响应状态码
+    %(micros) -> 响应时间，以微秒为单位
+    %(msecs) -> 响应时间，以毫秒为单位
+    %(time) -> 请求开始的时间戳
+    %(ctime) -> 请求开始的 ctime
+    %(epoch) -> Unix 格式的当前时间
+    %(size) -> 响应体大小 + 响应头大小 (自 1.4.5 起)
+    %(ltime) -> 人类可读 (Apache 风格) 的请求时间 (自 1.4.5 起)
+    %(hsize) -> 响应头大小 (自 1.4.5 起)
+    %(rsize) -> 响应体大小 (自 1.4.5 起)
+    %(cl) -> 请求内容体大小 (自 1.4.5 起)
+    %(pid) -> 处理请求的 worker 的 pid (自 1.4.6 起)
+    %(wid) -> 处理请求的 worker 的 id (自 1.4.6 起)
+    %(switches) -> 异步切换数 (自 1.4.6 起)
+    %(vars) -> 请求中的 CGI 变量数 (自 1.4.6 起)
+    %(headers) -> 已生成的响应头数 (自 1.4.6 起)
+    %(core) -> 运行请求的核心 (自 1.4.6 起)
+    %(vsz) -> 地址空间 / 虚拟内存使用 (单位为字节) (自 1.4.6 起)
+    %(rss) -> RSS 内存使用 (单位为字节) (自 1.4.6 起)
+    %(vszM) -> 地址空间 / 虚拟内存使用 (单位为 MB) (自 1.4.6 起)
+    %(rssM) -> RSS 内存使用 (单位为 MB) (自 1.4.6 起)
+    %(pktsize) -> 内部的请求 uwsgi 包大小 (自 1.4.6 起)
+    %(modifier1) -> 请求的 modifier1 (自 1.4.6 起)
+    %(modifier2) -> 请求的 modifier2 (自 1.4.6 起)
+    %(metric.XXX) -> 访问 XXX 度量值 (见 度量（Metrics）子系统)
+    %(rerr) -> 请求的读错误数 (自 1.9.21 起)
+    %(werr) -> 请求的写错误数 (自 1.9.21 起)
+    %(ioerr) -> 请求的读写错误数 (自 1.9.21 起)
+    %(tmsecs) -> 请求开始时间戳，自纪元起，单位为毫秒 (自 1.9.21 起)
+    %(tmicros) -> 请求开始时间戳，自纪元起，单位为微秒 (自 1.9.21 起)
+    %(var.XXX) -> 请求变量 XXX 的内容 (例如 var.PATH_INFO，自 1.9.21 起可用)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

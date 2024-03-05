@@ -1,0 +1,202 @@
+restic
+######
+
+
+* GitHub: https://github.com/restic/restic
+* 官网: https://restic.readthedocs.io/en/stable/
+* 简介: Fast, secure, efficient backup program
+
+
+
+
+安装
+====
+
+Local directory
+---------------
+
+::
+
+    $ restic -r /path/to/restic init
+
+
+
+REST Server
+------------
+
+set up a remote REST server instance::
+
+    参见: https://github.com/restic/rest-server
+
+初使化::
+
+    restic -r rest:http://host:8000/ init
+
+    restic -r rest:https://host:8000/ init
+    restic -r rest:https://user:pass@host:8000/ init
+    restic -r rest:https://user:pass@host:8000/my_backup_repo/ init
+
+可以使用环境变量指定用户名、密码::
+
+    export RESTIC_REST_USERNAME=<MY_REST_SERVER_USERNAME>
+    export RESTIC_REST_PASSWORD=<MY_REST_SERVER_PASSWORD>
+
+
+Usage
+=====
+
+Available Commands::
+
+    backup        Create a new backup of files and/or directories
+    cache         Operate on local cache directories
+    cat           Print internal objects to stdout
+    check         Check the repository for errors
+    copy          Copy snapshots from one repository to another
+    diff          Show differences between two snapshots
+    dump          Print a backed-up file to stdout
+    find          Find a file, a directory or restic IDs
+    forget        Remove snapshots from the repository
+    generate      Generate manual pages and auto-completion files (bash, fish, zsh, powershell)
+    help          Help about any command
+    init          Initialize a new repository
+    key           Manage keys (passwords)
+    list          List objects in the repository
+    ls            List files in a snapshot
+    migrate       Apply migrations
+    mount         Mount the repository
+    prune         Remove unneeded data from the repository
+    recover       Recover data from the repository not referenced by snapshots
+    repair        Repair the repository
+    restore       Extract the data from a snapshot
+    rewrite       Rewrite snapshots to exclude unwanted files
+    self-update   Update the restic binary
+    snapshots     List all snapshots
+    stats         Scan the repository and show basic statistics
+    tag           Modify tags on snapshots
+    unlock        Remove locks other processes created
+    version       Print version information
+
+
+
+
+Backing up
+----------
+
+::
+
+    $ restic -r /srv/restic-repo --verbose backup ~/work
+    open repository
+    enter password for repository:
+    password is correct
+    lock repository
+    load index files
+    start scan
+    start backup
+    scan finished in 1.837s
+    processed 1.720 GiB in 0:12
+    Files:        5307 new,     0 changed,     0 unmodified
+    Dirs:         1867 new,     0 changed,     0 unmodified
+    Added:      1.200 GiB
+    snapshot 40dc1520 saved
+
+
+
+
+
+Listing all snapshots
+----------------------
+
+list all the snapshots stored in the repository::
+
+    $ restic -r /srv/restic-repo snapshots
+
+    $ restic -r  rest:http://restic.zhaoweiguo.com/repos snapshots
+
+::
+
+    $ restic -r /srv/restic-repo snapshots
+    enter password for repository:
+    ID        Date                 Host    Tags   Directory
+    ----------------------------------------------------------------------
+    40dc1520  2015-05-08 21:38:30  kasimir        /home/user/work
+    79766175  2015-05-08 21:40:19  kasimir        /home/user/work
+    bdbd3439  2015-05-08 21:45:17  luigi          /home/art
+    590c8fc8  2015-05-08 21:47:38  kazik          /srv
+    9f0bc19e  2015-05-08 21:46:11  luigi          /srv
+
+
+filter the listing by directory path::
+
+    restic -r /srv/restic-repo snapshots --path="/srv"
+    enter password for repository:
+    ID        Date                 Host    Tags   Directory
+    ----------------------------------------------------------------------
+    590c8fc8  2015-05-08 21:47:38  kazik          /srv
+    9f0bc19e  2015-05-08 21:46:11  luigi          /srv
+
+Copying snapshots between repositories
+--------------------------------------
+
+transfer snapshots between two repositories::
+
+    $ restic -r /srv/restic-repo-copy copy --from-repo /srv/restic-repo
+    repository d6504c63 opened successfully, password is correct
+    repository 3dd0878c opened successfully, password is correct
+
+    snapshot 410b18a2 of [/home/user/work] at 2020-06-09 23:15:57.305305 +0200 CEST)
+      copy started, this may take a while...
+    snapshot 7a746a07 saved
+
+    snapshot 4e5d5487 of [/home/user/work] at 2020-05-01 22:44:07.012113 +0200 CEST)
+    skipping snapshot 4e5d5487, was already copied to snapshot 50eb62b7
+
+
+Removing files from snapshots
+-----------------------------
+
+remove the unwanted files from affected snapshots by rewriting them using the rewrite command::
+
+    $ restic -r /srv/restic-repo rewrite --exclude secret-file
+    repository c881945a opened (repository version 2) successfully, password is correct
+
+    snapshot 6160ddb2 of [/home/user/work] at 2022-06-12 16:01:28.406630608 +0200 CEST)
+    excluding /home/user/work/secret-file
+    saved new snapshot b6aee1ff
+
+    snapshot 4fbaf325 of [/home/user/work] at 2022-05-01 11:22:26.500093107 +0200 CEST)
+
+    modified 1 snapshots
+
+
+    $ restic -r /srv/restic-repo rewrite --exclude secret-file 6160ddb2
+    repository c881945a opened (repository version 2) successfully, password is correct
+
+    snapshot 6160ddb2 of [/home/user/work] at 2022-06-12 16:01:28.406630608 +0200 CEST)
+    excluding /home/user/work/secret-file
+    new snapshot saved as b6aee1ff
+
+    modified 1 snapshots
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

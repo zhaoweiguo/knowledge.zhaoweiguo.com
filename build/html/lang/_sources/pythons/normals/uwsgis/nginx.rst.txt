@@ -9,10 +9,12 @@ nginx::
 
     uwsgi_pass unix:///tmp/uwsgi.sock;
     include uwsgi_params;
-    or
+ 
+    or(using TCP sockets)
+ 
     uwsgi_pass 127.0.0.1:3031;
     include uwsgi_params;
-		
+
 uwsgi_params::
 
     uwsgi_param QUERY_STRING $query_string;
@@ -28,8 +30,7 @@ uwsgi_params::
     uwsgi_param SERVER_ADDR $server_addr;
     uwsgi_param SERVER_PORT $server_port;
     uwsgi_param SERVER_NAME $server_name;
-		
-		
+
 Clustering::
 
     upstream uwsgicluster {
@@ -39,7 +40,7 @@ Clustering::
     }
     //remeber modify your uwsgi_pass directive:
     uwsgi_pass uwsgicluster;
-		
+
 Dynamic apps::
 
     ./uwsgi -s /tmp/uwsgi.sock -C -M -A 4 -m

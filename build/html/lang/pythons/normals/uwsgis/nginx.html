@@ -33,8 +33,8 @@
   <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
     <link rel="index" title="索引" href="../../../genindex.html" />
     <link rel="search" title="搜索" href="../../../search.html" />
-    <link rel="next" title="uwsgi example" href="example.html" />
-    <link rel="prev" title="uwsgi安装与基本用法" href="install.html" /> 
+    <link rel="next" title="日志" href="log.html" />
+    <link rel="prev" title="stats" href="stats.html" /> 
 
   
   <script src="../../../_static/js/modernizr.min.js"></script>
@@ -534,6 +534,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../lib_standards/sys.html">2.3.2. sys模块</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../lib_standards/time.html">2.3.3. python日期</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../lib_standards/inspect.html">2.3.4. inspect库</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../lib_standards/queue.html">2.3.5. 队列</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../lib_3rd.html">2.4. python三方库</a><ul>
@@ -578,9 +579,16 @@
 <li class="toctree-l3"><a class="reference internal" href="../skill_ipynb.html">2.5.8. ipynb技巧</a></li>
 <li class="toctree-l3 current"><a class="reference internal" href="../uwsgi.html">2.5.9. uwsgi的使用</a><ul class="current">
 <li class="toctree-l4"><a class="reference internal" href="normal.html">常用</a></li>
-<li class="toctree-l4"><a class="reference internal" href="install.html">uwsgi安装与基本用法</a></li>
+<li class="toctree-l4"><a class="reference internal" href="install.html">uwsgi安装</a></li>
+<li class="toctree-l4"><a class="reference internal" href="usage.html">使用说明书</a></li>
+<li class="toctree-l4"><a class="reference internal" href="config.html">配置文件</a></li>
+<li class="toctree-l4"><a class="reference internal" href="stats.html">stats</a></li>
 <li class="toctree-l4 current"><a class="current reference internal" href="#">uwsgi nginx</a></li>
-<li class="toctree-l4"><a class="reference internal" href="example.html">uwsgi example</a></li>
+<li class="toctree-l4"><a class="reference internal" href="log.html">日志</a></li>
+<li class="toctree-l4"><a class="reference internal" href="var.html">uwsgi协议魔术变量</a></li>
+<li class="toctree-l4"><a class="reference internal" href="question.html">常见问题</a></li>
+<li class="toctree-l4"><a class="reference internal" href="uwsgitop.html">uwsgitop命令</a></li>
+<li class="toctree-l4"><a class="reference internal" href="profile.html">调优</a></li>
 </ul>
 </li>
 </ul>
@@ -625,10 +633,10 @@
 <li class="toctree-l4"><a class="reference internal" href="../../tools/conda.html#id5">包操作命令</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../tools/conda.html#show-channel-urls">show_channel_urls</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../tools/conda.html#channels">频道 channels</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../tools/conda.html#id6">文件</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../tools/conda.html#id7">对比</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../tools/conda.html#id8">常见问题</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../tools/conda.html#id9">参考</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../tools/conda.html#channel">更新镜像源channel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../tools/conda.html#id6">对比</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../tools/conda.html#id7">常见问题</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../tools/conda.html#id8">参考</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../tools/Poetry.html">2.7.6. Poetry</a><ul>
@@ -1274,7 +1282,10 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../c.html">8. C语言使用文档</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../cs/c_normal.html">8.1. 常用功能</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../cs/c_command.html">8.2. 常见命令</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../cs/gdb.html">8.3. gdb</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../cs/gdb.html">8.3. gdb</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../cs/gdb.html#id2">8.3.1. 临时</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../rust.html">9. Rust语言</a><ul>
@@ -1441,7 +1452,9 @@
 <p>nginx:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">uwsgi_pass</span> <span class="n">unix</span><span class="p">:</span><span class="o">///</span><span class="n">tmp</span><span class="o">/</span><span class="n">uwsgi</span><span class="o">.</span><span class="n">sock</span><span class="p">;</span>
 <span class="n">include</span> <span class="n">uwsgi_params</span><span class="p">;</span>
-<span class="ow">or</span>
+
+<span class="ow">or</span><span class="p">(</span><span class="n">using</span> <span class="n">TCP</span> <span class="n">sockets</span><span class="p">)</span>
+
 <span class="n">uwsgi_pass</span> <span class="mf">127.0.0.1</span><span class="p">:</span><span class="mi">3031</span><span class="p">;</span>
 <span class="n">include</span> <span class="n">uwsgi_params</span><span class="p">;</span>
 </pre></div>
@@ -1502,10 +1515,10 @@ uwsgi_param SERVER_NAME $server_name;
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="example.html" class="btn btn-neutral float-right" title="uwsgi example" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="log.html" class="btn btn-neutral float-right" title="日志" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="install.html" class="btn btn-neutral" title="uwsgi安装与基本用法" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="stats.html" class="btn btn-neutral" title="stats" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
