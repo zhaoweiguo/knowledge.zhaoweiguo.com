@@ -1,0 +1,67 @@
+subjectAlternativeName
+######################
+
+关键词::
+
+    Self Signed SSL/TLS Certificate with IP Address
+
+
+操作
+====
+
+alt.ext::
+
+    subjectAltName = @alt_names
+
+    [alt_names]
+    IP.1 = 0.0.0.0
+    IP.2 = 192.168.1.104
+    DNS.1 = myserver.com
+    DNS.2 = *.myserver.com
+
+说明::
+
+    使用 -extfile 选项指定
+
+执行命令::
+
+    // 生成 ca 证书
+    $ openssl req -newkey rsa:2048 -passout pass:123456 -keyout ca_key.pem -x509 -days 3650 -out ca.crt -subj "/C=CN/ST=BJ/L=BJ/O=COM/OU=NSP/CN=CA/emailAddress=admin@zhaoweiguo.com"
+    // 生成证书
+    $ openssl req -newkey rsa:2048 -passout pass:server -keyout new.key.secure  -out new.csr -subj "/C=CN/ST=Beijing/L=Beijing/O=Wei64 (Beijing) Limited/OU=Gordon/CN=192.168.1.104/emailAddress=admin@zhaoweiguo.com"
+    // 签名证书
+    $ openssl x509 -req -sha256 -days 3650 -in new.csr -CA ca.crt -CAkey ca_key.pem -passin pass:123456 -CAcreateserial -out new.crt -extfile alt.ext
+
+
+查看::
+
+    $ openssl x509 -in new.crt -noout -text
+    ...
+            X509v3 Subject Alternative Name:
+            IP Address:0.0.0.0, IP Address:192.168.1.104, DNS:myserver.com, DNS:*.myserver.com
+    ...
+
+
+
+不支持通配符 IP
+===============
+
+`RFC2818 上相关讨论 <https://datatracker.ietf.org/doc/html/rfc2818#section-3.1>`_ ::
+
+     In some cases, the URI is specified as an IP address rather than a
+     hostname. In this case, the iPAddress subjectAltName must be present
+     in the certificate and must exactly match the IP in the URI.
+
+
+
+参考
+====
+
+* 带有通配符 IP 的证书 subjectAlternativeName: https://www.it1352.com/2212848.html
+* 使用 openssl 生成证书: https://blog.csdn.net/ljskr/article/details/84570254
+* Self Signed SSL/TLS Certificate with IP Address: https://nodeployfriday.com/posts/self-signed-cert/
+
+
+
+
+

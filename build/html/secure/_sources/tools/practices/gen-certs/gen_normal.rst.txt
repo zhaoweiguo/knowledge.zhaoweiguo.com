@@ -1,0 +1,62 @@
+证书创建-基本
+#############
+
+.. note:: 证书和密钥给出了直接一步生成和分步生成两种形式，两种形式是等价的
+
+
+CA证书及密钥生成
+================
+
+方法一----直接生成CA密钥及其「自签名」证书::
+
+    $ openssl req -newkey rsa:2048 -passout pass:123456 -keyout ca_key.pem -x509 -days 365 -out ca.crt -subj "/C=CN/ST=BJ/L=BJ/O=COM/OU=NSP/CN=CA/emailAddress=youremail@qq.com"
+
+方法二----分步生成CA密钥及其「自签名」证书::
+
+    $ openssl genrsa  -passout pass:123456 -out ca_key.pem 2048
+    $ openssl req -new -x509 -days 365 -key ca_key.pem -out ca.crt -subj "/C=CN/ST=BJ/L=BJ/O=COM/OU=NSP/CN=CA/emailAddress=youremail@qq.com"
+
+服务器证书及密钥生成
+====================
+
+方法一----直接生成服务器密钥及「待签名」证书::
+
+    $ openssl req -newkey rsa:2048 -passout pass:server -keyout server_key.pem  -out server.csr -subj "/C=CN/ST=Beijing/L=Beijing/O=Wei64 (Beijing) Limited/OU=CED/CN=*.zhaoweiguo.com/emailAddress=youremail@qq.com"
+
+方法二----分步生成服务器密钥及「待签名」证书::
+
+    # openssl genrsa  -passout pass:server -out server_key.pem 2048
+    # openssl req -new -key server_key.pem -passin pass:server -out server.csr -subj "/C=CN/ST=Beijing/L=Beijing/O=Wei64 (Beijing) Limited/OU=CED/CN=*.zhaoweiguo.com/emailAddress=youremail@qq.com"
+
+方法三-基于指定key生成「待签名」证书::
+
+    openssl req -new -key s.key -out s.csr -subj "/C=CN/ST=Beijing/L=Beijing/O=Wei64 (Beijing) Limited/OU=CED/CN=*.zhaoweiguo.com/emailAddress=youremail@qq.com"
+
+
+
+签名证书
+========
+
+签名服务器证书
+--------------
+
+使用CA证书及密钥对服务器证书进行签名::
+
+    # openssl x509 -req -days 365 -in server.csr -CA ca.crt -CAkey ca_key.pem -passin pass:123456 -CAcreateserial -out server.crt
+
+将加密的RSA密钥转成未加密的RSA密钥，避免每次读取都要求输入解密密码::
+
+    # 注意: 读取私钥文件时要输入的解密密码passin
+    openssl rsa -in server_key.pem -out server_key.pem.unsecure
+
+
+脚本生成证书以及秘钥
+====================
+
+.. note:: 说明：按说上面命令都可以，这个脚本也应该可以，但不知道为啥不行
+
+.. literalinclude:: ./files/gen_cert_key.sh
+
+
+
+

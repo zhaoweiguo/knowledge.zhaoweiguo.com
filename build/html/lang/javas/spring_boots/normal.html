@@ -33,12 +33,18 @@
   <link rel="stylesheet" href="../../_static/copybutton.css" type="text/css" />
     <link rel="index" title="索引" href="../../genindex.html" />
     <link rel="search" title="搜索" href="../../search.html" />
-    <link rel="next" title="3.2.2. Mongo" href="mongo.html" />
+    <link rel="next" title="3.2.2. spring配置加载加载" href="config_load.html" />
     <link rel="prev" title="3.2. Sprint Boot" href="../spring_boot.html" /> 
 
   
   <script src="../../_static/js/modernizr.min.js"></script>
+  <script src="../../_static/js/jquery.min.js"></script>
 
+
+<!-- 评论插件 gittalk start -->
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script> -->
+<!-- 评论插件 gittalk end -->
 
 
 </head>
@@ -686,7 +692,11 @@
 <li class="toctree-l4"><a class="reference internal" href="#id5">学习知识</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="mongo.html">3.2.2. Mongo</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="config_load.html">3.2.2. spring配置加载加载</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="config_load.html#nacos">使用 Nacos 作为配置中心如何使本地配置优先</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="mongo.html">3.2.3. Mongo</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="mongo.html#id2">前提</a></li>
 <li class="toctree-l4"><a class="reference internal" href="mongo.html#id3">基本查询方式</a></li>
 <li class="toctree-l4"><a class="reference internal" href="mongo.html#bson">Bson查询方式</a></li>
@@ -700,7 +710,29 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../annotation.html">3.4. Java注解</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../annotation.html#spring-1">3.4.1. Spring 注解配置 </a></li>
+<li class="toctree-l3"><a class="reference internal" href="../annotation.html#id2">3.4.1. 自带</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../annotation.html#postconstruct">&#64;PostConstruct</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../annotation.html#enablescheduling">&#64;EnableScheduling</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../annotation.html#scheduled">&#64;Scheduled定时</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../annotation.html#order">&#64;Order</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../annotation.html#spring">3.4.2. Spring 注解配置</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../annotation.html#springbootapplication">&#64;SpringBootApplication</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../annotation.html#autowired">&#64;Autowired</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../annotation.html#resource">&#64;Resource</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../annotation.html#service">&#64;Service</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../annotation.html#qualifier">&#64;Qualifier</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../annotation.html#configuration">&#64;Configuration</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../annotation.html#mybatis-plus">3.4.3. MyBatis-Plus</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../annotation.html#tablename-1">&#64;TableName/1</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../annotation.html#lombok">3.4.4. Lombok</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../annotation.html#swagger">3.4.5. Swagger</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../annotation.html#id3">3.4.6. 参考</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../concurrency.html">3.5. 并发相关</a></li>
@@ -1499,7 +1531,7 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="mongo.html" class="btn btn-neutral float-right" title="3.2.2. Mongo" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="config_load.html" class="btn btn-neutral float-right" title="3.2.2. spring配置加载加载" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="../spring_boot.html" class="btn btn-neutral" title="3.2. Sprint Boot" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
@@ -1570,16 +1602,16 @@
       });
 
 
-      var gitalk = new Gitalk({
-              clientID: '565177626b5d46427009',
-              clientSecret: 'b2a36e67e1d2a73e43667f46d571c2624f8e1026',
-              repo: 'knowledge',
-              owner: 'zhaoweiguo',
-              admin: ['zhaoweiguo'],
-              id: location.pathname,      // Ensure uniqueness and length less than 50
-              distractionFreeMode: false  // Facebook-like distraction free mode
-            })
-      gitalk.render('gitalk-container')
+      // var gitalk = new Gitalk({
+      //         clientID: '565177626b5d46427009',
+      //         clientSecret: 'b2a36e67e1d2a73e43667f46d571c2624f8e1026',
+      //         repo: 'knowledge',
+      //         owner: 'zhaoweiguo',
+      //         admin: ['zhaoweiguo'],
+      //         id: location.pathname,      // Ensure uniqueness and length less than 50
+      //         distractionFreeMode: false  // Facebook-like distraction free mode
+      //       })
+      // gitalk.render('gitalk-container')
 
   </script>
 

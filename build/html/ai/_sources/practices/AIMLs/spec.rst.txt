@@ -1,0 +1,396 @@
+AIML 2.1 Documentation
+======================
+
+2. AIML System Overview
+-----------------------
+
+Bot Configuration and state::
+
+    1. AIML Files - Each bot is assumed to have its own set of AIML files.
+    2. Learnf file - one AIML file with special meaning is the file created by the tag (defined below).
+    3. Bot properties - global values for a bot, such as or <bot name=”species"/>.
+    4. Substitutions - normalizing substitutions, person substitutions, gender substitutions and sentence splitters are unique to each bot.
+    5. Predicate defaults - Predicate values in AIML are like local variables specific to one client.
+    6. Sets and Maps - AIML 2.0 includes a feature that implements sets (collections) and maps.
+
+
+Client session and state::
+
+    1. Initialization - when a client connects to a bot, before they begin chatting, the bot must initialize a client session.
+    2. Predicate defaults - Initialization step also includes setting predicates to the default values specified for the bot.
+    3. Predicate state - The chat session must keep track of the state of predicate values.
+    4. Topic - The AIML topic is a unique predicate value, because it becomes part of the pattern matching process.
+    5. Conversation log - Generally an interpreter keeps a conversation log of the interactions between a bot and a client.
+    6. Learned categories - Categories learned with are saved globally for the bot (see Learnf file above), but categories learned with the tag are specific to each client. 
+
+Counting interactions and sentence splitting::
+
+    <input/> - the current input sentence
+    <input index="2"/> - the previous input sentence
+    <input index="N"/> - the Nth previous input sentence.
+    <request/> = <request index="1"/> - the client’s last input request, consisting of one or more input sentences.
+    <request index="2"/> - the client’s 2nd to last input request.
+    <request index="N"/> - the client’s Nth to last input request.
+    <response/> = <response index="1"/> - the bot’s last response, consisting of one or more sentences.
+    <response index="2"/> - the bot’s second to last response.
+    <response index="N"/> - the bot’s Nth to last response.
+    <that/> = <that index="1,1"/> - the last sentence the bot uttered.
+    <that index="1,2"/> - the 2nd to last sentence in <response index="1"/>, provided it exists.
+    <that index="2,1"/> - The last sentence of <response index="2"/>.
+
+
+
+4. AIML Syntax
+--------------
+
+BNF表达式::
+
+    (EXPRESSION) 
+        - The expression EXPRESSION is optional.
+    (EXPRESSION)* 
+        - The expression EXPRESSION may be repeated 0 or more times.
+    (EXPRESSION)+ 
+        - The expression EXPRESSION may be repeated 1 or more times.
+    EXPRESSION3 ::== EXPRESSION1 | EXPRESSION2 
+        - Expression EXPRESSION3 may consist of either EXPRESSION1 or EXPRESSION2. 
+        This is equivalent to the two statements
+    EXPRESSION3 ::== EXPRESSION1
+    EXPRESSION3 ::== EXPRESSION2
+
+The full description of AIML syntax follows::
+
+    AIML_FILE ::== <aiml( version="AIML_VERSION")>AIML</aiml>
+    AIML_VERSION ::== 0.9 | 1.0 | 1.1 | 2.0
+    AIML ::== (CATEGORY_EXPRESSION | TOPIC_EXPRESSION)*
+
+    TOPIC_EXPRESSION ::==
+        <topic name="PATTERN_EXPRESSION">(CATEGORY_EXPRESSION)+</topic>
+
+    CATEGORY_EXPRESSION ::== 
+        <category>
+            <pattern>PATTERN_EXPRESSION</pattern>
+            (<that> PATTERN_EXPRESSION</that>)
+            (<topic>PATTERN_EXPRESSION</topic>)
+            <template>TEMPLATE_EXPRESSION</template>
+        </category>
+
+    PATTERN_EXPRESSION ::== WORD | PRIORITY_WORD | WILDCARD | SET_STATEMENT | PATTERN_SIDE_BOT_PROPERTY_EXPRESSION
+    PATTERN_EXPRESSION ::== PATTERN_EXPRESSION PATTERN_EXPRESSION
+    with exactly one space “ “ between pattern expressions.
+
+
+    WORD ::==  [a-zA-Z0-9]*     # 对英文来说
+    WILDCARD ::== * | _
+    SET_STATEMENT ::== <set>SET_NAME</set>
+    SET_NAME ::== WORD
+    PRIORITY_WORD ::== $WORD
+    PATTERN_SIDE_BOT_PROPERTY_EXPRESSION ::== <bot name="PROPERTY_NAME"/> | <bot> <name>PROPERTY_NAME</name></bot>
+    PROPERTY_NAME ::== WORD
+
+
+
+    TEMPLATE_EXPRESSION ::== TEXT | TAG_EXPRESSION | (TEMPLATE_EXPRESSION)*
+    说明:
+        TEXT 是由除 “<” 和 “>” 之外的任何字符组成的任何普通英文文本，必须分别指定为 < 和 >
+
+TAG_EXPRESSION 详解::
+
+    TAG_EXPRESSION ::==
+    RANDOM_EXPRESSION |
+    CONDITION_EXPRESSION |
+    SRAI_EXPRESSION |
+    SRAIX_EXPRESSION |
+    SET_PREDICATE_EXPRESSION |
+    GET_PREDICATE_EXPRESSION |
+    MAP_EXPRESSION |
+    BOT_PROPERTY_EXPRESSION |
+    DATE_EXPRESSION |
+    THINK_EXPRESSION |
+    EXPLODE_EXPRESSION | NORMALIZE_EXPRESSION |
+    DENORMALIZE_EXPRESSION |
+    FORMAL_EXPRESSION |
+    UPPERCASE_EXPRESSION | LOWERCASE_EXPRESSION |
+    SENTENCE_EXPRESSION |
+    PERSON_EXPRESSION |
+    PERSON2_EXPRESSION |
+    GENDER_EXPRESSION |
+    SYSTEM_EXPRESSION |
+    STAR_EXPRESSION | THATSTAR_EXPRESSION |
+    TOPICSTAR_EXPRESSION |
+    THAT_EXPRESSION |
+    REQUEST_EXPRESSION |
+    RESPONSE_EXPRESSION |
+    LEARN_EXPRESSION |
+    INTERVAL_EXPRESSION |
+    <sr/> | <id/> | <vocabulary/> | <program/>
+
+    RANDOM_EXPRESSION ::== <random>(<li>TEMPLATE_EXPRESSION</li>)+</random>
+
+    CONDITION_EXPRESSION ::==
+        <condition( CONDITION_ATTRIBUTES)>(CONDITION_ITEM_EXPRESSION)*</condition>
+    CONDITION_ATTRIBUTES ::== (name="NAME") | (value="NORMALIZED_TEXT")
+    CONDITION_ITEM_EXPRESSION ::== <li( CONDITION_ATTRIBUTES)*> (CONDITION_ITEM_COMPONENT)*</li>
+    CONDITION_ITEM_COMPONENT ::== <name>TEMPLATE_EXPRESSION</name> | <value> TEMPLATE_EXPRESSION</value> | <loop/> | TEMPLATE_EXPRESSION
+
+    SRAI_EXPRESSION ::== 
+        <srai>TEMPLATE_EXPRESSION</srai>
+    SRAIX_EXPRESSION ::== 
+        <sraix( SRAIX_ATTRIBUTES)*>TEMPLATE_EXPRESSION</sraix> |
+        <sraix>(SRAIX_ATTRIBUTE_TAGS)*TEMPLATE_EXPRESSION</sraix>
+    SRAIX_ATTRIBUTES ::= host="HOSTNAME" | botid="BOTID" | hint="TEXT" | apikey=" APIKEY" | service="SERVICE"
+    SRAIX_ATTRIBUTE_TAGS ::= <host>TEMPLATE_EXPRESSION</host> | <botid> TEMPLATE_EXPRESSION</botid> | <hint>TEMPLATE_EXPRESSION</hint> | <apikey> TEMPLATE_EXPRESSION</apikey> | <service>TEMPLATE_EXPRESSION</service>
+
+    GET_PREDICATE_EXPRESSION ::== <get name="WORD"/> | <get><name> TEMPLATE_EXPRESSION</name></get> | <get var=”WORD”> | <get><var>WORD</var></ get>
+    SET_PREDICATE_EXPRESSION ::== <set name="WORD">TEMPLATE_EXPRESSION</set> | <set><name>TEMPLATE_EXPRESSION</name>TEMPLATE_EXPRESSION</set> | <set var=" WORD">TEMPLATE_EXPRESSION</set> | <set><var>TEMPLATE_EXPRESSION</var> TEMPLATE_EXPRESSION</set>
+
+    MAP_EXPRESSION ::= <map name="WORD">TEMPLATE_EXPRESSION</map> | <map><name> TEMPLATE_EXPRESSION</name>TEMPLATE_EXPRESSION</map>
+
+    BOT_PROPERTY_EXPRESSION ::== <bot name="PROPERTY"/> | <bot><name> TEMPLATE_EXPRESSION</name></bot>
+
+    DATE_EXPRESSION ::== <date( DATE_ATTRIBUTES)*/> | <date>(DATE_ATTRIBUTE_TAG)</ date>
+    DATE_ATTRIBUTES ::== (format="LISP_DATE_FORMAT") | (jformat="JAVA DATE FORMAT")
+    DATE_ATTRIBUTE_TAG ::== <format>TEMPLATE_EXPRESSION</format> | <jformat> TEMPLATE_EXPRESSION</jformat>
+
+    THINK_EXPRESSION ::== <think>TEMPLATE_EXPRESSION</think>
+
+    EXPLODE_EXPRESSION ::== <explode>TEMPLATE_EXPRESSION</explode>
+    NORMALIZE_EXPRESSION ::== <normalize>TEMPLATE_EXPRESSION</normalize>
+
+    DENORMALIZE_EXPRESSION ::== <denormalize>TEMPLATE_EXPRESSION</denormalize>
+
+    PERSON_EXPRESSION ::== 
+        <person>TEMPLATE_EXPRESSION</person>
+    PERSON2_EXPRESSION ::== 
+        <person2>TEMPLATE_EXPRESSION</person2>
+
+    GENDER_EXPRESSION ::== 
+        <gender>TEMPLATE_EXPRESSION</gender>
+
+    SYSTEM_EXPRESSION ::==
+        <system( TIMEOUT_ATTRIBUTE)>TEMPLATE_EXPRESSION</system> |
+        <system><timeout>TEMPLATE_EXPRESSION</timeout></system>
+    TIMEOUT_ATTRIBUTE :== timeout=”NUMBER”
+    STAR_EXPRESSION ::== <star( INDEX_ATTRIBUTE)/> | <star><index> TEMPLATE_EXPRESSION</index></star>
+    INDEX_ATTRIBUTE ::== index="NUMBER"
+
+    THATSTAR_EXPRESSION ::== 
+        <thatstar( INDEX_ATTRIBUTE)/> | <thatstar><index> TEMPLATE_EXPRESSION</index></thatstar>
+    TOPICSTAR_EXPRESSION ::== 
+        <topicstar( INDEX_ATTRIBUTE)/> | <topicstar><index> TEMPLATE_EXPRESSION</index></topicstar>
+
+    THAT_EXPRESSION ::== 
+        <that( THAT_INDEX)/> | <that><index>TEMPLATE_EXPRESSION</ index></that>
+    THAT_INDEX ::= index="NUMBER,NUMBER"
+
+    REQUEST_EXPRESSION ::== 
+        <request( INDEX_ATTRIBUTE)/> | <request><index> TEMPLATE_EXPRESSION</index></request>
+
+    RESPONSE_EXPRESSION ::== 
+        <response( INDEX_ATTRIBUTE)/> | <response><index> TEMPLATE_EXPRESSION</index></response>
+
+    LEARN_EXPRESSION ::== 
+        <learn>LEARN_CATEGORY_EXPRESSION</learn> |
+        <learnf>LEARN_CATEGORY_EXPRESSION</learnf>
+    LEARN_CATEGORY_EXPRESSION ::==
+        <category><pattern>LEARN_PATTERN_EXPRESSION</pattern>
+        (<that>LEARN_P ATTERN_EXPRESSION</that>)
+        (<topic>LEARN_PATTERN_EXPRESSION</topic>)
+        <template>LEARN_TEMPLATE_EXPRESSION</template></category>
+    EVAL_EXPRESSION ::== <eval>TEMPLATE_EXPRESSION</eval>
+    LEARN_PATTERN_EXPRESSION ::== PATTERN_EXPRESSION | EVAL_EXPRESSION
+    LEARN_PATTERN_EXPRESSION ::== (LEARN_PATTERN_EXPRESSION)+
+    LEARN_TEMPLATE_EXPRESSION ::== TEXT | TAG_EXPRESSION | EVAL_EXPRESSION
+    LEARN_TEMPLATE_EXPRESSION ::== (LEARN_TEMPLATE_EXPRESSION)*
+
+    INTERVAL_EXPRESSION ::== <interval>(DATE_ATTRIBUTE_TAGS)<style> (TEMPLATE_EXPRESSION)</style><from>(TEMPLATE_EXPRESSION)</from><to> (TEMPLATE_EXPRESSION)</to></interval>
+
+
+
+
+
+
+5. AIML Pattern Language
+------------------------
+
+
+.. note:: 处理日语和中文等不使用空格分隔单词的语言的输入的一种方法是在每个字符之间放置一个隐式空格，并将每个字符视为一个 “单词”。
+
+Zero or more words wildcards
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+说明::
+
+    AIML 1.0 introductes 2 wildcards: * and _
+    AIML 2.0 introductes 2 wildcards: ^ and #
+    这4个wildcards功能一样，区别在于优先级不同:
+        '#' > '_' > 精确单词 > '^' > '*'
+
+    操作符的优先级从高到低为：
+    1. $word（最高优先级）
+    2. #
+    3. _
+    4. Exact word match
+    5. <set>name</set>
+    6. ^
+    7. *（最低优先级）
+
+
+AIML示例::
+
+    <category>
+        <pattern>SHARPTEST #</pattern>
+        <template>#star = <star/></template>
+    </category>
+    <category>
+        <pattern>SHARPTEST # TEST</pattern>
+        <template>#star = <star/></template>
+    </category>
+    <category>
+        <pattern># KEYWORD #</pattern>
+        <template>Found KEYWORD</template>
+    </category>
+    <category>
+        <pattern>^ CARETTEST</pattern>
+        <template>^star = <star/></template>
+    </category>
+
+
+使用此AIML的对话说明::
+
+    Human: sharptest
+    Robot: #star = unknown
+    Human: sharptest foo
+    Robot: #star = foo
+    Human: sharptest foo bar test       # 这儿奇怪为啥匹配的是category2而不是1
+    Robot: #star = foo bar
+    Human: xyz abc carettest
+    Robot: ^star = xyz abc
+    Human: carettest
+    Robot: ^star = unknown
+    Human: keyword
+    Robot: Found KEYWORD
+    Human: abc def keyword ghi jkl
+    Robot: Found KEYWORD
+
+
+
+$ operator
+^^^^^^^^^^
+
+* In some cases it is desirable to make an exact word match have higher priority than _.
+* The $ indicates that the word has higher matching priority than _.
+
+例::
+
+    <category>
+    <pattern>$WHO IS ALICE</pattern>
+    <template>I am Alice.</template>
+    </category>
+
+
+AIML Sets
+^^^^^^^^^
+
+AIML 2.0 中的模式可以包含引用 AIML 集的表达式::
+
+    <set>color</set>    # can match any member of this set.
+
+示例::
+
+    <pattern><set>color</set></pattern>
+    <pattern><SET>COLOR</SET></pattern>
+    <pattern>I LIKE <set>color</set></pattern>
+
+
+
+6. AIML Semantics
+-----------------
+
+* 具体的语法，很多，需要的时候现查吧
+
+
+7. AIML Pattern Matching
+------------------------
+
+* Every AIML category is uniquely specified by an ``input pattern``, ``that pattern`` and ``topic pattern``.
+* if the and/or are left unspecified, they are assumed to have a default value of *
+
+示例::
+
+    <category>
+        <pattern>DO YOU HAVE A DOG</pattern>
+        <template>Can your dog be my pet too?</template>
+    </category>
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/01/ZQe2Pe.png
+
+    Figure 1. Pattern Path for a category.
+
+* AIML 解释器通过读取 AIML 文件、为每个类别构建模式路径并将路径插入有向有根图来构建称为 Graphmaster 的对象
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/01/1eycDx.png
+
+    Figure 2. Simple Graphmaster with five categories.
+
+* Given a specific input to the bot, the AIML interpreter builds an Input Path(containing the normalized input, the bot’s last reply and the normalized topic)
+* Input Path is similar to a Pattern Path
+* 如下图所示(本图中的topic为unknown)
+
+示例::
+
+    Robot: I try to be upbeat and friendly.
+    Human: Do you have fun?
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/01/4Zrc7d.png
+
+    Figure 3. Input Path with <that> and <topic>.
+
+
+
+
+Non-greedy
+^^^^^^^^^^
+
+* It is important to note that the AIML pattern matching is non-greedy.
+* 例::
+
+    <pattern>* * *</pattern>
+    匹配: First second third fourth fifth
+    =>
+    <star/> = First
+    <star index=”2”/> = second
+    <star index=”3”/> = third fourth fifth
+
+
+Graph Implementation
+^^^^^^^^^^^^^^^^^^^^
+
+* 使用图节点而不是hash table实现，是因为图节点可以具有高度属性，该属性定义为从该节点到达叶子所需的输入路径中的最小单词数
+
+
+Duplicate Categories
+^^^^^^^^^^^^^^^^^^^^
+
+* 如两个类别具有相同的模式、主题和主题，则称它们是重复的。
+* 一对重复的类别可能具有不同的模板。当 AIML 解释器从 AIML 文件加载类别时，它可能会遇到重复项。处理重复项的方法称为合并策略
+
+
+merge policies::
+
+    1. Use first loaded 
+        - Keep the first duplicate loaded, and discard any subsequent ones.
+    2. Use last loaded 
+        - Keep the last duplicate category loaded, and discard any previous ones.
+    3. Merge with 
+        - If the two duplicate categories’ templates differ, combine them by placing each in a list item.
+
+
+
+
+
+
+
+
+
+
