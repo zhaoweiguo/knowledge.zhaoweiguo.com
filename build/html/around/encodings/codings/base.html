@@ -9,7 +9,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>1.1.5. base编码 &mdash; 新溪-gordon V1.7.9 文档</title>
+  <title>1.1.5. base编码 &mdash; 新溪-gordon V1.7.14 文档</title>
   
 
   
@@ -33,7 +33,7 @@
   <link rel="stylesheet" href="../../_static/copybutton.css" type="text/css" />
     <link rel="index" title="索引" href="../../genindex.html" />
     <link rel="search" title="搜索" href="../../search.html" />
-    <link rel="next" title="1.1.6. 工具" href="tool.html" />
+    <link rel="next" title="1.1.6. URLEncode" href="URLEncode.html" />
     <link rel="prev" title="1.1.4. 国标GB" href="gb.html" /> 
 
   
@@ -71,7 +71,7 @@
             
             
               <div class="version">
-                V1.7.9
+                V1.7.14
               </div>
             
           
@@ -129,6 +129,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#base91">Base91</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#base85">base85</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#base64">base64</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#urlbase64-url-base64">URL安全的Base64编码(URL Base64)</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#base62">Base62</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#base58">base58</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#base45">Base45</a></li>
@@ -137,8 +138,12 @@
 <li class="toctree-l4"><a class="reference internal" href="#base16">base16</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="tool.html">1.1.6. 工具</a></li>
-<li class="toctree-l3"><a class="reference internal" href="other.html">1.1.7. 其他</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="URLEncode.html">1.1.6. URLEncode</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="URLEncode.html#id2">原理</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tool.html">1.1.7. 工具</a></li>
+<li class="toctree-l3"><a class="reference internal" href="other.html">1.1.8. 其他</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="other.html#big5">BIG5</a></li>
 <li class="toctree-l4"><a class="reference internal" href="other.html#iso-8859">ISO-8859</a></li>
 </ul>
@@ -475,18 +480,22 @@
 <li><a class="reference internal" href="#base100">Base100</a></li>
 <li><a class="reference internal" href="#base91">Base91</a></li>
 <li><a class="reference internal" href="#base85">base85</a></li>
-<li><a class="reference internal" href="#base64">base64</a></li>
+<li><a class="reference internal" href="#base64">base64</a><ul>
+<li><a class="reference internal" href="#id2">由来</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#urlbase64-url-base64">URL安全的Base64编码(URL Base64)</a></li>
 <li><a class="reference internal" href="#base62">Base62</a></li>
 <li><a class="reference internal" href="#base58">base58</a><ul>
-<li><a class="reference internal" href="#id2">Base58 的作用</a></li>
-<li><a class="reference internal" href="#id3">Base58 的原理</a></li>
+<li><a class="reference internal" href="#id3">Base58 的作用</a></li>
+<li><a class="reference internal" href="#id4">Base58 的原理</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#base45">Base45</a></li>
 <li><a class="reference internal" href="#base38">base38</a></li>
 <li><a class="reference internal" href="#base32">base32</a></li>
 <li><a class="reference internal" href="#base16">base16</a><ul>
-<li><a class="reference internal" href="#id4">Base16 编码的方式</a></li>
+<li><a class="reference internal" href="#id5">Base16 编码的方式</a></li>
 </ul>
 </li>
 </ul>
@@ -538,10 +547,10 @@
 <section id="base64">
 <h2>base64<a class="headerlink" href="#base64" title="此标题的永久链接">¶</a></h2>
 <p>Base64 编码是使用 64 个可打印 ASCII 字符（A-Z、a-z、0-9、+、/）将任意字节序列数据编码成 ASCII 字符串，另有 “=” 符号用作后缀用途。</p>
-<figure class="align-default" id="id6">
+<figure class="align-default" id="id7">
 <img alt="https://img.zhaoweiguo.com/uPic/2022/03/mKJkq1.png" src="https://img.zhaoweiguo.com/uPic/2022/03/mKJkq1.png" />
 <figcaption>
-<p><span class="caption-text">base64 索引</span><a class="headerlink" href="#id6" title="此图像的永久链接">¶</a></p>
+<p><span class="caption-text">base64 索引</span><a class="headerlink" href="#id7" title="此图像的永久链接">¶</a></p>
 </figcaption>
 </figure>
 <div class="admonition note">
@@ -561,6 +570,24 @@
 <p class="admonition-title">备注</p>
 <p>Base64 编码若无特别说明，通常约定非 ASCII 字符按照 UTF-8 字符集进行编码处理。</p>
 </div>
+<section id="id2">
+<h3>由来<a class="headerlink" href="#id2" title="此标题的永久链接">¶</a></h3>
+<p>Base64算法最早应用于解决电子邮件传输问题，在早期，电子邮件只支持ASCII码字符。</p>
+<p>而ASCII码其长度为1个字节，是7位编码，最高位是0,是有符号字符型数。</p>
+<p>如果要传输一封带有非ASCII码字符的电子邮件，当它经过部分网关时就可能出现问题，这个网关可能会对非ASCII码字符的二进制位进行调整，即将这个非ASCII码的8位二进制码最高位置设置为0，此时用户收到的邮件就会是一封乱码的了。由此原因产生了Base64算法。</p>
+</section>
+</section>
+<section id="urlbase64-url-base64">
+<h2>URL安全的Base64编码(URL Base64)<a class="headerlink" href="#urlbase64-url-base64" title="此标题的永久链接">¶</a></h2>
+<ul class="simple">
+<li><p>UrlBase64 是 Base64 编码的一种变体，主要用于在 URL 中安全地传输二进制数据。</p></li>
+<li><p>Base64编码可用于在HTTP环境下传递较长的标识信息。在其他应用程序中，也常常需要把二进制数据编码为适合放在URL（包括隐藏表单域）中的形式。此时，采用Base64编码不仅比较简短，同时也具有不可读性，即所编码的数据不会被人用肉眼所直接看到。</p></li>
+<li><p>然而，标准的Base64并不适合直接放在URL里传输，因为URL编码器会把标准Base64中的「/」和「+」字符变为形如「%XX」的形式，而这些「%」号在存入数据库时还需要再进行转换，因为ANSI SQL中已将「%」号用作通配符。</p></li>
+<li><p>为解决此问题，可采用一种用于URL的改进Base64编码，它不在末尾填充’=’号，并将标准Base64中的「+」和「/」分别改成了「*」和「-」，这样就免去了在URL编解码和数据库存储时所要作的转换，避免了编码信息长度在此过程中的增加，并统一了数据库、表单等处对象标识符的格式。</p></li>
+<li><p>URL安全的Base64编码适用于以URL方式传递Base64编码结果的场景。该编码方式的基本过程是先将内容以Base64格式编码为字符串，然后检查该结果字符串，将字符串中的加号+换成中划线-，并且将 <code class="docutils literal notranslate"><span class="pre">斜杠/</span></code> 换成 <code class="docutils literal notranslate"><span class="pre">下划线_</span></code> 。</p></li>
+<li><p>详细编码规范请参考RFC4648标准中的相关描述。</p></li>
+<li><p>补充：对于末尾的“=”占位符，Bouncy Castle将之用.代替，而Commons Codes杜绝任何的补位符。下面的示例代码使用了Bouncy Castle的方法，将“=”用“.”代替。</p></li>
+</ul>
 </section>
 <section id="base62">
 <h2>Base62<a class="headerlink" href="#base62" title="此标题的永久链接">¶</a></h2>
@@ -579,8 +606,8 @@
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">123456789</span><span class="n">ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz</span>
 </pre></div>
 </div>
-<section id="id2">
-<h3>Base58 的作用<a class="headerlink" href="#id2" title="此标题的永久链接">¶</a></h3>
+<section id="id3">
+<h3>Base58 的作用<a class="headerlink" href="#id3" title="此标题的永久链接">¶</a></h3>
 <p>比特币私钥最原始的格式是 256 位的二进制表示，也就是 256 个 0 或者 1。下面就是一个栗子:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">0</span>
 </pre></div>
@@ -590,8 +617,8 @@
 </pre></div>
 </div>
 </section>
-<section id="id3">
-<h3>Base58 的原理<a class="headerlink" href="#id3" title="此标题的永久链接">¶</a></h3>
+<section id="id4">
+<h3>Base58 的原理<a class="headerlink" href="#id4" title="此标题的永久链接">¶</a></h3>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>二进制：0 和 1
 十进制：1 到 10
 十六进制：十进制的基础上加上了 A-F 六个字母
@@ -648,8 +675,8 @@ Base58 包含了阿拉伯数字、小写英文字母，大写英文字母。
 <li><p>Base16 编码使用 16 个 ASCII 可打印字符（数字 0-9 和字母 A-F）对任意字节数据进行编码。Base16 先获取输入字符串每个字节的二进制值（不足 8 比特在高位补 0），然后将其串联进来，再按照 4 比特一组进行切分，将每组二进制数分别转换成十进制，在下述表格中找到对应的编码串接起来就是 Base16 编码。</p></li>
 <li><p>Base16 编码是一个标准的十六进制字符串（注意是字符串而不是数值），更易被人类和计算机使用，因为它并不包含任何控制字符，以及 Base64 和 Base32 中的 “=” 符号。</p></li>
 </ul>
-<section id="id4">
-<h3>Base16 编码的方式<a class="headerlink" href="#id4" title="此标题的永久链接">¶</a></h3>
+<section id="id5">
+<h3>Base16 编码的方式<a class="headerlink" href="#id5" title="此标题的永久链接">¶</a></h3>
 <ol class="arabic simple">
 <li><p>将数据 (根据 ASCII 编码，UTF-8 编码等) 转成对应的二进制数，不足 8 比特位高位补 0。然后将所有的二进制全部串起来，4 个二进制位为一组，转化成对应十进制数。</p></li>
 <li><p>根据十进制数值找到 Base16 编码表里面对应的字符。Base16 是 4 个比特位表示一个字符，所以原始是 1 个字节 (8 个比特位) 刚好可以分成两组，也就是说原先如果使用 ASCII 编码后的一个字符，现在转化成两个字符。数据量是原先的 2 倍。</p></li>
@@ -675,7 +702,7 @@ Base58 包含了阿拉伯数字、小写英文字母，大写英文字母。
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="tool.html" class="btn btn-neutral float-right" title="1.1.6. 工具" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="URLEncode.html" class="btn btn-neutral float-right" title="1.1.6. URLEncode" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="gb.html" class="btn btn-neutral" title="1.1.4. 国标GB" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
@@ -720,7 +747,7 @@ Base58 包含了阿拉伯数字、小写英文字母，大写英文字母。
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../',
-            VERSION:'V1.7.9',
+            VERSION:'V1.7.14',
             LANGUAGE:'zh-CN',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
