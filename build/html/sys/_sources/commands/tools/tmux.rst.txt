@@ -114,7 +114,7 @@ tmux配置::
 
 
 常见问题
-'''''''''''
+========
 
 解决tmux启动「can't create socket」的问题::
 
@@ -136,6 +136,50 @@ tmux莫名被终止::
 
     原因:
     可能和glibc兼容性有问题
+
+
+屏幕比例不协调问题
+------------------
+
+有时候 tmux 突然中断之后，再次进入时，会发现屏幕被限制在了一个很小的范围内，其他的地方全部变成了点 “.”, 或者“烫”
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/05/GUUCQX.png
+
+
+原因::
+
+    有其他client使用了tmux连接了这个session, 但他的窗口较小
+
+
+定位::
+
+    # 查看有几个client在连接
+    $ tmux list-clients
+    /dev/pts/0: syscmd [158x49 xterm] (utf8)
+    /dev/pts/7: syscmd [230x64 xterm-256color] (utf8)
+
+    可以看到两个client的分辨率不同
+
+
+解决::
+
+    1. 手工退出那个client
+    2. 进入时使用  -d 参数(detach)
+        tmux a -d -t [YOUR TMUX NAME]
+        tmux attach -d -t [YOUR TMUX NAME]
+    3. 命令分离那个client
+        tmux detach-client -t <session_name>
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -18,37 +18,51 @@ ps命令使用
 
 列属性::
 
-  USER 进程的属主；
-  PID   进程的ID；
-  PPID    父进程；
-  %CPU   进程占用的CPU百分比；
-  %MEM  占用内存的百分比；
-  NI        进程的NICE值，数值大，表示较少占用CPU时间；
-  VSZ     該进程使用的虚拟內存量（KB）；
-  RSS     該進程占用的固定內存量（KB）（驻留中页的数量）；
-  TTY     該進程在那個終端上運行（登陸者的終端位置），若與終端無關，則顯示（？）。若為pts/0等，則表示由網絡連接主機進程
-  WCHAN  當前進程是否正在進行，若為-表示正在進行；
-  START   該進程被觸發启动时间；
-  TIME      該进程實際使用CPU運行的时间；
-  COMMAND   命令的名称和参数；
+    USER 进程的属主；
+    PID   进程的ID；
+    PPID    父进程；
+    %CPU   进程占用的CPU百分比；
+    %MEM  占用内存的百分比；
+    NI        进程的NICE值，数值大，表示较少占用CPU时间；
+    VSZ     該进程使用的虚拟內存量（KB）；
+    RSS     該進程占用的固定內存量（KB）（驻留中页的数量）；
+    TTY     該進程在那個終端上運行（登陸者的終端位置），若與終端無關，則顯示（？）。若為pts/0等，則表示由網絡連接主機進程
+    WCHAN  當前進程是否正在進行，若為-表示正在進行；
+    START   該進程被觸發启动时间；
+    TIME      該进程實際使用CPU運行的时间；
+    COMMAND   命令的名称和参数；
+
+    PGID：进程组 ID（Process Group ID）
+    SID：会话 ID（Session ID）
+    TPGID：控制终端的进程组 ID（Terminal Process Group ID）。
+    STAT：进程状态（Process State）。
+    UID：用户 ID（User ID）。
 
 
 
-ps工具标识进程的5种状态码::
 
-  D 无法中断的休眠状态（通常 IO 的进程）uninterruptible sleep (usually IO)
-  R 正在运行可中在队列中可过行的,runnable (on run queue)
-  S 处于休眠状态, sleeping
-  T 停止或被追踪, traced or stopped
-  W 进入内存交换  （从内核2.6开始无效）
-  X 死掉的进程   （基本很少見）
-  Z 僵尸进程, a defunct (”zombie”) process
-  < 优先级高的进程
-  N 优先级较低的进程
-  L 有些页被锁进内存；
-  s 进程的领导者（在它之下有子进程）
-  l 多进程的（使用 CLONE_THREAD, 类似 NPTL pthreads）
-  + 位于后台的进程组
+ps工具标识进程的5种状态码(STAT)::
+
+    D 无法中断的休眠状态（通常 IO 的进程）uninterruptible sleep (usually IO)
+    R 进程当前正在执行或在运行队列中等待执行
+        runnable (on run queue)
+    S 处于休眠状态, sleeping
+    T 停止或被追踪, traced or stopped
+        可能是由于收到了 SIGSTOP、SIGTSTP、SIGTTIN 或 SIGTTOU 信号
+    W 进入内存交换  （从内核2.6开始无效）
+    X 死掉的进程   （基本很少見）
+    Z 僵尸进程, a defunct (”zombie”) process
+        僵尸（Zombie）- 进程已经终止，但其父进程尚未调用 wait() 或 waitpid() 来获取其终止状态。
+        僵尸进程的进程描述符仍然存在于系统中。
+
+    < 优先级高的进程
+    N 优先级较低的进程
+
+    L 有些页被锁进内存；
+        进程的内存页被锁定在 RAM 中，不允许被换出
+    s 进程的领导者（在它之下有子进程）
+    l 多进程的（使用 CLONE_THREAD, 类似 NPTL pthreads）
+    + 位于后台的进程组
 
 
 
@@ -58,7 +72,7 @@ ps工具标识进程的5种状态码::
      ps alx     另一种常用输出格式
 
      // 查看所有进程
-     ps -ef    // 显示所有进程信息，连同命令行
+     ps -ef    // 显示所有进程信息，连同命令行(显示父pid->ppid)
      ps –eLf | grep java
      ps -eF
      ps -ely

@@ -157,6 +157,8 @@
 <li class="toctree-l3"><a class="reference internal" href="ulimit.html">ulimit命令</a></li>
 <li class="toctree-l3"><a class="reference internal" href="time.html">time命令</a></li>
 <li class="toctree-l3"><a class="reference internal" href="pstree.html">pstree命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="smem.html">smem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ipcs.html">ipcs</a></li>
 <li class="toctree-l3"><a class="reference internal" href="tune_tmp.html">调优临时命令</a></li>
 </ul>
 </li>
@@ -362,12 +364,21 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../compresses/rar.html">rar命令</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../compresses/tar.html">tar命令</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../compresses/gzip.html">gzip命令</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../compresses/gunzip.html">gunzip命令</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../compresses/bunzip2.html">bunzip2命令</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../compresses/bzip2.html">bzip2命令</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../compresses/zip.html">zip/unzip命令</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../compresses/unzip.html">unzip命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../compresses/gzip_gunzip.html">gzip/gunzip命令</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../compresses/gzip_gunzip.html#id2">压缩命令</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../compresses/gzip_gunzip.html#id3">解压命令</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../compresses/bzip2_bunzip2.html">bzip2命令</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../compresses/bzip2_bunzip2.html#id3">压缩</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../compresses/bzip2_bunzip2.html#id4">解压</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../compresses/zip_unzip.html">zip/unzip命令</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../compresses/zip_unzip.html#id2">zip命令</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../compresses/zip_unzip.html#unzip">解压命令unzip</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="../compresses/compress_other.html">其他压缩命令</a></li>
 </ul>
 </li>
@@ -452,6 +463,10 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../windows.html">windows命令</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../windows/Get-Command.html">Get-Command命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../windows/set.html">set/setx命令</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../windows/set.html#id2">设置环境变量</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../buildin.html">内置函数</a><ul>
@@ -1046,19 +1061,32 @@ WCHAN  當前進程是否正在進行，若為-表示正在進行；
 START   該進程被觸發启动时间；
 TIME      該进程實際使用CPU運行的时间；
 COMMAND   命令的名称和参数；
+
+PGID：进程组 ID（Process Group ID）
+SID：会话 ID（Session ID）
+TPGID：控制终端的进程组 ID（Terminal Process Group ID）。
+STAT：进程状态（Process State）。
+UID：用户 ID（User ID）。
 </pre></div>
 </div>
-<p>ps工具标识进程的5种状态码:</p>
+<p>ps工具标识进程的5种状态码(STAT):</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>D 无法中断的休眠状态（通常 IO 的进程）uninterruptible sleep (usually IO)
-R 正在运行可中在队列中可过行的,runnable (on run queue)
+R 进程当前正在执行或在运行队列中等待执行
+    runnable (on run queue)
 S 处于休眠状态, sleeping
 T 停止或被追踪, traced or stopped
+    可能是由于收到了 SIGSTOP、SIGTSTP、SIGTTIN 或 SIGTTOU 信号
 W 进入内存交换  （从内核2.6开始无效）
 X 死掉的进程   （基本很少見）
 Z 僵尸进程, a defunct (”zombie”) process
+    僵尸（Zombie）- 进程已经终止，但其父进程尚未调用 wait() 或 waitpid() 来获取其终止状态。
+    僵尸进程的进程描述符仍然存在于系统中。
+
 &lt; 优先级高的进程
 N 优先级较低的进程
+
 L 有些页被锁进内存；
+    进程的内存页被锁定在 RAM 中，不允许被换出
 s 进程的领导者（在它之下有子进程）
 l 多进程的（使用 CLONE_THREAD, 类似 NPTL pthreads）
 + 位于后台的进程组
@@ -1069,7 +1097,7 @@ l 多进程的（使用 CLONE_THREAD, 类似 NPTL pthreads）
 ps alx     另一种常用输出格式
 
 // 查看所有进程
-ps -ef    // 显示所有进程信息，连同命令行
+ps -ef    // 显示所有进程信息，连同命令行(显示父pid-&gt;ppid)
 ps –eLf | grep java
 ps -eF
 ps -ely

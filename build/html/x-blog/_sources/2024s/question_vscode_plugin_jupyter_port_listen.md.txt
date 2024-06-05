@@ -1,0 +1,82 @@
+# 怪异问题：一个由vscode jupyter插件占用端口引起的问题
+
+## 前言
+
+* 今天在运行一个 uwsgi 的python服务时，发现和预想不一致，最开始以为是我的服务有问题，查了好长时间始终不得要领。
+* 表现上看是一个很奇怪的问题：
+
+    ➜ curl http://localhost:9000
+    curl: (1) Received HTTP/0.9 when not allowed
+
+
+* 怎么修改代码都不管用
+
+
+## 定位问题过程
+
+* 最开始以为代码的问题（今天上线时遇到各种问题，正在复盘定位问题），但试了各种修改都不管用，开始怀疑人生的时候，我知道可能不是程序的问题。
+* 于是，我开启了一个最简单的 uwsgi 服务，一样有这种问题。
+* 于是怀疑是不是uwsgi的问题，比如版本之类的、依赖问题啥的，毕竟对这个东西不太熟，但发现我直接使用 python -m http.server 9000 也有这种问题
+* 这就……我怀疑是不是python的问题，于是使用node的http-server也有问题
+* 那会不会是端口的问题，我使用 netstat -nlp tcp | grep 9000 发现没被占，所以不是端口被占的原因（记住我这个结论1）
+* 实在找不到原因了，换个端口试试吧，9001 怎么样，再试试9002 9003...9100，一样的问题，看来真不是端口的问题（记住这个结论2）
+* 我指定端口启动服务器时，也没问题，启动成功了，所以应该不是端口问题（结论3）
+* 实在找不到原因了，吃个饭休息下吧。吃饭时想起，我的知识体系是在本机占的的8888端口，好像没有问题，因为一直在用
+* 吃完回来试试，咦！！！居然是好的，再试试8000也是好的，试试9010，9100……都不行，难道9xxx端口集体罢工了？
+
+
+## 找到原因
+
+* mac下的 netstat -nlp tcp 命令没有发现 9000 被占，但使用 netstat -anlp tcp 命令发现 9000 被占::
+```
+netstat -anlp tcp | grep 90 | grep LISTEN
+tcp4       0      0  127.0.0.1.9002                                *.*                                           LISTEN
+tcp4       0      0  127.0.0.1.9006                                *.*                                           LISTEN
+tcp4       0      0  127.0.0.1.9003                                *.*                                           LISTEN
+tcp4       0      0  127.0.0.1.9005                                *.*                                           LISTEN
+tcp4       0      0  127.0.0.1.9004                                *.*                                           LISTEN
+tcp4       0      0  127.0.0.1.9006                                *.*                                           LISTEN
+tcp4       0      0  127.0.0.1.9000                                *.*                                           LISTEN
+tcp4       0      0  127.0.0.1.9007                                *.*                                           LISTEN
+tcp4       0      0  127.0.0.1.9001                                *.*                                           LISTEN
+... ...
+```
+
+* netstat -anlp tcp 会把不活跃的也列出来，所以这些9xxx都是不活跃的端口(上面结论1被推翻)
+* 原来 9xxx 端口都被占了，所以前面我试了9001 9002 9100 等都没成功很正常，因为这些端口都被占了(上面结论2被推翻)
+
+## 根因定位
+
+* 这是什么原因导致的，先用 lsof ，找到进程id:
+
+```
+sudo lsof -i :9004
+COMMAND     PID       USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+Code\x20H 81199 zhaoweiguo   91u  IPv4 0xebef57f874d0a779      0t0  TCP localhost:52223->localhost:9004 (ESTABLISHED)
+python3.8 84139 zhaoweiguo   33u  IPv4 0xebef57f871014e69      0t0  TCP localhost:9004 (LISTEN)
+python3.8 84139 zhaoweiguo   66u  IPv4 0xebef57f871095789      0t0  TCP localhost:9004->localhost:52223 (ESTABLISHED)
+
+```
+
+* 看下这个进程到底是啥
+```
+➜ ps aux | grep 87666
+zhaoweiguo       87666   0.0  0.0 35936004   7720   ??  S    Sat10AM   0:00.97 python -m ipykernel_launcher --f=~/Library/Jupyter/runtime/kernel-v2-81196VlEbiD59vsvM.json
+```
+
+* 原来是 jupyter 的问题，看下vscode 中的jupyter插件，翻文档可知:
+```
+默认端口：通常情况下，Jupyter插件会尝试使用默认的端口，比如8888端口。
+动态分配端口：如果默认端口被占用，Jupyter插件会尝试动态地选择一个空闲的端口。它会从一系列预定义的端口中选择一个未被占用的端口，通常是从9000到9999之间的端口。
+```
+
+* vscode 的 jupyter 插件监听的是 localhost的端口，所以启动服务时如果监听 :port 是没有问题(结论3也被推翻)
+
+
+## 总结
+
+* 未来的生活是不确定的
+* 工作遇到奇怪的问题也正常，但总能找到解释的方法
+
+
+

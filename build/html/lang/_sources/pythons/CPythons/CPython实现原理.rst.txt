@@ -1,0 +1,100 @@
+CPython实现原理
+###############
+
+
+CPython实现原理-万物皆为PyObject
+======================================
+
+对象的定义
+----------
+
+* 在C/C++中，对象就是堆(Heap)内存中的内存实体，从简单的基本数据类型(int,float,char)到聚合的数据类型(struct)一切皆为对象，我们说基本的数据类型是简单的对象(Simple Object)，因为它仅包含数据属性。而struct级别的数据类型是完整的对象(Concrete Object)，因为完整的对象具有属性和行为两个基本概念。
+* 属性就是结构体的数据字段，可以是基本数据类型，指针类型、甚至是嵌套的struct类型。
+* 行为又称为方法或成员函数,就是struct内部定义的一系列函数指针。
+
+
+Python对象的本源 PyObject
+-------------------------
+
+PyObject的定义::
+
+    typedef struct _object {
+        _PyObject_HEAD_EXTRA    // 以发布模型编译CPython源代码的话，_PyObject_HEAD_EXTRA这段宏定义是不存在
+        Py_ssize_t ob_refcnt;   // 引用计数器，和内存回收有关
+        PyTypeObject *ob_type;  // 定义Python对象的元类信息
+    } PyObject;
+
+
+* PyObject的难点是就是第三个字段PyTyepObject,也是整个PyObject的核心,包括基本的类型信息：类名称，类型尺寸(需要分配多大的内存)以及类绑定的方法(即绑定的函数指针)
+
+
+在Python的世界观中一切皆为PyObject
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/05/ofI4gD.png
+
+    PyLongObject,继承PyVarObject，而PyVarObject本来就继承PyObject
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/05/QkSwNo.png
+
+    从内存图的角度来看，如下图所示，PyLongObject类型的对象，我们说当实例化一个PyLongObject的实例，它首先要初始化PyVarObject的内存中的数据(所有字段的默认值)，我们说PyLongObject的实例持有PyVarObject的内存副本。而PyVarObject初始化，也要初始化PyObject的内存数据。换句话说，在Python内部，每个堆都拥有相同的对象头部，这使对象的引用变得单一化，只需一个PyObject*指针就可以任意引用一个对象。
+
+
+Python对象的类型信息
+--------------------
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/05/tbn6aC.png
+
+    在Python中所有class关键字的类定义都通过一个与其对应的PyTypeObject实例来创建该类型的对象。比如Python的int类型对应C层面的PyLongObject类，而PyLongObject的实例化由对应的PyLong_Type实例提供类型信息。
+
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/05/VCuOD2.png
+
+    PyType_Type是所有Python对象的元类。我们可以通过一个内存图来得到一个清晰的轮廓
+
+
+
+
+
+CPython实现原理-整数对象
+========================
+
+小型整数
+--------
+
+* 在Python中就引入了小型整数对象池(Small Integer Object Pool)
+* CPython底层需要区分小型整数(Small Integer)和大型整数(Big Integer)：因为在CPython中一切对象都是堆中对应的内存数据实体，我们不太可能为某段整数区间内频繁使用的整数分配N次堆内存，然后再释放堆内存，这样势必令到Python的内存管理效率大大降低。并且会给系统内核的虚拟内存管理带来严重的性能负担。严重拖慢操作系统的性能。
+
+CPython预设的小型整数的区间为[-5，257)::
+
+    //位于Objects/longobject.c文件
+    #define NSMALLPOSINTS           _PY_NSMALLPOSINTS
+    #define NSMALLNEGINTS           _PY_NSMALLNEGINTS
+    ....
+
+    //位于Include/internal/pycore_interp.h文件
+
+    //小型整数的右开区间，最大值256
+    #define _PY_NSMALLPOSINTS           257
+    //小型整数的左闭区间，为-5
+    #define _PY_NSMALLNEGINTS           5
+
+大型整数
+--------
+
+* 小型整数完全缓存在small_ints这个数组当中，而超出该区间的整数，CPython运行时会为大型整数直接调用第一层的PyMem函数族为其分配堆内存。
+* 在过去的CPython2.x之后的版本会为大型整数提供专门的缓存池，供大型整数重复使用，而在后续的CPython3.x的PyLongObject就取消了大型整数缓存池.这恰好也说明CPython3.x的整数对象性能低下的原因。
+
+
+
+
+
+参考
+====
+
+* 对Python内核的理解：https://www.zhihu.com/column/c_1272122576572284928
+
+
+

@@ -1,0 +1,170 @@
+interpreter-解释器
+##################
+
+
+* 如果你在 uWSGI 中运行多个应用或者需要高隔离性，那么启用多解释器模式（默认模式，即 single-interpreter = false）更合适。每个应用或租户将有自己的解释器实例，减少了不同应用之间的干扰和潜在的安全问题。
+* 在 uWSGI 配置中提到的“单个应用程序”是指运行在 uWSGI 实例中的一个具体的 Python WSGI 应用。当你只运行一个应用时，可以禁用多解释器模式以优化资源使用和性能。
+
+
+
+多个应用程序的示例
+==================
+
+* 在这个示例中，uWSGI 被配置为支持多个解释器实例（single-interpreter = false），这样可以保证每个应用程序都有自己的解释器实例，从而避免全局状态的共享和冲突。
+* 每个应用程序都通过一个独立的 uWSGI 配置文件（app1.ini 和 app2.ini）来定义，并且每个应用程序都运行在不同的 socket 上。Nginx 负责反向代理，将不同的 URL 路径映射到对应的应用程序上。
+* 通过这种配置，你可以在同一个 uWSGI 实例中运行多个应用程序，同时保持它们之间的隔离和独立性。
+
+
+
+应用程序 1 (app1.py)::
+
+    # app1.py
+    from flask import Flask
+
+    app1 = Flask(__name__)
+
+    @app1.route('/')
+    def hello_app1():
+        return 'Hello from App 1!'
+
+    if __name__ == '__main__':
+        app1.run()
+
+
+应用程序 2 (app2.py)::
+
+    # app2.py
+    from flask import Flask
+
+    app2 = Flask(__name__)
+
+    @app2.route('/')
+    def hello_app2():
+        return 'Hello from App 2!'
+
+    if __name__ == '__main__':
+        app2.run()
+
+
+uWSGI 配置文件(uwsgi.ini)::
+
+    [uwsgi]
+    http = :9001
+    master = true
+    processes = 2
+    threads = 2
+
+    # 启用多个解释器实例
+    single-interpreter = false
+
+    # 加载应用1和应用2
+    vassals = /etc/uwsgi/vassals/
+
+
+
+应用程序 1 的 uWSGI 配置 (app1.ini)::
+
+    [uwsgi]
+    module = app1:app1
+    callable = app1
+    virtualenv = /path/to/virtualenv/app1
+    processes = 1
+    socket = 127.0.0.1:9002
+    chdir = /path/to/app1
+
+应用程序 2 的 uWSGI 配置 (app2.ini)::
+
+    [uwsgi]
+    module = app2:app2
+    callable = app2
+    virtualenv = /path/to/virtualenv/app2
+    processes = 1
+    socket = 127.0.0.1:9003
+    chdir = /path/to/app2
+
+
+
+Nginx 配置(nginx.conf)::
+
+    server {
+        listen 80;
+
+        location /app1 {
+            include uwsgi_params;
+            uwsgi_pass 127.0.0.1:9002;
+            uwsgi_modifier1 30;
+        }
+
+        location /app2 {
+            include uwsgi_params;
+            uwsgi_pass 127.0.0.1:9003;
+            uwsgi_modifier1 30;
+        }
+    }
+
+
+目录结构::
+
+    /path/to/
+    |-- app1/
+    |   |-- app1.py
+    |   |-- venv/  # virtualenv for app1
+    |
+    |-- app2/
+    |   |-- app2.py
+    |   |-- venv/  # virtualenv for app2
+    |
+    |-- /etc/uwsgi/vassals/
+    |   |-- app1.ini
+    |   |-- app2.ini
+    |
+    |-- uwsgi.ini
+    |-- nginx.conf
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

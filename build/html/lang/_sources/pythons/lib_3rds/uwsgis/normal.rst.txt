@@ -1,0 +1,161 @@
+常用
+####
+
+* GitHub: https://github.com/unbit/uwsgi/
+* 官网: https://projects.unbit.it/uwsgi
+* 英文版: https://uwsgi-docs.readthedocs.io/en/latest/
+* 中文版: https://uwsgi-docs-zh.readthedocs.io/zh-cn/latest/
+
+
+
+Included components
+===================
+
+::
+
+    1. The Core
+        implements:
+        configuration, processes management, sockets creation, monitoring, logging, 
+        shared memory areas, ipc, cluster membership and the uWSGI Subscription Server
+    2. Request plugins
+        implement:
+        application server interfaces for various languages and platforms: WSGI, PSGI, Rack, Lua WSAPI, CGI, PHP, Go …
+    3. Gateways
+        implement:
+        load balancers, proxies and routers
+    4. The Emperor(多应用部署)
+        implements massive instances management and monitoring
+        https://uwsgi-docs-zh.readthedocs.io/zh-cn/latest/Emperor.html
+    5. Loop engines
+        implement:
+        events and concurrency, components can be run in preforking, threaded, asynchronous/evented and green thread/coroutine modes. 
+        Various technologies are supported, including uGreen, Greenlet, Stackless, Gevent, Coro::AnyEvent, Tornado, Goroutines and Fibers
+
+
+wsgi协议,uwsgi协议和uWSGI
+=========================
+
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/05/TTqPMw.png
+
+    wsgi协议，uwsgi协议和uWSGI
+
+* WSGI(wsgi): 全称 Web Server Gateway Interface，或者 Python Web Server Gateway Interface ，是为 Python 语言定义的 Web 服务器和 Web 应用程序或框架之间的一种简单而通用的接口。从名字就可以看出来，这东西是一个Gateway，也就是网关。网关的作用就是在协议之间进行转换。总结：WSGI(wsgi)只是一种规范，描述web server如何与web application通信的规范
+* uWSGI: uWSGI是一个Web服务器，它实现了WSGI协议、uwsgi、http等协议。
+* uwsgi: 与WSGI一样是一种通信协议，但与WSGI协议是两种东西，uwsgi协议是uWSGI服务器的独占协议，用于定义传输信息的类型(type of information)
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/05/WupIKC.png
+
+    web请求流程
+
+uwsgi协议
+---------
+
+* uwsgi 协议是 uWSGI 服务器使用的本地协议。
+* 它是一个二进制协议，可以携带任何类型的数据。一个 uwsgi 分组的头 4 个字节描述了这个分组包含的数据类型。
+* 每个 uwsgi 请求生成一个 uwsgi 格式的响应。
+* 该协议主要通过 TCP 工作，但是 master 经常可以为 内嵌 SNMP 服务器 或者集群管理 / 消息请求绑定到一个 UDP 单播 / 组播。
+
+
+uwsgi 包头::
+
+    struct uwsgi_packet_header {
+        uint8_t modifier1;
+        uint16_t datasize;
+        uint8_t modifier2;
+    };
+
+
+
+
+关键定义
+========
+
+* harakiri: uWSGI 的一个特性，中止那些过长时间处理请求的 worker。使用选项的 harakiri 族来配置。每一个会耗费比 harakiri timeout 指定的秒数长的请求都将会被丢弃，而对应的 worker 会被回收。
+* master: uWSGI 内置的预派生 + 线程 多 worker 管理模式，通过打开 master 开关激活。对于所有实际的服务部署，不 使用 master 模式，真的不是个好主意。
+
+
+三方插件
+========
+
+* 参见: https://uwsgi-docs-zh.readthedocs.io/zh-cn/latest/ThirdPartyPlugins.html
+
+
+
+
+
+
+
+
+
+
+
+
+
+Operational MODE
+================
+
+
+uWSGI支持多种操作模式，包括::
+
+    preforking
+    threading
+    asyncio
+
+
+
+Preforking模式
+--------------
+
+* 在preforking模式中，uWSGI在启动时会预先派生一定数量的worker进程。这些worker进程在启动时就已经存在，并且等待来自客户端的请求。
+* 当有新的请求到达时，uWSGI会将请求分配给空闲的worker进程来处理，而不是动态地创建新的进程。
+* 这种模式的好处是可以避免进程创建和销毁的开销，因为worker进程在启动时已经预先创建，可以立即处理请求。
+* 不过，缺点是需要提前分配足够数量的worker进程来处理请求，这可能会占用一定的系统资源，并且不够灵活，无法根据负载情况动态地调整worker进程的数量。
+
+
+preforking模式通常适用于对稳定性和性能要求较高，且负载相对稳定的场景，例如处理Web应用程序或API服务。
+
+
+
+Threading模式
+-------------
+
+* 在Threading模式中，uWSGI会创建一个或多个master线程，每个master线程负责监听来自客户端的连接请求。
+* 每个master线程会维护一个线程池，其中包含一定数量的worker线程。当有新的请求到达时，master线程会将请求分配给空闲的worker线程来处理。
+* 这种模式下，每个worker线程都在一个单独的线程中执行，可以充分利用多核CPU的并行性能。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
