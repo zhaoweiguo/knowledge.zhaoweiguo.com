@@ -9,7 +9,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>5.15.3. Tutorials: Learning Oriented Lessons &mdash; 新溪-gordon V1.7.14 文档</title>
+  <title>5.15.3. Tutorials: Learning Oriented Lessons &mdash; 新溪-gordon V1.7.16 文档</title>
   
 
   
@@ -71,7 +71,7 @@
             
             
               <div class="version">
-                V1.7.14
+                V1.7.16
               </div>
             
           
@@ -115,10 +115,15 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../theory.html">2. 理论</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../theories/math.html">2.1. 数学</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../theories/bag-of-words.html">2.2. bag-of-words</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../theories/overfitting-underfitting.html">2.3. overfitting&amp;underfitting</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../theories/evaluate.html">2.4. evaluate评估</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../theories/ReAct.html">2.1. ReAct框架</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../theories/math.html">2.2. 数学</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../theories/bag-of-words.html">2.3. bag-of-words</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../theories/word2vec.html">2.4. Word2Vec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../theories/doc2vec.html">2.5. Doc2Vec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../theories/FastText.html">2.6. FastText</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../theories/LDA.html">2.7. LDA-Latent Dirichlet Allocation(潜在狄利克雷分配)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../theories/overfitting-underfitting.html">2.8. overfitting&amp;underfitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../theories/evaluate.html">2.9. evaluate评估</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../LLM.html">3. 大模型</a><ul>
@@ -296,7 +301,7 @@
 <li class="toctree-l3"><a class="reference internal" href="How-to_Guides.html">5.15.4. How-to Guides: Solve a Problem</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../LAC.html">5.16. LAC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../LAC.html">5.16. LAC-百度词法分析工具</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../framework.html">6. 学习框架</a><ul>
@@ -467,23 +472,10 @@
               <h4 id="local-table-of-contents-title">On This Page</h4>
               <ul>
 <li><a class="reference internal" href="#">5.15.3. Tutorials: Learning Oriented Lessons</a><ul>
-<li><a class="reference internal" href="#word2vec-model">Word2Vec Model</a><ul>
-<li><a class="reference internal" href="#review-bag-of-words">Review: Bag-of-words</a></li>
-<li><a class="reference internal" href="#introducing-the-word2vec-model">Introducing: the Word2Vec Model</a></li>
-<li><a class="reference internal" href="#id2">参考</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#doc2vec-model">Doc2Vec Model</a><ul>
-<li><a class="reference internal" href="#review-word2vec-model">Review: Word2Vec Model</a></li>
-<li><a class="reference internal" href="#introducing-paragraph-vector">Introducing: Paragraph Vector</a></li>
-</ul>
-</li>
+<li><a class="reference internal" href="#word2vec-model">Word2Vec Model</a></li>
+<li><a class="reference internal" href="#doc2vec-model">Doc2Vec Model</a></li>
 <li><a class="reference internal" href="#ensemble-lda">Ensemble LDA</a></li>
-<li><a class="reference internal" href="#fasttext-model">FastText Model</a><ul>
-<li><a class="reference internal" href="#word2vec">与Word2Vec对比</a></li>
-<li><a class="reference internal" href="#training-models">Training models</a></li>
-</ul>
-</li>
+<li><a class="reference internal" href="#fasttext-model">FastText Model</a></li>
 <li><a class="reference internal" href="#lda-model">LDA Model</a></li>
 </ul>
 </li>
@@ -504,165 +496,33 @@
 <p>Learning-oriented lessons that introduce a particular gensim feature, e.g. a model (Word2Vec, FastText) or technique (similarity queries or text summarization).</p>
 <section id="word2vec-model">
 <h2>Word2Vec Model<a class="headerlink" href="#word2vec-model" title="此标题的永久链接">¶</a></h2>
-<ul>
-<li><p>Introduces Gensim’s Word2Vec model and demonstrates its use on the <a class="reference external" href="https://hekyll.services.adelaide.edu.au/dspace/bitstream/2440/28910/1/hdl_28910.pdf">Lee Evaluation Corpus</a></p></li>
-<li><p>Word2Vec 是一种广泛使用的基于神经网络的算法，通常称为 “深度学习”（尽管 word2vec 本身相当浅薄）。 word2vec 使用大量未注释的纯文本，自动学习单词之间的关系。输出是向量，每个单词一个向量，具有显着的线性关系，使我们能够执行以下操作:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>vec(“king”) - vec(“man”) + vec(“woman”) =~ vec(“queen”)
-vec(&quot;中国北京&quot;) – vec(&quot;中国&quot;) + vec(&quot;日本&quot;) =~ vec(&quot;日本东京&quot;).
-</pre></div>
-</div>
-</li>
-</ul>
-<section id="review-bag-of-words">
-<h3>Review: Bag-of-words<a class="headerlink" href="#review-bag-of-words" title="此标题的永久链接">¶</a></h3>
 <ul class="simple">
-<li><p>bag-of-words model: 将每个文档转换为固定长度的整数向量</p></li>
+<li><p>详情参见 <a class="reference internal" href="../../theories/word2vec.html#word2vec"><span class="std std-ref">Word2Vec</span></a></p></li>
 </ul>
-<p>如:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">John</span> <span class="n">likes</span> <span class="n">to</span> <span class="n">watch</span> <span class="n">movies</span><span class="o">.</span> <span class="n">Mary</span> <span class="n">likes</span> <span class="n">movies</span> <span class="n">too</span><span class="o">.</span>
-<span class="n">John</span> <span class="n">also</span> <span class="n">likes</span> <span class="n">to</span> <span class="n">watch</span> <span class="n">football</span> <span class="n">games</span><span class="o">.</span> <span class="n">Mary</span> <span class="n">hates</span> <span class="n">football</span><span class="o">.</span>
-
-<span class="o">=&gt;</span>
-
-<span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
-<span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
-
-<span class="c1"># 每个元素计算特定单词在文档中出现的次数</span>
-<span class="c1"># 元素的顺序是任意的</span>
-<span class="c1"># 此例中，元素的顺序对应于单词:</span>
-<span class="p">[</span><span class="s2">&quot;John&quot;</span><span class="p">,</span> <span class="s2">&quot;likes&quot;</span><span class="p">,</span> <span class="s2">&quot;to&quot;</span><span class="p">,</span> <span class="s2">&quot;watch&quot;</span><span class="p">,</span> <span class="s2">&quot;movies&quot;</span><span class="p">,</span> <span class="s2">&quot;Mary&quot;</span><span class="p">,</span> <span class="s2">&quot;too&quot;</span><span class="p">,</span> <span class="s2">&quot;also&quot;</span><span class="p">,</span> <span class="s2">&quot;football&quot;</span><span class="p">,</span> <span class="s2">&quot;games&quot;</span><span class="p">,</span> <span class="s2">&quot;hates&quot;</span><span class="p">]</span>
-</pre></div>
-</div>
-<p>Bag-of-words models are surprisingly effective, but have several weaknesses:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. they lose all information about word order
-    n-grams 模型包考虑长度为 n 的单词短语，将文档表示为固定长度的向量，以捕获局部词序，但会受到数据稀疏和高维度的影响
-2. 该模型不会尝试学习底层单词的含义，因此向量之间的距离并不总是反映含义的差异
-</pre></div>
-</div>
-<div class="admonition note">
-<p class="admonition-title">备注</p>
-<p>The <code class="docutils literal notranslate"><span class="pre">Word2Vec</span></code> model addresses this second problem.</p>
-</div>
-</section>
-<section id="introducing-the-word2vec-model">
-<h3>Introducing: the Word2Vec Model<a class="headerlink" href="#introducing-the-word2vec-model" title="此标题的永久链接">¶</a></h3>
-<ul>
-<li><p>Word2Vec 是一种更新的模型，它使用浅层神经网络将单词嵌入到低维向量空间中。结果是一组词向量，其中向量空间中靠近的向量根据上下文具有相似的含义，而彼此远离的词向量具有不同的含义。</p></li>
-<li><p>The are two versions of this model and Word2Vec class implements them both:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mf">1.</span> <span class="n">Skip</span><span class="o">-</span><span class="n">grams</span> <span class="p">(</span><span class="n">SG</span><span class="p">)</span>
-<span class="mf">2.</span> <span class="n">Continuous</span><span class="o">-</span><span class="n">bag</span><span class="o">-</span><span class="n">of</span><span class="o">-</span><span class="n">words</span> <span class="p">(</span><span class="n">CBOW</span><span class="p">)</span>
-</pre></div>
-</div>
-</li>
-</ul>
-</section>
-<section id="id2">
-<h3>参考<a class="headerlink" href="#id2" title="此标题的永久链接">¶</a></h3>
-<ul class="simple">
-<li><p>Original C toolkit and word2vec papers by Google: <a class="reference external" href="https://code.google.com/archive/p/word2vec/">https://code.google.com/archive/p/word2vec/</a></p></li>
-<li><p>API docs: gensim.models.word2vec: <a class="reference external" href="https://radimrehurek.com/gensim/models/word2vec.html#module-gensim.models.word2vec">https://radimrehurek.com/gensim/models/word2vec.html#module-gensim.models.word2vec</a></p></li>
-</ul>
-</section>
 </section>
 <section id="doc2vec-model">
 <h2>Doc2Vec Model<a class="headerlink" href="#doc2vec-model" title="此标题的永久链接">¶</a></h2>
 <ul class="simple">
-<li><p>[论文]An Empirical Evaluation of Models of Text Document Similarity: <a class="reference external" href="https://hekyll.services.adelaide.edu.au/dspace/bitstream/2440/28910/1/hdl_28910.pdf">https://hekyll.services.adelaide.edu.au/dspace/bitstream/2440/28910/1/hdl_28910.pdf</a></p></li>
-<li><p>[论文]Doc2Vec algorithm: <a class="reference external" href="https://cs.stanford.edu/~quocle/paragraph_vector.pdf">https://cs.stanford.edu/~quocle/paragraph_vector.pdf</a></p></li>
-<li><p>Doc2Vec is a Model that represents each Document as a Vector.</p></li>
+<li><p>详情参见 <a class="reference internal" href="../../theories/doc2vec.html#doc2vec"><span class="std std-ref">Doc2Vec</span></a></p></li>
 </ul>
-<section id="review-word2vec-model">
-<h3>Review: Word2Vec Model<a class="headerlink" href="#review-word2vec-model" title="此标题的永久链接">¶</a></h3>
-<ul class="simple">
-<li><p>Word2Vec 是一种更新的模型，它使用浅层神经网络将单词嵌入到低维向量空间中。结果是一组词向量，其中向量空间中靠近的向量根据上下文具有相似的含义，而彼此远离的词向量具有不同的含义。例如， strong 和 powerful 会很近， strong 和 Paris 会相对较远。</p></li>
-<li><p>使用 Word2Vec 模型，我们可以计算文档中每个单词的向量。但是如果我们想计算整个文档的向量怎么办？我们可以对文档中每个单词的向量进行平均 - 虽然这既快速又粗略，但它通常很有用。然而，还有更好的方法……</p></li>
-</ul>
-</section>
-<section id="introducing-paragraph-vector">
-<h3>Introducing: Paragraph Vector<a class="headerlink" href="#introducing-paragraph-vector" title="此标题的永久链接">¶</a></h3>
-<ul class="simple">
-<li><p>In Gensim, we refer to the Paragraph Vector model as Doc2Vec.</p></li>
-</ul>
-<p>There are two implementations:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Paragraph</span> <span class="n">Vector</span> <span class="o">-</span> <span class="n">Distributed</span> <span class="n">Memory</span> <span class="p">(</span><span class="n">PV</span><span class="o">-</span><span class="n">DM</span><span class="p">)</span>
-<span class="n">Paragraph</span> <span class="n">Vector</span> <span class="o">-</span> <span class="n">Distributed</span> <span class="n">Bag</span> <span class="n">of</span> <span class="n">Words</span> <span class="p">(</span><span class="n">PV</span><span class="o">-</span><span class="n">DBOW</span><span class="p">)</span>
-</pre></div>
-</div>
-<ul class="simple">
-<li><p>PV-DM 类似于 Word2Vec CBOW。文档向量是通过训练神经网络来获得的，该神经网络基于上下文词向量和完整文档的文档向量的平均值来预测中心词的综合任务。</p></li>
-<li><p>PV-DBOW 类似于 Word2Vec SG。文档向量是通过训练神经网络来完成从完整文档的文档向量预测目标单词的综合任务而获得的。</p></li>
-</ul>
-</section>
 </section>
 <section id="ensemble-lda">
 <h2>Ensemble LDA<a class="headerlink" href="#ensemble-lda" title="此标题的永久链接">¶</a></h2>
 <ul class="simple">
-<li><p>EnsembleLda is a method of finding and generating stable topics from the results of multiple topic models, it can be used to remove topics from your results that are noise and are not reproducible.</p></li>
-<li><p>“LDA” 通常指的是 “Latent Dirichlet Allocation”（潜在狄利克雷分配）。这个模型最初由 David Blei、Andrew Ng 和 Michael I. Jordan 于 2003 年提出。</p></li>
-<li><p>LDA 是一种概率主题模型，用于分析文档集合中的主题结构</p></li>
-<li><p>在 LDA 中，每个文档被看作是多个主题的混合，而每个主题又被看作是多个单词的分布。模型的目标是找到一个能够解释文档中单词分布的主题分布，以及每个文档中主题的分配情况。LDA 的输出包括每个文档的主题分布和每个主题的单词分布。</p></li>
+<li><p>详情参见 <a class="reference internal" href="../../theories/LDA.html#lda"><span class="std std-ref">LDA</span></a></p></li>
 </ul>
-<div class="admonition note">
-<p class="admonition-title">备注</p>
-<p>这种多主题的暂没有需求，未来有需求再看</p>
-</div>
 </section>
 <section id="fasttext-model">
 <h2>FastText Model<a class="headerlink" href="#fasttext-model" title="此标题的永久链接">¶</a></h2>
-<section id="word2vec">
-<h3>与Word2Vec对比<a class="headerlink" href="#word2vec" title="此标题的永久链接">¶</a></h3>
-<ul>
-<li><ol class="arabic simple">
-<li><p>词形处理</p></li>
-</ol>
-<blockquote>
-<div><ul class="simple">
-<li><p>The main principle behind fastText is that the morphological structure of a word carries important information about the meaning of the word.</p></li>
-<li><p>传统的词嵌入（如 Word2Vec）并不考虑这种结构，因为传统的词嵌入会为每个单词训练唯一的词嵌入。</p></li>
-<li><p>对于词形丰富的语言（德语、土耳其语）来说，一个单词可能有大量的词形，而每一种词形都可能很少出现，因此很难训练出好的词嵌入。</p></li>
-<li><p>fastText 试图通过将每个单词视为其子单词的聚合来解决这个问题。</p></li>
+<ul class="simple">
+<li><p>详情参见 <a class="reference internal" href="../../theories/FastText.html#fasttext"><span class="std std-ref">FastText</span></a></p></li>
 </ul>
-</div></blockquote>
-</li>
-<li><ol class="arabic simple" start="2">
-<li><p>fastText 在句法任务上的表现明显更好，尤其是当训练语料库规模较小时。不过，Word2Vec 在语义任务上稍微优于 fastText。随着训练语料库规模的增加，差异变得更小。</p></li>
-</ol>
-</li>
-</ul>
-</section>
-<section id="training-models">
-<h3>Training models<a class="headerlink" href="#training-models" title="此标题的永久链接">¶</a></h3>
-<p>FastText supports the following parameters from the original word2vec:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mf">1.</span> <span class="n">model</span><span class="p">:</span>           <span class="n">Training</span> <span class="n">architecture</span><span class="o">.</span> <span class="n">Allowed</span> <span class="n">values</span><span class="p">:</span> <span class="n">cbow</span><span class="p">,</span> <span class="n">skipgram</span> <span class="p">(</span><span class="n">Default</span> <span class="n">cbow</span><span class="p">)</span>
-<span class="mf">2.</span> <span class="n">vector_size</span><span class="p">:</span>     <span class="n">Dimensionality</span> <span class="n">of</span> <span class="n">vector</span> <span class="n">embeddings</span> <span class="n">to</span> <span class="n">be</span> <span class="n">learnt</span> <span class="p">(</span><span class="n">Default</span> <span class="mi">100</span><span class="p">)</span>
-<span class="mf">3.</span> <span class="n">alpha</span><span class="p">:</span>           <span class="n">Initial</span> <span class="n">learning</span> <span class="n">rate</span> <span class="p">(</span><span class="n">Default</span> <span class="mf">0.025</span><span class="p">)</span>
-<span class="mf">4.</span> <span class="n">window</span><span class="p">:</span>          <span class="n">Context</span> <span class="n">window</span> <span class="n">size</span> <span class="p">(</span><span class="n">Default</span> <span class="mi">5</span><span class="p">)</span>
-<span class="mf">5.</span> <span class="n">min_count</span><span class="p">:</span>       <span class="n">Ignore</span> <span class="n">words</span> <span class="k">with</span> <span class="n">number</span> <span class="n">of</span> <span class="n">occurrences</span> <span class="n">below</span> <span class="n">this</span> <span class="p">(</span><span class="n">Default</span> <span class="mi">5</span><span class="p">)</span>
-<span class="mf">6.</span> <span class="n">loss</span><span class="p">:</span>            <span class="n">Training</span> <span class="n">objective</span><span class="o">.</span> <span class="n">Allowed</span> <span class="n">values</span><span class="p">:</span> <span class="n">ns</span><span class="p">,</span> <span class="n">hs</span><span class="p">,</span> <span class="n">softmax</span> <span class="p">(</span><span class="n">Default</span> <span class="n">ns</span><span class="p">)</span>
-<span class="mf">7.</span> <span class="n">sample</span><span class="p">:</span>          <span class="n">Threshold</span> <span class="k">for</span> <span class="n">downsampling</span> <span class="n">higher</span><span class="o">-</span><span class="n">frequency</span> <span class="n">words</span> <span class="p">(</span><span class="n">Default</span> <span class="mf">0.001</span><span class="p">)</span>
-<span class="mf">8.</span> <span class="n">negative</span><span class="p">:</span>        <span class="n">Number</span> <span class="n">of</span> <span class="n">negative</span> <span class="n">words</span> <span class="n">to</span> <span class="n">sample</span><span class="p">,</span> <span class="k">for</span> <span class="n">ns</span> <span class="p">(</span><span class="n">Default</span> <span class="mi">5</span><span class="p">)</span>
-<span class="mf">9.</span> <span class="n">epochs</span><span class="p">:</span>          <span class="n">Number</span> <span class="n">of</span> <span class="n">epochs</span> <span class="p">(</span><span class="n">Default</span> <span class="mi">5</span><span class="p">)</span>
-<span class="mf">10.</span> <span class="n">sorted_vocab</span><span class="p">:</span>   <span class="n">Sort</span> <span class="n">vocab</span> <span class="n">by</span> <span class="n">descending</span> <span class="n">frequency</span> <span class="p">(</span><span class="n">Default</span> <span class="mi">1</span><span class="p">)</span>
-<span class="mf">11.</span> <span class="n">threads</span><span class="p">:</span>        <span class="n">Number</span> <span class="n">of</span> <span class="n">threads</span> <span class="n">to</span> <span class="n">use</span> <span class="p">(</span><span class="n">Default</span> <span class="mi">12</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>In addition, fastText has three additional parameters:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mf">1.</span> <span class="n">min_n</span><span class="p">:</span> <span class="nb">min</span> <span class="n">length</span> <span class="n">of</span> <span class="n">char</span> <span class="n">ngrams</span> <span class="p">(</span><span class="n">Default</span> <span class="mi">3</span><span class="p">)</span>
-<span class="mf">2.</span> <span class="n">max_n</span><span class="p">:</span> <span class="nb">max</span> <span class="n">length</span> <span class="n">of</span> <span class="n">char</span> <span class="n">ngrams</span> <span class="p">(</span><span class="n">Default</span> <span class="mi">6</span><span class="p">)</span>
-<span class="mf">3.</span> <span class="n">bucket</span><span class="p">:</span> <span class="n">number</span> <span class="n">of</span> <span class="n">buckets</span> <span class="n">used</span> <span class="k">for</span> <span class="n">hashing</span> <span class="n">ngrams</span> <span class="p">(</span><span class="n">Default</span> <span class="mi">2000000</span><span class="p">)</span>
-</pre></div>
-</div>
-</section>
 </section>
 <section id="lda-model">
 <h2>LDA Model<a class="headerlink" href="#lda-model" title="此标题的永久链接">¶</a></h2>
 <ul class="simple">
-<li><p>Introduction to Latent Dirichlet Allocation: <a class="reference external" href="https://blog.echen.me/2011/08/22/introduction-to-latent-dirichlet-allocation/">https://blog.echen.me/2011/08/22/introduction-to-latent-dirichlet-allocation/</a></p></li>
+<li><p>详情参见 <a class="reference internal" href="../../theories/LDA.html#lda"><span class="std std-ref">LDA</span></a></p></li>
 </ul>
-<div class="admonition note">
-<p class="admonition-title">备注</p>
-<p>这种多主题的暂没有需求，未来有需求再看</p>
-</div>
 <table class="docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
@@ -728,7 +588,7 @@ vec(&quot;中国北京&quot;) – vec(&quot;中国&quot;) + vec(&quot;日本&quo
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../',
-            VERSION:'V1.7.14',
+            VERSION:'V1.7.16',
             LANGUAGE:'zh-CN',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',

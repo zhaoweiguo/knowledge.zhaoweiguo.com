@@ -9,7 +9,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>2.2.6. GPU专用 &mdash; 新溪-gordon V1.7.14 文档</title>
+  <title>2.2.6. GPU专用 &mdash; 新溪-gordon V1.7.16 文档</title>
   
 
   
@@ -71,7 +71,7 @@
             
             
               <div class="version">
-                V1.7.14
+                V1.7.16
               </div>
             
           
@@ -457,7 +457,9 @@
               <h4 id="local-table-of-contents-title">On This Page</h4>
               <ul>
 <li><a class="reference internal" href="#">2.2.6. GPU专用</a><ul>
-<li><a class="reference internal" href="#id2">常见问题</a></li>
+<li><a class="reference internal" href="#id2">安装</a></li>
+<li><a class="reference internal" href="#id3">使用</a></li>
+<li><a class="reference internal" href="#id4">常见问题</a></li>
 </ul>
 </li>
 </ul>
@@ -474,12 +476,48 @@
 </table>
 <section id="gpu">
 <h1><span class="section-number">2.2.6. </span>GPU专用<a class="headerlink" href="#gpu" title="此标题的永久链接">¶</a></h1>
+<section id="id2">
+<h2>安装<a class="headerlink" href="#id2" title="此标题的永久链接">¶</a></h2>
+<p>安装:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
+distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+sudo apt-get update &amp;&amp; sudo apt-get install -y nvidia-container-runtime
+
+sudo apt-get install -y nvidia-docker2
+</pre></div>
+</div>
+<p>验证:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">nvidia</span><span class="o">-</span><span class="n">container</span><span class="o">-</span><span class="n">runtime</span>
+</pre></div>
+</div>
+<p>修改 docker 配置:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cat</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">docker</span><span class="o">/</span><span class="n">daemon</span><span class="o">.</span><span class="n">json</span>
+<span class="p">{</span>
+  <span class="s2">&quot;default-runtime&quot;</span><span class="p">:</span> <span class="s2">&quot;nvidia&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;runtimes&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;nvidia&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;/usr/bin/nvidia-container-runtime&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;runtimeArgs&quot;</span><span class="p">:</span> <span class="p">[]</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>重启:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">systemctl</span> <span class="n">restart</span> <span class="n">docker</span>
+</pre></div>
+</div>
+</section>
+<section id="id3">
+<h2>使用<a class="headerlink" href="#id3" title="此标题的永久链接">¶</a></h2>
 <p>和普通不同的点是增加了 <code class="docutils literal notranslate"><span class="pre">--gpus=all</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">docker</span> <span class="n">run</span> <span class="o">-</span><span class="n">it</span> <span class="o">-</span><span class="n">gpus</span> <span class="nb">all</span> <span class="o">&lt;</span><span class="n">image</span><span class="o">&gt;</span> <span class="n">nvidia</span><span class="o">-</span><span class="n">smi</span>
 </pre></div>
 </div>
-<section id="id2">
-<h2>常见问题<a class="headerlink" href="#id2" title="此标题的永久链接">¶</a></h2>
+</section>
+<section id="id4">
+<h2>常见问题<a class="headerlink" href="#id4" title="此标题的永久链接">¶</a></h2>
 <p>Error response from daemon: could not select device driver “” with capabilities: [[gpu]]:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>没有配置好 docker 运行环境导致的，执行安装容器运行环境
 $ apt-get install nvidia-container-runtime
@@ -551,7 +589,7 @@ $ apt-get install nvidia-container-runtime
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../',
-            VERSION:'V1.7.14',
+            VERSION:'V1.7.16',
             LANGUAGE:'zh-CN',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',

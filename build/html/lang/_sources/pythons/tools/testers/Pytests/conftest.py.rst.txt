@@ -1,0 +1,132 @@
+特殊文件-conftest.py
+####################
+
+
+- conftest.py 是一个特殊的文件名，它允许您定义钩子函数和共享的固定测试资源。
+- 当您将钩子函数或其他 pytest 的自定义行为放置在 conftest.py 中时，pytest 会自动加载这些内容，并确保它们在运行测试时生效。
+
+
+主要功能和用途::
+
+    1. Fixture 共享
+        可以在整个项目中共享 Fixture，不需要在每个测试文件中单独导入
+    2. 自定义钩子函数
+    3. 配置选项
+    4. 插件机制
+    5. 自定义标记
+    6. 全局设置和初始化
+
+5个关键函数::
+
+    pytest_sessionstart: 测试会话开始
+    pytest_runtest_setup: 测试用例开始
+    pytest_runtest_makereport: 测试用例结束
+        用于在每个测试函数运行后生成测试报告
+        四个参数：
+            item：当前测试用例的对象
+            call：表示测试用例的调用状态，包括 setup, call, teardown 三个阶段
+            keyword：关键字参数，通常不需要手动传递
+            outcome：测试结果信息
+    pytest_runtest_teardown: 测试用例结束
+    pytest_sessionfinish: 测试会话结束
+
+
+
+
+示例
+====
+
+指定测试路径::
+
+    [pytest]
+    testpaths = testing doc
+
+    等同于:
+    pytest testing doc
+
+    注：如果都没有指定会选择当前目录
+
+
+conftest.py生效分解::
+
+    a/conftest.py:
+        def pytest_runtest_setup(item):
+            print("---sub--------++++setting up", item)
+
+    a/test_sub.py:
+        def test_sub():
+            print("-----------test_sub")
+
+    test_flat.py:
+        def test_flat():
+            print("-----------test_flat")
+
+    conftest.py:
+        def pytest_runtest_setup(item):
+            print("---main--------++++setting up", item)
+
+
+    执行:
+    $ pytest test_flat.py --capture=no
+        ---main--------++++setting up <Function test_flat>
+        -----------test_flat
+
+    $ pytest a/test_sub.py --capture=no
+        ---sub--------++++setting up <Function test_sub>
+        ---main--------++++setting up <Function test_sub>
+        -----------test_sub
+
+    $ cd a
+    $ pytest test_sub.py --capture=no
+    ---sub--------++++setting up <Function test_sub>
+    -----------test_sub
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

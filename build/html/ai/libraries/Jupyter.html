@@ -9,7 +9,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>5.5. Jupyter &mdash; 新溪-gordon V1.7.14 文档</title>
+  <title>5.5. Jupyter &mdash; 新溪-gordon V1.7.16 文档</title>
   
 
   
@@ -71,7 +71,7 @@
             
             
               <div class="version">
-                V1.7.14
+                V1.7.16
               </div>
             
           
@@ -115,10 +115,15 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../theory.html">2. 理论</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../theories/math.html">2.1. 数学</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../theories/bag-of-words.html">2.2. bag-of-words</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../theories/overfitting-underfitting.html">2.3. overfitting&amp;underfitting</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../theories/evaluate.html">2.4. evaluate评估</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theories/ReAct.html">2.1. ReAct框架</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theories/math.html">2.2. 数学</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theories/bag-of-words.html">2.3. bag-of-words</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theories/word2vec.html">2.4. Word2Vec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theories/doc2vec.html">2.5. Doc2Vec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theories/FastText.html">2.6. FastText</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theories/LDA.html">2.7. LDA-Latent Dirichlet Allocation(潜在狄利克雷分配)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theories/overfitting-underfitting.html">2.8. overfitting&amp;underfitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theories/evaluate.html">2.9. evaluate评估</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../LLM.html">3. 大模型</a><ul>
@@ -296,7 +301,7 @@
 <li class="toctree-l3"><a class="reference internal" href="gensims/How-to_Guides.html">5.15.4. How-to Guides: Solve a Problem</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="LAC.html">5.16. LAC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="LAC.html">5.16. LAC-百度词法分析工具</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../framework.html">6. 学习框架</a><ul>
@@ -465,9 +470,14 @@
               <h4 id="local-table-of-contents-title">On This Page</h4>
               <ul>
 <li><a class="reference internal" href="#">5.5. Jupyter</a><ul>
-<li><a class="reference internal" href="#id4">5.5.1. 远程访问</a></li>
-<li><a class="reference internal" href="#jupyterlab-toc">5.5.2. jupyterlab-toc</a></li>
-<li><a class="reference internal" href="#id5">5.5.3. 常见问题</a><ul>
+<li><a class="reference internal" href="#id3">5.5.1. 基本命令</a></li>
+<li><a class="reference internal" href="#id4">5.5.2. 环境变量</a><ul>
+<li><a class="reference internal" href="#jupyter-platform-dirs-1">JUPYTER_PLATFORM_DIRS=1</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id5">5.5.3. 远程访问</a></li>
+<li><a class="reference internal" href="#jupyterlab-toc">5.5.4. jupyterlab-toc</a></li>
+<li><a class="reference internal" href="#id6">5.5.5. 常见问题</a><ul>
 <li><a class="reference internal" href="#server-ip">远程server执行时, 如果不配置ip</a></li>
 <li><a class="reference internal" href="#libomp-dylib">libomp.dylib</a></li>
 </ul>
@@ -489,7 +499,7 @@
 <section id="jupyter">
 <span id="id2"></span><h1><span class="section-number">5.5. </span>Jupyter<a class="headerlink" href="#jupyter" title="此标题的永久链接">¶</a></h1>
 <ul class="simple">
-<li><p>官网 <a class="footnote-reference brackets" href="#id6" id="id3" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a></p></li>
+<li><p>官网: <a class="reference external" href="https://jupyter.org/">https://jupyter.org/</a></p></li>
 </ul>
 <p>发音:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>音标:/ˈdʒuːpɪtə(r)/
@@ -510,8 +520,53 @@ $ conda install jupyter
 $ conda install jupyter=1.0.0
 </pre></div>
 </div>
+<section id="id3">
+<h2><span class="section-number">5.5.1. </span>基本命令<a class="headerlink" href="#id3" title="此标题的永久链接">¶</a></h2>
+<p>显示 Jupyter 使用的各种目录路径，包括配置文件目录、数据目录和运行时目录:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>➜ jupyter --paths
+config:
+    /Users/zhaoweiguo/.jupyter
+    /Users/zhaoweiguo/.local/etc/jupyter
+    /Users/zhaoweiguo/9tool/miniconda3/envs/metagpt/etc/jupyter
+    /usr/local/etc/jupyter
+    /etc/jupyter
+data:
+    /Users/zhaoweiguo/Library/Jupyter
+    /Users/zhaoweiguo/.local/share/jupyter
+    /Users/zhaoweiguo/9tool/miniconda3/envs/metagpt/share/jupyter
+    /usr/local/share/jupyter
+    /usr/share/jupyter
+runtime:
+    /Users/zhaoweiguo/Library/Jupyter/runtime
+
+➜ JUPYTER_PLATFORM_DIRS=1 jupyter --paths
+config:
+    /Users/zhaoweiguo/Library/Application Support/Jupyter
+    /Users/zhaoweiguo/.local/etc/jupyter
+    /Users/zhaoweiguo/9tool/miniconda3/envs/metagpt/etc/jupyter
+    /Library/Application Support/Jupyter
+data:
+    /Users/zhaoweiguo/Library/Application Support/Jupyter
+    /Users/zhaoweiguo/.local/share/jupyter
+    /Users/zhaoweiguo/9tool/miniconda3/envs/metagpt/share/jupyter
+    /Library/Application Support/Jupyter
+runtime:
+    /Users/zhaoweiguo/Library/Application Support/Jupyter/runtime
+</pre></div>
+</div>
+</section>
 <section id="id4">
-<h2><span class="section-number">5.5.1. </span>远程访问<a class="headerlink" href="#id4" title="此标题的永久链接">¶</a></h2>
+<h2><span class="section-number">5.5.2. </span>环境变量<a class="headerlink" href="#id4" title="此标题的永久链接">¶</a></h2>
+<section id="jupyter-platform-dirs-1">
+<h3>JUPYTER_PLATFORM_DIRS=1<a class="headerlink" href="#jupyter-platform-dirs-1" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>背景：Jupyter 项目正逐步迁移到使用 <code class="docutils literal notranslate"><span class="pre">platformdirs</span></code> 库来确定配置、数据和运行时目录的路径。platformdirs 库根据操作系统的标准位置来决定这些目录的位置，以便更好地与系统的其他应用程序协调。</p></li>
+<li><p>作用：当你设置 JUPYTER_PLATFORM_DIRS=1 并运行 Jupyter 时，Jupyter 会使用 platformdirs 库来确定各个路径，并打印出新的目录位置。这可以帮助开发者和用户适应新的目录结构，并确保未来的兼容性。</p></li>
+</ul>
+</section>
+</section>
+<section id="id5">
+<h2><span class="section-number">5.5.3. </span>远程访问<a class="headerlink" href="#id5" title="此标题的永久链接">¶</a></h2>
 <p>解决方法:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>jupyter远程访问配置:
 1. 生成配置文件（~/.jupyter/jupyter_notebook_config.py）
@@ -536,7 +591,7 @@ $ jupyter notebook --ip=*
 </div>
 </section>
 <section id="jupyterlab-toc">
-<h2><span class="section-number">5.5.2. </span>jupyterlab-toc<a class="headerlink" href="#jupyterlab-toc" title="此标题的永久链接">¶</a></h2>
+<h2><span class="section-number">5.5.4. </span>jupyterlab-toc<a class="headerlink" href="#jupyterlab-toc" title="此标题的永久链接">¶</a></h2>
 <ul class="simple">
 <li><p>Table of Contents extension for JupyterLab</p></li>
 <li><p>Github: <a class="reference external" href="https://github.com/jupyterlab/jupyterlab-toc">https://github.com/jupyterlab/jupyterlab-toc</a></p></li>
@@ -544,8 +599,8 @@ $ jupyter notebook --ip=*
 <li><p>VSCODE版: <a class="reference external" href="https://marketplace.visualstudio.com/items?itemName=xelad0m.jupyter-toc">https://marketplace.visualstudio.com/items?itemName=xelad0m.jupyter-toc</a></p></li>
 </ul>
 </section>
-<section id="id5">
-<h2><span class="section-number">5.5.3. </span>常见问题<a class="headerlink" href="#id5" title="此标题的永久链接">¶</a></h2>
+<section id="id6">
+<h2><span class="section-number">5.5.5. </span>常见问题<a class="headerlink" href="#id6" title="此标题的永久链接">¶</a></h2>
 <section id="server-ip">
 <h3>远程server执行时, 如果不配置ip<a class="headerlink" href="#server-ip" title="此标题的永久链接">¶</a></h3>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">gluon</span><span class="p">)</span> <span class="p">[</span><span class="n">root</span><span class="nd">@GPU1</span> <span class="n">d2l</span><span class="o">-</span><span class="n">zh</span><span class="p">]</span><span class="c1"># jupyter notebook</span>
@@ -586,12 +641,6 @@ $ jupyter notebook --ip=*
 <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;KMP_DUPLICATE_LIB_OK&quot;</span><span class="p">]</span><span class="o">=</span><span class="s2">&quot;TRUE&quot;</span>
 </pre></div>
 </div>
-<aside class="footnote-list brackets">
-<aside class="footnote brackets" id="id6" role="note">
-<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id3">1</a><span class="fn-bracket">]</span></span>
-<p><a class="reference external" href="https://jupyter.org/">https://jupyter.org/</a></p>
-</aside>
-</aside>
 <table class="docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
@@ -658,7 +707,7 @@ $ jupyter notebook --ip=*
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'V1.7.14',
+            VERSION:'V1.7.16',
             LANGUAGE:'zh-CN',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
