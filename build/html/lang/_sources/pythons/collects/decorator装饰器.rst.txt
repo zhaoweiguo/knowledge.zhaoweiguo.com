@@ -1,0 +1,163 @@
+装饰器
+########
+
+* 装饰器（decorator）是一种设计模式，用于在不修改现有代码的情况下，向函数或方法添加功能。装饰器本质上是一个高阶函数（一个接受函数作为参数的函数），它返回一个新的函数，该函数通常扩展了原始函数的功能。
+
+
+自定义装饰器
+============
+
+函数::
+
+    def my_decorator(func):
+        def wrapper():
+            print("Something is happening before the function is called.")
+            func()
+            print("Something is happening after the function is called.")
+        return wrapper
+
+
+``@my_decorator 语法`` 示例::
+
+    @my_decorator
+    def say_hello():
+        print("Hello!")
+
+    say_hello()
+
+上面示例相当于::
+
+    def say_hello():
+        print("Hello!")
+
+    decorated_hello = my_decorator(say_hello)
+    decorated_hello()
+
+
+
+带参数的函数装饰器
+------------------
+
+::
+
+    def my_decorator(func):
+        def wrapper(*args, **kwargs):
+            print("Something is happening before the function is called.")
+            result = func(*args, **kwargs)
+            print("Something is happening after the function is called.")
+            return result
+        return wrapper
+
+    @my_decorator
+    def say_hello(name):
+        print(f"Hello, {name}!")
+
+    say_hello("Alice")
+    输出:
+    Something is happening before the function is called.
+    Hello, Alice!
+    Something is happening after the function is called.
+
+
+类装饰器
+--------
+
+* 类装饰器是装饰整个类，而不是类中的单个方法。类装饰器的实现需要实现 __call__ 和 __init__ 方法。例如：
+* 示例参见 ``demo_python``
+
+
+
+
+@overload
+=========
+
+* typing 模块中的一个装饰器，用于定义函数重载（function overloading）。
+* 函数重载允许在同一作用域中定义多个同名函数，但这些函数的参数类型或数量不同。在 Python 中，实际的运行时并不支持函数重载，但通过 @overload 装饰器，可以在静态类型检查工具（如 mypy）中实现类似的功能。
+
+
+用法
+----
+
+* @overload 只能与类型提示一起使用，它不会实际实现函数逻辑，而是仅用于提供类型信息。具体的实现应该放在没有 @overload 装饰器的函数定义中。
+
+注意事项
+--------
+
+* 仅用于类型检查：@overload 装饰器不会实际生成不同的函数版本，它只是用于类型检查工具来识别不同的签名。
+* 实现必须单独定义：真正的函数实现必须在所有 @overload 定义之后，并且不能使用 @overload 装饰器。
+* 参数和返回类型的一致性：@overload 装饰器定义的参数和返回类型应该在实际实现中得到正确处理。
+
+
+示例
+----
+
+::
+
+    from typing import overload, Union
+
+    @overload
+    def process(value: int) -> str:
+        ...
+
+    @overload
+    def process(value: str) -> int:
+        ...
+
+    def process(value: Union[int, str]) -> Union[str, int]:
+        if isinstance(value, int):
+            return str(value)
+        elif isinstance(value, str):
+            return len(value)
+        else:
+            raise TypeError("Unsupported type")
+
+    # 示例调用
+    print(process(123))  # 输出: "123"
+    print(process("abc"))  # 输出: 3
+
+
+* process 函数有两个重载版本，一个接收 int 类型参数并返回 str，另一个接收 str 类型参数并返回 int。实际的函数实现结合了这两种情况，并根据输入的类型进行相应的处理。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

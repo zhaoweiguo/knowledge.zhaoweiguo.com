@@ -90,6 +90,75 @@
     def test_fetch_data_success(mocker):
         ...
 
+* 安装::
+
+    pip install pytest pytest-mock
+
+常用功能(pytest-mock)::
+
+    1. patch
+        mocker.patch 是最常用的功能，用于替换某个对象或函数。
+        可以使用 return_value 参数指定替换后的返回值，或使用 side_effect 指定一个函数来动态返回值。
+        示例：
+        def test_patch_example(mocker):
+            # 替换函数，并指定返回值
+            mocker.patch('path.to.module.function_name', return_value=42)
+            assert module.function_name() == 42
+
+            # 使用 side_effect 动态返回值
+            def side_effect(arg):
+                return arg * 2
+
+            mocker.patch('path.to.module.function_name', side_effect=side_effect)
+            assert module.function_name(21) == 42
+
+    2. spy
+        mocker.spy 用于监视某个函数的调用情况，比如调用次数、传递的参数等，但不改变其原有行为
+        示例：
+        def test_spy_example(mocker):
+            spy = mocker.spy(module, 'function_name')
+            result = module.function_name(5)
+            spy.assert_called_once_with(5)
+            assert result == 10  # 假设函数行为为返回参数的2倍
+
+    3. stub
+        mocker.stub 用于创建一个简单的 mock 对象，它没有任何行为，除非你显式地设置
+        def test_stub_example(mocker):
+            stub = mocker.stub(name='example_stub')
+            stub.return_value = 'stubbed value'
+            
+            assert stub() == 'stubbed value'
+            stub.assert_called_once()
+
+
+
+
+示例::
+
+    import requests
+
+    def fetch_data(url):
+        response = requests.get(url)
+        if response.status_code == 200:
+            return response.json()
+        return None
+
+    def test_fetch_data_success(mocker):
+        mock_response = mocker.Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {'key': 'value'}
+
+        mocker.patch('requests.get', return_value=mock_response)
+
+        url = 'http://example.com/api/data'
+        result = fetch_data(url)
+        assert result == {'key': 'value'}
+
+
+
+
+
+
 
 插件-pytest-asyncio
 ===================

@@ -9,6 +9,23 @@
 - 测试夹具用于在测试函数执行之前准备特定的状态或对象，并在测试函数执行之后进行清理工作。
 
 
+
+fixture函数的发现顺序::
+
+    1. 测试类
+    2. 测试模块
+    3. conftest.py文件
+    4. 内置和第三方插件
+
+
+
+参数
+====
+
+scope
+-----
+
+
 通过 scope 参数设置夹具的作用范围::
 
     function(默认): 每个测试函数调用一次
@@ -18,13 +35,45 @@
     package: 
 
 
+autouse
+-------
 
-fixture函数的发现顺序::
+::
 
-    1. 测试类
-    2. 测试模块
-    3. conftest.py文件
-    4. 内置和第三方插件
+    autouse=False(默认)
+    autouse=True：自动应用该夹具到指定范围内的所有测试。
+
+使用示例::
+
+    1. 设置和清理全局环境
+    @pytest.fixture(scope="session", autouse=True)
+    def setup_environment():
+        # 设置全局环境变量
+        os.environ['API_KEY'] = 'my_api_key'
+        yield
+        # 清理全局环境变量
+        del os.environ['API_KEY']
+
+    def test_example():
+        assert os.getenv('API_KEY') == 'my_api_key'
+
+    2. 配置数据库连接
+    @pytest.fixture(scope="session", autouse=True)
+    def setup_database():
+        # 假设这里是连接数据库的代码
+        db = connect_to_database()
+        yield db
+        # 假设这里是断开数据库连接的代码
+        db.close()
+
+    def test_db_query():
+        # 这里可以使用已经建立的数据库连接
+        result = execute_query("SELECT 1")
+        assert result == 1
+
+
+
+
 
 
 自带fixture

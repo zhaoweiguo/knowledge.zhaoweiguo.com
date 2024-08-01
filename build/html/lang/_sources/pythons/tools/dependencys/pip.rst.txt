@@ -40,32 +40,78 @@ python命令安装::
 使用Pip
 =======
 
-* 安装package::
+安装package
+-----------
+
+安装最新版本的包::
 
     $ pip install Markdown
 
-* 列出安装的packages::
-
-    $ pip freeze
-    or
-    $ pip list
-
-* 安装特定版本的package::
+安装特定版本的package::
 
     通过使用==, >=, <=, >, <来指定一个版本号
     $ pip install 'Markdown<2.0'
     $ pip install 'Markdown>2.0,<2.0.3'
     $ pip install applicationName==version
 
-
-* 升级包::
+升级已安装的包::
 
     升级包到当前最新的版本，可以使用-U 或者 --upgrade
     $ pip install -U Markdown
 
-* 卸载包::
 
-    $ pip uninstall Markdown
+指定安装源::
+
+    pip install package_name -i <URL>
+    示例:
+    pip install requests -i https://mirrors.aliyun.com/pypi/simple/
+
+
+安装开发版本（开发者模式）::
+
+    # 以“开发模式”安装包。
+    # 在这种模式下，包的源代码文件会被链接到 Python 环境中，而不是复制。
+    # 这意味着对源代码的任何更改都会立即反映在已安装的包中。
+    pip install -e .
+    or
+    pip install --editable .
+
+    # 示例
+    pip install -e ".[torch,metrics]"
+    # 说明
+    # [torch,metrics]：这些是额外的依赖项名称
+    # 你的 setup.py 文件中可能有类似以下的定义
+    # extras_require={
+    #     'torch': ['torch>=1.8.0'],
+    #     'metrics': ['some-metrics-library']
+    # }
+
+
+
+指定额外的依赖项::
+
+    pip install package_name[extra]
+    示例: 安装 requests 以及其额外的 security 依赖项
+    pip install requests[security]
+
+
+
+
+
+
+
+查询
+----
+
+* 列出安装的packages::
+
+    $ pip freeze > requirements.txt
+    or
+    $ pip list
+
+    # 查看过时的包：
+    pip list --outdated
+
 
 * 查询包::
 
@@ -74,9 +120,24 @@ python命令安装::
 .. warning:: PyPI 停止支持 pip search 命令的日期是在 2018 年 4 月。这个决定是由于 XML-RPC search 在性能和安全性方面存在问题，因此被弃用。在 PyPI 的更新和升级过程中，许多旧的或不安全的功能都被移除或替代。如果你想查找 Python 包，现在推荐使用 https://pypi.org/search 网站上的搜索功能
 
 
-* 查看一个包的详细信息,包括其安装路径::
+* 查看包的详细信息(包括其安装路径)::
 
-   pip show pkgname
+   pip show package_name
+
+
+其他
+----
+
+* 卸载包::
+
+    $ pip uninstall Markdown
+
+清理缓存::
+
+    pip cache purge
+
+
+
 
 
 查询路径

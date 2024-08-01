@@ -9,7 +9,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>9.2. Milvus &mdash; 新溪-gordon V1.7.16 文档</title>
+  <title>9.3. Milvus &mdash; 新溪-gordon V1.7.17 文档</title>
   
 
   
@@ -33,8 +33,8 @@
   <link rel="stylesheet" href="../_static/copybutton.css" type="text/css" />
     <link rel="index" title="索引" href="../genindex.html" />
     <link rel="search" title="搜索" href="../search.html" />
-    <link rel="next" title="10. 多模 DB" href="../Multi-Model.html" />
-    <link rel="prev" title="9.1. 常用" href="normal.html" /> 
+    <link rel="next" title="9.4. Faiss" href="Faiss.html" />
+    <link rel="prev" title="9.2. 传统DB" href="tradition.html" /> 
 
   
   <script src="../_static/js/modernizr.min.js"></script>
@@ -71,7 +71,7 @@
             
             
               <div class="version">
-                V1.7.16
+                V1.7.17
               </div>
             
           
@@ -107,7 +107,11 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../normals/SQL.html">1.3. SQL</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../normals/tmp.html">1.4. 临时</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../normals/file_format.html">1.4. 文件存储格式</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../normals/file_format.html#parquet">1.4.1. Parquet</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../normals/tmp.html">1.5. 临时</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../Key-Value.html">2. K/V数据库</a><ul>
@@ -665,10 +669,17 @@
 </li>
 <li class="toctree-l1 current"><a class="reference internal" href="../VectorDB.html">9. 向量数据库</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="normal.html">9.1. 常用</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="normal.html#chroma">9.1.1. Chroma</a></li>
+<li class="toctree-l3"><a class="reference internal" href="normal.html#db">9.1.1. 各向量DB对比</a></li>
+<li class="toctree-l3"><a class="reference internal" href="normal.html#id3">9.1.2. 索引方法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="normal.html#id4">9.1.3. 其他</a></li>
 </ul>
 </li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">9.2. Milvus</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tradition.html">9.2. 传统DB</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">9.3. Milvus</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Faiss.html">9.4. Faiss</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Chroma.html">9.5. Chroma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Pinecone.html">9.6. Pinecone</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Weaviate.html">9.7. Weaviate</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../Multi-Model.html">10. 多模 DB</a><ul>
@@ -752,7 +763,7 @@
         
           <li><a href="../VectorDB.html"><span class="section-number">9. </span>向量数据库</a> &raquo;</li>
         
-      <li><span class="section-number">9.2. </span>Milvus</li>
+      <li><span class="section-number">9.3. </span>Milvus</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -780,12 +791,25 @@
 </tbody>
 </table>
 <section id="milvus">
-<h1><span class="section-number">9.2. </span>Milvus<a class="headerlink" href="#milvus" title="此标题的永久链接">¶</a></h1>
+<h1><span class="section-number">9.3. </span>Milvus<a class="headerlink" href="#milvus" title="此标题的永久链接">¶</a></h1>
 <ul class="simple">
 <li><p>GitHub: <a class="reference external" href="https://github.com/milvus-io/milvus">https://github.com/milvus-io/milvus</a></p></li>
 <li><p>官网: <a class="reference external" href="https://milvus.io/">https://milvus.io/</a></p></li>
 <li><p>Milvus 是一个开源的向量数据库，它专门用于存储和检索大规模向量数据。它提供了多种向量索引算法，可以高效地处理向量检索任务。</p></li>
 </ul>
+<p>特点:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 通过代理、负载均衡器、消息代理、Kafka和Kubernetes的组合实现了高度可扩展性，这使得整个系统变得非常复杂和资源密集;
+2. 截至2023年，它是唯一一个提供可工作的DiskANN实现的主要供应商;
+3. 支持在向量相似度检索过程中进行标量字段过滤，实现混合查询;
+4. 采用存储与计算分离的架构设计;
+5. 提供python,juava,go,node.js等语言SDK,也提供milvus lite等in-momery运行;
+6. 提供了图形界面客户端。
+</pre></div>
+</div>
+<p>缺点:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>更新频繁，数据备份时只能同一集群备份，权限控制较差。
+</pre></div>
+</div>
 <table class="docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
@@ -805,10 +829,10 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../Multi-Model.html" class="btn btn-neutral float-right" title="10. 多模 DB" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="Faiss.html" class="btn btn-neutral float-right" title="9.4. Faiss" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="normal.html" class="btn btn-neutral" title="9.1. 常用" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="tradition.html" class="btn btn-neutral" title="9.2. 传统DB" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -850,7 +874,7 @@
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'V1.7.16',
+            VERSION:'V1.7.17',
             LANGUAGE:'zh-CN',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',

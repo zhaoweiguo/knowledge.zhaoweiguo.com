@@ -9,7 +9,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>9.1. 常用 &mdash; 新溪-gordon V1.7.16 文档</title>
+  <title>9.1. 常用 &mdash; 新溪-gordon V1.7.17 文档</title>
   
 
   
@@ -33,7 +33,7 @@
   <link rel="stylesheet" href="../_static/copybutton.css" type="text/css" />
     <link rel="index" title="索引" href="../genindex.html" />
     <link rel="search" title="搜索" href="../search.html" />
-    <link rel="next" title="9.2. Milvus" href="Milvus.html" />
+    <link rel="next" title="9.2. 传统DB" href="tradition.html" />
     <link rel="prev" title="9. 向量数据库" href="../VectorDB.html" /> 
 
   
@@ -71,7 +71,7 @@
             
             
               <div class="version">
-                V1.7.16
+                V1.7.17
               </div>
             
           
@@ -107,7 +107,11 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../normals/SQL.html">1.3. SQL</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../normals/tmp.html">1.4. 临时</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../normals/file_format.html">1.4. 文件存储格式</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../normals/file_format.html#parquet">1.4.1. Parquet</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../normals/tmp.html">1.5. 临时</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../Key-Value.html">2. K/V数据库</a><ul>
@@ -665,10 +669,17 @@
 </li>
 <li class="toctree-l1 current"><a class="reference internal" href="../VectorDB.html">9. 向量数据库</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">9.1. 常用</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#chroma">9.1.1. Chroma</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#db">9.1.1. 各向量DB对比</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">9.1.2. 索引方法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">9.1.3. 其他</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="Milvus.html">9.2. Milvus</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tradition.html">9.2. 传统DB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Milvus.html">9.3. Milvus</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Faiss.html">9.4. Faiss</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Chroma.html">9.5. Chroma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Pinecone.html">9.6. Pinecone</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Weaviate.html">9.7. Weaviate</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../Multi-Model.html">10. 多模 DB</a><ul>
@@ -774,7 +785,9 @@
               <h4 id="local-table-of-contents-title">On This Page</h4>
               <ul>
 <li><a class="reference internal" href="#">9.1. 常用</a><ul>
-<li><a class="reference internal" href="#chroma">9.1.1. Chroma</a></li>
+<li><a class="reference internal" href="#db">9.1.1. 各向量DB对比</a></li>
+<li><a class="reference internal" href="#id3">9.1.2. 索引方法</a></li>
+<li><a class="reference internal" href="#id4">9.1.3. 其他</a></li>
 </ul>
 </li>
 </ul>
@@ -791,55 +804,89 @@
 </table>
 <section id="id2">
 <h1><span class="section-number">9.1. </span>常用<a class="headerlink" href="#id2" title="此标题的永久链接">¶</a></h1>
-<ul>
-<li><p><a class="reference external" href="https://github.com/facebookresearch/faiss">Faiss</a>: Faiss 是一个Facebook开发的开源向量索引库，它提供了一些非常快速和高效的近似最近邻搜索算法。虽然它本身不是一个数据库系统，但可以与其他数据库集成，以支持向量检索。</p></li>
-<li><p>Weaviate: <a class="reference external" href="https://weaviate.io/">https://weaviate.io/</a></p></li>
-<li><p><a class="reference external" href="https://github.com/spotify/annoy">Annoy</a>: Annoy 是一个小巧而快速的库，专门用于近似最近邻搜索。虽然它不是一个数据库，但你可以将其用于构建自定义向量索引。</p></li>
-<li><p>Pinecone: <a class="reference external" href="https://www.pinecone.io/">https://www.pinecone.io/</a></p>
-<blockquote>
-<div><ul class="simple">
-<li><p>Langchain AI Handbook: <a class="reference external" href="https://www.pinecone.io/learn/langchain/">https://www.pinecone.io/learn/langchain/</a></p></li>
+<section id="db">
+<h2><span class="section-number">9.1.1. </span>各向量DB对比<a class="headerlink" href="#db" title="此标题的永久链接">¶</a></h2>
+<ul class="simple">
+<li><p>参考: <a class="reference external" href="https://www.jianshu.com/p/43cc19426113">https://www.jianshu.com/p/43cc19426113</a></p></li>
 </ul>
-</div></blockquote>
-</li>
-</ul>
-<section id="chroma">
-<h2><span class="section-number">9.1.1. </span>Chroma<a class="headerlink" href="#chroma" title="此标题的永久链接">¶</a></h2>
-<ul>
-<li><p>Chroma(Chroma is the open-source embedding database. Chroma makes it easy to build LLM apps by making knowledge, facts, and skills pluggable for LLMs): <a class="reference external" href="https://docs.trychroma.com/">https://docs.trychroma.com/</a></p></li>
-<li><p>quickstart:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># 1. Install</span>
-<span class="n">pip</span> <span class="n">install</span> <span class="n">chromadb</span>
-
-<span class="c1"># 2. Get the Chroma Client</span>
-<span class="kn">import</span> <span class="nn">chromadb</span>
-<span class="n">chroma_client</span> <span class="o">=</span> <span class="n">chromadb</span><span class="o">.</span><span class="n">Client</span><span class="p">()</span>
-
-<span class="c1"># 3. Create a collection</span>
-<span class="n">collection</span> <span class="o">=</span> <span class="n">chroma_client</span><span class="o">.</span><span class="n">create_collection</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;my_collection&quot;</span><span class="p">)</span>
-
-<span class="c1"># 4. Add some text documents to the collection</span>
-<span class="n">collection</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
-    <span class="n">documents</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;This is a document&quot;</span><span class="p">,</span> <span class="s2">&quot;This is another document&quot;</span><span class="p">],</span>
-    <span class="n">metadatas</span><span class="o">=</span><span class="p">[{</span><span class="s2">&quot;source&quot;</span><span class="p">:</span> <span class="s2">&quot;my_source&quot;</span><span class="p">},</span> <span class="p">{</span><span class="s2">&quot;source&quot;</span><span class="p">:</span> <span class="s2">&quot;my_source&quot;</span><span class="p">}],</span>
-    <span class="n">ids</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;id1&quot;</span><span class="p">,</span> <span class="s2">&quot;id2&quot;</span><span class="p">]</span>
-<span class="p">)</span>
-<span class="c1"># or</span>
-<span class="n">collection</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
-    <span class="n">embeddings</span><span class="o">=</span><span class="p">[[</span><span class="mf">1.2</span><span class="p">,</span> <span class="mf">2.3</span><span class="p">,</span> <span class="mf">4.5</span><span class="p">],</span> <span class="p">[</span><span class="mf">6.7</span><span class="p">,</span> <span class="mf">8.2</span><span class="p">,</span> <span class="mf">9.2</span><span class="p">]],</span>
-    <span class="n">documents</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;This is a document&quot;</span><span class="p">,</span> <span class="s2">&quot;This is another document&quot;</span><span class="p">],</span>
-    <span class="n">metadatas</span><span class="o">=</span><span class="p">[{</span><span class="s2">&quot;source&quot;</span><span class="p">:</span> <span class="s2">&quot;my_source&quot;</span><span class="p">},</span> <span class="p">{</span><span class="s2">&quot;source&quot;</span><span class="p">:</span> <span class="s2">&quot;my_source&quot;</span><span class="p">}],</span>
-    <span class="n">ids</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;id1&quot;</span><span class="p">,</span> <span class="s2">&quot;id2&quot;</span><span class="p">]</span>
-<span class="p">)</span>
-
-<span class="c1"># 5. Query the collection</span>
-<span class="n">results</span> <span class="o">=</span> <span class="n">collection</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>
-    <span class="n">query_texts</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;This is a query document&quot;</span><span class="p">],</span>
-    <span class="n">n_results</span><span class="o">=</span><span class="mi">2</span>
-<span class="p">)</span>
+<p>托管方式:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="bp">self</span><span class="o">-</span><span class="n">hosted</span><span class="o">/</span><span class="n">on</span><span class="o">-</span><span class="n">premise</span>
+    <span class="n">redis</span><span class="p">,</span><span class="n">pgvector</span><span class="p">,</span><span class="n">milvus</span>
+<span class="n">managed</span><span class="o">/</span><span class="n">cloud</span><span class="o">-</span><span class="n">native</span>
+    <span class="n">zilliz</span><span class="p">,</span><span class="n">pinecone</span>
+<span class="n">embeded</span><span class="o">+</span><span class="n">cloud</span><span class="o">-</span><span class="n">native</span>
+    <span class="n">chroma</span><span class="p">,</span><span class="n">lanceDB</span>
+<span class="bp">self</span><span class="o">-</span><span class="n">hosted</span><span class="o">+</span><span class="n">cloud</span><span class="o">-</span><span class="n">native</span>
+    <span class="n">vald</span><span class="p">,</span><span class="n">drant</span><span class="p">,</span><span class="n">weaviate</span><span class="p">,</span><span class="n">vspa</span><span class="p">,</span><span class="n">elasticsearch</span>
 </pre></div>
 </div>
-</li>
+<figure class="align-default" id="id6">
+<img alt="https://img.zhaoweiguo.com/uPic/2024/07/pCQ8sK.png" src="https://img.zhaoweiguo.com/uPic/2024/07/pCQ8sK.png" />
+<figcaption>
+<p><span class="caption-text">编程语言的选择</span><a class="headerlink" href="#id6" title="此图像的永久链接">¶</a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id7">
+<img alt="https://img.zhaoweiguo.com/uPic/2024/07/W5EoUC.png" src="https://img.zhaoweiguo.com/uPic/2024/07/W5EoUC.png" />
+<figcaption>
+<p><span class="caption-text">时间线</span><a class="headerlink" href="#id7" title="此图像的永久链接">¶</a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id8">
+<img alt="https://img.zhaoweiguo.com/uPic/2024/07/pe0Yst.png" src="https://img.zhaoweiguo.com/uPic/2024/07/pe0Yst.png" />
+<figcaption>
+<p><span class="caption-text">开/闭源</span><a class="headerlink" href="#id8" title="此图像的永久链接">¶</a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id9">
+<img alt="https://img.zhaoweiguo.com/uPic/2024/07/9GPdm2.png" src="https://img.zhaoweiguo.com/uPic/2024/07/9GPdm2.png" />
+<figcaption>
+<p><span class="caption-text">托管方法</span><a class="headerlink" href="#id9" title="此图像的永久链接">¶</a></p>
+</figcaption>
+</figure>
+</section>
+<section id="id3">
+<h2><span class="section-number">9.1.2. </span>索引方法<a class="headerlink" href="#id3" title="此标题的永久链接">¶</a></h2>
+<ul class="simple">
+<li><p>13 种高维向量检索算法全解析: <a class="reference external" href="https://zhuanlan.zhihu.com/p/415320221">https://zhuanlan.zhihu.com/p/415320221</a></p></li>
+</ul>
+<p>算法:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Flat
+Tree-based:KD-Tree, Trinary Projection Trees, Annoy
+IVF-based:IVF,IVMF
+Hashing-based:LSH,Spherical Hashing,Spectral Hashing
+Graph-based:NSW,NSG,HNSW,DiskANN
+    HNSW
+        分层的可导航小世界（Hierarchical Navigable Small World，HNSW）是一种基于图的数据结构，它将节点划分成不同层级，贪婪地遍历来自上层的元素，直到达到局部最小值，然后切换到下一层，以上一层中的局部最小值作为新元素重新开始遍历，直到遍历完最低一层。它的基本思想是:跳表+NSW
+        跳表
+    NSW
+        核心思想：可导航小世界（Navigable Small World，NSW）将候选集合  构建成可导航小世界图，利用基于贪婪搜索的kNN算法从图中查找与查询点距离最近的k个顶点。
+        近似Delonay图：向图中逐个插入点，对于每个新插入点，使用近似kNN搜索（approximate kNN search）算法从图中找到与其最近f个点集合，该集合中所有点与插入点连接。通过上述方式构建的是近似Delonay图，与标准Delonay图相比，随着越来越多的点被插入到图中，初期构建的短距离边会慢慢变成长距离边，形成可导航的小世界，从而在查找时减少跳数加快查找速度。
+        德劳内（Delaunay）三角剖分算法，这个算法可以达成如下要求：1，图中每个点都有“友点”。2，相近的点都互为“友点”。3，图中所有连接（线段）的数量最少。Delaunay图有个缺点，它没有高速公路机制，也就是说所有的图节点都只会跟自己相近的点建立连接，如果需要抵达一个距离较远的点，则时间复杂度较高。而不管是构建图索引的时候，还是在线检索的时候，都需要进行临近搜索，直接采用Delaunay图就会导致离线索引构建以及在线serving的时间复杂度不理想。
+        SW:在网络中，任选两个节点，连通这两个节点的最少边数，定义为这两个节点的路径长度，网络中所有节点对的路径长度的平均值，定义为网络的特征路径长度，小世界网络的定义即特征路径长度与节点数的对数呈正相关。
+    Vamana(DiskANN)
+</pre></div>
+</div>
+<p>量化:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>PQ（Product Quantization）
+    PQ 将特征空间分解为多个低维子空间的笛卡尔乘积，然后单独地对每一个子空间进行量化
+SQ（Scalar Quantization）
+    SQ是将每一个维度量化成指定位数的一个数
+</pre></div>
+</div>
+<p>检索:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>向量检索: 基于faiss, milvus,weaviate,chroma等向量数据库
+关键字检索:基于文本检索引擎ElasticSearch,OpenSearch和BM25算法
+图数据库检索：ne4j,nebula等图数据库
+关系数据库检索：pgsql,oracle等关系数据库
+搜索引擎：bing, duckduckgo, metaphor
+</pre></div>
+</div>
+</section>
+<section id="id4">
+<h2><span class="section-number">9.1.3. </span>其他<a class="headerlink" href="#id4" title="此标题的永久链接">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://github.com/spotify/annoy">Annoy</a>: Annoy 是一个小巧而快速的库，专门用于近似最近邻搜索。虽然它不是一个数据库，但你可以将其用于构建自定义向量索引。</p></li>
 </ul>
 <table class="docutils align-default">
 <tbody>
@@ -861,7 +908,7 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="Milvus.html" class="btn btn-neutral float-right" title="9.2. Milvus" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="tradition.html" class="btn btn-neutral float-right" title="9.2. 传统DB" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="../VectorDB.html" class="btn btn-neutral" title="9. 向量数据库" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
@@ -906,7 +953,7 @@
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'V1.7.16',
+            VERSION:'V1.7.17',
             LANGUAGE:'zh-CN',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
