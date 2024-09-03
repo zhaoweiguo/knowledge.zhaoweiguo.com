@@ -1,0 +1,116 @@
+常见问题
+########
+
+
+多进程多线程部署
+================
+
+用 uWSGI +Flask 多进程多线程部署 pytorch项目时报::
+
+    "Cannot re-initialize CUDA in forked subprocess. To use CUDA with "
+    RuntimeError: Cannot re-initialize CUDA in forked subprocess. 
+    To use CUDA with multiprocessing, you must use the 'spawn' start method
+
+    解决方法:
+        lazy=true
+
+
+
+
+
+字符问题
+========
+
+简介
+----
+
+::
+
+    docker容器运行的服务
+    一个使用Flash的示例
+    使用uwsgi启动
+
+现象
+----
+
+* 疑问1: 用curl命令请求时，如果参数带汉字，Flash使用 ``request.args.get('cmd')`` 提取时乱码
+* 疑问2: 在代码中打印时用 print(f"cmd: {cmd}")时，报错: ``UnicodeEncodeError: 'ascii' codec can't encode characters in position 65-68: ordinal not in range(128)``::
+
+    --- Logging error ---
+    Traceback (most recent call last):
+      File "/opt/conda/lib/python3.10/logging/__init__.py", line 1103, in emit
+        stream.write(msg + self.terminator)
+    UnicodeEncodeError: 'ascii' codec can't encode characters in position 66-69: ordinal not in range(128)
+    Call stack:
+      File "/opt/conda/lib/python3.10/site-packages/flask/app.py", line 2548, in __call__
+        return self.wsgi_app(environ, start_response)
+      File "/opt/conda/lib/python3.10/site-packages/flask/app.py", line 2525, in wsgi_app
+        response = self.full_dispatch_request()
+      File "/opt/conda/lib/python3.10/site-packages/flask/app.py", line 1820, in full_dispatch_request
+        rv = self.dispatch_request()
+      File "/opt/conda/lib/python3.10/site-packages/flask/app.py", line 1796, in dispatch_request
+        return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+      File "/data/intend_llm/./intend/intend.py", line 33, in run
+        log.debug(f"responds: {responds}")
+    Unable to print the message and arguments - possible formatting error.
+    Use the traceback above to help find the error.
+
+* 奇怪的是不使用uwsgi，直接用python启动Flash，只有现象1，没有现象2（todo）
+
+
+过程
+----
+
+* 最开始是第一个问题，chatgpt给我扯了一堆有的没的，各种试都没有用，后来放弃
+* 后面代码运行时，结果都没有问题，但报上面这个错，也是各种扯，之后我想如果是编码问题，那是不是看看LANG等环境变量::
+
+    echo $LANG   => ""
+    echo $LC_ALL   => ""
+    echo $LANGUAGE   => ""
+
+    # 执行下local
+    $ locale
+    LANG=
+    LANGUAGE=
+    LC_CTYPE="POSIX"
+    LC_NUMERIC="POSIX"
+    LC_TIME="POSIX"
+    LC_COLLATE="POSIX"
+    LC_MONETARY="POSIX"
+    LC_MESSAGES="POSIX"
+    LC_PAPER="POSIX"
+    LC_NAME="POSIX"
+    LC_ADDRESS="POSIX"
+    LC_TELEPHONE="POSIX"
+    LC_MEASUREMENT="POSIX"
+    LC_IDENTIFICATION="POSIX"
+    LC_ALL=
+
+    # POSIX does not support UTF-8 encoding.
+
+解决
+----
+
+修改Dockfile::
+
+    FROM your_base_image
+
+    # Install locales package and set up locale
+    RUN apt-get update && apt-get install -y locales && \
+        locale-gen en_US.UTF-8 && \
+        update-locale LANG=en_US.UTF-8
+
+    ENV LANG=en_US.UTF-8
+    ENV LC_ALL=en_US.UTF-8
+
+
+
+
+
+
+
+
+
+
+
+

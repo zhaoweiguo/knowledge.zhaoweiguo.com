@@ -1,0 +1,58 @@
+apt-key命令
+###########
+
+
+* 用于管理 Debian 和 Ubuntu 系统中 APT（Advanced Package Tool）软件包管理器的公钥的命令。APT 使用这些公钥来验证从远程存储库中下载的包，以确保它们的真实性和完整性。通过 apt-key，用户可以添加、查看或删除这些公钥。
+
+
+
+常用命令::
+
+    添加新密钥：
+    apt-key add <file>
+
+    列出所有密钥：
+    apt-key list
+
+    删除特定密钥：
+    apt-key del <keyid>
+
+
+注意事项
+========
+
+.. warning:: 自 Ubuntu 20.04（Focal Fossa）和 Debian 11（Bullseye）起，apt-key 命令已经被弃用，建议用户使用其他方式来管理存储库的签名密钥，例如直接将公钥添加到 /etc/apt/trusted.gpg.d/ 目录或使用 signed-by 选项指定存储库的签名密钥。
+
+* 弃用 apt-key 是因为将所有的信任密钥存储在一个全局信任密钥环中并不安全，可能会导致系统安装不受信任的软件包。因此，最新的推荐方法是使用存储库特定的密钥管理方式。
+
+
+新的方法
+--------
+
+下载并保存公钥::
+
+    curl -fsSL https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/3bf863cc.pub | gpg --dearmour -o /usr/share/keyrings/nvidia-archive-keyring.gpg
+
+配置 APT 存储库::
+
+    echo "deb [signed-by=/usr/share/keyrings/nvidia-archive-keyring.gpg] http://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/ /" | sudo tee /etc/apt/sources.list.d/cuda.list
+
+更新软件包列表并安装::
+
+    sudo apt-get update
+    sudo apt-get install xxxxx
+
+
+.. note:: signed-by 参数告诉 APT 使用特定的密钥来验证此存储库，而不是使用全局密钥
+
+
+
+
+
+
+
+
+
+
+
+
