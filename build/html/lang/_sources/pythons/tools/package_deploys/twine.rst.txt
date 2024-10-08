@@ -5,18 +5,43 @@ twine
 * 它通常用于发布 Python 包，并确保发布过程的安全性和可靠性，比传统的 python setup.py upload(Setuptools 内置的上传功能)更安全，因为它可以避免一些与上传直接关联的安全风险，并支持更加可靠的认证和上传机制。
 
 
-
-
-
-
 安装::
 
     pip install --upgrade twine
 
+使用::
 
-上传包至PyPi::
+    # 指定 ~/.pypirc 文件中指定的repo
+    twine upload --repository testpypi dist/*
 
-    python -m twine upload --repository testpypi dist/*
+    # 指定repo url
+    twine upload --repository-url https://test.pypi.org/ dist/*
+
+
+
+
+
+示例
+====
+
+修改 ``~/.pypirc`` 配置 ``testpypi`` ::
+
+    [distutils]
+    index-servers =
+        nexus
+        pypitest
+
+    [default]
+    repository: nexus
+
+    [nexus]
+    repository=http://10.140.13.16:9081/repository/pypi/
+    username=admin
+    password=admin123
+
+指定 ``testpypi`` 上传::
+
+    $ twine upload --repository testpypi dist/*
     Uploading distributions to https://test.pypi.org/legacy/
     Enter your username: peter
     Enter your password:
@@ -25,17 +50,33 @@ twine
     Uploading face_push-0.0.1.tar.gz
     100% ---------------------------------------- 17.5/17.5 kB • 00:00 • ?
 
-    View at:
+    参见:
     https://test.pypi.org/project/face-push/0.0.1/
 
 
-下载与安装项目::
+安装&使用::
 
-    py -m pip install --index-url https://test.pypi.org/simple/ --no-deps example-package
-
-
+    pip install --index-url https://test.pypi.org/simple/ --no-deps example-package
 
 
+
+
+
+
+
+
+
+常见问题
+========
+
+问题1::
+
+    ERROR    HTTPError: 400 Bad Request from http://10.140.13.16:9081/repository/pypi/
+        pypi/packages/tx-agent/0.1.0/tx_agent-0.1.0-py3-none-any.whl cannot be updated    
+
+原因定位::
+
+    1. 可能是版本冲突，也就是说现在仓库中已经有指定的版本了
 
 
 

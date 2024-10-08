@@ -459,10 +459,83 @@ VI-D Evaluation Benchmarks and Tools
 VII. Discussion and Future Prospects
 ====================================
 
+VII-A RAG vs Long Context
+-------------------------
+
+* 当LLMs不受上下文限制时是否仍然需要RAG
+* 事实上，RAG仍然发挥着不可替代的作用。
+* 一方面，一次性为LLMs提供大量上下文将显着影响其推理速度，而分块检索和按需输入可以显着提高运营效率。
+* 另一方面，基于RAG的生成可以快速定位LLMs的原始参考文献，帮助用户验证生成的答案。整个检索和推理过程是可观察的，而仅依赖长上下文的生成仍然是一个黑匣子。
+* 相反，语境的扩展为RAG的发展提供了新的机遇，使其能够解决更复杂的问题以及需要阅读大量材料才能回答的综合或总结性问题。
+* 在超长背景下开发新的RAG方法是未来的研究趋势之一。
 
 
-VIII. Conclusion
-================
+
+VII-B RAG Robustness
+--------------------
+
+* 检索过程中存在的噪声或矛盾信息可能会对 RAG 的输出质量产生不利影响。这种情况被形象地称为“错误信息可能比没有信息更糟糕”。
+* 提高 RAG 对此类对抗性或反事实输入的抵抗力正在获得研究动力，并已成为关键绩效指标。
+
+
+VII-C Hybrid Approaches
+-----------------------
+
+* 将 RAG 与微调相结合正在成为一种领先策略。
+* 确定 RAG 的最佳集成和微调（无论是顺序、交替还是通过端到端联合训练）以及如何利用参数化和非参数化优势是值得探索的领域。
+* 另一个趋势是将具有特定功能的SLM引入RAG中，并根据RAG系统的结果进行微调。例如， `CRAG <https://arxiv.org/abs/2401.15884>`_ 训练一个轻量级检索评估器来评估查询检索到的文档的整体质量，并根据置信度触发不同的知识检索动作。
+
+VII-D Scaling laws of RAG
+-------------------------
+
+* 端到端的RAG模型和基于RAG的预训练模型仍然是当前研究人员关注的焦点之一。这些模型的参数是关键因素之一。
+* 当LLMs的参数已经找到确定的标度律时，对 RAG 的适用性仍然不确定。
+* 像 RETRO++ 这样的初步研究已经开始解决这个问题，但 RAG 模型中的参数计数仍然落后于LLMs 。
+* RAG模型可能适用逆标度律(较小的模型优于较大的模型)，这一点特别有趣，值得进一步研究。
+
+VII-E Production-Ready RAG
+--------------------------
+
+
+In the development of RAG technology, there is a clear trend towards different specialization directions, such as::
+
+    1) Customization - tailoring RAG to meet specific requirements. 
+    2) Simplification - making RAG easier to use to reduce the initial learning curve. 
+    3) Specialization - optimizing RAG to better serve production environments.
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/09/8a5Rze.png
+
+    Figure 6: Summary of RAG ecosystem
+
+
+
+VII-F Multi-modal RAG
+---------------------
+
+* Image::
+
+    1. RA-CM3 是检索和生成文本和图像的开创性多模态模型
+    2. BLIP-2 利用冻结图像编码器和LLMs进行高效的视觉语言预训练，实现零样本图像到文本的转换
+    3. “Visualize Before You Write” 方法使用图像生成来引导 LM 的文本生成，在开放式文本生成任务中显示出前景
+
+* Audio and Video::
+
+    1. GSS 方法检索音频剪辑并将其拼接在一起，将机器翻译的数据转换为语音翻译的数据
+    2. UEOP 通过结合外部离线语音到文本转换策略，标志着端到端自动语音识别的重大进步
+    3. 基于 KNN 的注意力融合利用音频嵌入和语义相关的文本嵌入来完善 ASR，从而加速领域适应。
+    4. Vid2Seq 使用专门的时间标记增强了语言模型，有助于在统一的输出序列中预测事件边界和文本描述
+
+* Code::
+
+    1. RBPS 通过编码和频率分析，检索与开发人员目标一致的代码示例，在小规模学习任务中表现出色。这种方法已在测试断言生成和程序修复等任务中证明了有效性
+    2. 对于结构化知识，CoK方法首先从知识图谱中提取与输入查询相关的事实，然后将这些事实作为提示集成到输入中，从而提高知识图谱问答任务的性能
+
+
+
+
+
+
 
 
 

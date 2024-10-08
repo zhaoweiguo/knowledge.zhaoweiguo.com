@@ -32,7 +32,8 @@ password = pypi-<your-testpypi-token>
 ## 模拟一个要分发的项目
 
 创建项目结构:
-```python
+
+```shell
 mkdir zwg_project && cd zwg_project
 touch setup.py
 touch README.md
@@ -42,7 +43,8 @@ touch zwgpackage/greetings.py
 ```
 
 编写代码:.gitignore:
-```python
+
+```shell
 tee .gitignore <<-'EOF'
 zwgpackage.egg-info
 build
@@ -51,7 +53,8 @@ EOF
 ```
 
 编写代码:zwgpackage/greetings.py:
-```python
+
+```shell
 tee zwgpackage/greetings.py <<-'EOF'
 def say_hello(name):
     return f"Hello, {name}!"
@@ -60,7 +63,8 @@ EOF
 
 
 编写代码:zwgpackage/__init__.py:
-```python
+
+```shell
 tee zwgpackage/__init__.py <<-'EOF'
 from .greetings import say_hello
 EOF
@@ -89,7 +93,7 @@ EOF
 
 文档:
 
-```python
+```shell
 tee README.md <<-'EOF'
 # zwgpackage
 
@@ -115,20 +119,25 @@ EOF
 ## 打包&分发
 
 测试你的插件:
-```python
+```shell
 pip install .
 # 安装后使用Readme里面Usage的方法测试
 ```
 
 打包：
-```python
+```shell
 python setup.py sdist
 ```
 
 分发：
-```python
-twine upload dist/*
+```shell
+twine upload --repository testpypi dist/*
 # 注：你可能需要先安装twine: pip install twine
+```
+分发-自己的仓库
+```shell
+# 指定repo url
+twine upload --repository-url http://10.140.13.16:9081/repository/ dist/*
 ```
 成功日志
 ```
@@ -144,8 +153,12 @@ https://test.pypi.org/project/zwgpackage/0.1/
 
 - 参见：https://test.pypi.org/project/zwgpackage/0.1/
 - 安装
-```python
+```shell
 pip install -i https://test.pypi.org/simple/ zwgpackage==0.1
+```
+- 使用自己的仓库
+```
+pip install zwgpackage==0.1.0 -i http://10.140.13.16:9081/repository/pypi/
 ```
 - 使用
 ```python

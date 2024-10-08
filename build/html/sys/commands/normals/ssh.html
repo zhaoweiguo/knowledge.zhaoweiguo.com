@@ -9,7 +9,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>ssh命令 &mdash; 新溪-gordon V1.7.17 文档</title>
+  <title>ssh命令 &mdash; 新溪-gordon V1.7.19 文档</title>
   
 
   
@@ -71,7 +71,7 @@
             
             
               <div class="version">
-                V1.7.17
+                V1.7.19
               </div>
             
           
@@ -299,6 +299,8 @@
 <li class="toctree-l3 current"><a class="current reference internal" href="#">ssh命令</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#id2">选项</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#sshd">sshd命令</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#torsocks">torsocks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gsocket">gsocket</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#id3">周边ssh命令</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#id5">如何使 SSH 会话保持活动状态</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#id6">常见问题</a></li>
@@ -1094,6 +1096,8 @@
 </ul>
 </li>
 <li><a class="reference internal" href="#sshd">sshd命令</a></li>
+<li><a class="reference internal" href="#torsocks">torsocks</a></li>
+<li><a class="reference internal" href="#gsocket">gsocket</a></li>
 <li><a class="reference internal" href="#id3">周边ssh命令</a><ul>
 <li><a class="reference internal" href="#ssh-keygen">ssh-keygen命令</a></li>
 <li><a class="reference internal" href="#ssh-add">ssh-add命令相关</a></li>
@@ -1301,6 +1305,50 @@ $ ssh -R HostC:PortC:HostB:PortB  user@HostC
 <h2>sshd命令<a class="headerlink" href="#sshd" title="此标题的永久链接">¶</a></h2>
 <p>安装:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">apt</span> <span class="n">install</span> <span class="n">openssh</span><span class="o">-</span><span class="n">server</span>
+</pre></div>
+</div>
+</section>
+<section id="torsocks">
+<h2>torsocks<a class="headerlink" href="#torsocks" title="此标题的永久链接">¶</a></h2>
+<ul class="simple">
+<li><p>torsocks 专门用于通过 Tor（The Onion Router）网络 代理通信。Tor 网络是一种匿名通信网络，它通过多层加密和多跳路由让数据包通过一系列中间节点，以此来隐藏通信的来源和目标。</p></li>
+<li><p>功能： torsocks 可以让用户将常规的命令（如 SSH 连接）通过 Tor 网络进行匿名化处理。使用 Tor 可以隐藏真实的 IP 地址，并加密流量，从而增强隐私性。</p></li>
+<li><p>torsocks 是通过 Tor 网络来实现通信隐私，适合在希望隐藏身份或访问 .onion 隐匿服务时使用。</p></li>
+</ul>
+<p>示例:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">torsocks</span> <span class="n">ssh</span> <span class="o">-</span><span class="n">o</span> <span class="s2">&quot;SetEnv SECRET=Dp...&quot;</span> <span class="n">root</span><span class="nd">@smkxxxxx</span><span class="o">.</span><span class="n">onion</span>
+</pre></div>
+</div>
+<p>安装:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Debian/Ubuntu</span>
+<span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="o">-</span><span class="n">y</span> <span class="n">torsocks</span>
+<span class="c1"># CentOS</span>
+<span class="n">sudo</span> <span class="n">yum</span> <span class="n">install</span> <span class="n">torsocks</span>  <span class="c1"># CentOS 或 Fedora 早期版本</span>
+<span class="c1"># Arch Linux</span>
+<span class="n">sudo</span> <span class="n">pacman</span> <span class="o">-</span><span class="n">S</span> <span class="n">torsocks</span>
+<span class="c1"># mac</span>
+<span class="n">brew</span> <span class="n">install</span> <span class="n">torsocks</span>
+</pre></div>
+</div>
+</section>
+<section id="gsocket">
+<h2>gsocket<a class="headerlink" href="#gsocket" title="此标题的永久链接">¶</a></h2>
+<ul>
+<li><p>gsocket 是一个用于 穿越防火墙 和 NAT（网络地址转换） 的工具，允许通过防火墙等限制网络环境建立对外的网络连接。</p></li>
+<li><p>功能： gsocket 可以实现 P2P（点对点）通信，即使两个主机都位于受限的网络（如防火墙内）。它使用一种称为 UDP打洞（UDP hole punching）的技术，通过外部服务器进行连接协调，建立直接的通信通道。</p></li>
+<li><p>gsocket 则是用于穿透网络限制，如防火墙和 NAT，确保可以在复杂网络条件下建立直接的 SSH 连接。</p></li>
+<li><p>示例:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># 使用 gsocket 来建立 SSH 连接时，可以绕过网络限制，确保 SSH 能够正常进行，即便网络环境是封闭或受限的</span>
+<span class="n">gsocket</span> <span class="o">-</span><span class="n">s</span> <span class="n">OTVkOGENmFjM</span> <span class="n">ssh</span> <span class="o">-</span><span class="n">o</span> <span class="s2">&quot;SetEnv SECRET=Dp...&quot;</span> <span class="n">root</span><span class="o">@</span><span class="mi">8</span><span class="n">lgm</span><span class="o">.</span><span class="n">segfault</span><span class="o">.</span><span class="n">gsocket</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p>安装:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># macOS</span>
+<span class="n">brew</span> <span class="n">install</span> <span class="n">gsocket</span>
+<span class="c1"># 其他</span>
+<span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">hackerschoice</span><span class="o">/</span><span class="n">gsocket</span><span class="o">.</span><span class="n">git</span>
 </pre></div>
 </div>
 </section>
@@ -1655,7 +1703,7 @@ ssh-add 默认将制定的秘钥添加在当前运行的 ssh-agent 服务中
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../',
-            VERSION:'V1.7.17',
+            VERSION:'V1.7.19',
             LANGUAGE:'zh-CN',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',

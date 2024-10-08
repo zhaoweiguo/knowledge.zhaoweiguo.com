@@ -39,6 +39,37 @@ error: invalid path
 
 
 
+fatal: the remote end hung up unexpectedly
+==========================================
+
+现象::
+
+    $ git push origin -u master
+    Enumerating objects: 31425, done.
+    Counting objects: 100% (31425/31425), done.
+    Delta compression using up to 16 threads
+    Compressing objects: 100% (7393/7393), done.
+    error: RPC failed; HTTP 500 curl 22 The requested URL returned error: 500
+    send-pack: unexpected disconnect while reading sideband packet
+    Writing objects: 100% (31425/31425), 25.25 MiB | 65.29 MiB/s, done.
+    Total 31425 (delta 23854), reused 31425 (delta 23854), pack-reused 0
+    fatal: the remote end hung up unexpectedly
+    Everything up-to-date
+
+    $ du -hs
+    160M
+
+原因::
+
+    git仓库太大，push不上去
+
+
+解决::
+
+    git config http.postBuffer 524288000
+
+
+
 
 CRLF换行符问题
 ======================

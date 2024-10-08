@@ -1,0 +1,176 @@
+Discussions
+##################
+
+Versioning
+==========
+
+Valid version numbers
+---------------------
+
+::
+
+    A simple version (final release): 1.2.0
+    A development release: 1.2.0.dev1
+    An alpha release: 1.2.0a1
+    A beta release: 1.2.0b1
+    A release candidate: 1.2.0rc1
+    A post-release: 1.2.0.post1
+    A post-release of an alpha release (possible, but discouraged): 1.2.0a1.post1
+    A simple version with only two components: 23.12
+    A simple version with just one component: 42
+    A version with an epoch: 1!1.0
+
+
+Semantic versioning vs. calendar versioning
+-------------------------------------------
+
+Semantic versioning::
+
+    使用由 3 部分组成的版本号:
+    格式: major.minor.patch
+
+    ~= X.Y
+        等同于
+        name >= X.Y, == X.*
+    name ~= X.Y.Z
+        等同于
+        name >= X.Y.Z, == X.Y.*
+
+Calendar versioning::
+
+     格式: year.month
+     例: 23.12   # 表示 2023 年 12 月
+
+
+Local version identifiers
+-------------------------
+
+* 公共版本标识符旨在支持通过 PyPI 进行分发
+* Python 打包工具还支持 ``本地版本标识符`` 的概念，该标识符可用于识别不用于发布的本地开发版本，或由再分发者维护的版本的修改变体
+
+
+示例::
+
+    1.2.1+fedora.4
+    0.5.dev1+gd00980f
+
+
+Package Formats
+===============
+
+索引上有两种格式的文件::
+
+    1. source distributions, or sdists
+        格式: package_name-version.tar.gz
+        示例: pip-23.3.1.tar.gz
+    2. binary distributions, or wheels
+        格式: package_name-version-python_tag-abi_tag-platform_tag.whl
+        示例: pip-23.3.1-py3-none-any.whl
+            none: 不依赖于 Python 版本
+            any: 不依赖于平台
+
+
+Egg & Wheel
+-----------
+
+* “Egg” 是一种旧的包格式，已被 wheel 格式取代。它不应该再使用。
+* 自 2023 年 8 月起，PyPI 拒绝 egg 上传。
+
+* The egg format was introduced by Setuptools in 2004
+* Wheel 是一种分发格式，即打包格式。
+* Egg 既是一种分发格式，也是一种运行时安装格式（如果保持压缩），并且被设计为可导入。
+
+
+
+
+src layout vs flat layout
+=========================
+
+flat layout::
+
+    .
+    ├── README.md
+    ├── noxfile.py
+    ├── pyproject.toml
+    ├── setup.py
+    ├── awesome_package/
+    │   ├── __init__.py
+    │   └── module.py
+    └── tools/
+        ├── generate_awesomeness.py
+        └── decrease_world_suck.py
+
+
+src layout::
+
+    .
+    ├── README.md
+    ├── noxfile.py
+    ├── pyproject.toml
+    ├── setup.py
+    ├── src/
+    │    └── awesome_package/
+    │       ├── __init__.py
+    │       └── module.py
+    └── tools/
+        ├── generate_awesomeness.py
+        └── decrease_world_suck.py
+
+
+differences between the src layout and the flat layout
+------------------------------------------------------
+
+* src layout 需要安装项目才能运行其代码，而 flat layout 则不需要。这意味着 src 布局涉及项目开发工作流程中的附加步骤： ``可编辑安装(pip install -e .)`` 用于开发，``常规安装`` 用于测试
+* src 布局有助于防止意外使用代码的开发中副本。因为 Python 解释器将当前工作目录作为导入路径上的第一项。这意味着，如果当前工作目录中存在与已安装的导入包同名的导入包，则将使用当前工作目录中的变体。
+
+
+Running a command-line interface from source with src-layout
+------------------------------------------------------------
+
+* src-layout下，命令行界面不能直接从源代码树运行，而是需要在开发模式下安装包以进行测试。由于这在某些情况下可能不切实际
+* 解决方法是在通过其 __main__.py 文件调用时将包文件夹附加到 Python 的 sys.path 前面::
+
+    import os
+    import sys
+
+    if not __package__:
+        # Make CLI runnable from source tree with
+        #    python src/package
+        package_source_path = os.path.dirname(os.path.dirname(__file__))
+        sys.path.insert(0, package_source_path)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+参考
+====
+
+* Python Packaging User Guide Discussions: https://packaging.python.org/en/latest/discussions/
+
+
+
+
+
+
+
+

@@ -37,11 +37,8 @@ python命令安装::
 
 
 
-使用Pip
-=======
-
-安装package
------------
+pip install命令
+===============
 
 安装最新版本的包::
 
@@ -60,14 +57,14 @@ python命令安装::
     $ pip install -U Markdown
 
 
-指定安装源::
+指定安装源 ``-i(--index-url)`` ::
 
     pip install package_name -i <URL>
     示例:
     pip install requests -i https://mirrors.aliyun.com/pypi/simple/
 
 
-安装开发版本（开发者模式）::
+安装开发版本（开发者模式） ``-e(--editable)`` ::
 
     # 以“开发模式”安装包。
     # 在这种模式下，包的源代码文件会被链接到 Python 环境中，而不是复制。
@@ -96,12 +93,56 @@ python命令安装::
 
 
 
+Installing from local archives
+------------------------------
+
+Install a particular source archive file::
+
+    pip install ./downloads/SomeProject-1.0.4.tar.gz
+
+Install from a local directory containing archives (and don’t check PyPI)::
+
+    python3 -m pip install --no-index --find-links=file:///local/dir/ SomeProject
+    python3 -m pip install --no-index --find-links=/local/dir/ SomeProject
+    python3 -m pip install --no-index --find-links=relative/dir/ SomeProject
+
+Installing “Extras”
+-------------------
+
+Extras 是软件包的可选 “变体”，其中可能包括额外的依赖项，从而启用软件包中的其他功能::
+
+    pip install 'SomePackage[PDF]'
+    pip install 'SomePackage[PDF]==3.0'
+    pip install -e '.[PDF]'  # editable project in current directory
+
+
+direct_url.json
+---------------
+
+下面这些命令执行时会生成 direct_url.json 文件::
+
+    pip install https://example.com/app-1.0.tgz
+    pip install https://example.com/app-1.0.whl
+    pip install "app @ git+https://example.com/repo/app.git#subdirectory=setup"
+    pip install ./app
+    pip install file:///home/user/app
+    pip install --editable "app @ git+https://example.com/repo/app.git#subdirectory=setup"
+    pip install -e ./app
+
+
+下面这些命令执行时不会生成 direct_url.json 文件::
+
+    pip install app
+    pip install app --no-index --find-links https://example.com/
 
 
 
 
-查询
-----
+
+
+
+查询pip包
+=========
 
 * 列出安装的packages::
 
@@ -115,7 +156,9 @@ python命令安装::
 
 * 查询包::
 
-    $ pip search "Markdown"
+    $ pip search "Markdown"     ⛔️
+
+    $ pip list | grep Markdown  ✅
 
 .. warning:: PyPI 停止支持 pip search 命令的日期是在 2018 年 4 月。这个决定是由于 XML-RPC search 在性能和安全性方面存在问题，因此被弃用。在 PyPI 的更新和升级过程中，许多旧的或不安全的功能都被移除或替代。如果你想查找 Python 包，现在推荐使用 https://pypi.org/search 网站上的搜索功能
 
@@ -126,7 +169,7 @@ python命令安装::
 
 
 其他
-----
+====
 
 * 卸载包::
 
