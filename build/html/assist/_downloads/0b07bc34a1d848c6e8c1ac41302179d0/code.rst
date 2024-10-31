@@ -16,7 +16,19 @@
 
     xxxx xxx xxx
 
-3.另一种代码格式(高亮3,5行):
+3.另一种代码格式(高亮3,5行)::
+
+    .. code-block:: erlang
+       :linenos:
+       :emphasize-lines: 3,5
+       :dedent: 4
+
+            -module(abc).
+            -export([ex/0]).
+
+            ex() ->
+                Ex="dedent=4可以去除每一行的前4个字符".
+
 
 .. code-block:: erlang
    :linenos:
@@ -30,7 +42,16 @@
             Ex="dedent=4可以去除每一行的前4个字符".
 
 
-指定显示从哪一行开始:
+
+
+指定显示从哪一行开始::
+
+    .. code-block:: ruby
+       :lineno-start: 10
+
+       Some more Ruby code, 
+       with line numbering starting 
+       at 10.
 
 .. code-block:: ruby
    :lineno-start: 10
@@ -41,6 +62,7 @@
 
 multiple code examples::
 
+    # 配置增加
     extensions = ['sphinx.ext.autosectionlabel',
               'sphinxcontrib.osexample']
 
@@ -60,6 +82,28 @@ multiple code examples::
       .. code-block:: ruby
 
         print "Hello, World!\n"
+
+
+
+.. example-code::
+
+  .. code-block:: JSON
+
+    {
+      "key": "value"
+    }
+
+  .. code-block:: python
+
+    pygments_style = 'sphinx'
+
+
+  .. code-block:: ruby
+
+    print "Hello, World!\n"
+
+
+
 
 全局
 ====

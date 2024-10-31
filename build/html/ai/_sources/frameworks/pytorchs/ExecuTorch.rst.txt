@@ -1,0 +1,147 @@
+ExecuTorch
+##########
+
+* from: https://pytorch.org/executorch/0.4/
+
+Introduction
+============
+
+
+ExecuTorch Overview
+-------------------
+
+* Executorch是一款端到端解决方案，用于在移动的和边缘设备（包括可穿戴设备、嵌入式设备和微控制器）上实现设备上的推理功能。它是PyTorch Edge生态系统的一部分，可以将PyTorch模型高效部署到边缘设备。
+
+主要价值主张(key value propositions)::
+
+    - Portability
+    - Productivity
+    - Performance
+
+
+
+How ExecuTorch Works
+--------------------
+
+从高层次上讲，在边缘设备（如笔记本电脑、移动的手机、可穿戴设备和物联网设备）上使用Executorch运行PyTorch模型有三个步骤::
+
+    1. Export the model
+    2. Compile the exported model to an ExecuTorch program
+    3. Run the ExecuTorch program on a target device
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/10/cdXAHP.png
+
+
+Key Benefits::
+
+    1. Export that is robust and powerful
+    2. Operator standardization
+    3. Standardization for compiler interfaces (aka delegates) and the OSS ecosystem
+    4. First-party SDK and toolchain
+    5. No intermediate conversions necessary
+    6. Ease of customization
+    7. Low overhead runtime and execution
+
+
+High-level Architecture and Components of ExecuTorch
+----------------------------------------------------
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/10/Lh2ypG.png
+
+    将PyTorch模型部署到设备上有三个阶段：程序准备(Program Preparation)，运行时准备(Runtime Preparation)和程序执行(Program Execution)
+
+
+
+
+Getting Started
+===============
+
+Setting Up ExecuTorch
+---------------------
+
+install::
+
+    pip install executorch
+
+
+Export a Program::
+
+    # ExecuTorch provides APIs to compile a PyTorch nn.Module to a .pte binary
+    1. torch.export
+    2. exir.to_edge
+    3. exir.to_executorch
+    4. Save the result as a .pte binary to be consumed by the ExecuTorch runtime.
+
+
+导出代码示例::
+
+    import torch
+    from torch.export import export
+    from executorch.exir import to_edge
+
+    # Start with a PyTorch model that adds two input tensors (matrices)
+    class Add(torch.nn.Module):
+      def __init__(self):
+        super(Add, self).__init__()
+
+      def forward(self, x: torch.Tensor, y: torch.Tensor):
+          return x + y
+
+    # 1. torch.export: Defines the program with the ATen operator set.
+    aten_dialect = export(Add(), (torch.ones(1), torch.ones(1)))
+
+    # 2. to_edge: Make optimizations for Edge devices
+    edge_program = to_edge(aten_dialect)
+
+    # 3. to_executorch: Convert the graph to an ExecuTorch program
+    executorch_program = edge_program.to_executorch()
+
+    # 4. Save the compiled .pte program
+    with open("add.pte", "wb") as file:
+        file.write(executorch_program.buffer)
+
+Run Your Program::
+
+    executor_runner --model_path ./add.pte
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

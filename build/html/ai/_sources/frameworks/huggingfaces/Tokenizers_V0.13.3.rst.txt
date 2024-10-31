@@ -1,0 +1,508 @@
+Tokenizers
+##########
+
+* From: https://huggingface.co/docs/tokenizers/index
+
+
+Getting started
+===============
+
+Quicktour
+---------
+
+Build a tokenizer from scratch
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Training the tokenizer::
+
+    from tokenizers import Tokenizer
+    from tokenizers.models import BPE
+    tokenizer = Tokenizer(BPE(unk_token="[UNK]"))
+
+    # train our tokenizer on the wikitext files:
+    from tokenizers.trainers import BpeTrainer
+    trainer = BpeTrainer(special_tokens=["[UNK]", "[CLS]", "[SEP]", "[PAD]", "[MASK]"])
+
+    # 英文等增加对空格的分格(否则像it is这种会因为常出现被认识是一个token)
+    from tokenizers.pre_tokenizers import Whitespace
+    tokenizer.pre_tokenizer = Whitespace()
+
+    # train
+    files = [f"data/wikitext-103-raw/wiki.{split}.raw" for split in ["test", "train", "valid"]]
+    tokenizer.train(files, trainer)
+
+    tokenizer.save("data/tokenizer-wiki.json")
+
+    # 重新加载:
+    tokenizer = Tokenizer.from_file("data/tokenizer-wiki.json")
+
+
+Using the tokenizer::
+
+    output = tokenizer.encode("Hello, y'all! How are you 😁 ?")
+    print(output.tokens)
+    # ["Hello", ",", "y", "'", "all", "!", "How", "are", "you", "[UNK]", "?"]
+
+    print(output.ids)
+    # [27253, 16, 93, 11, 5097, 5, 7961, 5112, 6218, 0, 35]
+
+    print(output.offsets[9])
+    # (26, 27)
+
+    sentence = "Hello, y'all! How are you 😁 ?"
+    sentence[26:27]
+    # "😁"
+
+Post-processing::
+
+    tokenizer.token_to_id("[SEP]")
+    # 2
+
+    from tokenizers.processors import TemplateProcessing
+    tokenizer.post_processor = TemplateProcessing(
+        single="[CLS] $A [SEP]",
+        pair="[CLS] $A [SEP] $B:1 [SEP]:1",
+        special_tokens=[
+            ("[CLS]", tokenizer.token_to_id("[CLS]")),
+            ("[SEP]", tokenizer.token_to_id("[SEP]")),
+        ],
+    )
+    # 说明
+    1. 指定单句子的模板：格式是 “[CLS] $A [SEP]”，其中 $A 代表我们的句子
+    2. 指定句子对的模板：格式是 “[CLS] $A [SEP] $B [SEP]”，其中 $A 代表第一个句子，$B 代表第二个句子
+
+    # 单句子示例
+    output = tokenizer.encode("Hello, y'all! How are you 😁 ?")
+    print(output.tokens)
+    # ["[CLS]", "Hello", ",", "y", "'", "all", "!", "How", "are", "you", "[UNK]", "?", "[SEP]"]
+
+    # 句子对示例
+    output = tokenizer.encode("Hello, y'all!", "How are you 😁 ?")
+    print(output.tokens)
+    # ["[CLS]", "Hello", ",", "y", "'", "all", "!", "[SEP]", "How", "are", "you", "[UNK]", "?", "[SEP]"]
+    print(output.type_ids)
+    # [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
+
+
+Encoding multiple sentences in a batch::
+
+    # process your texts by batches
+    output = tokenizer.encode_batch(["Hello, y'all!", "How are you 😁 ?"])
+
+    # batch of sentences pairs
+    output = tokenizer.encode_batch(
+        [["Hello, y'all!", "How are you 😁 ?"], ["Hello to you too!", "I'm fine, thank you!"]]
+    )
+
+    # automatically pad the outputs to the longest sentence
+    tokenizer.enable_padding(pad_id=3, pad_token="[PAD]") # 分词器为填充标记 [PAD] 预设的唯一整数 ID。当分词器遇到 [PAD] 时，自动会将其转换为 3
+
+    output = tokenizer.encode_batch(["Hello, y'all!", "How are you 😁 ?"])
+    print(output[1].tokens)
+    # ["[CLS]", "How", "are", "you", "[UNK]", "?", "[SEP]", "[PAD]"]
+    print(output[1].attention_mask)
+    # [1, 1, 1, 1, 1, 1, 1, 0]
+
+
+
+
+Pretrained
+^^^^^^^^^^
+
+Using a pretrained tokenizer::
+
+    from tokenizers import Tokenizer
+
+    tokenizer = Tokenizer.from_pretrained("bert-base-uncased")
+
+Importing a pretrained tokenizer from legacy vocabulary files::
+
+    from tokenizers import BertWordPieceTokenizer
+
+    tokenizer = BertWordPieceTokenizer("bert-base-uncased-vocab.txt", lowercase=True)
+
+
+
+The tokenization pipeline
+-------------------------
+
+When calling ``Tokenizer.encode`` or ``Tokenizer.encode_batch``, the ``input text(s)`` go through the following pipeline::
+
+    normalization
+    pre-tokenization
+    model
+    post-processing
+
+
+Normalization
+^^^^^^^^^^^^^
+
+* 标准化是对原始字符串应用的一组操作，以使其不那么随机或“更干净”。
+* 常见操作包括去除空格、删除重音字符或小写所有文本。
+* 每个标准化操作在 🤗 Tokenizers 库中都由Normalizer表示，您可以使用normalizers.Sequence组合其中的多个操作
+
+
+应用 **NFD Unicode 标准化** 并 **删除重音符号** 的标准化器::
+
+    from tokenizers import normalizers
+    from tokenizers.normalizers import NFD, StripAccents
+    normalizer = normalizers.Sequence([NFD(), StripAccents()])
+
+使用::
+
+    normalizer.normalize_str("Héllò hôw are ü?")
+    # "Hello how are u?"
+
+更改相应的属性来自定义其规范化器::
+
+    tokenizer.normalizer = normalizer
+
+
+Pre-Tokenization
+^^^^^^^^^^^^^^^^
+
+* 预标记化是将文本分割成更小的对象的行为，这些对象为训练结束时的标记给出了上限(upper bound)。
+* A good way to think of this is that the pre-tokenizer will split your text into “words” and then, your final tokens will be parts of those words.
+
+预标记输入的一种简单方法是根据空格和标点符号进行分割::
+
+    from tokenizers.pre_tokenizers import Whitespace
+    pre_tokenizer = Whitespace()
+    pre_tokenizer.pre_tokenize_str("Hello! How are you? I'm fine, thank you.")
+    # [("Hello", (0, 5)), ("!", (5, 6)), ("How", (7, 10)), ("are", (11, 14)), ("you", (15, 18)),
+    #  ("?", (18, 19)), ("I", (20, 21)), ("'", (21, 22)), ('m', (22, 23)), ("fine", (24, 28)),
+    #  (",", (28, 29)), ("thank", (30, 35)), ("you", (36, 39)), (".", (39, 40))]
+
+可以将任何PreTokenizer组合在一起::
+
+    # 将按空格、标点符号和数字进行分割，将数字分隔成各个数字
+    from tokenizers import pre_tokenizers
+    from tokenizers.pre_tokenizers import Digits
+    pre_tokenizer = pre_tokenizers.Sequence([Whitespace(), Digits(individual_digits=True)])
+    pre_tokenizer.pre_tokenize_str("Call 911!")
+    # [("Call", (0, 4)), ("9", (5, 6)), ("1", (6, 7)), ("1", (7, 8)), ("!", (8, 9))]
+
+
+更改相应的属性来自定义Tokenizer的预分词器::
+
+    tokenizer.pre_tokenizer = pre_tokenizer
+
+Model
+^^^^^
+
+* 一旦输入文本被标准化和预标记化， Tokenizer就会在预标记上应用模型。
+* 模型的作用是使用它学到的规则将你的“单词”分割成标记。它还负责将这些标记映射到模型词汇表中相应的 ID。
+* This model is passed along when intializing the Tokenizer 
+
+Tokenizers 库支持::
+
+    models.BPE
+    models.Unigram
+    models.WordLevel
+    models.WordPiece
+
+示例::
+
+    # Tokenizer初使化时就传递
+    tokenizer = Tokenizer(BPE(unk_token="[UNK]"))
+
+
+Post-Processing
+^^^^^^^^^^^^^^^
+
+* 后处理是最后一步，用于在返回Encoding之前对其执行任何其他转换，例如添加潜在的特殊标记。
+* 通过设置相应的属性来自定义Tokenizer的后处理器
+
+示例-通过以下方式进行后处理以使输入适合 BERT 模型::
+
+    from tokenizers.processors import TemplateProcessing
+    tokenizer.post_processor = TemplateProcessing(
+        single="[CLS] $A [SEP]",
+        pair="[CLS] $A [SEP] $B:1 [SEP]:1",
+        special_tokens=[("[CLS]", 1), ("[SEP]", 2)],
+    )
+
+* 与预分词器或标准化器不同，无需在更改后处理器后重新训练分词器
+
+
+All together: a BERT tokenizer from scratch
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+BERT 依赖于 WordPiece，因此我们使用此模型实例化一个新的Tokenizer::
+
+    from tokenizers import Tokenizer
+    from tokenizers.models import WordPiece
+    bert_tokenizer = Tokenizer(WordPiece(unk_token="[UNK]"))
+
+BERT 通过删除重音符号和小写字母来预处理文本::
+
+    from tokenizers import normalizers
+    from tokenizers.normalizers import NFD, Lowercase, StripAccents
+    bert_tokenizer.normalizer = normalizers.Sequence([NFD(), Lowercase(), StripAccents()])
+
+根据空格和标点符号进行分割::
+
+    from tokenizers.pre_tokenizers import Whitespace
+    bert_tokenizer.pre_tokenizer = Whitespace()
+
+uses the template::
+
+    from tokenizers.processors import TemplateProcessing
+    bert_tokenizer.post_processor = TemplateProcessing(
+        single="[CLS] $A [SEP]",
+        pair="[CLS] $A [SEP] $B:1 [SEP]:1",
+        special_tokens=[
+            ("[CLS]", 1),
+            ("[SEP]", 2),
+        ],
+    )
+
+
+use this tokenizer and train on it on wikitext::
+
+    from tokenizers.trainers import WordPieceTrainer
+    trainer = WordPieceTrainer(vocab_size=30522, special_tokens=["[UNK]", "[CLS]", "[SEP]", "[PAD]", "[MASK]"])
+    files = [f"data/wikitext-103-raw/wiki.{split}.raw" for split in ["test", "train", "valid"]]
+    bert_tokenizer.train(files, trainer)
+    bert_tokenizer.save("data/bert-wiki.json")
+
+
+Decoding
+^^^^^^^^
+
+* 除了对输入文本进行编码之外， Tokenizer还具有用于解码的 API，即将模型生成的 ID 转换回文本::
+
+    Tokenizer.decode (for one predicted text)
+    Tokenizer.decode_batch (for a batch of predictions)
+
+
+decoder首先将 ID 转换回标记（使用标记器的词汇表）并删除所有特殊标记，然后将这些标记与空格连接起来::
+
+    output = tokenizer.encode("Hello, y'all! How are you 😁 ?")
+    print(output.ids)
+    # [1, 27253, 16, 93, 11, 5097, 5, 7961, 5112, 6218, 0, 35, 2]
+    tokenizer.decode([1, 27253, 16, 93, 11, 5097, 5, 7961, 5112, 6218, 0, 35, 2])
+    # "Hello , y ' all ! How are you ?"
+
+如果您使用的模型添加了特殊字符来表示给定“单词”的子标记（例如 WordPiece 中的"##" ）::
+
+    output = bert_tokenizer.encode("Welcome to the 🤗 Tokenizers library.")
+    print(output.tokens)
+    # ["[CLS]", "welcome", "to", "the", "[UNK]", "tok", "##eni", "##zer", "##s", "library", ".", "[SEP]"]
+    bert_tokenizer.decode(output.ids)
+    # "welcome to the tok ##eni ##zer ##s library ."
+
+这种情况需要自定义decoder以正确处理它们::
+
+    from tokenizers import decoders
+    bert_tokenizer.decoder = decoders.WordPiece()
+    bert_tokenizer.decode(output.ids)
+    # "welcome to the tokenizers library."
+
+
+Components
+----------
+
+Normalizers
+^^^^^^^^^^^
+
+常用的Normalizer方法::
+
+    NFD
+    NFKD
+    NFC
+    NFKC
+    Lowercase       => Input: HELLO ὈΔΥΣΣΕΎΣ  Output: helloὀδυσσεύς`
+    Strip           => Input: "  hi  " Output: "hi"
+    StripAccents    => Input: é Ouput: e
+    Replace         => Replace("a", "e") will behave like this: Input: "banana" Ouput: "benene"
+    BertNormalizer
+        => Provides an implementation of the Normalizer used in the original BERT
+            clean_text
+            handle_chinese_chars
+            strip_accents
+            lowercase
+    Sequence
+        => Composes multiple normalizers that will run in the provided order
+            Sequence([NFKC(), Lowercase()])
+
+
+Pre-tokenizers
+^^^^^^^^^^^^^^
+
+* The PreTokenizer takes care of splitting the input according to a set of rules. 
+
+algorithms::
+
+    ByteLevel
+        Splits on whitespaces while remapping all the bytes to a set of visible characters.
+        introduced by OpenAI with GPT-2
+    Whitespace          => Input: "Hello there!" Output: "Hello", "there!"
+        Splits on word boundaries (using the following regular expression: `\w+|[^\w\s]+`
+    WhitespaceSplit
+        Splits on any whitespace character
+    Punctuation         => Input: "Hello?" Ouput: "Hello", "?"
+    Metaspace           => Input: "Hello there" Ouput: "Hello", "▁there"
+        Splits on whitespaces and replaces them with a special char “▁” (U+2581)
+    CharDelimiterSplit  => Example with x: Input: "Helloxthere" Ouput: "Hello", "there"
+    Digits              => Input: "Hello123there" Output: "Hello", "123", "there"
+            Splits the numbers from any other characters.
+    Split
+        有下面3个参数:
+            1. `pattern` should be either a custom string or regexp.
+            2. `behavior` should be one of:
+                removed
+                isolated
+                merged_with_previous
+                merged_with_next
+                contiguous
+            3. `invert` should be a boolean flag.
+        示例:
+            pattern = , behavior = "isolated", invert = False:
+            Input: "Hello, how are you?"
+            Output: "Hello,", " ", "how", " ", "are", " ", "you?"
+    Sequence
+        示例:
+            Sequence([Punctuation(), WhitespaceSplit()])
+
+
+Models
+^^^^^^
+
+分词::
+
+        models.BPE          => Byte-Pair-Encoding
+        models.Unigram      => 
+        models.WordLevel    => 
+        models.WordPiece    => 
+
+
+WordLevel
+"""""""""
+
+* 简介：WordLevel 是最基础的分词方法，也是我们通常所说的“词级别分词”。它将每个完整的词映射到一个唯一的ID，而不对词进一步分解。
+* 优点：简单直观，易于理解和实现。只需要一个单词-ID映射表。
+* 缺点：需要非常大的词汇表来覆盖所有可能出现的单词，导致模型体积大。而且在处理未见过的单词（out-of-vocabulary, OOV）时很可能会出现“[UNK]”（未知词）。
+* 适用场景：适用于词汇量较小的任务，或对词汇量没有严格要求的简单应用。
+
+
+BPE
+"""
+
+* 简介：BPE 是一种流行的子词分词算法。它从字符级别开始，通过合并在语料中最常出现的字符对逐步创建新的子词（tokens）。这种合并操作是迭代进行的，以构建更长的子词。
+* 优点：BPE 可以处理未见过的单词，因为它能够将生词分解为子词并进行组合。因此它的词汇表可以相对较小。
+* 缺点：BPE 的分词是基于频率统计的，因此分词结果是固定的，不具备动态性和上下文敏感性。
+* 适用场景：广泛用于 GPT-2 等子词模型，适合词汇丰富的语言以及希望减少词汇表大小的场景。
+
+WordPiece
+"""""""""
+
+* 简介：WordPiece 是一种与 BPE 相似的子词分词算法，主要由 Google 在 BERT 模型中使用。它的分词策略是贪婪的，即优先尝试生成最长的子词。对于没有完整词汇的单词，WordPiece 会将其拆分为多个子词，并在单词内部使用 ## 前缀标识后续子词。
+* 优点：能有效处理未见过的单词，通过将未知单词拆分成多个子词以覆盖更多可能的组合。较少出现“[UNK]”标记。
+* 缺点：依赖语料的训练，需要更多的时间和计算资源。
+* 适用场景：用于 BERT 及其衍生模型。适合较长文本或希望通过分词算法获得稳定效果的情况。
+
+
+Unigram
+"""""""
+
+* 简介：Unigram 是另一种子词分词算法，与 BPE 和 WordPiece 不同，Unigram 基于概率模型来选择最优的分词组合。它会为一个句子计算多种分词方式，选择其中概率最高的组合。
+* 优点：Unigram 不依赖固定规则，而是基于概率动态选择最优分词，具有一定的灵活性和上下文敏感性。能够有效地压缩词汇表并减少 OOV 问题。
+* 缺点：相比其他算法更为复杂，可能计算量较大。
+* 适用场景：应用于 XLNet 和 SentencePiece 等模型，适合需要灵活分词的语言模型应用。
+
+
+
+总结对比
+""""""""
+
++-----------+------------------------+------------+-------------+----------------------+
+| 算法      | 分词方式               | 词汇表大小 | 未知词处理  | 主要应用模型         |
++===========+========================+============+=============+======================+
+| WordLevel | 直接按词映射ID         | 非常大     | 使用“[UNK]” | 简单文本分析任务     |
++-----------+------------------------+------------+-------------+----------------------+
+| BPE       | 子词合并，频率统计     | 中等       | 子词组合    | GPT-2 等模型         |
++-----------+------------------------+------------+-------------+----------------------+
+| WordPiece | 贪婪匹配，词首“##”标记 | 中等       | 子词组合    | BERT 及其变体        |
++-----------+------------------------+------------+-------------+----------------------+
+| Unigram   | 概率模型，最优组合     | 中等       | 动态选择    | SentencePiece, XLNet |
++-----------+------------------------+------------+-------------+----------------------+
+
+
+
+Post-Processors
+^^^^^^^^^^^^^^^
+
+* TemplateProcessing
+* 具体参见上面
+
+
+
+Decoders
+^^^^^^^^
+
+::
+
+    ByteLevel
+    Metaspace
+    WordPiece
+
+    BPEDecoder
+    CTC
+
+
+
+API
+===
+
+Normalizers
+-----------
+
+::
+
+    BertNormalizer
+    Lowercase
+
+
+Trainers
+--------
+
+::
+
+    BpeTrainer
+    UnigramTrainer
+    WordLevelTrainer
+    WordPieceTrainer
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -66,6 +66,71 @@ Cannot uninstall 'pyparsing'. It is a distutils installed project and thus we ca
   如果没有安装相关的元信息的话，最简单的方式就是删除对应的egg文件
 
 
+RuntimeError: can't start new thread
+====================================
+
+执行 ``docker build`` 命令打包python镜像时在执行 ``pip install`` 命令时报::
+
+
+    09:47:14 Step 1/2 : FROM python:3.11.9
+    09:47:14  ---> 4da317ec949b
+    09:47:14 Step 2/2 : RUN pip install -U openai
+    09:47:15  ---> Running in ad6acc9b449a
+    09:47:18 Collecting openai==0.8.1
+    09:47:18   Downloading http://10.192.15.63:8081/repository/pypi/packages/metagpt/0.8.1%2Bbuild0/metagpt-0.8.1%2Bbuild0-py3-none-any.whl (588 kB)
+    09:47:18 [91mERROR: Exception:
+    09:47:18 Traceback (most recent call last):
+    09:47:18   File "/usr/local/lib/python3.11/site-packages/pip/_internal/cli/base_command.py", line 180, in exc_logging_wrapper
+    09:47:18     status = run_func(*args)
+    09:47:18              ^^^^^^^^^^^^^^^
+    09:47:18   File "/usr/local/lib/python3.11/site-packages/pip/_internal/cli/req_command.py", line 245, in wrapper
+    09:47:18     return func(self, options, args)
+    09:47:18            ^^^^^^^^^^^^^^^^^^^^^^^^^
+    ... ...
+    ... ...
+    09:47:18   File "/usr/local/lib/python3.11/threading.py", line 964, in start
+    09:47:18     _start_new_thread(self._bootstrap, ())
+    09:47:18 RuntimeError: can't start new thread
+
+
+现象::
+
+    1. 在机器A执行docker build没有问题
+    2. 在机器B执行docker build有问题
+    3. 机器A、B操作系统和版本都相同
+    4. 机器A的Docker版本 Docker version 24.0.6, build ed223bc
+    5. 机器B的Docker版本 Docker version 19.03.3, build a872fc2
+    6. 直接在宿主机上执行 pip install 没有问题
+
+问题原因::
+
+    因为Docker 20.10.9的默认seccomp配置文件没有调整以支持在Ubuntu 21.10和Fedora 35中采用的glibc 2.34的clone()系统调用包装器。
+    参考:
+      https://medium.com/nttlabs/ubuntu-21-10-and-fedora-35-do-not-work-on-docker-20-10-9-1cd439d9921
+      https://stackoverflow.com/questions/70087344/python-in-docker-runtimeerror-cant-start-new-thread
+    说明:
+      docker的版本操作系统的版本冲突导致
+
+解决办法::
+
+    1. 可以升级docker到23.0.0以上的版本
+    2. 可以在pip安装的过程中，不开启进度条展示，这样就避免开启新线程：
+      pip config --user set global.progress_bar off
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

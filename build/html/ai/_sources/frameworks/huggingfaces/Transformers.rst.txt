@@ -1,7 +1,7 @@
 Transformers
 ############
 
-.. note:: 本文档是参考自 ``v4.23.1`` 版本
+.. note:: 本文档是参考自 ``v4.34.1`` 版本
 
 
 
@@ -1227,7 +1227,7 @@ NLP::
       NER attempts to find a label for each entity in a sentence, 
         such as a person, location, or org.
     Question answering
-    Causal language modeling
+    Causal language modeling(There are two types of language modeling: `causal` and `masked`)
       Causal language models are frequently used for text generation.
       You can use these models for creative applications 
         like choosing your own text adventure or an intelligent coding assistant 
@@ -1383,51 +1383,214 @@ Glossary
 ::
 
     attention mask
+        该参数向模型指示哪些标记应该被关注，哪些标记不应该被关注。
+        两个有不同的长度的序列放在同一个张量中时使用
+        注意掩码是一个二进制张量，指示填充索引的位置，以便模型不会关注它们
+
     autoencoding models
+        See `encoder models` and `masked language modeling`
+
     autoregressive models
+        See `causal language modeling` and `decoder models`
+
     backbone
+        backbone is the network (embeddings and layers) that outputs the raw hidden states or features.
+        It is usually connected to a head which accepts the features as its input to make a prediction.
+        For example, 
+            `ViTModel` is a `backbone` without a specific head on top. 
+            Other models can also use `VitModel` as a `backbone` such as DPT.
+
     causal language modeling
+        预训练任务，模型按顺序读取文本并必须预测下一个单词
+
     channel
+        彩色图像由红、绿、蓝 (RGB) 三个通道中的值的某种组合组成，而灰度图像只有一个通道
+        在 🤗 Transformers 中，通道可以是图像张量的第一个或最后一个维度：[ n_channels , height , width ] 或 [ height , width , n_channels ]
+
     connectionist temporal classification (CTC)
+        一种允许模型在不确切知道输入和输出如何对齐的情况下进行学习的算法
+         CTC 通常用于语音识别任务，由于多种原因（例如说话者的语速不同），语音并不总是与文本完全一致。
+
     convolution
+        神经网络中的一种层，其中输入矩阵与一个较小的矩阵（内核或过滤器）相乘，并将值求和到一个新矩阵中
+        卷积神经网络 (CNN) 常用于计算机视觉
+
     decoder input IDs
+        This input is specific to encoder-decoder models, and contains the input IDs that will be fed to the decoder. 
+        These inputs should be used for sequence to sequence tasks, such as translation or summarization, and are usually built in a way specific to each model.
+
     decoder models
+        也叫: autoregressive models
+        decoder models involve a pretraining task (called causal language modeling) where the model reads the texts in order and has to predict the next word. 
+        It’s usually done by reading the whole sentence with a mask to hide future tokens at a certain timestep.
+
     encoder models
+        也叫: autoencoding models
+        encoder models take an input (such as text or images) and transform them into a condensed(压缩) numerical representation called an embedding. 
+        Oftentimes, encoder models are pretrained using techniques like `masked language modeling`, 
+            which masks parts of the input sequence and forces the model to create more meaningful representations.
+
     feature extraction
+        The process of selecting and transforming raw data into a set of features that are more informative and useful for machine learning algorithms. 
+        Some examples of feature extraction include 
+            transforming raw text into word embeddings 
+            and extracting important features such as edges or shapes from image/video data.
+
     feed forward chunking
+        参见下面详解
+
     finetuned models
+        Finetuning is a form of transfer learning which involves 
+            taking a pretrained model, freezing its weights, and replacing the output layer with a newly added model head. 
+        The model head is trained on your target dataset.
+
     head
+        The model head refers to the last layer of a neural network that accepts the raw hidden states and projects them onto a different dimension. 
+        There is a different model head for each task. 
+        For example:
+            GPT2ForSequenceClassification is a sequence classification head - a linear layer - on top of the base GPT2Model.
+            ViTForImageClassification is an image classification head - a linear layer on top of the final hidden state of the CLS token - on top of the base ViTModel.
+            Wav2Vec2ForCTC is a language modeling head with CTC on top of the base Wav2Vec2Model.
+
     image patch
+        参见下面详解
+        Vision-based Transformers models split an image into smaller patches which are linearly embedded, 
+            and then passed as a sequence to the model. 
+        You can find the patch_size - or resolution - of the model in its configuration.
+
+
     inference
+        Inference is the process of evaluating a model on new data after training is complete. 
+
     input IDs
+        The input ids are often the only required parameters to be passed to the model as input. 
+        They are token indices, numerical representations of tokens building the sequences that will be used as input by the model.
+
     labels
+        The labels are an optional argument which can be passed in order for the model to compute the loss itself.
+        These labels should be the expected prediction of the model: 
+            it will use the standard loss in order to compute the loss between its predictions and the expected value (the label).
+
     masked language modeling (MLM)
+        A pretraining task where the model sees a corrupted version of the texts, 
+            usually done by masking some tokens randomly, and has to predict the original text.
+
     multimodal
+        A task that combines texts with another kind of inputs (for instance images).
+
     pipeline
+        Transformers 中的管道是一个抽象，指的是按特定顺序执行的一系列步骤，用于预处理和转换数据并从模型返回预测
+
     pixel values
+        传递给模型的图像数值表示的张量。
+        pixel values的形状为 [ batch_size , num_channels , height , width ]，由图像处理器生成。
+
     pooling
+        通过取池化维度的最大值或平均值，将矩阵缩减为更小的矩阵的操作
+        池化层通常位于卷积层之间，用于对特征表示进行下采样
+
     position IDs
+
     representation learning
+        机器学习的一个子领域，专注于学习原始数据的有意义的表示。
+        表示学习技术的一些示例包括词嵌入、自动编码器和生成对抗网络 (GAN)。
+
     self-attention
+        Each element of the input finds out which other elements of the input they should attend to.
+        输入的每个元素都会找出它们应该关注输入的哪些其他元素。
+
     self-supervised learning
     semi-supervised learning
+
     sequence-to-sequence (seq2seq)
+        从输入生成新序列的模型，例如翻译模型或摘要模型
+
     stride
+        在卷积或池化中，步幅是指内核在矩阵上移动的距离。
+        步幅为 1 表示内核一次移动一个像素，步幅为 2 表示内核一次移动两个像素。
+
     token
+        A part of a sentence, usually a word, but can also be a subword (non-common words are often split in subwords) or a punctuation symbol.
+
     token Type IDs
+        这些需要将两个不同的序列连接到单个“input_ids”条目中，这通常是在特殊标记的帮助下执行的，
+        例如分类器（classifier [CLS] ）和分隔符（separator [SEP] ）标记。
+
     transfer learning
+        一种涉及采用预训练模型并将其适应特定于您的任务的数据集的技术。
+        您可以利用从现有模型获得的知识作为起点，而不是从头开始训练模型。这加快了学习过程并减少了所需的训练数据量。
 
 
 
+feed forward chunking
+^^^^^^^^^^^^^^^^^^^^^
+
+* from llm
+* Feed Forward Chunking 是一种用于减少内存消耗的技术，特别是在 Transformer 模型中的前馈神经网络层（Feed Forward Layers）的计算中
+
+背景：Transformer 模型中的前馈网络::
+
+    在 Transformer 模型的每个残差注意力块（Residual Attention Block）中，通常包含以下两部分：
+        1. 自注意力层（Self-Attention Layer）
+        2. 前馈网络（Feed Forward Network，FFN）
+    前馈网络通常由两层线性层组成：
+        第一层将输入嵌入（embedding）从隐藏层大小（hidden_size）投影到一个更高维度的中间层大小（intermediate_size）
+        第二层将中间层的输出再投影回隐藏层大小。
+
+* 例：对于 BERT 模型，intermediate_size 比 hidden_size 更大，这样做是为了增加模型的表达能力。然而，由于输入的尺寸是 [batch_size, sequence_length, hidden_size]，中间层的尺寸会变为 [batch_size, sequence_length, intermediate_size]，在 intermediate_size 较大的情况下，这会占用大量内存。
+* 【问题：内存开销】当输入有较长的序列长度（sequence_length）时，存储这些中间嵌入会导致巨大的内存占用。对于大型 Transformer 模型，这种内存开销是瓶颈之一。
+* 【解决方案Feed Forward Chunking】主要思想是：不再一次性对整个输入序列的所有位置计算前馈网络的输出，而是将输入序列按块（chunk）进行分割，逐块计算前馈层的输出。
+* 具体步骤如下::
+
+    1. 将输入的 [batch_size, sequence_length, hidden_size] 切分为若干小块，每一小块的大小为 [batch_size, chunk_size, hidden_size]
+    2. 对每个小块单独进行前馈网络的计算，得到对应的输出
+    3. 将这些小块的输出拼接（concat）成完整的输出 [batch_size, sequence_length, hidden_size]
+
+* 【关键点：为什么能这样做】前馈网络的计算是位置独立的，也就是说，序列中每个位置的前馈网络输出只依赖于该位置的输入，而不会受其他位置的影响。因此，将序列按块分割并逐块计算，最终拼接起来的结果和一次性计算整个序列的结果是数学等价的。
+* 【内存与计算时间的权衡】1.减少内存消耗：通过将序列分块，只需要为每个小块分配内存，而不是整个序列，这显著减少了中间嵌入的内存开销。2.增加计算时间：虽然内存开销减少了，但计算时间会增加。原因是，模型不能一次性并行计算所有序列位置，而是需要逐块计算，这会带来额外的时间开销。
+* 【总结】Feed Forward Chunking 是一种通过逐块计算前馈网络来降低内存占用的技术，它在 Transformer 模型中尤为重要，特别是当输入序列较长、隐藏层和中间层较大时。虽然这种方法会增加计算时间，但通过适当选择 chunk_size，可以在计算时间和内存使用之间找到一个平衡。
+
+
+image patch
+^^^^^^^^^^^
+
+* Image patch 是视觉Transformer（Vision Transformers，ViTs）模型中的一个核心概念，用于将输入图像转换为适合 Transformer 处理的序列格式。
+* 在传统的卷积神经网络（CNN）中，输入图像会经过卷积核（filters）逐层提取局部特征。CNN擅长捕捉局部的空间关系，但在建模远距离依赖（long-range dependencies）上存在一定的限制。
+* Vision Transformer 则引入了和自然语言处理中的 Transformer 类似的架构，试图将图像也处理成一种序列化输入，并通过自注意力机制（Self-Attention）来捕捉全局和局部特征。
+* 【定义】在 Vision Transformer 模型中，图像首先被划分为固定大小的小块，称为 image patches，每个小块都是图像的一个局部区域。具体来说：
+
+    * 1.划分图像：Vision Transformer 将一张图像（例如 224x224 的 RGB 图像）按照固定大小（例如 16x16）的网格划分为若干个小块（patches）。如果图像是 224x224，且 patch 大小是 16x16，那么最终会得到 (224 / 16) * (224 / 16) = 14 * 14 = 196 个图像块，每个图像块的尺寸是 16x16x3（RGB 图像有 3 个通道）。
+    * 2. 线性嵌入：每个 16x16x3 的图像块会被展平成一个向量（1D），然后通过一个线性变换（线性层）将其映射到模型的嵌入维度（embedding dimension），这与传统 Transformer 的词向量类似。
+    * 3. 作为序列输入 Transformer：这些嵌入后的图像块（patches）被视为序列的元素，类似于 NLP 中的词向量，作为输入序列传递给 Transformer。每个 patch 相当于输入序列中的一个“词”。
+
+* 因此，Vision Transformer 模型将一张二维图像转换成了一个序列化的表示形式，并通过 Transformer 的自注意力机制进行处理。
+
+* 【1. Patch Size 的选择】Patch size 是指划分图像时每个小块的大小。较大的 patch size 会将更多的局部信息集中到一个 patch 中，但同时也会降低图像的分辨率，可能会丢失一些细节。较小的 patch size 则会增加序列长度（更多的 patches），使得 Transformer 能够捕捉更多的细节，但也增加了计算复杂度。例如，对于 224x224 的图像，使用 16x16 的 patch 会生成 196 个 patches，而使用 8x8 的 patch 则会生成 784 个 patches。
+* 【2. 线性嵌入】每个 image patch 被展平成一维向量，并通过线性层将其映射到一个固定的维度（比如 768 维），这个操作是为了使所有 patches 的表示维度与 Transformer 模型的输入维度匹配。
+* 【3. 自注意力机制如何作用于 Patches】在 Vision Transformer 中，自注意力机制会关注每个 patch 和其他所有 patches 之间的关系，从而建模全局特征。与 CNN 不同，Vision Transformer 不局限于局部感受野（receptive field），它可以直接捕捉图像中远距离的依赖关系。
+* 【4. 配置中的 patch_size】模型的配置文件通常会包含 patch_size，这表示每个 patch 的分辨率（例如 16x16），它直接决定了图像被分割的粒度。可以理解为 patch_size 控制了 Transformer 处理图像的“单位”，类似于在 NLP 中的 token（词元）。
+
+* 【图像块（patches）的重要性】
+
+    * 局部与全局特征结合：图像块在模型中扮演了词元（tokens）的角色，它们代表图像的局部信息，而 Transformer 的自注意力机制可以在这些局部信息之间进行全局建模。这种机制使得 ViTs 能够同时捕捉到图像的细节特征（局部块之间的关系）和整体结构（不同块的远距离关系）。
+    * 减少计算复杂度：通过将图像划分为较大的图像块，ViT 模型能够减少序列长度，从而降低自注意力的计算复杂度。序列长度越短，自注意力机制的计算量越小。
+
+
+* 【总结】Image patch 是 Vision Transformer 将输入图像转换为序列格式的关键步骤。通过将图像划分为小的图像块，并将这些块通过线性嵌入映射到向量表示，ViT 可以利用 Transformer 的自注意力机制来捕捉图像的局部和全局特征。Patch size 的选择会直接影响模型的计算复杂度和对图像细节的捕捉能力。
+
+
+
+
+
+
+How Transformers solve tasks
+----------------------------
 
 
 .. figure:: https://img.zhaoweiguo.com/uPic/2023/08/ZNMFdF.png
 
     处理过程图: Tokenizer-> Model -> Post-Processing
 
-
-How Transformers solve tasks
-----------------------------
 
 * ``Wav2Vec2`` for audio classification and automatic speech recognition (ASR)
 * ``Vision Transformer (ViT)`` and ``ConvNeXT`` for image classification
@@ -1526,6 +1689,156 @@ Subword tokenization::
         ALBERT
         Marian
         T5
+
+
+
+Padding and truncation
+----------------------
+
+* The following table summarizes the recommended way to setup padding and truncation
+
+padding strategy(boolean or a string)::
+
+    True or 'longest'
+    max_length
+    False or 'do_not_pad
+
+truncation strategy(boolean or a string)::
+
+    True or 'longest_first'
+    only_second
+        当输入模型的是两个序列的配对（例如：句子对，或文本对）
+        这种截断方式适用于需要保持第一个序列完整，而对第二个序列进行裁剪的场景。
+    only_first
+        与only_second相反
+    False or 'do_not_truncate'
+
+
+no truncation::
+
+    +-----------------------------------+-----------------------------------------------------------------+
+    | no padding                        | tokenizer(batch_sentences)                                      |
+    +===================================+=================================================================+
+    | padding to max sequence in batch  | tokenizer(batch_sentences, padding=True) or                     |
+    +-----------------------------------+-----------------------------------------------------------------+
+    |                                   | tokenizer(batch_sentences, padding='longest')                   |
+    +-----------------------------------+-----------------------------------------------------------------+
+    | padding to max model input length | tokenizer(batch_sentences, padding='max_length')                |
+    +-----------------------------------+-----------------------------------------------------------------+
+    | padding to specific length        | tokenizer(batch_sentences, padding='max_length', max_length=42) |
+    +-----------------------------------+-----------------------------------------------------------------+
+    | padding to a multiple of a value  | tokenizer(batch_sentences, padding=True, pad_to_multiple_of=8)  |
+    +-----------------------------------+-----------------------------------------------------------------+
+
+
+truncation to max model input length::
+
+    +-----------------------------------+-----------------------------------------------------------------------+
+    | no padding                        | tokenizer(batch_sentences, truncation=True) or                        |
+    +===================================+=======================================================================+
+    |                                   | tokenizer(batch_sentences, truncation=STRATEGY)                       |
+    +-----------------------------------+-----------------------------------------------------------------------+
+    | padding to max sequence in batch  | tokenizer(batch_sentences, padding=True, truncation=True) or          |
+    +-----------------------------------+-----------------------------------------------------------------------+
+    |                                   | tokenizer(batch_sentences, padding=True, truncation=STRATEGY)         |
+    +-----------------------------------+-----------------------------------------------------------------------+
+    | padding to max model input length | tokenizer(batch_sentences, padding='max_length', truncation=True) or  |
+    +-----------------------------------+-----------------------------------------------------------------------+
+    |                                   | tokenizer(batch_sentences, padding='max_length', truncation=STRATEGY) |
+    +-----------------------------------+-----------------------------------------------------------------------+
+    | padding to specific length        | Not possible                                                          |
+    +-----------------------------------+-----------------------------------------------------------------------+
+
+
+truncation to specific length::
+
+    +-----------------------------------+--------------------------------------------------------------------------------------+
+    | no padding                        | tokenizer(batch_sentences, truncation=True, max_length=42) or                        |
+    +===================================+======================================================================================+
+    |                                   | tokenizer(batch_sentences, truncation=STRATEGY, max_length=42)                       |
+    +-----------------------------------+--------------------------------------------------------------------------------------+
+    | padding to max sequence in batch  | tokenizer(batch_sentences, padding=True, truncation=True, max_length=42) or          |
+    +-----------------------------------+--------------------------------------------------------------------------------------+
+    |                                   | tokenizer(batch_sentences, padding=True, truncation=STRATEGY, max_length=42)         |
+    +-----------------------------------+--------------------------------------------------------------------------------------+
+    | padding to max model input length | Not possible                                                                         |
+    +-----------------------------------+--------------------------------------------------------------------------------------+
+    | padding to specific length        | tokenizer(batch_sentences, padding='max_length', truncation=True, max_length=42) or  |
+    +-----------------------------------+--------------------------------------------------------------------------------------+
+    |                                   | tokenizer(batch_sentences, padding='max_length', truncation=STRATEGY, max_length=42) |
+    +-----------------------------------+--------------------------------------------------------------------------------------+
+
+
+Model training anatomy
+----------------------
+
+* 当模型加载到 GPU 时， ``CUDA 的运行时库和内核（kernels）`` 也会加载，这可能会占用 1-2GB 内存。为了查看它有多少，我们将一个微小的张量加载到 GPU 中，这也会触发内核的加载。
+* 可以用下面语句验证::
+
+    import torch
+    torch.ones((1, 1)).to("cuda")   # 
+    print_gpu_utilization()         # 这儿基本就是内核占用的gpu数
+
+    说明:
+        内核占用多少和GPU型号有关
+        L20(48G):     390M   NVIDIA L20
+        V100(32G):    366M   V100-SXM2
+            Volta 架构
+        V100(8G):     449M   Tesla P4
+            Pascal 架构
+
+
+* 请注意，在较新的 GPU 上，模型有时会占用更多空间，因为权重以优化的方式加载，可以加快模型的使用速度。
+
+
+Anatomy of Model’s Operations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Transformers 架构包括 3 个主要操作组，按计算强度分组如下::
+
+    1. Tensor Contractions
+        多头注意力的线性层和组件都进行批量矩阵-矩阵乘法。这些操作是训练 Transformer 时计算量最大的部分
+    2. Statistical Normalizations
+        Softmax 和层归一化比张量收缩的计算强度要小，并且涉及一个或多个归约操作，然后通过映射应用其结果。
+    3. Element-wise Operators
+        这些是剩余的运算符：偏差、丢失、激活和剩余连接。这些是计算强度最小的操作
+
+
+.. note:: 在分析性能瓶颈时了解这些知识很有帮助。This summary is derived from `Data Movement Is All You Need: A Case Study on Optimizing Transformers 2020 <https://arxiv.org/abs/2007.00072>`_
+
+
+Anatomy of Model’s Memory
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+训练模型使用的内存比仅仅将模型放在 GPU 上要多得多。这是因为训练期间有许多组件使用 GPU 内存。 GPU 内存的组成部分如下::
+
+    1. model weights 模型权重
+    2. optimizer states 优化器状态
+    3. gradients 渐变
+    4. forward activations saved for gradient computation 为梯度计算保存前向激活
+    5. temporary buffers 临时缓冲区
+    6. functionality-specific memory 特定功能存储器
+
+
+details::
+
+    1. Model Weights:
+        4 bytes * number of parameters for fp32 training
+        6 bytes * number of parameters for mixed precision training (maintains a model in fp32 and one in fp16 in memory)
+    2. Optimizer States:
+        8 bytes * number of parameters for normal AdamW (maintains 2 states)
+        2 bytes * number of parameters for 8-bit AdamW optimizers like bitsandbytes
+        4 bytes * number of parameters for optimizers like SGD with momentum (maintains only 1 state)
+    3. Gradients
+        4 bytes * number of parameters for either fp32 or mixed precision training (gradients are always kept in fp32)
+    4. Forward Activations
+        size depends on many factors, the key ones being sequence length, hidden size and batch size.
+    5. Temporary Memory
+        各种临时变量
+    6. Functionality-specific memory
+        特殊的内存需求。例如，当使用集束搜索生成文本时，软件需要维护输入和输出的多个副本
+
+
 
 
 

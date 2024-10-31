@@ -9,7 +9,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Docker代理加速 &mdash; 新溪-gordon V1.7.19 文档</title>
+  <title>Docker代理加速 &mdash; 新溪-gordon V1.7.20 文档</title>
   
 
   
@@ -71,7 +71,7 @@
             
             
               <div class="version">
-                V1.7.19
+                V1.7.20
               </div>
             
           
@@ -462,6 +462,17 @@
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
+            <nav id="local-table-of-contents" role="navigation" aria-labelledby="local-table-of-contents-title">
+              <h4 id="local-table-of-contents-title">On This Page</h4>
+              <ul>
+<li><a class="reference internal" href="#">Docker代理加速</a><ul>
+<li><a class="reference internal" href="#linux">Linux</a></li>
+<li><a class="reference internal" href="#mac">Mac版专用</a></li>
+</ul>
+</li>
+</ul>
+
+            </nav>
   <table class="docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
@@ -473,6 +484,34 @@
 </table>
 <section id="docker">
 <h1>Docker代理加速<a class="headerlink" href="#docker" title="此标题的永久链接">¶</a></h1>
+<p>镜像proxy:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>⛔️阿里云: https://bpsifqa9.mirror.aliyuncs.com
+⛔️Docker 官方提供的中国 mirror: https://registry.docker-cn.com
+⛔️七牛云加速器 https://reg-mirror.qiniu.com/
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">警告</p>
+<p>⚠️2020 年 11 月后，Docker Hub 新增了 访问速率限制，这可能导致在校内使用 Docker Hub 镜像缓存时出现间歇性的问题。⚠️ 自 2024-06-06 开始，国内的 Docker Hub 镜像加速器相继停止服务，可选择为 Docker daemon 配置代理或自建镜像加速服务。⚠️ 阿里镜像在2024-06-25号变更使用范围：仅限阿里云用户通过支持公网访问的阿里云产品上使用该镜像加速能力。🛑基本上都不能用了，后面可以不考虑这个方案了。</p>
+</div>
+<ul class="simple">
+<li><p>参考: <a class="reference external" href="https://gist.github.com/y0ngb1n/7e8f16af3242c7815e7ca2f0833d3ea6">https://gist.github.com/y0ngb1n/7e8f16af3242c7815e7ca2f0833d3ea6</a></p></li>
+<li><p>2024-10-10更新：找到一个可用用的 <code class="docutils literal notranslate"><span class="pre">dockerpull.com</span></code> 和 <code class="docutils literal notranslate"><span class="pre">dockerproxy.cn</span></code></p></li>
+</ul>
+<p>使用方法:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 方法一
+假如拉取原始镜像命令如下
+docker pull whyour/qinglong:latest
+仅需在原命令前缀加入加速镜像地址 例如：
+docker pull dockerproxy.cn/whyour/qinglong:latest
+
+2. 方法二
+修改文件 /etc/docker/daemon.json
+{&quot;registry-mirrors&quot;: [&quot;https://dockerproxy.cn&quot;]}
+</pre></div>
+</div>
+<section id="linux">
+<h2>Linux<a class="headerlink" href="#linux" title="此标题的永久链接">¶</a></h2>
 <p>配置镜像加速器 <a class="footnote-reference brackets" href="#id3" id="id2" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a></p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">Linux版</span>
 <span class="n">sudo</span> <span class="n">mkdir</span> <span class="o">-</span><span class="n">p</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">docker</span>
@@ -489,12 +528,6 @@
 <p class="admonition-title">警告</p>
 <p>注意, systemctl restart docker会重启docker服务
 k8s集群上执行,所有docker服务都会重启</p>
-</div>
-<p>其他proxy:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">阿里云</span><span class="p">:</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">bpsifqa9</span><span class="o">.</span><span class="n">mirror</span><span class="o">.</span><span class="n">aliyuncs</span><span class="o">.</span><span class="n">com</span>
-<span class="n">Docker</span> <span class="n">官方提供的中国</span> <span class="n">registry</span> <span class="n">mirror</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">registry</span><span class="o">.</span><span class="n">docker</span><span class="o">-</span><span class="n">cn</span><span class="o">.</span><span class="n">com</span>
-<span class="n">七牛云加速器</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">reg</span><span class="o">-</span><span class="n">mirror</span><span class="o">.</span><span class="n">qiniu</span><span class="o">.</span><span class="n">com</span><span class="o">/</span>
-</pre></div>
 </div>
 <p>配置 DNS:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span># 每次启动的容器 DNS 自动配置为 114.114.114.114 和 8.8.8.8
@@ -514,6 +547,15 @@ $ cat /etc/docker/daemon.json
 }
 </pre></div>
 </div>
+</section>
+<section id="mac">
+<h2>Mac版专用<a class="headerlink" href="#mac" title="此标题的永久链接">¶</a></h2>
+<ul class="simple">
+<li><p>打开 Docker Desktop。</p></li>
+<li><p>点击右上角的 齿轮图标 进入 Preferences（偏好设置）。</p></li>
+<li><p>在左侧菜单中选择 Docker Engine。</p></li>
+<li><p>修改内容与 Linux 版的 daemon.json 文件相同</p></li>
+</ul>
 <aside class="footnote-list brackets">
 <aside class="footnote brackets" id="id3" role="note">
 <span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id2">1</a><span class="fn-bracket">]</span></span>
@@ -529,6 +571,7 @@ $ cat /etc/docker/daemon.json
 </tr>
 </tbody>
 </table>
+</section>
 </section>
 
 
@@ -584,7 +627,7 @@ $ cat /etc/docker/daemon.json
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../../',
-            VERSION:'V1.7.19',
+            VERSION:'V1.7.20',
             LANGUAGE:'zh-CN',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
