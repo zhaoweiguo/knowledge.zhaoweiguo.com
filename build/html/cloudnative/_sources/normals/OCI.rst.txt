@@ -1,0 +1,99 @@
+OCI-Open Container Initiative
+#############################
+
+
+* 一个旨在制定和推动容器开放标准的组织。它由多个行业领先公司（如 Docker、Red Hat、Google、Microsoft 等）发起，成立于 2015 年。OCI 的目标是通过创建开放的标准和规范，确保容器技术的互操作性、可扩展性和可移植性，从而帮助推动容器生态系统的发展。
+* https://opencontainers.org/
+
+
+
+主要工作
+========
+
+* 容器镜像规范（OCI Image Format）：定义了容器镜像的格式和规范，以确保容器镜像可以在不同的容器运行时（如 Docker、containerd、CRI-O 等）之间兼容和共享。该规范包括镜像的构建、存储、分发和验证等方面。
+* 容器运行时规范（OCI Runtime Specification）：定义了容器运行时的行为和标准，旨在确保容器可以在不同的操作系统和硬件平台上运行。该规范涵盖了容器的生命周期管理、资源限制、网络配置等方面。
+
+
+
+
+
+
+
+
+
+容器镜像加密
+============
+
+* 容器镜像可能包含敏感信息，如配置文件、密钥、用户数据等，因此需要对其进行加密处理。OCI 提供了一个灵活的加密框架来确保容器镜像在存储和传输过程中得到保护。
+
+    * 加密算法支持：可以通过在容器镜像构建和存储过程中实现加密，使用对称加密或非对称加密算法来保护敏感数据。
+    * 密钥管理：OCI 容器镜像加密通常依赖外部密钥管理服务（KMS）或本地的密钥管理方案。通过密钥提供者（Key Provider）来动态获取和管理加密密钥。OCI 规范允许容器镜像在构建时加密，并在部署时进行解密。
+
+
+镜像加密流程
+------------
+
+* 加密镜像内容：容器镜像中的敏感数据（例如配置文件、密钥文件等）可以在构建阶段通过加密工具进行加密。
+* 存储加密：加密后的镜像可以被推送到镜像仓库（如 Docker Hub、Harbor 或私有仓库），并在存储时保持加密状态。镜像仓库可以提供对加密数据的透明支持。
+* 解密操作：在容器运行时，容器运行时环境（如 containerd 或 CRI-O）会使用适当的密钥解密容器镜像，并确保镜像中的敏感数据以明文形式仅在需要时使用。
+
+
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/11/7EpqJI.png
+
+    镜像加密原理图(draft of modifications to the OCI spec on Encrypted Container Images)：在原来格式的基础上添加了一个mediaType类型，表示数据文件被加密；同时在annotation中添加具体加密相关信息
+
+
+没加密之前数据::
+
+    "layers":[
+      {
+        "mediaType":"application/vnd.oci.image.layer.v1.tar+gzip",
+        "digest":"sha256:7c9d20b9b6cda1c58bc4f9d6c401386786f584437abbe87e58910f8a9a15386b",
+        "size":760770
+      }
+    ]
+
+加密之后数据::
+
+    layers":[
+      {
+        "mediaType":"application/vnd.oci.image.layer.v1.tar+gzip+encrypted",
+        "digest":"sha256:c72c69b36a886c268e0d7382a7c6d885271b6f0030ff022fda2b6346b2b274ba",
+        "size":760770,
+        "annotations": {
+          "org.opencontainers.image.enc.keys.jwe":"eyJwcm90ZWN0Z...",
+          "org.opencontainers.image.enc.pubopts":"eyJjaXBoZXIiOi..."
+        }
+      }
+    ]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,382 @@
+skopeo
+######
+
+* 轻量级的命令行工具，用于检查和管理容器镜像。
+* 它支持直接与各种容器镜像仓库（如 Docker Hub、Quay.io、OCI 仓库等）交互，无需运行 Docker 守护进程。这使得 Skopeo 特别适合在 CI/CD 流水线、容器安全扫描、镜像同步和分发中使用。
+* GitHub: https://github.com/containers/skopeo.git
+* docker 镜像: quay.io/skopeo/stable
+
+
+
+特点
+====
+
+* 无需 Docker 守护进程
+* 支持多种镜像格式::
+
+    Docker 镜像（如 docker://）
+    OCI 镜像（如 oci:）
+    本地文件（如 .tar 文件）
+
+
+
+IMAGE 镜像格式
+==============
+
+containers-storage:
+-------------------
+
+<docker-reference> An image located in a local containers/storage image store. Both the location and image store are specified in /etc/containers/storage.conf. (Backend for Podman, CRI-O, Buildah and friends)
+
+::
+
+    containers-storage:docker-reference
+
+
+
+dir:
+----
+
+* **dir:** <path> An existing local directory path storing the manifest, layer tarballs and signatures as individual files. This is a non-standardized format, primarily useful for debugging or noninvasive container inspection.
+
+::
+
+    dir:/path/to/dir
+
+
+
+docker://
+---------
+
+* **docker://** <docker-reference> An image in a registry implementing the “Docker Registry HTTP API V2”. By default, uses the authorization state in either $XDG_RUNTIME_DIR/containers/auth.json, which is set using (skopeo login). If the authorization state is not found there, $HOME/.docker/config.json is checked, which is set using (docker login).
+
+::
+
+    docker://registry.example.com/image:tag
+
+
+
+
+docker-archive:
+---------------
+
+* **docker-archive:** <path>  An image is stored in the docker save formatted file. docker-reference is only used when creating such a file, and it must not contain a digest.
+
+::
+
+    docker-archive:/path/to/file.tar[:tag]
+
+    本格式可以使用: docker  load < /path/to/demo.tar 命令导入
+
+
+docker-daemon:
+--------------
+
+* **docker-daemon:** docker-reference An image docker-reference stored in the docker daemon internal storage. docker-reference must contain either a tag or a digest. Alternatively, when reading images, the format can be docker-daemon:algo:digest (an image ID).
+
+::
+
+    docker-daemon:image:tag
+    docker-daemon:algo:digest
+
+
+
+oci:
+----
+
+* **oci:path:** tag An image tag in a directory compliant with “Open Container Image Layout Specification” at path.
+
+::
+
+    oci:/path/to/dir:tag
+
+oci-archive:
+------------
+
+::
+
+    oci-archive:/path/to/file.tar[:tag]
+
+
+其他
+----
+
+剩下都是比较少见的::
+
+    atomic:
+    tarball:
+
+
+
+
+核心功能
+========
+
+1. 镜像查看(Inspect)
+--------------------
+
+基本::
+
+    $ skopeo inspect docker://alpine:latest
+    # 输出
+    {
+      "Name": "docker.io/library/alpine",
+      "Tag": "latest",
+      "Digest": "sha256:58e1c1f4...",
+      "Created": "2023-01-01T00:00:00Z",
+      "Layers": [
+        "sha256:abc123...",
+        "sha256:def456..."
+      ]
+    }
+
+
+查看 docker 本地存储中的一个镜像的 image config 文件::
+
+    $ skopeo inspect docker-daemon:alpine:latest
+
+
+查看 registry 中一个镜像的 manifests 文件，可以通过这种方式来判断镜像是否存在::
+
+    $ skopeo inspect docker://alpine:latest --raw | jq '.'
+
+
+
+
+
+2. 镜像复制(Copy)
+-----------------
+
+.. note:: 基于上面镜像格式应该有 ``7*7`` 种可能
+
+示例-docker复制为其他格式::
+
+    下载到本地 OCI 格式:
+
+        $ skopeo copy docker://alpine:latest oci:alpine-oci
+
+    下载到本地目录:
+
+        $ skopeo copy docker://alpine:latest dir:/path/to/alpine
+
+    下载为 tar 文件:
+
+        $ skopeo copy docker://alpine:latest docker-archive:/path/to/alpine.tar
+
+
+    下载为 oci-archive 文件:
+
+        $ skopeo copy docker://alpine:latest oci-archive:/tmp/alpine.oci
+
+    下载到 docker 守护进程:
+
+        $ skopeo copy docker://alpine:latest docker-daemon:alpine:latest
+        # 基本等同于 docker pull
+
+
+
+示例-其他格式复制docker格式::
+
+    从本地 Docker 守护进程（dockerd）写入到指定仓库:
+        $ skopeo copy docker-daemon:alpine:3.12 docker://alpine:3.12
+        # 基本等同于 docker push
+
+
+
+参数 ``--encryption-key``
+"""""""""""""""""""""""""
+
+::
+
+    *Experimental* key with the encryption protocol to use needed to encrypt the image (e.g. jwe:/path/to/key.pem)
+
+    一个加密密钥，用于加密镜像的所有或部分层（layers）
+
+    skopeo copy --encryption-key <key> docker://<source_image> docker://<destination_image>
+        <key>：加密密钥，可以是公钥（如 PGP 密钥）或对称密钥。
+
+    支持的密钥类型:
+        1. PGP 密钥：
+            skopeo copy --encryption-key "pgp:recipient@example.com" docker://source docker://destination
+        2. JSON Web Key (JWK)：
+            skopeo copy --encryption-key "jwk:{\"kty\":\"oct\",\"k\":\"base64url-encoded-key\"}" docker://source docker://destination
+        3. 对称密钥：
+            skopeo copy --encryption-key "base64url-encoded-symmetric-key" docker://source docker://destination
+
+
+.. note:: 【注意】与 ``宏---encryption-key`` 配合时，使用命令格式如 ``skopeo copy --encryption-key provider:my-kms-provider docker://source docker://destination`` 。具体参见 ``宏---encryption-key``
+
+
+
+
+
+
+
+
+3. 镜像签名和验证
+-----------------
+
+::
+
+    $ skopeo standalone-sign docker://alpine:latest my-signature
+
+
+
+
+
+4. 删除远程镜像
+---------------
+
+    $ skopeo delete docker://myregistry.example.com/myimage:tag
+
+
+
+
+5. 镜像同步(Sync)
+-----------------
+
+
+::
+
+    # 从docker镜像同步到目录
+    $ skopeo sync --src docker --dest dir registry.example.com/busybox /media/usb
+
+
+宏-OCICRYPT_KEYPROVIDER_CONFIG
+==============================
+
+* 指定密钥提供者配置文件：密钥提供者是加密/解密过程中用于管理密钥的外部工具或服务，例如基于云的 KMS（Key Management Service， 如：AWS KMS、Azure Key Vault 或 Google Cloud KMS）或本地的 HSM（Hardware Security Module）。
+* 与 OCI (Open Container Initiative) 镜像加密相关的配置环境变量。
+* 当涉及到使用加密的容器镜像时，这个环境变量用来指定一个密钥提供者（key provider）的配置文件路径，该文件定义了如何获取用于解密镜像的密钥。
+* 使用::
+
+    export OCICRYPT_KEYPROVIDER_CONFIG=/path/to/keyprovider/config.json
+
+文件格式
+--------
+
+.. code-block:: python
+
+    {
+      "key-providers": {        # 关键词
+        "my-kms-provider": {    # 唯一标识
+            "cmd": {
+                  "path": "/usr/local/bin/my-kms-binary",
+                  "args": ["--region=us-west-1", "--key-id=1234abcd"]
+            }
+        }
+      }
+    }
+
+
+配合 skopeo 使用::
+
+    # 加密
+    skopeo copy --encryption-key provider:my-kms-provider docker://source docker://destination
+    # 解密
+    skopeo copy --decryption-key provider:my-kms-provider docker://encrypted-image docker://local-dir
+
+
+模拟调用
+--------
+
+* OCI 加密密钥提供者协议：密钥提供者需要遵循 OCI 定义的加密和解密协议。它的输入通常是以标准输入（stdin）形式传入的 JSON 格式请求，而不是通过命令行直接传递参数。
+
+
+构造一个符合 OCI 标准的 JSON 请求::
+
+    {
+      "op": "encrypt",
+      "keywrapparams": {
+        "region": "us-west-1",
+        "key-id": "1234abcd"
+      },
+      "annotations": {
+        "example": "annotation-data"
+      }
+    }
+
+
+
+执行::
+
+    echo '{"op":"encrypt","keywrapparams":{"region":"us-west-1","key-id":"1234abcd"},"annotations":{"example":"annotation-data"}}' \
+    | /usr/local/bin/my-kms-binary
+
+
+
+
+
+
+Authenticating
+==============
+
+
+基本::
+
+    $ skopeo login --username USER myregistrydomain.com:5000
+    Password:
+    $ skopeo inspect docker://myregistrydomain.com:5000/busybox
+    {...}
+    $ skopeo logout myregistrydomain.com:5000
+
+
+Using ``--creds`` directly::
+
+    $ skopeo inspect --creds=<testuser>:<testpassword> docker://myregistrydomain.com:5000/busybox
+    {...}
+
+
+
+``--src-creds`` 、 ``--dest-creds`` ::
+
+    skopeo copy oci:image-encrypted docker://hub.zhaoweiguo.com/ns/demo \
+        --dest-username=<name> --dest-password=<passwd>
+
+
+``--dest-authfile`` ::
+
+    $ skopeo copy docker://a.io/abc:v1.17.5 docker://b.io/demo:v1.17.5 --dest-authfile /root/.docker/config.json
+
+
+
+认证文件
+--------
+
+* 认证文件默认存放在 ``$HOME/.docker/config.json``
+* 文件内容::
+
+    {
+     "auths": {
+      "registry.redhat.io": {
+        "auth": "<username:password in base64>"
+      },
+      "quay.io": {
+        "auth": "bXl1c2VyOm15c2VjcmV0"
+      }
+     }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

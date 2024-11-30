@@ -1,0 +1,126 @@
+Greedy Decoding
+###############
+
+* Greedy Decoding 是序列生成任务（如机器翻译、文本生成、语音识别等）中一种简单的解码策略，用于从模型输出的概率分布中生成序列。它逐步选择每一步概率最高的选项，直到生成完成。
+
+
+
+定义
+====
+
+* Greedy Decoding 是一种逐步生成序列的方法。
+* 在每个时间步 𝑡，根据模型的概率分布 :math:`𝑃(𝑦_𝑡∣𝑦_{<𝑡}, 𝑥)` ，选择概率最高的单词（或符号）作为当前的输出 :math:`𝑦_𝑡=arg\ max_𝑦 𝑃(𝑦∣𝑦_{<𝑡}, 𝑥)` 生成过程继续，直到模型输出终止符（如 <EOS>）或达到预设的最大长度。
+
+
+流程
+====
+
+* 初始状态： 从特殊起始标记 <BOS> 开始生成。
+* 逐步选择： 在每个时间步，模型输出一个概率分布，选择最高概率的词作为输出。
+* 终止条件： 如果输出了 <EOS>，生成停止；否则继续迭代。
+
+
+示例：文本生成任务::
+
+    输入句子：
+    The weather today is
+
+    模型在每个时间步输出的概率分布：
+        Step 1: P(sunny | The weather today is)
+            sunny: 0.5
+            rainy: 0.3
+            cloudy: 0.2
+            选择: sunny （最高概率）
+        Step 2: P(and | The weather today is sunny)
+            and: 0.6
+            but: 0.2
+            or: 0.2
+            选择: and （最高概率）
+        Step 3: P(warm | The weather today is sunny and)
+            warm: 0.4
+            cold: 0.35
+            humid: 0.25
+            选择: warm （最高概率）
+        Step 4: P(<EOS> | The weather today is sunny and warm)
+            <EOS> (结束符): 0.9
+            outside: 0.1
+            选择: <EOS> （生成结束）
+
+    生成结果：
+    The weather today is sunny and warm.
+
+
+示例-机器翻译任务::
+
+    输入句子：I love cats.
+    模型输出概率分布：
+        Step 1: P(je | I love cats) = 0.8
+        Step 2: P(aime | je) = 0.9
+        Step 3: P(les | aime) = 0.85
+        Step 4: P(chats | les) = 0.9
+        生成结果：je aime les chats.
+
+
+
+
+
+
+优缺点
+======
+
+优点::
+
+    简单高效：
+        不需要额外的复杂计算，如维护多个候选序列（Beam Search）
+    快速解码：
+        每步只需要选择一个最优词，不需要比较多个序列
+
+
+缺点::
+
+    可能产生次优结果：
+        Greedy Decoding 总是选择当前步的局部最优解，但可能错过全局最优序列。
+
+    缺乏多样性：
+        生成的结果较为单一，不能很好地反映输入的潜在多种可能性。
+
+
+
+应用场景
+========
+
+* Greedy Decoding 常用于对生成质量要求较低或解码速度要求较高的场景，比如：实时翻译，快速文本预测
+
+
+
+
+与其他解码方法的比较
+====================
+
+* Beam Search: Beam Search 会同时保留多个候选序列，评估全局得分，通常生成质量更高，但解码速度较慢。
+* Sampling Decoding: Sampling 随机从概率分布中采样，生成结果更有多样性，但可能偏离高概率区域。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

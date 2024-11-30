@@ -2,6 +2,9 @@ PEFT
 ####
 
 * GitHub: https://github.com/huggingface/peft
+* https://huggingface.co/docs/peft/v0.6.2/en/index
+
+.. note:: 本文档是参考自 ``v0.6.2`` 版本
 
 
 GET STARTED
@@ -50,6 +53,15 @@ PeftConfig
 		lora_dropout=0.1
 	)
 
+	参数:
+	task_type: the task to train for (sequence-to-sequence language modeling in this case)
+	inference_mode: whether you’re using the model for inference or not
+	r: the dimension of the low-rank matrices
+	lora_alpha: the scaling factor for the low-rank matrices
+	lora_dropout: the dropout probability of the LoRA layers
+
+
+
 
 
 PeftModel
@@ -72,7 +84,6 @@ Wrap your base model and peft_config with the get_peft_model function to create 
 	model.print_trainable_parameters()
 	# 输出
 	"output: trainable params: 2359296 || all params: 1231940608 || trainable%: 0.19151053100118282"
-
 
 
 Save and load a model
@@ -110,6 +121,7 @@ load your model::
 	      print(tokenizer.batch_decode(outputs.detach().cpu().numpy(), skip_special_tokens=True)[0])
 	  # 输出
 	  'complaint'
+
 
 
 
@@ -876,6 +888,8 @@ Prompting
 Prompt tuning
 ^^^^^^^^^^^^^
 
+* https://hf.co/papers/2104.08691
+
 .. figure:: https://img.zhaoweiguo.com/uPic/2023/08/L7WpQy.jpg
 
 	Only train and store a significantly smaller set of task-specific prompt parameters
@@ -883,8 +897,30 @@ Prompt tuning
 * Prompt tuning was developed for text classification tasks on T5 models, and all downstream tasks are cast as a text generation task.
 * For example, sequence classification usually assigns a single class label to a sequence of text. By casting it as a text generation task, the tokens that make up the class label are generated. Prompts are added to the input as a series of tokens. Typically, the model parameters are fixed which means the prompt tokens are also fixed by the model parameters.
 
+
+* Prompt tuning 是针对 T5 模型上的文本分类任务开发的，所有下游任务都被转换为文本生成任务。
+* 例如，序列分类(sequence classification)通常为文本序列分配单个类别标签。通过将其转换为文本生成任务，组成类标签(class label)的tokens就生成了。
+* Pormpt 作为一系列标记添加到输入中。通常，模型参数是固定的，这意味着提示标记也由模型参数固定。
+
+.. note::关键思想: prompt tokens有自己的独立更新的参数。这意味着您可以保持预训练模型的参数冻结，并且仅更新提示标记嵌入的梯度。结果与训练整个模型的传统方法相当，并且随着模型大小的增加而提示调整性能。
+
+
+示例::
+
+	peft_config = PromptTuningConfig(
+	    task_type=TaskType.CAUSAL_LM,
+	    prompt_tuning_init=PromptTuningInit.TEXT,
+	    num_virtual_tokens=8,
+	    prompt_tuning_init_text="Classify if the tweet is a complaint or not:",
+	    tokenizer_name_or_path=model_name_or_path,
+	)
+
+
+
 Prefix tuning
 ^^^^^^^^^^^^^
+
+* https://hf.co/papers/2101.00190
 
 .. figure:: https://img.zhaoweiguo.com/uPic/2023/08/uEGkK0.jpg
 
@@ -892,6 +928,15 @@ Prefix tuning
 * Prefix tuning was designed for natural language generation (NLG) tasks on GPT models.
 * It is very similar to prompt tuning; prefix tuning also prepends a sequence of task-specific vectors to the input that can be trained and updated while keeping the rest of the pretrained model’s parameters frozen.
 * The main difference is that the prefix parameters are inserted in all of the model layers, whereas prompt tuning only adds the prompt parameters to the model input embeddings. The prefix parameters are also optimized by a separate feed-forward network (FFN) instead of training directly on the soft prompts because it causes instability and hurts performance. The FFN is discarded after updating the soft prompts.
+
+::
+
+	peft_config = PrefixTuningConfig(
+		task_type=TaskType.SEQ_2_SEQ_LM, 
+		inference_mode=False, 
+		num_virtual_tokens=20
+	)
+
 
 
 P-tuning
@@ -907,6 +952,37 @@ P-tuning
 	the prompt tokens can be inserted anywhere in the input sequence, and it isn’t restricted to only the beginning
 	the prompt tokens are only added to the input instead of adding them to every layer of the model
 	introducing anchor tokens can improve performance because they indicate characteristics of a component in the input sequence
+
+::
+
+	peft_config = PromptEncoderConfig(
+		task_type="SEQ_CLS",
+		num_virtual_tokens=20, 
+		encoder_hidden_size=128
+	)
+
+
+与Lora的区别-fromGPT
+^^^^^^^^^^^^^^^^^^^^
+
+* Prompt Tuning（在输入中加入可训练的提示）：1、适合多任务适配：Prompt Tuning 在输入中插入可训练的提示向量，让模型能通过不同的提示适应多个任务。对于那些任务切换频繁或需要一次微调适应多个任务的情况，Prompt Tuning 能以较少的参数达到适应不同任务的效果。2、更少的训练资源需求：由于仅需在输入侧添加提示向量，Prompt Tuning 通常比 LoRA 更高效，不需要更新大量的网络参数，因此适合在资源受限或不易频繁加载权重的场景下使用。
+* Prefix Tuning（在输入前面加上可训练的“前缀”向量）：1、适合长文本生成任务：Prefix Tuning 将可训练的向量作为“前缀”嵌入到输入中，可以帮助模型更有效地引导生成特定风格或内容的文本，适合长文本生成任务（如文本生成、对话生成）。2、少量参数适应特定风格：与 LoRA 调整模型内部权重不同，Prefix Tuning 直接作用在输入前面，因此可以以更少的参数实现对生成风格的控制，适合生成对特定上下文敏感的内容。
+* P-tuning（基于插入的可训练嵌入）：1、适合小样本学习和生成任务：P-tuning 在小样本任务（例如少量标注的数据或新的文本生成任务）上表现良好，因为它直接在输入中加入可训练的嵌入作为提示。这种方式对生成任务较友好，因为它能灵活调整输入，使模型关注特定任务。2、无须修改模型权重：P-tuning 的方法是通过在输入嵌入中插入可训练向量，无需更改 Transformer 层的权重，因此模型的推理效率不会受到影响，适合推理过程较敏感的任务。
+
+
++---------------+--------------------------------------+--------------------------------+
+| 方法          | 优势场景                             | 相较 LoRA 的优势               |
++===============+======================================+================================+
+| P-tuning      | 小样本、生成任务、无需频繁加载新权重 | 输入灵活、适合生成任务         |
++---------------+--------------------------------------+--------------------------------+
+| Prefix Tuning | 长文本生成任务、风格控制             | 控制文本风格、生成任务稳定性高 |
++---------------+--------------------------------------+--------------------------------+
+| Prompt Tuning | 多任务适配、资源受限任务             | 任务切换高效、训练资源需求少   |
++---------------+--------------------------------------+--------------------------------+
+
+
+* 【soft prompt的使用场景】1、多任务场景：Prompt Tuning 通过调整输入提示的方式能够在一个模型中完成多任务，而不需要频繁切换微调权重。2、参数量少，训练过程更轻量
+
 
 IA3
 ---

@@ -4,6 +4,8 @@ Transformers 4.45.2
 
 .. note:: 本文档是自 ``v4.23.1`` 版本到本版本的变动部分
 
+* from: https://huggingface.co/docs/transformers/v4.45.2/en/index
+
 
 Tutorials
 =========
@@ -15,6 +17,8 @@ Tutorials
 
 Load pretrained instances with an AutoClass
 -------------------------------------------
+
+.. note:: 其他 AutoXXX 参见原始transformers文档
 
 AutoBackbone
 ^^^^^^^^^^^^
@@ -216,6 +220,10 @@ Wrong padding side
     ).to("cuda")
     generated_ids = model.generate(**model_inputs)
     tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
+    # 输出
+    # '1, 2, 33333333333'
+
+
 
     # With left-padding, it works as expected!
     tokenizer = AutoTokenizer.from_pretrained("mistralai/Mistral-7B-v0.1", padding_side="left")
@@ -225,6 +233,9 @@ Wrong padding side
     ).to("cuda")
     generated_ids = model.generate(**model_inputs)
     tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
+    # 输出
+    # '1, 2, 3, 4, 5, 6,'
+
 
 
 Wrong prompt
@@ -247,10 +258,14 @@ Wrong prompt
     input_length = model_inputs.input_ids.shape[1]
     generated_ids = model.generate(**model_inputs, max_new_tokens=20)
     print(tokenizer.batch_decode(generated_ids[:, input_length:], skip_special_tokens=True)[0])
-    # Oh no, it did not follow our instruction to reply as a thug! Let's see what happens when we write
-    # a better prompt and use the right template for this model (through `tokenizer.apply_chat_template`)
+    # 输出
+    # "I'm not a thug, but i can tell you that a human cannot eat"
+    # 说明
+    # Oh no, it did not follow our instruction to reply as a thug!
 
 
+    # write a better prompt and use the right template for this model
+    # (through `tokenizer.apply_chat_template`)
     set_seed(0)
     messages = [
         {
@@ -263,6 +278,9 @@ Wrong prompt
     input_length = model_inputs.shape[1]
     generated_ids = model.generate(model_inputs, do_sample=True, max_new_tokens=20)
     print(tokenizer.batch_decode(generated_ids[:, input_length:], skip_special_tokens=True)[0])
+    # 输出
+    # 'None, you thug. How bout you try to focus on more useful questions?'
+    # 说明
     # As we can see, it followed a proper thug style 😎
 
 
@@ -341,9 +359,10 @@ Memory considerations
 Performance considerations
 """"""""""""""""""""""""""
 
-* 聊天模型生成文本相对不同，因为它的瓶颈是**内存带宽**而不是**计算能力**，因为它必须为模型生成的每个 token 从内存中读取每一个active parameter。这意味着您每秒可以从聊天模型生成的 token 数量通常与它这个表达式成正比：``内存总带宽除以模型的大小`` 。一个8B的模型，以 bfloat16 精度加载时，模型大小为 ~16GB。这意味着必须为模型生成的每个令牌从内存中读取 16GB。总内存带宽从消费类 CPU 的 20-100GB/秒到消费类 GPU、Intel Xeon、AMD Threadripper/Epyc 或高端 Apple Silicon 等专用 CPU 的 200-900GB/秒不等，最后高达 2-3TB/秒的数据中心 GPU，如 Nvidia A100 或 H100。这应该可以让您很好地了解这些不同硬件类型的生成速度。
+* 聊天模型生成文本相对不同，因为它的瓶颈是 **内存带宽** 而不是 **计算能力** ，因为它必须为模型生成的每个 token 从内存中读取每一个active parameter。这意味着您每秒可以从聊天模型生成的 token 数量通常与它这个表达式成正比：``内存总带宽除以模型的大小`` 。一个8B的模型，以 bfloat16 精度加载时，模型大小为 ~16GB。这意味着必须为模型生成的每个令牌从内存中读取 16GB。
+* 总内存带宽从消费类 CPU 的 ``20-100GB/秒`` 到消费类 GPU、Intel Xeon、AMD Threadripper/Epyc 或高端 Apple Silicon 等专用 CPU 的 ``200-900GB/秒`` 不等，最后高达 ``2-3TB/秒`` 的数据中心 GPU，如 Nvidia A100 或 H100。这应该可以让您很好地了解这些不同硬件类型的生成速度。
 * assisted generation的变体：也称为 “推测性采样(speculative sampling)”，通常使用较小的“草稿模型(draft model)”尝试一次猜测多个未来的 token，然后用聊天模型确认这些generations。如果通过聊天模型验证了猜测结果，则每次forward pass可以生成多个 Token，大大缓解了带宽瓶颈，提高了生成速度。
-* MoE 模型：几种流行的聊天模型，如 Mixtral、Qwen-MoE 和 DBRX，都是 MoE 模型。在这些模型中，并非每个参数对于生成的每个 Token 都处于活动状态。因此，MoE 模型通常具有低得多的内存带宽要求，即使它们的总大小可能相当大。因此，它们可以比相同大小的普通 “密集” 模型快几倍。然而，像辅助生成这样的技术通常对这些模型无效，因为每个新的推测令牌都会有更多的参数变得活跃，这将抵消 MoE 架构提供的带宽和速度优势。
+* MoE 模型：几种流行的聊天模型，如 Mixtral、Qwen-MoE 和 DBRX，都是 MoE 模型。在这些模型中，并非每个参数对于生成的每个 Token 都处于活动状态。因此，MoE 模型通常具有低得多的内存带宽要求，即使它们的总大小可能相当大。因此，它们可以比相同大小的普通 “密集” 模型快几倍。然而，像辅助生成(assisted generation)这样的技术通常对这些模型无效，因为每个新的推测令牌都会有更多的参数变得活跃，这将抵消 MoE 架构提供的带宽和速度优势。
 
 
 
@@ -361,63 +380,88 @@ COMPUTER VISION
 ---------------
 
 
-Image-to-Image::
+Image-to-Image
+^^^^^^^^^^^^^^
+
+::
 
     image enhancement (super resolution, low light enhancement, deraining and so on)
         图像增强(超分辨率、弱光增强、去污等)
     image inpainting
         图像修复
 
-Image Feature Extraction::
+Image Feature Extraction
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+::
 
     image similarity
         图像相似度
     image retrieval
         图像检索
 
-    remove the task-specific head (image classification, object detection etc) and get the features
-        These features are very useful on a higher level: edge detection, corner detection and so on. 
-        They may also contain information about the real world (e.g. what a cat looks like) depending on how deep the model is. 
-        Therefore, these outputs can be used to train new classifiers on a specific dataset.
+* remove the task-specific head (image classification, object detection etc) and get the features
+* These features are very useful on a higher level: edge detection, corner detection and so on. 
+* They may also contain information about the real world (e.g. what a cat looks like) depending on how deep the model is. 
+* Therefore, these outputs can be used to train new classifiers on a specific dataset.
 
 
-Mask Generation::
+Mask Generation
+^^^^^^^^^^^^^^^
 
-     very similar to image segmentation, but many differences exist. 
+* **Mask Generation** 为图像生成语义上有意义的掩模的任务。该任务与图像分割非常相似，但存在许多差异。图像分割模型在标记数据集上进行训练，并且仅限于它们在训练期间看到的类；给定图像，它们返回一组掩码和相应的类。
+* Mask generation is the task of generating semantically meaningful masks for an image. This task is very similar to image segmentation, but many differences exist. 
+* ``Image segmentation`` models are trained on labeled datasets and are limited to the classes they have seen during training; they return a set of masks and corresponding classes, given an image.
 
-     Image segmentation models are trained on labeled datasets and are limited to the classes they have seen during training; 
-        they return a set of masks and corresponding classes, given an image.
-     Mask generation models are trained on large amounts of data and operate in two modes.
-        1. Prompting mode: 
-            模型接收图像和提示，其中提示可以是对象内图像中的 2D 点位置（XY 坐标）或对象周围的边界框。
-            在提示模式下，模型仅返回提示所指向的对象上的mask
-        2. Segment Everything mode:
-            给定一张图像，模型会生成图像中的每个蒙版。
-            为此，将生成一个点网格并将其叠加在图像上以进行推理。
+Mask generation models are trained on large amounts of data and operate in two modes::
+
+    1. Prompting mode: 
+        模型接收图像和提示，其中提示可以是对象内图像中的 2D 点位置（XY 坐标）或对象周围的边界框。
+        在提示模式下，模型仅返回提示所指向的对象上的mask
+    2. Segment Everything mode:
+        给定一张图像，模型会生成图像中的每个蒙版。
+        为此，将生成一个点网格并将其叠加在图像上以进行推理。
+
 
 
 .. figure:: https://img.zhaoweiguo.com/uPic/2024/10/hvrrET.png
 
+::
+
+    Point Prompting
+    Box Prompting
+
+
+.. note:: 具体细看文档吧(有空运行一下相关代码再细分析吧)
 
 
 
-Keypoint Detection::
+Keypoint Detection
+^^^^^^^^^^^^^^^^^^
 
-    Keypoint detection identifies and locates specific points of interest within an image.
-    These keypoints, also known as landmarks, represent meaningful features of objects, 
-        such as facial features(面部特征) or object parts(对象部位).
+* 关键点检测识别并定位图像中的特定兴趣点。这些关键点也称为地标，代表对象的有意义的特征，例如面部特征或对象部分。
+* Keypoint detection identifies and locates specific points of interest within an image. These keypoints, also known as landmarks, represent meaningful features of objects, such as facial features(面部特征) or object parts(对象部位).
 
-    These models take an image input and return the following outputs:
-    1. Keypoints and Scores: 兴趣点及其置信度分数
+These models take an image input and return the following outputs::
+
+    1. Keypoints and Scores: 
+        兴趣点及其置信度分数
         Points of interest and their confidence scores.
-    2. Descriptors: 每个关键点周围的图像区域的表示形式，捕获其纹理、渐变、方向和其他属性
-        A representation of the image region surrounding each keypoint, capturing its texture, gradient, orientation and other properties.
+    2. Descriptors: 
+        每个关键点周围的图像区域的表示形式，捕获其纹理、渐变、方向和其他属性
+        A representation of the image region surrounding each keypoint, 
+            capturing its texture, gradient, orientation and other properties.
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/11/KEzcue.png
 
 
-Knowledge Distillation for Computer Vision::
 
-    Knowledge distillation is a technique used to transfer knowledge 
-        from a larger, more complex model (teacher) to a smaller, simpler model (student). 
+
+Knowledge Distillation for Computer Vision
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Knowledge distillation is a technique used to transfer knowledge from a larger, more complex model (teacher) to a smaller, simpler model (student). 
+
 
 
 MULTIMODAL
@@ -845,7 +889,7 @@ Quantized Cache
 * 使用generate()时使用量化缓存可以显着减少内存需求，但代价是速度。
 * transformers中的 ``KV Cache量化`` 很大程度上受到此论文启发: KIVI: A Tuning-Free Asymmetric 2bit Quantization for KV Cache: https://arxiv.org/abs/2402.02750
 
-* 如果您使用quanto后端，建议将缓存配置中的axis-key/axis-value参数设置为0 ；如果您使用HQQ后端，建议将其设置为1 。对于其他配置值，请使用默认值
+* 如果您使用quanto后端，建议将缓存配置中的axis-key/axis-value参数设置为0；如果您使用HQQ后端，建议将其设置为1 。对于其他配置值，请使用默认值
 
 
 
@@ -1077,7 +1121,7 @@ Use model-specific APIs
 ----------------------------
 
 * Create a custom architecture
-* AutoClass自动推断模型架构并下载预训练的配置和权重。一般来说，我们**建议**使用AutoClass来生成与检查点无关的代码。
+* AutoClass自动推断模型架构并下载预训练的配置和权重。一般来说，我们 **建议** 使用AutoClass来生成与检查点无关的代码。
 * 本节主要了解如何创建不使用AutoClass自定义模型
 
 Configuration
@@ -1230,7 +1274,7 @@ Backbone
 
     Computer vision models consist of a ``backbone``, ``neck``, and ``head``. 
 
-* 骨干从输入图像中提取特征，颈部组合并增强提取的特征，头部用于主要任务（例如，对象检测）。
+* **backbone** 从输入图像中提取特征， **neck** 组合并增强提取的特征， **head** 用于主要任务（例如，对象检测）。
 * 首先在模型配置中初始化主干，并指定是否要加载预训练的权重或加载随机初始化的权重。然后您可以将模型配置传递给模型头。
 * The backbone extracts features from an input image, the neck combines and enhances the extracted features, and the head is used for the main task (e.g., object detection). 
 * Start by initializing a backbone in the model config and specify whether you want to load pretrained weights or load randomly initialized weights. Then you can pass the model config to the model head.
@@ -1260,15 +1304,241 @@ Building custom models
 Chat Templates
 --------------
 
-@todo
+Introduce
+^^^^^^^^^
+
+* An increasingly common use case for LLMs is chat.
+* 在聊天上下文中，该模型不是继续单个文本字符串（如标准语言模型的情况），而是继续由一条或多条消息组成的对话，每条消息都包含一个角色，例如“user”或“assists”，以及消息文本。
+* 与标记化(tokenization)非常相似，不同的模型期望聊天的输入格式截然不同。这就是我们添加聊天模板作为一项功能的原因。
+* 聊天模板是标记器(tokenizer)的一部分。它们指定如何将表示为消息列表的对话转换为模型期望格式的单个可标记字符串。
+
+示例::
+
+    from transformers import AutoTokenizer
+    tokenizer = AutoTokenizer.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1")
+
+    chat = [
+      {"role": "user", "content": "Hello, how are you?"},
+      {"role": "assistant", "content": "I'm doing great. How can I help you today?"},
+      {"role": "user", "content": "I'd like to show off how chat templating works!"},
+    ]
+
+    tokenizer.apply_chat_template(chat, tokenize=False)
+
+    # 注: 标记 [INST] 和 [/INST] 来指示用户消息的开始和结束
+    # 其他模型可能使用别的标记来指示
+
+
+How do I use chat templates
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+.. code-block:: python
+
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+
+    checkpoint = "HuggingFaceH4/zephyr-7b-beta"
+    tokenizer = AutoTokenizer.from_pretrained(checkpoint)
+    model = AutoModelForCausalLM.from_pretrained(checkpoint)  # You may want to use bfloat16 and/or move to GPU here
+
+    messages = [
+        {
+            "role": "system",
+            "content": "You are a friendly chatbot who always responds in the style of a pirate",
+        },
+        {"role": "user", "content": "How many helicopters can a human eat in one sitting?"},
+     ]
+    tokenized_chat = tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=True, return_tensors="pt")
+    print(tokenizer.decode(tokenized_chat[0]))
+    # 输出
+    """
+    <|system|>
+    You are a friendly chatbot who always responds in the style of a pirate</s> 
+    <|user|>
+    How many helicopters can a human eat in one sitting?</s> 
+    <|assistant|>
+    """
+
+模型输出::
+
+    outputs = model.generate(tokenized_chat, max_new_tokens=128) 
+    print(tokenizer.decode(outputs[0]))
+    # 输出
+    <|system|>
+    You are a friendly chatbot who always responds in the style of a pirate</s> 
+    <|user|>
+    How many helicopters can a human eat in one sitting?</s> 
+    <|assistant|>
+    Matey, I'm afraid I must .......
 
 
 
 
 
 
+核心参数
+^^^^^^^^
+
+add_generation_prompt 参数
+""""""""""""""""""""""""""
+
+* 类型：bool
+* 功能：是否在聊天模板的末尾添加一个提示，用于指示模型生成下一条消息。这对于一些聊天模型至关重要，因为它们需要一个特定的触发标记来开始生成。
+
+实例::
+
+    messages = [
+        {"role": "user", "content": "Hi there!"},
+        {"role": "assistant", "content": "Nice to meet you!"},
+        {"role": "user", "content": "Can I ask a question?"}
+    ]
+
+ without a generation prompt::
+
+    >>> tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=False)
+    """<|im_start|>user
+    Hi there!<|im_end|>
+    <|im_start|>assistant
+    Nice to meet you!<|im_end|>
+    <|im_start|>user
+    Can I ask a question?<|im_end|>
+    """
+
+with a generation prompt::
+
+    >>> tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+    """<|im_start|>user
+    Hi there!<|im_end|>
+    <|im_start|>assistant
+    Nice to meet you!<|im_end|>
+    <|im_start|>user
+    Can I ask a question?<|im_end|>
+    <|im_start|>assistant               # 添加生成提示
+    """
+
+continue_final_message 参数
+"""""""""""""""""""""""""""
+
+* 类型：bool
+* 功能：是否在最后一条消息的 content 末尾继续生成。这在需要模型接着未完成的句子生成时很有用。
 
 
+
+::
+
+    chat = [
+        {"role": "user", "content": "Can you format the answer in JSON?"},
+        {"role": "assistant", "content": '{"name": "'},
+    ]
+
+    formatted_chat = tokenizer.apply_chat_template(chat, tokenize=True, return_dict=True, continue_final_message=True)
+    model.generate(**formatted_chat)
+
+
+.. note:: add_generation_prompt添加开始新消息的标记，而continue_final_message从最终消息中删除任何消息结束标记，因此将它们一起使用没有意义。
+
+
+tokenize 参数
+"""""""""""""
+
+.. note:: 默认情况下，某些标记生成器会将特殊标记（如<bos>和<eos>添加到它们标记的文本中。聊天模板应该已经包含它们需要的所有特殊标记，因此额外的特殊标记通常会不正确或重复，这会损害模型性能。
+
+* 如果您使用以下格式设置文本格式 apply_chat_template(tokenize=False) ，当您稍后标记该文本时，您应该设置参数add_special_tokens=False 。如果你使用 apply_chat_template(tokenize=True) ，你不需要担心这个！
+
+Advanced: How do chat templates work?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* 模型的聊天模板存储在tokenizer.chat_template属性中
+
+示例(Jinja 模板)::
+
+    {%- for message in messages %}
+        {{- '<|' + message['role'] + |>\n' }}
+        {{- message['content'] + eos_token }}
+    {%- endfor %}
+    {%- if add_generation_prompt %}
+        {{- '<|assistant|>\n' }}
+    {%- endif %}
+
+
+示例2::
+
+    {%- for message in messages %}
+        {%- if message['role'] == 'user' %}
+            {{- bos_token + '[INST] ' + message['content'] + ' [/INST]' }}
+        {%- elif message['role'] == 'system' %}
+            {{- '<<SYS>>\\n' + message['content'] + '\\n<</SYS>>\\n\\n' }}
+        {%- elif message['role'] == 'assistant' %}
+            {{- ' '  + message['content'] + ' ' + eos_token }}
+        {%- endif %}
+    {%- endfor %}
+
+
+Advanced: Adding and editing chat templates
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+How do I create a chat template?
+""""""""""""""""""""""""""""""""
+
+基于别的token进行修改::
+
+    template = tokenizer.chat_template
+    template = template.replace("SYS", "SYSTEM")  # Change the system token
+
+    tokenizer.chat_template = template  # Set the new template
+    tokenizer.push_to_hub("model_name")  # Upload your new template to the Hub!
+
+
+一种流行的选择是ChatML格式::
+
+    {%- for message in messages %}
+        {{- '<|im_start|>' + message['role'] + '\n' + message['content'] + '<|im_end|>' + '\n' }}
+    {%- endfor %}
+
+
+Advanced: Template writing tips
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Trimming whitespace
+"""""""""""""""""""
+
+强烈建议使用格式::
+
+    {%- for message in messages %}
+        {{- message['role'] + message['content'] }}
+    {%- endfor %}
+
+不要使用格式::
+
+    {% for message in messages %}
+        {{ message['role'] + message['content'] }}
+    {% endfor %}
+
+
+Callable functions
+""""""""""""""""""
+
+::
+
+    1. raise_exception(msg)
+    2. strftime_now(format_str)
+
+Compatibility with non-Python Jinja
+"""""""""""""""""""""""""""""""""""
+
+.. note:: 非 Python 实现在部署环境中尤其常见，其中 JS 和 Rust 非常流行。
+
+* 1.Replace Python methods with Jinja filters::
+
+    string.lower()      => string|lower
+    dict.items()        => dict|items
+    string.strip()      => string|trim
+
+* 2.Replace True, False and None, which are Python-specific, with true, false and none.
+* 3.添加tojson过滤器, 避免直接渲染字典或列表可能会在其他实现中给出不同的结果
+
+
+* Jinja内置Filter: https://jinja.palletsprojects.com/en/3.1.x/templates/#builtin-filters
 
 
 
@@ -1308,7 +1578,7 @@ TrainingArguments class::
 Export to ONNX
 --------------
 
-* 🤗 Optimum 是 Transformers 的扩展，可以通过其exporters模块将模型从 PyTorch 导出为序列化格式，例如 ONNX 和 TFLite。
+* 🤗 Optimum 是 Transformers 的扩展，可以通过其exporters模块将模型从 PyTorch 导出为序列化格式(serialized format)，例如 ONNX 和 TFLite。
 * ONNX（Open Neural Network eXchange）是一种开放标准，定义了一组通用运算符和通用文件格式，以表示各种框架（包括 PyTorch 和 TensorFlow）中的深度学习模型。当模型导出为 ONNX 格式时，这些运算符用于构建计算图（通常称为中间表示），该计算图表示通过神经网络的数据流。
 * 通过使用标准化运算符和数据类型公开图表，ONNX 可以轻松地在框架之间切换。例如，在 PyTorch 中训练的模型可以导出为 ONNX 格式，然后导入到 TensorFlow 中（反之亦然）。
 
@@ -2006,7 +2276,15 @@ Scalability strategy::
 Fully Sharded Data Parallel
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* Fully Sharded Data Parallel (FSDP): 完全分片数据并行 (FSDP)是一种数据并行方法，可将模型的参数、梯度和优化器状态分片到可用 GPU（也称为工作线程或等级）的数量上。与DistributedDataParallel (DDP)不同，FSDP 减少了内存使用量，因为模型会在每个 GPU 上复制。这提高了 GPU 内存效率，并允许您在更少的 GPU 上训练更大的模型。
+* `Fully Sharded Data Parallel (FSDP) <https://pytorch.org/blog/introducing-pytorch-fully-sharded-data-parallel-api/>`_ : 完全分片数据并行 (FSDP)是一种数据并行方法，可将模型的参数、梯度和优化器状态分片到可用 GPU（也称为工作线程或等级）的数量上。
+* 与DistributedDataParallel（DDP）不同，FSDP通过在每个GPU上进行模型分片而非完整复制，从而降低了内存使用。这提高了 GPU 内存效率，并允许您在更少的 GPU 上训练更大的模型。
+* Unlike DistributedDataParallel (DDP), FSDP reduces memory-usage because a model is replicated on each GPU. This improves GPU memory-efficiency and allows you to train much larger models on fewer GPUs.
+* FSDP is integrated with the Accelerate
+
+
+
+
+
 
 DeepSpeed
 ^^^^^^^^^
@@ -2242,7 +2520,7 @@ Zero Redundancy Optimizer (ZeRO)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * 【原始】Parallelism technique which performs sharding of the tensors somewhat similar to TensorParallel, except the whole tensor gets reconstructed in time for a forward or backward computation, therefore the model doesn’t need to be modified. This method also supports various offloading techniques to compensate for limited GPU memory. Learn more about ZeRO here.
-* 【定义】Zero Redundancy Optimizer (ZeRO) 是由 DeepSpeed 框架提出的一种分布式优化策略。是一种优化器并行技术，旨在大幅减少深度学习模型训练中的内存使用，特别是在多 GPU 环境下。它通过**分片（sharding）管理**模型参数、梯度和优化器状态，极大地提高了 GPU 的内存效率，从而允许更大规模的模型在有限的 GPU 资源上进行训练。ZeRO 是一种与 Tensor Parallelism 相似的技术，但有一些独特的特性，使其能够进一步优化内存使用。
+* 【定义】Zero Redundancy Optimizer (ZeRO) 是由 DeepSpeed 框架提出的一种分布式优化策略。是一种优化器并行技术，旨在大幅减少深度学习模型训练中的内存使用，特别是在多 GPU 环境下。它通过 **分片（sharding）管理** 模型参数、梯度和优化器状态，极大地提高了 GPU 的内存效率，从而允许更大规模的模型在有限的 GPU 资源上进行训练。ZeRO 是一种与 Tensor Parallelism 相似的技术，但有一些独特的特性，使其能够进一步优化内存使用。
 * 【核心思想】只在计算需要时才将张量重新构建，而在计算完成后将其再次分片到各个 GPU。因此，整个模型的张量不需要一直驻留在单个 GPU 上，从而有效减少了显存的占用。
 * 【三个阶段】
 
@@ -2259,7 +2537,13 @@ Zero Redundancy Optimizer (ZeRO)
 
 * 【优势】无需对模型结构进行修改，而只需要调整张量的存储和处理方式，因此模型本身不需要特别为 ZeRO 进行重写。不仅通过分片减少 GPU 内存的占用，还支持offloading 技术，这意味着可以将部分计算或数据从 GPU 卸载到 CPU，甚至 NVMe 存储（硬盘），通过这种技术，即使 GPU 内存非常有限，也能支持大模型训练：
 
-* 【总结】Zero Redundancy Optimizer (ZeRO) 是一种高效的并行优化技术，它通过**分片（sharding）**模型的参数、梯度和优化器状态，将这些信息分布在多个 GPU 上，从而极大地减少了单个 GPU 的内存占用。它能够支持训练非常大的模型，同时保持较高的计算效率。与 Tensor Parallelism 不同，ZeRO 允许动态重构张量，且不需要对模型进行修改。此外，ZeRO 还支持将计算和存储卸载到 CPU 或硬盘，进一步优化有限资源上的模型训练。
+* 【总结】Zero Redundancy Optimizer (ZeRO) 是一种高效的并行优化技术，它通过 **分片（sharding）** 模型的参数、梯度和优化器状态，将这些信息分布在多个 GPU 上，从而极大地减少了单个 GPU 的内存占用。它能够支持训练非常大的模型，同时保持较高的计算效率。与 Tensor Parallelism 不同，ZeRO 允许动态重构张量，且不需要对模型进行修改。此外，ZeRO 还支持将计算和存储卸载到 CPU 或硬盘，进一步优化有限资源上的模型训练。
+
+
+Fully Sharded Data Parallel
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. note:: 参见上面相关章节
 
 
 
@@ -2273,7 +2557,8 @@ effective techniques for efficient LLM deployment::
     2. Flash Attention
         注意力算法的一种变体，它不仅提供了一种更节省内存的方法，而且由于优化了 GPU 内存利用率而实现了效率的提高
     3. Architectural Innovations
-        模型架构中最重要的进步有: Alibi, Rotary embeddings, Multi-Query Attention (MQA) and Grouped-Query-Attention (GQA).
+        模型架构中最重要的进步有: 
+            Alibi, Rotary embeddings, Multi-Query Attention (MQA) and Grouped-Query-Attention (GQA).
 
 1. Lower Precision
 ^^^^^^^^^^^^^^^^^^
@@ -2857,6 +3142,34 @@ DPR 模型的流程::
 
 
 
+
+
+其他-fromGPT
+============
+
+
+Transformer 的主要组成部分包括::
+
+    1. Attention Block、
+        注意力模块，最核心的模块
+    2. Feed-Forward Network (FFN)
+        在每个 Transformer 层中，注意力模块后面是一个前馈神经网络（Feed-Forward Network），通常是一个两层的全连接网络
+        FFN 对每个位置独立操作，主要负责非线性变换，增强模型的表示能力。
+        FFN 的参数规模通常很大，因此也是计算开销的一个主要来源。
+    3. Embedding Layer
+        Embedding 层用于将输入的离散标记（tokens）转化为连续的向量表示。
+        在 NLP 模型中，输入和输出通常都有 embedding 层，分别将输入标记转为向量和将输出向量转回标记。
+        对于 NLP 模型，词汇表的大小会影响 embedding 层的参数规模。
+    4. Positional Encoding
+        Transformer 不具备内在的序列位置感知，因此需要加入位置编码（positional encoding）来表示序列中每个位置的信息。
+        位置编码可以是固定的（例如通过正弦和余弦函数生成）或是可训练的向量。
+        虽然位置编码不包含很多参数，但它在 Transformer 中至关重要，帮助模型区分序列中的位置。
+    5. Layer Normalization
+        每个 Transformer 层通常包含一个或多个层归一化（Layer Normalization）步骤，用于加速训练收敛，稳定模型性能。
+        虽然 Layer Normalization 的参数很少，但对模型的稳定性和性能有较大影响。
+    6. Residual Connections
+        在每个模块（如 Attention 和 FFN）中，通常使用残差连接（residual connections）来连接输入和输出，以避免梯度消失和梯度爆炸问题。
+        残差连接本身没有参数，但在计算图中增加了对输入的直接引用。
 
 
 
