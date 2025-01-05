@@ -1,0 +1,4416 @@
+动手学深度学习(Dive into Deep Learning)
+#######################################
+
+
+* 英文版: https://d2l.ai/
+* GitHub开源地址: https://github.com/d2l-ai/d2l-en
+* 中文版: https://zh.d2l.ai/
+* GitHub开源地址: https://github.com/d2l-ai/d2l-zh
+* 发布于2021年(大模型真正兴起前)
+
+
+前言
+====
+
+
+* 第 1 部分：基础知识和预备知识。
+    * 第 1 节 是深度学习的简介。
+    * 第 2 节，我们将快速带您了解实践深度学习所需的先决条件，例如如何存储和操作数据，以及如何应用基于线性代数、微积分和概率的基本概念的各种数值运算。
+    * 第 3 节到第 5 节涵盖深度学习中最基本的概念和技术，包括回归和分类；线性模型；多层感知器；以及过度拟合和正则化。
+
+* 第 2 部分：现代深度学习技术。 
+    * 第 6 节描述了关键的计算深度学习系统的组成部分，并为我们的更复杂模型的后续实现。
+    * 第 7 条和第 8 条存在 卷积神经网络 (CNN) 是构成 大多数现代计算机视觉系统的支柱。
+    * 第 9 节和第 10 节介绍 循环神经网络 (RNN)，利用顺序模型 数据中的（例如，时间）结构，通常用于自然语言处理和时间序列预测。
+    * 第 11 节，我们描述了一类相对较新的模型，基于所谓的注意力机制，它已经取代 RNN 成为大多数自然语言处理任务的主导架构。这些部分将带您快速了解深度学习从业者广泛使用的最强大、最通用的工具。
+
+* 第 3 部分：可扩展性、效率和应用程序。
+    * 在第 12 章中，我们讨论了几种用于训练深度学习模型的常见优化算法。
+    * 在第 13 章中，我们研究了影响深度学习代码计算性能的几个关键因素。
+    * 在第 14 章中，我们将说明深度学习在计算机视觉中的主要应用。
+    * 在第 15 章和第 16 章中，我们演示了如何预训练语言表示模型并将其应用于自然语言处理任务。
+
+
+Notation
+--------
+
+Numerical Objects:
+^^^^^^^^^^^^^^^^^^
+
+* x: a scalar
+* **x**: a vector
+* **X**: a matrix
+* X: a general tensor
+* **I**: the identity matrix (of some given dimension), i.e., a square matrix with 1 on all diagonal entries and 0 on all off-diagonals
+* :math:`x_i, [x]_i`, : the :math:`i^{th}` element of vector 
+* :math:`x_{ij}, x_{i,j}, [X]_{ij}, [X]_{i,j}`: the element of matrix **X** at row i and column j.
+
+
+Set Theory
+^^^^^^^^^^
+
+- X: a set
+-  :math:`\mathbb{Z}`  : the set of integers
+-  :math:`\mathbb{Z}^{+}` : the set of positive integers
+-  :math:`\mathbb{R}`  : the set of real numbers
+-  :math:`\mathbb{R}^{n}`  : the set of  n-dimensional vectors of real numbers
+-  :math:`\mathbb{R}^{a \times b}`  : The set of matrices of real numbers with  a  rows and  b  columns
+-  :math:`|\mathcal{X}|`  : cardinality (number of elements) of set  :math:`\mathcal{X}` 
+-  :math:`\mathcal{A} \cup \mathcal{B}`  : union of sets  :math:`\mathcal{A}`  and  :math:`\mathcal{B}`
+-  :math:`\mathcal{A} \cap \mathcal{B}`  : intersection of sets  :math:`\mathcal{A}`  and  :math:`\mathcal{B}`
+-  :math:`\mathcal{A} \backslash \mathcal{B}`  : set subtraction of  :math:`\mathcal{B}`  from  :math:`\mathcal{A}`  (contains only those elements of  :math:`\mathcal{A}`  that do not belong to  :math:`\mathcal{B}`  )
+
+Functions and Operators
+^^^^^^^^^^^^^^^^^^^^^^^
+
+-  :math:`f(\cdot)` :  a function
+-  :math:`\log (\cdot)`  : the natural logarithm (base  e  )
+-  :math:`\log _{2}(\cdot)`  : logarithm to base 2
+-  :math:`\exp (\cdot)`  : the exponential function
+-  :math:`\mathbf{1}(\cdot)`  : the indicator function; evaluates to 1 if the boolean argument is true, and 0 otherwise
+-  :math:`\mathbf{1}_{\mathcal{X}}(z)`  : the set-membership indicator function; evaluates to 1 if the element  z  belongs to the set  \mathcal{X}  and 0 otherwise
+-  :math:`(\cdot)^{\top}`  : transpose of a vector or a matrix
+-  :math:`\mathbf{X}^{-1}`  : inverse of matrix  \mathbf{X} 
+-  :math:`\odot`  : Hadamard (elementwise) product
+-  :math:`[\cdot, . ]` : concatenation 
+-  :math:`\|\cdot\|_{p}: \ell_{p}`  norm
+-  :math:`\|\cdot\|: \ell_{2}`  norm
+-  :math:`\langle\mathbf{x}, \mathbf{y}\rangle` : inner (dot) product of vectors  :math:`\mathbf{x}`  and  :math:`\mathbf{y}`
+-  :math:`\sum`  : summation over a collection of elements
+-  :math:`\Pi`  : product over a collection of elements
+- =: an equality asserted as a definition of the symbol on the left-hand side
+
+Calculus
+^^^^^^^^
+
+-  :math:`\frac{d y}{d x}`  : derivative of  y  with respect to  x 
+-  :math:`\frac{\partial y}{\partial x}`  : partial derivative of  y  with respect to  x 
+-  :math:`\nabla_{\mathrm{x}} y`  : gradient of  y  with respect to  x
+-  :math:`\int_{a}^{b} f(x) d x`  : definite integral of  f  from  a  to  b  with respect to  x 
+-  :math:`\int f(x) d x`  : indefinite integral of  f  with respect to  x 
+
+
+Probability and Information Theory
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+-  X  : a random variable
+-  P  : a probability distribution
+-  :math:`X \sim P`  : the random variable  X  follows distribution  P 
+-  :math:`X \sim N(μ,σ^2 )` :随机变量 X 服从均值为 μ，方差为 σ^2  的高斯分布(正态分布)
+-  :math:`\epsilon \sim \mathcal{N}\left(0, 0.01^{2}\right)` : 随机变量 ϵ 服从一个高斯（正态）分布，其均值（mean）为 0，方差（variance）为 :math:`0.01 ^ 2`
+-  P(X=x)  : the probability assigned to the event where random variable  X  takes value  x 
+-  :math:`P(X \mid Y)`  : the conditional probability distribution of  X  given  Y 
+-  :math:`p(\cdot)`  : a probability density function (PDF) associated with distribution  P 
+-  E[X]  : expectation of a random variable  X 
+-  :math:`X \perp Y`  : random variables  X  and  Y  are independent
+-  :math:`X \perp Y \mid Z`  : random variables  X  and  Y  are conditionally independent given  Z 
+-  :math:`\sigma_{X}`  : standard deviation of random variable  X 
+-  :math:`\operatorname{Var}(X)`  : variance of random variable  X , equal to  \sigma_{X}^{2} 
+-  :math:`\operatorname{Cov}(X, Y)`  : covariance of random variables  X  and  Y 
+
+额外的
+^^^^^^
+
+-  :math:`\rho(X, Y)`  : the Pearson correlation coefficient between  X  and  Y , equals :math:`\frac{\operatorname{Cov}(X, Y)}{\sigma_{X} \sigma_{Y}}`
+-  H(X) : entropy of random variable  X
+-  H(P, Q): cross-entropy from P to Q
+-  :math:`D_{\mathrm{KL}}(P \| Q)`  : the KL-divergence (or relative entropy) from distribution  Q  to distribution  P 
+- :math:`P(y=i) \propto \exp o_{i}` : 表示类别 y 是 i 的概率与 :math:`o^i` 的指数函数成正比(这儿 :math:`o^i` 通常指的是模型输出的未经归一化的对数几率（logits），即模型对于每个类别的原始预测值)
+- :math:`R` : 表示风险或误差，表示泛化误差 (Generalization Error) 
+- :math:`R_{\text{emp}}` : 表示 经验风险 (Empirical Risk)，也称为 训练误差 (Training Error)
+
+
+
+
+Part 1: Basics and Preliminaries
+================================
+
+1. Introduction
+---------------
+
+Key Components
+^^^^^^^^^^^^^^
+
+* Data
+* Model
+* Function that quantifies how well (or badly) the model is doing
+* Algorithm to adjust the model’s parameters to optimize the objective function.
+
+::
+
+    特征（协变量或 输入）-----> 标签（或目标）
+    features (covariates or inputs) -----> label (or target)
+
+Kinds of Machine Learning Problems
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Supervised Learning
+"""""""""""""""""""
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/12/IJaPfO.png
+
+    Fig. 1.3.1 Supervised learning.
+
+* Regression
+* Classification
+* Tagging
+* Search(e.g. PageRank)
+* Recommender Systems
+* Sequence Learning
+    * Tagging and Parsing(标记和解析): 如词性（PoS）标记, 命名实体识别
+    * Automatic Speech Recognition(自动语音识别)
+    * Text to Speech(文字转语音)
+    * Machine Translation(机器翻译)
+
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/12/rOICXJ.png
+
+    [Tagging]当分类器遇到这种图像时，我们自己就会遇到麻烦。学习预测不互斥的类的问题称为多标签分类。自动标记问题通常最好用多标签分类来描述。
+
+
+
+
+
+Unsupervised and Self-Supervised Learning
+"""""""""""""""""""""""""""""""""""""""""
+
+* 无监督学习的进一步发展是: 自我监督学习
+* 自我监督学习：利用某些方面的技术，使用未标记的数据提供监督。
+* 对于文本，我们可以训练模型 通过使用它们预测随机屏蔽的单词来“填空” 大语料库中的周围单词（上下文），无需任何标记工作
+* 对于图像，我们可以训练模型 告诉同一图像的两个裁剪区域之间的相对位置，基于图像的剩余部分来预测图像的被遮挡部分，或者预测两个示例是否是同一底层图像的变动版本。
+
+Interacting with an Environment
+"""""""""""""""""""""""""""""""
+
+* 前面的监督和无监督学习都会预先获取大量数据，然后启动模式识别机器，而无需再次与环境交互。
+* 因为所有的学习都是在算法与环境断开连接之后进行的，所以这有时被称为离线学习
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/12/K3Ulip.png
+
+    Fig. 1.3.6 Collecting data for supervised learning from an environment.
+
+
+Reinforcement Learning
+""""""""""""""""""""""
+
+* 强化学习给出了一个非常笼统的问题描述，其中代理通过一系列时间步骤与环境进行交互。在每个时间步，代理都会从环境中接收一些观察结果，并且必须选择随后传输的操作 通过某种机制（有时称为 执行器），当每次循环之后，代理收到来自环境的奖励。然后，代理接收后续观察，并选择后续操作，依此类推。强化学习代理的行为受策略控制。简而言之，一个 政策只是将环境观察映射到行动的函数。强化学习的目标是产生好的政策。
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/12/Tqv5o7.png
+
+
+* 强化学习框架的通用性怎么强调都不为过。一般的强化学习问题有一个非常通用的设置。行动会影响随后的观察。仅当奖励与所选操作相对应时才会观察到奖励。
+
+* 当环境被充分观察时，我们将强化学习问题称为``马尔可夫决策过程(Markov decision process)``
+* 当状态不依赖于先前的动作时，我们将其称为 ``上下文强盗问题(contextual bandit problem)``
+* 当没有状态，只有一组初始奖励未知的可用动作时，我们就会遇到经典的 ``多臂老虎机问题(multi-armed bandit problem)``
+
+
+Roots
+^^^^^
+
+* 对于一系列不同的机器学习问题，深度学习 学习为他们的解决方案提供了强大的工具。虽然很多深 学习方法是最近的发明，学习背后的核心思想 几个世纪以来，人们一直在研究数据。事实上，人类已经掌握了 渴望分析数据并预测未来的结果，并且它 这种愿望是许多自然科学的根源 数学。两个例子是伯努利分布，以 雅各布·伯努利（Jacob Bernoulli，1655-1705） ，以及卡尔·弗里德里希·高斯（Carl Friedrich Gauss，1777-1855）发现的高斯分布。
+
+* 随着数据的可用性和收集，统计数据真正起飞。它的先驱之一罗纳德·费希尔（Ronald Fisher，1890-1962）对其理论及其在遗传学中的应用做出了重大贡献。他的许多算法（例如线性判别分析）和概念（例如费舍尔信息矩阵）仍然在现代统计学的基础中占有重要地位。Fisher 于 1936 年发布的 Iris 数据集有时仍用于演示机器学习算法。
+* 对机器学习的其他影响来自克劳德·香农（1916-2001）的信息论和艾伦·图灵（1912-1954）提出的计算理论。
+* 进一步的影响来自神经科学和心理学。毕竟， 人类明显表现出智能行为。很多学者都问过 是否可以解释并可能对这种能力进行逆向工程。 第一个受生物学启发的算法是由 唐纳德·赫布 (1904–1985) 。在他的开创性著作《行为的组织》（ Hebb，1949 ）中，他假设神经元通过正强化进行学习。这被称为赫布学习规则。这些想法启发了后来的工作，例如罗森布拉特的感知器学习算法，并为当今深度学习的许多随机梯度下降算法奠定了基础：强化期望的行为并减少不良行为，以获得神经网络中参数的良好设置。
+* 神经网络的名字来源于生物学灵感。一个多世纪以来（可以追溯到 1873 年 Alexander Bain 和 1890 年 James Sherrington 的模型），研究人员一直试图组装类似于相互作用神经元网络的计算电路。
+
+
+
+The Road to Deep Learning
+^^^^^^^^^^^^^^^^^^^^^^^^^
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/12/MeU9NJ.png
+
+    表1.5.1 数据集vs计算机内存和计算能力
+
+
+
+* 机器学习和统计的最佳结合点 从（广义）线性模型和核方法转向深度神经网络 网络。这也是很多中流砥柱的原因之一 深度学习，例如多层感知器 （ McCulloch 和 Pitts，1943 ） ，卷积神经网络 （ LeCun等，1998 ） ，长短期记忆 （ Hochreiter 和 Schmidhuber，1997 ）和 Q-Learning （ Watkins 和 Dayan，1992 ） 
+
+
+* 下面列举了帮助研究人员在过去十年中取得巨大进步的想法
+    * 新的容量控制方法，如dropout (Srivastava et al., 2014)，有助于减轻过拟合的危险。这是通过在整个神经网络中应用噪声注入 (Bishop, 1995) 来实现的，出于训练目的，用随机变量来代替权重。
+    * 注意力机制解决了困扰统计学一个多世纪的问题：如何在不增加可学习参数的情况下增加系统的记忆和复杂性。
+    * 多阶段设计。例如，存储器网络 (Sukhbaatar et al., 2015) 和神经编程器-解释器 (Reed and De Freitas, 2015)。它们允许统计建模者描述用于推理的迭代方法。
+    * 生成对抗网络 (Goodfellow et al., 2014) 。传统模型中，密度估计和生成模型的统计方法侧重于找到合适的概率分布（通常是近似的）和抽样算法。因此，这些算法在很大程度上受到统计模型固有灵活性的限制。生成式对抗性网络的关键创新是用具有可微参数的任意算法代替采样器。然后对这些数据进行调整，使得鉴别器（实际上是一个双样本测试）不能区分假数据和真实数据。通过使用任意算法生成数据的能力，它为各种技术打开了密度估计的大门。
+
+
+2. Preliminaries
+----------------
+
+survival skills::
+
+    1) techniques for storing and manipulating data; 
+    2) libraries for ingesting and preprocessing data from a variety of sources; 
+    3) knowledge of the basic linear algebraic operations that we apply to high-dimensional data elements; 
+    4) just enough calculus to determine which direction to adjust each parameter in order to decrease the loss function; 
+    5) the ability to automatically compute derivatives so that you can forget much of the calculus you just learned; 
+    6) some basic fluency in probability, our primary language for reasoning under uncertainty; and 
+    7) some aptitude for finding answers in the official documentation when you get stuck.
+
+2.1 Data Manipulation
+^^^^^^^^^^^^^^^^^^^^^
+
+* 广播机制
+* 索引和切片
+* 转换为其他Python对象::
+
+    X = torch.tensor([[ 0,  1,  2,  3],
+                         [ 4,  5,  6,  7],
+                         [ 8,  9, 10, 11]])
+    A = X.numpy()
+    B = torch.tensor(A)
+    type(A), type(B)
+    # (numpy.ndarray, torch.Tensor)
+
+
+    # 将大小为1的张量转换为Python标量
+    a = torch.tensor([3.5])
+    a, a.item(), float(a), int(a)
+    # (array([3.5]), 3.5, 3.5, 3)
+
+
+
+2.2. Data Preprocessing
+^^^^^^^^^^^^^^^^^^^^^^^
+
+* 读取数据集
+* 处理缺失值
+* 转换为张量格式::
+
+    import torch
+    X = torch.tensor(inputs.to_numpy(dtype=float))
+    y = torch.tensor(outputs.to_numpy(dtype=float))
+    X, y
+
+
+
+2.3. Linear Algebra(线性代数)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Scalars(标量)
+* Vectors(向量)
+* Matrices(矩阵)
+* Tensors(张量)
+
+
+Hadamard product
+""""""""""""""""
+
+* The elementwise product of two matrices is called their Hadamard product (denoted  :math:`\odot`  ).
+* two matrices  :math:`\mathbf{A}, \mathbf{B} \in \mathbb{R}^{m \times n}`
+
+.. math::
+
+     \mathbf{A} \odot \mathbf{B}= \left[\begin{array}{cccc}
+         a_{11} b_{11} & a_{12} b_{12} & \ldots & a_{1 n} b_{1 n} \\ 
+         a_{21} b_{21} & a_{22} b_{22} & \ldots & a_{2 n} b_{2 n} \\ 
+         \vdots & \vdots & \ddots & \vdots \\ 
+         a_{m 1} b_{m 1} & a_{m 2} b_{m 2} & \ldots & a_{m n} b_{m n} \\
+     \end{array}\right] .
+
+
+::
+
+    A = torch.arange(6, dtype=torch.float32).reshape(2, 3)
+    B = A.clone()  # Assign a copy of A to B by allocating new memory
+    A * B
+    tensor([[ 0.,  1.,  4.],
+            [ 9., 16., 25.]])
+
+
+
+点积(Dot Product)
+"""""""""""""""""
+
+::
+
+    x = torch.arange(3, dtype=torch.float32)
+    y = torch.ones(3, dtype = torch.float32)
+    x, y
+    # (tensor([0., 1., 2.]), tensor([1., 1., 1.]))
+
+    torch.dot(x, y), torch.sum(x * y)
+    # (tensor(3.), tensor(3.))
+    # 过程:
+    # 0*1 + 1*1 + 2*1 = 3
+
+
+矩阵-向量积(Matrix–Vector Products)
+"""""""""""""""""""""""""""""""""""
+
+.. math::
+
+    \mathbf{A}=\left[\begin{array}{c}
+    \mathbf{a}_{1}^{\top} \\
+    \mathbf{a}_{2}^{\top} \\
+    \vdots \\
+    \mathbf{a}_{m}^{\top} \\
+    \end{array}\right]
+
+* where each  :math:`\mathbf{a}_{i}^{\top} \in \mathbb{R}^{n}`  is a row vector representing the  :math:`i^{\text {th }}`  row of the matrix  :math:`\mathbf{A}` .
+* The matrix-vector product  :math:`\mathbf{A x}`  is simply a column vector of length  m , whose  :math:`i^{\text {th }}`  element is the dot product  :math:`\mathbf{a}_{i}^{\top} \mathbf{x}`
+
+.. math::
+
+    \mathbf{A} \mathbf{x}=\left[\begin{array}{c}
+    \mathbf{a}_{1}^{\top} \\
+    \mathbf{a}_{2}^{\top} \\
+    \vdots \\
+    \mathbf{a}_{m}^{\top} \\
+    \end{array}\right] \mathbf{x}=\left[\begin{array}{c}
+    \mathbf{a}_{1}^{\top} \mathbf{x} \\
+    \mathbf{a}_{2}^{\top} \mathbf{x} \\
+    \vdots \\
+    \mathbf{a}_{m}^{\top} \mathbf{x} \\
+    \end{array}\right]
+
+::
+
+    A = torch.arange(6).reshape(2, 3)
+    # tensor([[0, 1, 2],
+    #         [3, 4, 5]])
+    x = torch.arange(3)
+    # tensor([0, 1, 2])
+
+    A.shape, x.shape
+    # (torch.Size([2, 3]), torch.Size([3])
+
+    torch.mv(A, x), A@x
+    # tensor([ 5., 14.]), tensor([ 5., 14.]))
+    # 过程:
+    # torch.dot([0, 1, 2], [0, 1, 2]) = 0*0+1*1+2*2=5
+    # torch.dot([3, 4, 5], [0, 1, 2]) = 0*3+1*4+2*5=14
+
+
+
+矩阵-矩阵乘法(Matrix–Matrix Multiplication)
+"""""""""""""""""""""""""""""""""""""""""""
+
+* Say that we have two matrices  :math:`\mathbf{A} \in \mathbb{R}^{n \times k}`  and  :math:`\mathbf{B} \in \mathbb{R}^{k \times m}` .
+
+.. math::
+
+    \mathbf{A}=\left[\begin{array}{cccc}
+    a_{11} & a_{12} & \cdots & a_{1 k} \\
+    a_{21} & a_{22} & \cdots & a_{2 k} \\
+    \vdots & \vdots & \ddots & \vdots \\
+    a_{n 1} & a_{n 2} & \cdots & a_{n k} \\
+    \end{array}\right], \quad \mathbf{B}=\left[\begin{array}{cccc}
+    b_{11} & b_{12} & \cdots & b_{1 m} \\
+    b_{21} & b_{22} & \cdots & b_{2 m} \\
+    \vdots & \vdots & \ddots & \vdots \\
+    b_{k 1} & b_{k 2} & \cdots & b_{k m}
+    \end{array}\right] .
+
+
+* Let  :math:`\mathbf{a}_{i}^{\top} \in \mathbb{R}^{k}`  denote the row vector representing the  :math:`i^{\text {th }}`  row of the matrix  :math:`\mathbf{A}`  and let  :math:`\mathbf{b}_{j} \in \mathbb{R}^{k}`  denote the column vector from the  :math:`j^{\text {th }}`  column of the matrix B:
+
+.. math::
+
+    \mathbf{A}=\left[\begin{array}{c}
+    \mathbf{a}_{1}^{\top} \\
+    \mathbf{a}_{2}^{\top} \\
+    \vdots \\
+    \mathbf{a}_{n}^{\top}
+    \end{array}\right], \quad \mathbf{B}=\left[\begin{array}{llll}
+    \mathbf{b}_{1} & \mathbf{b}_{2} & \cdots & \mathbf{b}_{m}
+    \end{array}\right]
+
+
+To form the matrix product  :math:`\mathbf{C} \in \mathbb{R}^{n \times m}` , we simply compute each element  :math:`c_{i j}`  as the dot product between the  :math:`i^{\text {th }}`  row of  :math:`\mathbf{A}`  and the  :math:`j^{\text {th }}`  column of  :math:`\mathbf{B}` , i.e.,  :math:`\mathbf{a}_{i}^{\top} \mathbf{b}_{j}`  :
+
+.. math::
+
+    \mathbf{C}=\mathbf{A B}=\left[\begin{array}{c}
+    \mathbf{a}_{1}^{\top} \\
+    \mathbf{a}_{2}^{\top} \\
+    \vdots \\
+    \mathbf{a}_{n}^{\top}
+    \end{array}\right]\left[\begin{array}{llll}
+    \mathbf{b}_{1} & \mathbf{b}_{2} & \cdots & \mathbf{b}_{m}
+    \end{array}\right]=\left[\begin{array}{cccc}
+    \mathbf{a}_{1}^{\top} \mathbf{b}_{1} & \mathbf{a}_{1}^{\top} \mathbf{b}_{2} & \cdots & \mathbf{a}_{1}^{\top} \mathbf{b}_{m} \\
+    \mathbf{a}_{2}^{\top} \mathbf{b}_{1} & \mathbf{a}_{2}^{\top} \mathbf{b}_{2} & \cdots & \mathbf{a}_{2}^{\top} \mathbf{b}_{m} \\
+    \vdots & \vdots & \ddots & \vdots \\
+    \mathbf{a}_{n}^{\top} \mathbf{b}_{1} & \mathbf{a}_{n}^{\top} \mathbf{b}_{2} & \cdots & \mathbf{a}_{n}^{\top} \mathbf{b}_{m}
+    \end{array}\right]
+
+
+* 我们可以将矩阵-矩阵乘法 **AB** 看作简单地执行 m 次矩阵-向量积，并将结果拼接在一起，形成一个 n*m 矩阵。 
+* 在下面的代码中，我们在A和B上执行矩阵乘法。 这里的A是一个5行4列的矩阵，B是一个4行3列的矩阵。 两者相乘后，我们得到了一个5行3列的矩阵。
+
+::
+
+    A = torch.arange(20, dtype=torch.float32).reshape(5, 4)
+    tensor([[ 0.,  1.,  2.,  3.],
+            [ 4.,  5.,  6.,  7.],
+            [ 8.,  9., 10., 11.],
+            [12., 13., 14., 15.],
+            [16., 17., 18., 19.]])
+    B = torch.ones(4, 3)
+    tensor([[1., 1., 1.],
+            [1., 1., 1.],
+            [1., 1., 1.],
+            [1., 1., 1.]])
+    torch.mm(A, B)
+    # 输出
+    tensor([[ 6.,  6.,  6.],
+            [22., 22., 22.],
+            [38., 38., 38.],
+            [54., 54., 54.],
+            [70., 70., 70.]])
+
+
+
+.. note:: ``矩阵-矩阵乘法(matrix–matrix multiplication)`` 可以简单地称为 ``矩阵乘法(matrix multiplication)`` ，不应与 ``Hadamard积(Hadamard product)`` 混淆。
+
+
+2.4. Calculus(微积分)
+^^^^^^^^^^^^^^^^^^^^^
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/12/Ovvwmt.png
+
+    逼近法就是积分(integral calculus)的起源
+
+* 微分(differential calculus)被发明出来。 在微分学最重要的应用是优化问题，即考虑如何把事情做到最好
+
+将拟合模型的任务分解为两个关键问题::
+
+    1. 优化(optimization): 用模型拟合观测数据的过程
+    2. 泛化(generalization): 数学原理和实践者的智慧，能够指导我们生成出有效性超出用于训练的数据集本身的模型
+
+Derivatives and Differentiation(导数和微分)
+"""""""""""""""""""""""""""""""""""""""""""
+
+* Put simply, a ``derivative`` is the rate of change in a function with respect to changes in its arguments. Derivatives can tell us how rapidly a loss function would increase or decrease were we to increase or decrease each parameter by an infinitesimally small amount.
+* 简而言之，对于每个参数， 如果我们把这个参数增加或减少一个无穷小的量，可以知道损失会以多快的速度增加或减少
+
+* 假设我们有一个函数 :math:`f: \mathbb{R} \rightarrow \mathbb{R}` , 其输入和输出都是标量。如果  f  的导数存在, 这个极限被定义为
+
+.. math::
+
+    f^{\prime}(x)=\lim _{h \rightarrow 0} \frac{f(x+h)-f(x)}{h}
+
+* 如果 :math:`f^{\prime}(a)` 存在，则称 ``f`` 在 ``a`` 处是可微（differentiable）的
+* 如果 ``f`` 在一个区间内的每个数上都是可微的，则此函数在此区间中是可微的
+* 可以将上面公式中的导数 :math:`f^{\prime}(a)` 解释为 ``f(x)`` 相对于 ``x`` 的瞬时（instantaneous）变化率
+* 所谓的瞬时变化率是基于 ``x`` 中的变化 ``h`` ，且 ``h`` 接近 ``0``
+
+
+* 导数的几个等价符号：
+
+.. math::
+
+    f^{\prime}(x)=y^{\prime}=\frac{d y}{d x}=\frac{d f}{d x}=\frac{d}{d x} f(x)=D f(x)=D_{x} f(x),
+
+
+其中符号  :math:`\frac{d}{d x}`  和  **D**  是微分运算符, 表示微分操作。我们可以使用以下规则来对常见函数求微分：
+
+    -  :math:`D C=0`  (  C  是一个常数)
+    -  :math:`D x^{n}=n x^{n-1}`  (幂律（power rule）,  n  是任意实数）
+    -  :math:`D e^{x}=e^{x}`
+    -  :math:`D \ln (x)=1 / x`
+
+* 为了微分一个由一些常见函数组成的函数, 下面的一些法则方便使用。假设函数  ``f``  和  ``g``  都是可微的,  ``C``  是一个常数, 则:
+* 常数相乘法则
+
+.. math::
+
+    \frac{d}{d x}[C f(x)]=C \frac{d}{d x} f(x),
+
+
+* 加法法则
+
+.. math::
+
+    \frac{d}{d x}[f(x)+g(x)]=\frac{d}{d x} f(x)+\frac{d}{d x} g(x)
+
+乘法法则
+
+.. math::
+
+    \frac{d}{d x}[f(x) g(x)]=f(x) \frac{d}{d x}[g(x)]+g(x) \frac{d}{d x}[f(x)],
+
+
+除法法则
+
+.. math::
+
+    \frac{d}{d x}\left[\frac{f(x)}{g(x)}\right]=\frac{g(x) \frac{d}{d x}[f(x)]-f(x) \frac{d}{d x}[g(x)]}{[g(x)]^{2}} .
+
+
+* 现在我们可以应用上述几个法则来计算 :math:`u=f(x)=3x^2-4x`
+* :math:`u^{\prime}=f^{\prime}(x)=3 \frac{d}{d x} x^{2}-4 \frac{d}{d x}x = 6x-4`
+* 令  x=1 , 我们有  :math:`u^{\prime}=2`
+* 当  x=1  时, 此导数也是曲线  u=f(x)  切线的斜率。
+
+
+Partial Derivatives(偏导数)
+"""""""""""""""""""""""""""
+
+* 在深度学习中，函数通常依赖于许多变量。 因此，我们需要将微分的思想推广到多元函数（multivariate function）上
+* 设  :math:`y=f\left(x_{1}, x_{2}, \ldots, x_{n}\right)`  是一个具有  n  个变量的函数。  y  关于第  i  个参数  :math:`x_{i}`  的偏导数（partial derivative）为:
+
+.. math::
+
+    \frac{\partial y}{\partial x_{i}}=
+        \lim_{h \rightarrow 0} \frac{f\left(x_{1}, \ldots, x_{i-1}, x_{i}+h, x_{i+1}, \ldots, x_{n}\right)-f\left(x_{1}, \ldots, x_{i}, \ldots, x_{n}\right)}{h}
+
+
+* 为了计算  :math:`\frac{\partial y}{\partial x_{i}}` , 我们可以简单地将  :math:`x_{1}, \ldots, x_{i-1}, x_{i+1}, \ldots, x_{n}`  看作常数, 并计算  y  关于  :math:`x_{i}`  的导数。对于偏导数的表示, 以下是等价的:
+
+.. math::
+
+    \frac{\partial y}{\partial x_{i}}=\frac{\partial f}{\partial x_{i}}=f_{x_{i}}=f_{i}=D_{i} f=D_{x_{i}} f .
+
+
+
+Gradients(梯度)
+"""""""""""""""
+
+* 我们可以连结一个多元函数对其所有变量的偏导数, 以得到该函数的梯度（gradient）向量。
+* 具体而言，设函数  :math:`f: \mathbb{R}^{n} \rightarrow \mathbb{R}`  的输入是一个  n  维向量  :math:`\mathbf{x}=\left[x_{1}, x_{2}, \ldots, x_{n}\right]^{\top}` , 并且输出是一个标量。
+* 函数  :math:`f(\mathbf{x})`  相对于  :math:`\mathbf{x}`  的梯度是一个包含  n  个偏导数的向量:
+
+.. math::
+
+    \nabla_{\mathbf{x}} f(\mathbf{x})=\left[\frac{\partial f(\mathbf{x})}{\partial x_{1}}, \frac{\partial f(\mathbf{x})}{\partial x_{2}}, \ldots, \frac{\partial f(\mathbf{x})}{\partial x_{n}}\right]^{\top}
+
+
+* 其中  :math:`\nabla_{\mathbf{x}} f(\mathbf{x})`  通常在没有歧义时被  :math:`\nabla f(\mathbf{x})`  取代。
+* 假设 x 为  n  维向量, 在微分多元函数时经常使用以下规则:
+    - 对于所有  :math:`\mathbf{A} \in \mathbb{R}^{m \times n}`  ，都有  :math:`\nabla_{\mathbf{x}} \mathbf{A} \mathbf{x}=\mathbf{A}^{\top}`
+    - 对于所有  :math:`\mathbf{A} \in \mathbb{R}^{n \times m}`  ，都有  :math:`\nabla_{\mathbf{x}} \mathbf{x}^{\top} \mathbf{A}=\mathbf{A}`
+    - 对于所有  :math:`\mathbf{A} \in \mathbb{R}^{n \times n}`  ，都有  :math:`\nabla_{\mathbf{x}} \mathbf{x}^{\top} \mathbf{A} \mathbf{x}=\left(\mathbf{A}+\mathbf{A}^{\top}\right) \mathbf{x}` 
+    -  :math:`\nabla_{\mathbf{x}}\|\mathbf{x}\|^{2}=\nabla_{\mathbf{x}} \mathbf{x}^{\top} \mathbf{x}=2 \mathbf{x}`
+
+* :math:`|\mathbf{x}\|^{2} = \mathbf{x}^{\top} \mathbf{x}` 是向量 **𝑥** 的二范数平方
+* 同样，对于任何矩阵  :math:`\mathbf{X}`  ，都有  :math:`\nabla_{\mathbf{X}}\|\mathbf{X}\|_{F}^{2}=2 \mathbf{X}` ，其中 :math:`\|\mathbf{X}\|_{F}` 是 **矩阵 Frobenius 范数**
+
+
+
+
+2.5. Automatic Differentiation(自动微分)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* 深度学习框架通过自动计算导数，即自动微分（automatic differentiation）来加快求导。 实际中，根据设计好的模型，系统会构建一个计算图（computational graph）， 来跟踪计算是哪些数据通过哪些操作组合起来产生输出。 自动微分使系统能够随后反向传播梯度。 这里，反向传播（backpropagate）意味着跟踪整个计算图，填充关于每个参数的偏导数。
+
+.. note:: grad can be implicitly created only for scalar outputs 梯度默认给标量输出创建，就是说 y 应该是个标量
+
+.. code-block:: python
+
+    import torch
+    x = torch.arange(4.0)       #  tensor([0., 1., 2., 3.])
+    x.requires_grad_(True)      # 等价于x=torch.arange(4.0,requires_grad=True)
+    print(f"====1: {x.grad}")   # None
+    y = 2 * torch.dot(x, x)
+    print(f"====2: y:{y}")      # tensor(28., grad_fn=<MulBackward0>)
+    y.backward()
+    print(f"====3: x.grad:{x.grad}")    # tensor([ 0.,  4.,  8., 12.])
+
+
+    # 在默认情况下，PyTorch会累积梯度，我们需要清除之前的值
+    x.grad.zero_()
+    y = x.sum()  # grad can be implicitly created only for scalar outputs
+    y.backward()
+    x.grad          # tensor([1., 1., 1., 1.])
+
+
+Backward for Non-Scalar Variables
+"""""""""""""""""""""""""""""""""
+
+* 在数学中，当 𝑦 是一个向量，𝑥 也是一个向量时，𝑦 对 𝑥 的导数是一个 Jacobian 矩阵。
+    * Jacobian 矩阵的每个元素表示 𝑦 的每个分量对 𝑥 的每个分量的偏导数。
+    * 如果 𝑦 和 𝑥 的维度都很高，求导的结果会是一个更高阶的张量。
+* 但在深度学习中，我们通常不需要直接计算 Jacobian 矩阵，而是希望将结果进行汇总，最终得到一个和 𝑥 形状相同的向量（即梯度）
+
+PyTorch 的处理方式::
+
+    如果对 非标量张量直接调用 .backward()，会报错。
+        RuntimeError: grad can be implicitly created only for scalar outputs
+    因为框架无法自动决定如何将非标量处理成标量。
+    我们需要提供一个向量（通常称为 gradient 参数），来告诉 PyTorch如何汇总梯度
+        y = x * x  # 假设 y 是一个向量
+        y.backward(gradient=torch.ones(len(y)))
+    实际上更快的方式是直接对 𝑦 求和后再调用 .backward()
+        y.sum().backward()
+
+示例::
+
+    >>> x
+    tensor([0., 1., 2., 3.], requires_grad=True)
+
+    >>> x.grad.zero_()
+    >>> y = x * x
+    >>> y.sum().backward()
+    >>> x.grad
+    tensor([0., 2., 4., 6.])
+    # 说明
+    #   y = x1*x1 + x2*x2 + ... + xi*xi
+    #   导数: [2x1, 2x2, ..., 2xi]
+    #   即: [0, 2, 4, 6]
+
+
+    >>> x.grad.zero_()
+    >>> y = x * x
+    >>> y.mean().backward()
+    >>> x.grad
+    tensor([0.0000, 0.5000, 1.0000, 1.5000])
+    # 说明
+    #   y = 1/i(x1*x1 + x2*x2 + ... + xi*xi)
+    #   导数: 1/i([2x1, 2x2, ..., 2xi])
+    #   即: 1/4([0, 2, 4, 6])
+    #       [0.0000, 0.5000, 1.0000, 1.5000]
+
+
+Detaching Computation
+"""""""""""""""""""""
+
+* 有时，我们希望将某些计算移动到记录的计算图之外。 
+* 例如，假设y是作为x的函数计算的，而z则是作为y和x的函数计算的。 
+* 想计算z关于x的梯度，但由于某种原因，希望将y视为一个常数， 并且只考虑到x在y被计算后发挥的作用。
+
+
+.. code-block:: python
+
+    x=torch.arange(4.0,requires_grad=True)
+    x
+    # tensor([0., 1., 2., 3.], requires_grad=True)
+
+    # 梯度计算分离y
+    y = x * x
+    u = y.detach()
+    z = u * x
+    z.sum().backward()
+    x.grad
+    # tensor([0., 1., 4., 9.])
+
+    # 梯度计算不分离y
+    x.grad.zero_()
+    z=y * x
+    z.sum().backward()
+    x.grad
+    # tensor([ 0.,  3., 12., 27.])
+
+Gradients and Python Control Flow
+"""""""""""""""""""""""""""""""""
+
+* 使用自动微分的一个好处是： 即使构建函数的计算图需要通过Python控制流（例如，条件、循环或任意函数调用），我们仍然可以计算得到的变量的梯度
+* 示例-while循环的迭代次数和if语句的结果都取决于输入a的值::
+
+    def f(a):
+        b = a * 2
+        while b.norm() < 1000:
+            b = b * 2
+        if b.sum() > 0:
+            c = b
+        else:
+            c = 100 * b
+        return c
+
+计算梯度::
+
+    a = torch.randn(size=(), requires_grad=True)    # tensor(0.0412, requires_grad=True)
+    d = f(a)                                        # tensor(1350.7505, grad_fn=<MulBackward0>)
+    d.backward()
+    a.grad
+    # tensor(32768.)
+    a.grad == d / a     # 不管怎么算，对a的梯度就是除a外的常数,因为f(a)=常数*a
+    # tensor(True)
+
+
+
+2.6 Probability and Statistics
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+基本概率论
+""""""""""
+
+* 在统计学中，我们把从概率分布中抽取样本的过程称为抽样（sampling）
+
+
+概率论公理
+++++++++++
+
+* 在处理骰子掷出示例时，我们将集合 ``S={1,2,3,4,5,6}`` 称为 **样本空间（sample space）或结果空间（outcome space）** ， 其中每个元素都是结果（outcome）。 
+* **事件（event）** 是一组给定样本空间的随机结果。 例如，“看到5”（ ``{5}`` ）和“看到奇数”（ ``{1,3,5}`` ）都是掷出骰子的有效事件。 注意，如果一个随机实验的结果在 :math:`\mathcal{A}` 中，则事件 :math:`\mathcal{A}` 已经发生。 也就是说，如果投掷出 3 点，因为 :math:`3 \in {1,3,5}` ，我们可以说，“看到奇数”的事件发生了。
+* **概率（probability）** 可以被认为是将集合映射到真实值的函数。在给定的样本空间  :math:`\mathcal{S}`  中, 事件  :math:`\mathcal{A}`  的概率, 表示为  :math:`P(\mathcal{A})` , 满足以下属性：
+    - 对于任意事件  :math:`\mathcal{A}` , 其概率从不会是负数, 即  :math:`P(\mathcal{A}) \geq 0` ;
+    - 整个样本空间的概率为 1 , 即 :math:`P(\mathcal{S})=1` ;
+    - 对于互斥（mutually exclusive）事件（对于所有  :math:`i \neq j`  都有  :math:`\mathcal{A}_{i} \cap \mathcal{A}_{j}=\emptyset`  ）的任意一个可数序列 :math:`\mathcal{A}_{1}, \mathcal{A}_{2}, \ldots` ，序列中任意一个事件发生的概率等于它们各自发生的概率之和, 即  :math:`P\left(\bigcup_{i=1}^{\infty} \mathcal{A}_{i}\right)=\sum_{i=1}^{\infty} P\left(\mathcal{A}_{i}\right)`  。
+
+* 上面这个就是概率论的公理，由科尔莫戈罗夫于1933年提出
+
+随机变量
+++++++++
+
+* 随机变量（random variable）
+* :math:`P(\mathcal{X} = a)` 我们区分了随机变量 :math:`\mathcal{X}` 和这个随机变量可以采取的值（例如a）
+* 为了简化符号
+* 一方面，我们可以将 ``P(X)`` 表示为随机变量 ``X`` 上的分布（distribution）： 分布告诉我们 ``X`` 获得某一值的概率；另一方面，我们可以简单用 ``P(a)`` 表示随机变量取值 a 的概率
+* 一方面，我们可以将 ``P(1<=X<=3)`` 表示事件 ``{1<=X<=3}`` 的概率；另一方面， ``P(1<=X<=3)`` 表示随机变量 ``X`` 从 `{1,2,3}` 中取值的概率
+
+* 注意：离散（discrete）随机变量（如骰子的每一面） 和连续（continuous）随机变量（如人的体重和身高）之间存在微妙的区别
+
+
+处理多个随机变量
+""""""""""""""""
+
+联合概率
+++++++++
+
+* 联合概率（joint probability）  ``P(A=a, B=b)`` : 给定任意值  a  和  b , 联合概率可以回答:  A=a  和  B=b  同时满足的概率是多少?
+* 请注意, 对于任何  a  和  b  的取值,  :math:`P(A=a, B=b) \leq P(A=a)`  。 这点是确定的, 因为要同时发生  ``A=a  和  B=b`` , ``A=a``  就必须发生
+
+条件概率
+++++++++
+
+* 联合概率的不等式带给我们一个有趣的比率： :math:`0 \leq \frac{P(A=a, B=b)}{P(A=a)} \leq 1` 
+* 我们称这个比率为条件概率（conditional probability）, 并用  :math:`P(B=b \mid A=a)`  表示它：在 ``A=b`` 前提下  ``B=b``  的概率。
+
+贝叶斯定理
+++++++++++
+
+* 使用条件概率的定义，我们可以得出统计学中最有用的方程之一： **贝叶斯定理（Bayes' theorem）**
+* 根据 **乘法法则（multiplication rule）** 可得到  :math:`P(A, B)=P(B \mid A) P(A)` 
+* 根据对称性, 可得到  :math:`P(A, B)=P(A \mid B) P(B)`  。假设  ``P(B)>0`` , 求解其中一个条件变量, 我们得到
+
+.. math::
+
+    P(A \mid B)=\frac{P(B \mid A) P(A)}{P(B)}
+
+* P(A, B)  是一个联合分布（joint distribution）
+* P(A \mid B)  是一个条件分布（conditional distribution）
+
+边际化
+++++++
+
+* 边际化(marginalization)：为了能进行事件概率求和, 我们需要 ``求和法则 (sum rule)`` , 即  B  的概率相当于计算  A  的所有可能选择, 并将所有选择的联合概率聚合在一起:
+
+.. math::
+
+    P(B)=\sum_{A} P(A, B)
+
+
+* 边际化结果的概率或分布称为边际概率（marginal probability） 或边际分布（marginal distribution）。
+
+
+独立性
+++++++
+
+* 另一个有用属性是依赖（dependence）与独立（independence）。
+* 如果两个随机变量  A  和  B  是独立的，意味着事件  A  的发生跟  B  事件的发生无关。在这种情况下，统计学家通常将这一点表述为  :math:`A \perp B` 
+* 根据贝叶斯定理，马上就能同样得到  :math:`P(A \mid B)=P(A)` 
+* 在所有其他情况下，我们称  A  和  B  依赖。
+* 比如，两次连续抛出一个骰子的事件是相互独立的。相比之下，灯开关的位置和房间的亮度并不是（因为可能存在灯泡坏掉、电源故障，或者开关故障）
+
+* 如果 A  和  B  是独立的，则 :math:`P(A \mid B)=\frac{P(A, B)}{P(B)}=P(A)`  等价于  :math:`P(A, B)=P(A) P(B)` =》结论：当且仅当两个随机变量是独立的，两个随机变量的联合分布是其各自分布的乘积
+* 同样地, 给定另一个随机变量  C  时, 两个随机变量  A  和  B  是条件独立的（conditionally independent），有 :math:`P(A, B \mid C)=P(A \mid C) P(B \mid C)`
+* 这个情况表示为  :math:`A \perp B \mid C`
+
+应用示例
+++++++++
+
++---------------------------+-----+------+
+| 条件概率                  | H=1 | H=0  |
++===========================+=====+======+
+| :math:`P(D_1 = 1 \mid H)` | 1   | 0.01 |
++---------------------------+-----+------+
+| :math:`P(D_1 = 0 \mid H)` | 0   | 0.99 |
++---------------------------+-----+------+
+
+* 如果 :math:`P(H=1) = 0.0015`
+* 运用边际化和乘法法则来确定
+
+.. math::
+
+    \begin{aligned}
+    &P(D_1 = 1) \\
+    =& P(D_1=1, H=0) + P(D_1=1, H=1)  \\
+    =& P(D_1=1 \mid H=0) P(H=0) + P(D_1=1 \mid H=1) P(H=1) \\
+    =& 0.01 * (1-0.0015) + 1*0.0015
+    =& 0.011485.
+    \end{aligned}
+
+* 于是
+
+.. math::
+
+    \begin{aligned}
+        &P(H = 1 \mid D_1 = 1)\\
+        =& \frac{P(D_1=1 \mid H=1) P(H=1)}{P(D_1=1)} \\
+        =& (1*0.0015)/0.011485
+        =& 0.1306 
+    \end{aligned}
+
+* 第2次的测试概率
+
++---------------------------+------+------+
+| 条件概率                  | H=1  | H=0  |
++===========================+======+======+
+| :math:`P(D_2 = 1 \mid H)` | 0.98 | 0.03 |
++---------------------------+------+------+
+| :math:`P(D_2 = 0 \mid H)` | 0.02 | 0.97 |
++---------------------------+------+------+
+
+.. math::
+
+    \begin{aligned}
+    &P(D_1 = 1, D_2 = 1 \mid H = 0) \\
+    =& P(D_1 = 1 \mid H = 0) P(D_2 = 1 \mid H = 0)  \\
+    =& 0.01*0.03
+    =& 0.0003,
+    \end{aligned}
+
+.. math::
+
+    \begin{aligned}
+    &P(D_1 = 1, D_2 = 1 \mid H = 1) \\
+    =& P(D_1 = 1 \mid H = 1) P(D_2 = 1 \mid H = 1)  \\
+    =& 1*0.98
+    =& 0.98.
+    \end{aligned}
+
+* 现在我们可以应用边际化和乘法规则：
+
+.. math::
+
+    \begin{aligned}
+    &P(D_1 = 1, D_2 = 1) \\
+    =& P(D_1 = 1, D_2 = 1, H = 0) + P(D_1 = 1, D_2 = 1, H = 1)  \\
+    =& P(D_1 = 1, D_2 = 1 \mid H = 0)P(H=0) + P(D_1 = 1, D_2 = 1 \mid H = 1)P(H=1)\\
+    =& 0.0003*(1-0.0015) + 0.98*0.0015
+    =& 0.00176955.
+    \end{aligned}
+
+
+* 最后，鉴于存在两次阳性检测，患者患有艾滋病的概率为
+
+.. math::
+
+    \begin{aligned}
+    &P(H = 1 \mid D_1 = 1, D_2 = 1)\\
+    =& \frac{P(D_1 = 1, D_2 = 1 \mid H=1) P(H=1)}{P(D_1 = 1, D_2 = 1)} \\
+    =& 0.98*0.0015/0.00176955
+    =& 0.8307.
+    \end{aligned}
+
+
+期望和方差
+""""""""""
+
+* 假设某项投资有：
+    * 50% 的概率会失败
+    * 40% 的概率它可能提供 2倍回报
+    * 10% 的概率它可能会提供 10 倍回报 。
+    * 计算预期回报，我们总结了所有回报，将每个回报乘以它们发生的概率。
+    * 期望= ``0.5*0 + 0.4*2 + 0.1*10``
+    * 因此 预期回报率为1.8
+
+一个随机变量 X 的 **期望(expectation)/平均值(average)** 表示为
+
+.. math::
+
+    E[X] = E_{x \sim P}[x] =  \sum_{x} x P(X = x).
+
+
+* 当函数 ``f(x)`` 的输入是从分布 ``P`` 中抽取的随机变量时， ``f(x)`` 的期望值为
+
+.. math::
+
+    E_{x \sim P}[f(x)] = \sum_x f(x) P(x)
+
+一个随机变量 X 的 **密度**
+
+
+
+* 在许多情况下，我们希望衡量随机变量 **X** 与其期望值的偏置。这可以通过方差来量化
+
+.. math::
+
+    \mathrm{Var}[X] = E\left[(X - E[X])^2\right] =
+    E[X^2] - E[X]^2
+
+* 方差的平方根被称为 **标准差(standard deviation)**
+* 随机变量函数的方差衡量的是：当从该随机变量分布中采样不同值 x 时，
+* 函数值偏离该函数的期望的程度：
+
+.. math::
+
+    \mathrm{Var}[f(x)] = E\left[\left(f(x) - E[f(x)]\right)^2\right]
+
+
+3. Linear Neural Networks for Regression
+----------------------------------------
+
+3.1. Linear Regression
+^^^^^^^^^^^^^^^^^^^^^^
+
+Basics
+""""""
+
+Model
++++++
+
+* 在机器学习中，我们通常使用高维数据集，在这种情况下使用紧凑的线性代数表示法会更方便
+* 当我们的输入由 d 特征组成时，我们可以为每个特征分配一个索引（在 1 和 d 之间）并表达我们的预测 :math:`\hat{y}`
+
+.. math::
+
+    \hat{y} = w_1x_1 + \cdot + w_dx_d + b
+
+
+* 将所有 **特征** 收集到向量 :math:`\mathbf{x} \in \mathbb{R}^d` 中，并将所有 **权重** 收集到向量 :math:`\mathbf{w} \in \mathbb{R}^d` 中，我们可以通过 **x** 和 **w** 向量的点积简洁的表达
+
+.. math::
+
+    \hat{y} = \mathbf{w}^{\top}\mathbf{x} + b
+
+* 通过设计矩阵 :math:`\mathbf{X} \in \mathbb{R}^{n \times d}` 引用 n 个示例的整个数据集的特征很方便。这里， :math:`\mathbf{X}` 包含每个示例(行)和每个功能(列)。对于特征集合 :math:`\mathbf{X}` ，预测 :math:`\hat{y} \in \mathbb{R}^n` 可以通过矩阵向量积表示
+
+.. math::
+
+    \hat{y} = \mathbf{X}\mathbf{w} + b
+
+Loss Function
++++++++++++++
+
+* 损失函数量化目标的实际值和预测值之间的距离。损失通常是一个非负数，其中值越小越好，完美的预测会导致损失为 0。
+* 对于回归问题，最常见的损失函数是平方误差。
+* 对示例 i 的预测为 :math:`\hat{y}^{(i)}` 且相应的真实标签为 :math:`y^{(i)}` 时，平方误差由下式给出：
+
+.. math::
+
+    l^{(i)}(\mathbf{w}, b) = \frac{1}{2} \left(\hat{y}^{(i)}-y^{(i)}\right)^2
+
+
+注意，由于其二次方形式，估计  :math:`\hat{y}^{(i)}` 和目标 :math:`y^{(i)}` 之间的巨大差异会导致对损失的影响更大（这种二次方的特性可能是一把双刃剑；虽然它鼓励模型以避免大错误，也可能导致对异常数据过度敏感）。为了衡量 
+n 个示例的数据集上的整体模型质量，我们只需对训练集上的损失进行平均即可
+
+.. math::
+
+    L(\mathbf{w}, b)=\frac{1}{n} \sum_{i=1}^{n} l^{(i)}(\mathbf{w}, b)
+                    =\frac{1}{n} \sum_{i=1}^{n} \frac{1}{2} \left(\hat{y}^{(i)}-y^{(i)}\right)^{2}
+                    =\frac{1}{n} \sum_{i=1}^{n} \frac{1}{2}\left(\mathbf{w}^{\top} \mathbf{x}^{(i)}+b-y^{(i)}\right)^{2}
+
+
+训练模型时, 我们寻求能够最小化所有训练示例的总损失的参数  :math:`\left(\mathbf{w}^{*}, b^{*}\right)` :
+
+.. math::
+
+    \mathbf{w}^{*}, b^{*}=\underset{\mathbf{w}, b}{\operatorname{argmin}} L(\mathbf{w}, b) .
+
+Analytic Solution(解析解)
++++++++++++++++++++++++++
+
+* 线性回归的解可以用一个公式简单地表达出来， 这类解叫作解析解（analytical solution）。
+* 线性回归的目标是找到一组参数 **w** 和偏置 b，使得预测值与真实值之间的误差最小化。为了简化问题，可以将偏置项 b 合并到参数向量 **w** 中，方法是在设计矩阵 **X** 的每一行末尾添加一个1，从而将偏置视为权重的一部分。
+
+
+.. note::  像线性回归这样的简单问题存在解析解，但并不是所有的问题都存在解析解。 解析解可以进行很好的数学分析，但解析解对问题的限制很严格，导致它无法广泛应用在深度学习里。
+
+
+Minibatch Stochastic Gradient Descent
++++++++++++++++++++++++++++++++++++++
+
+* 梯度下降（gradient descent）：它通过不断地在损失函数递减的方向上更新参数来降低误差。梯度下降最简单的用法是计算损失函数（数据集中所有样本的损失均值） 关于模型参数的导数（在这里也可以称为梯度）
+* 小批量随机梯度下降（minibatch stochastic gradient descent）：在每次需要计算更新的时候随机抽取一小批样本的梯度下降。使用小批量随机梯度下降是因为梯度下降在实际中的执行可能会非常慢：原因是在每一次更新参数之前，我们必须遍历整个数据集。
+
+在每次迭代中，我们首先随机抽样一个小批量 :math:`\mathcal{B}` ， 它是由固定数量的训练样本组成的。 然后，我们计算小批量的平均损失关于模型参数的导数（也可以称为梯度）。 最后，我们将梯度乘以一个预先确定的正数 :math:`\eta` ，并从当前参数的值中减掉。
+
+* 我们用下面的数学公式来表示这一更新过程（  :math:`\partial`  表示偏导数）：
+
+.. math::
+
+    (\mathbf{w}, b) \leftarrow(\mathbf{w}, b)-\frac{\eta}{|\mathcal{B}|} \sum_{i \in \mathcal{B}} \partial_{(\mathbf{w}, b)} l^{(i)}(\mathbf{w}, b) .
+
+
+总结一下，算法的步骤如下：（1）初始化模型参数的值，如随机初始化；（2）从数据集中随机抽取小批量样本且在负梯度的方向上更新参数，并不断迭代这一步骤。对于平方损失和仿射变换，我们可以明确地写成如下形式:
+
+.. math::
+
+    \begin{aligned}
+    \mathbf{w} & \leftarrow \mathbf{w}-\frac{\eta}{|\mathcal{B}|} \sum_{i \in \mathcal{B}} \partial_{\mathbf{w}} l^{(i)}(\mathbf{w}, b)=\mathbf{w}-\frac{\eta}{|\mathcal{B}|} \sum_{i \in \mathcal{B}} \mathbf{x}^{(i)}\left(\mathbf{w}^{\top} \mathbf{x}^{(i)}+b-y^{(i)}\right) \\
+    b & \leftarrow b-\frac{\eta}{|\mathcal{B}|} \sum_{i \in \mathcal{B}} \partial_{b} l^{(i)}(\mathbf{w}, b)=b-\frac{\eta}{|\mathcal{B}|} \sum_{i \in \mathcal{B}}\left(\mathbf{w}^{\top} \mathbf{x}^{(i)}+b-y^{(i)}\right)
+    \end{aligned}
+
+.. note:: 更艰巨的任务是找到能够对以前未见过的数据进行准确预测的参数，这一挑战称为泛化。The more formidable task is to find parameters that lead to accurate predictions on previously unseen data, a challenge called generalization.
+
+Predictions(预测)
++++++++++++++++++
+
+* 给定模型 :math:`\hat{\mathbf{w}}^{\top}\mathbf{x} + \hat{b}` ，我们现在可以对新示例进行预测(有时也称推理)
+
+
+Vectorization for Speed
+"""""""""""""""""""""""
+
+* 使用torch向量库比直接使用for循环要快3个数量级
+
+The Normal Distribution and Squared Loss
+""""""""""""""""""""""""""""""""""""""""
+
+* 正态分布的公式
+
+.. math::
+
+    f(x)=\frac{1}{\sqrt{2 \pi \sigma^2}} e^{-\frac{(x-\mu)^2}{2 \sigma^2}}
+
+其中::
+
+    μ：均值（mean），表示分布的中心。
+    𝜎^2 ：方差（variance），表示分布的宽度，反映数据的离散程度
+
+    𝜎 越大，分布越宽、越平
+    𝜎 越小，分布越窄、越尖
+
+Linear Regression as a Neural Network
+"""""""""""""""""""""""""""""""""""""
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/12/LjmKJJ.png
+
+    由树突（dendrites，输入终端）、 细胞核（nucleus，CPU）组成的生物神经元图片。 轴突（axon，输出线）和轴突端子（axon terminal，输出端子） 通过突触（synapse）与其他神经元连接。consisting of ``dendrites`` (input terminals), the ``nucleus`` (CPU), the ``axon`` (output wire), and the ``axon terminals`` (output terminals), enabling connections to other neurons via ``synapses``.
+
+
+.. note:: 过程：来自其他神经元（或环境传感器）的信息 :math:`x_i` 在树突中被接收。特别是，该信息通过突触权重 :math:`w_i` 进行加权，确定输入的效果，例如通过产品 :math:`x_i w_i` 激活或抑制。来自多个源的加权输入在核中聚合为加权和 :math:`y=\sum_i{x_i w_i} + b` ，可能通过函数 :math:`\sigma(y)` 进行一些非线性后处理。然后，该信息通过轴突发送到轴突末端，在那里到达目的地（例如肌肉等执行器），或者通过树突馈送到另一个神经元。
+
+
+
+3.2. Object-Oriented Design for Implementation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+实现了几个对象类::
+
+    HyperParameters
+    ProgressBoard
+    Module
+    DataModule
+    Trainer
+
+
+3.3. Synthetic Regression Data
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* 分别介绍了使用 **生成数据集** 和 **读取数据集**
+* 还介绍了使用 ``torch.utils.data.TensorDataset`` 和 ``torch.utils.data.DataLoader`` 的简洁实现
+
+* 实现数据加载器对象类::
+
+    SyntheticRegressionData
+
+
+3.4. Linear Regression Implementation from Scratch
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* 从头开始实现整个方法，包括（i）模型； (ii) 损失函数； (iii) 小批量随机梯度下降优化器； (iv) 将所有这些部分拼接在一起的训练函数。
+
+3.4.1. Defining the Model
+"""""""""""""""""""""""""
+
+.. code-block:: python
+
+    # 从平均值为 0、标准差为 0.01 的正态分布中抽取随机数来初始化权重
+    # 魔法数字 0.01 在实践中通常效果很好
+    class LinearRegressionScratch(d2l.Module):  #@save
+        """The linear regression model implemented from scratch."""
+        def __init__(self, num_inputs, lr, sigma=0.01):
+            super().__init__()
+            self.save_hyperparameters()
+            self.w = torch.normal(0, sigma, (num_inputs, 1), requires_grad=True)
+            self.b = torch.zeros(1, requires_grad=True)
+
+        # 生成的 forward 方法
+        def forward(self, X):
+            return torch.matmul(X, self.w) + self.b
+
+3.4.2. Defining the Loss Function
+"""""""""""""""""""""""""""""""""
+
+返回小批量中所有示例的平均损失值(使用平方损失函数):
+
+.. code-block:: python
+
+    @d2l.add_to_class(LinearRegressionScratch)  #@save
+    def loss(self, y_hat, y):
+        l = (y_hat - y) ** 2 / 2
+        return l.mean()
+
+3.4.3. Defining the Optimization Algorithm
+""""""""""""""""""""""""""""""""""""""""""
+
+SGD(随机梯度下降) 优化器:
+
+.. code-block:: python
+
+    class SGD(d2l.HyperParameters):  #@save
+        """Minibatch stochastic gradient descent."""
+        def __init__(self, params, lr):
+            self.save_hyperparameters()
+
+        def step(self):
+            for param in self.params:
+                param -= self.lr * param.grad
+
+        def zero_grad(self):
+            for param in self.params:
+                if param.grad is not None:
+                    param.grad.zero_()
+
+
+定义 configure_optimizers 方法，它返回 SGD 类的实例:
+
+.. code-block:: python
+
+    @d2l.add_to_class(LinearRegressionScratch)  #@save
+    def configure_optimizers(self):
+        return SGD([self.w, self.b], self.lr)
+
+
+3.4.4. Training
+"""""""""""""""
+
+* 执行以下循环（小批量随机梯度下降）
+    * Initialize parameters  :math:`(\mathbf{w}, b)`
+    * Repeat until done
+        * Compute gradient :math:`\mathbf{g} \leftarrow \partial_{(\mathbf{w}, b)} \frac{1}{|\mathcal{B}|} \sum_{i \in \mathcal{B}} l\left(\mathbf{x}^{(i)}, y^{(i)}, \mathbf{w}, b\right)`
+        * Update parameters :math:`(\mathbf{w}, b) \leftarrow(\mathbf{w}, b)-\eta \mathbf{g}`
+
+
+.. .. math::
+
+..     \begin{array}{l}
+..     \text { Initialize parameters} (\mathbf{w}, b) \\
+..     \text { Repeat until done} \\
+..         \begin{array}{l}
+..         \text { Compute gradient } \mathbf{g} \leftarrow \partial_{(\mathbf{w}, b)} \frac{1}{|\mathcal{B}|} \sum_{i \in \mathcal{B}} l\left(\mathbf{x}^{(i)}, y^{(i)}, \mathbf{w}, b\right) \\
+..         \text { Update parameters }(\mathbf{w}, b) \leftarrow(\mathbf{w}, b)-\eta \mathbf{g} \\
+..         \end{array}
+..     \end{array}
+
+* 在每个 epoch 传递一次验证数据加载器来测量模型性能
+
+.. code-block:: python
+
+    @d2l.add_to_class(d2l.Trainer)  #@save
+    def prepare_batch(self, batch):
+        return batch
+
+    @d2l.add_to_class(d2l.Trainer)  #@save
+    def fit_epoch(self):
+        self.model.train()
+        for batch in self.train_dataloader:
+            loss = self.model.training_step(self.prepare_batch(batch))
+            self.optim.zero_grad()
+            with torch.no_grad():
+                loss.backward()
+                if self.gradient_clip_val > 0:  # To be discussed later
+                    self.clip_gradients(self.gradient_clip_val, self.model)
+                self.optim.step()
+            self.train_batch_idx += 1
+        if self.val_dataloader is None:
+            return
+        self.model.eval()
+        for batch in self.val_dataloader:
+            with torch.no_grad():
+                self.model.validation_step(self.prepare_batch(batch))
+            self.val_batch_idx += 1
+
+使用学习率 ``lr=0.03`` 训练模型并设置 ``max_epochs=3`` ::
+
+    model = LinearRegressionScratch(2, lr=0.03)
+    data = d2l.SyntheticRegressionData(w=torch.tensor([2, -3.4]), b=4.2)
+    trainer = d2l.Trainer(max_epochs=3)
+    trainer.fit(model, data)
+
+    with torch.no_grad():
+        print(f'error in estimating w: {data.w - model.w.reshape(data.w.shape)}')
+        print(f'error in estimating b: {data.b - model.b}')
+    # error in estimating w: tensor([ 0.1408, -0.1493])
+    # error in estimating b: tensor([0.2130])
+
+
+
+
+
+3.5. Concise Implementation of Linear Regression
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+3.5.1. Defining the Model
+"""""""""""""""""""""""""
+
+.. code-block:: python
+
+    class LinearRegression(d2l.Module):  #@save
+        """The linear regression model implemented with high-level APIs."""
+        def __init__(self, lr):
+            super().__init__()
+            self.save_hyperparameters()
+            self.net = nn.LazyLinear(1)
+            self.net.weight.data.normal_(0, 0.01)
+            self.net.bias.data.fill_(0)
+
+3.5.2. Defining the Loss Function
+"""""""""""""""""""""""""""""""""
+
+.. code-block:: python
+
+    @d2l.add_to_class(LinearRegression)  #@save
+    def loss(self, y_hat, y):
+        fn = nn.MSELoss()
+        return fn(y_hat, y)
+
+
+3.5.3. Defining the Optimization Algorithm
+""""""""""""""""""""""""""""""""""""""""""
+
+.. code-block:: python
+
+    @d2l.add_to_class(LinearRegression)  #@save
+    def configure_optimizers(self):
+        return torch.optim.SGD(self.parameters(), self.lr)
+
+3.5.4. Training
+"""""""""""""""
+
+.. code-block:: python
+
+    model = LinearRegression(lr=0.03)
+    data = d2l.SyntheticRegressionData(w=torch.tensor([2, -3.4]), b=4.2)
+    trainer = d2l.Trainer(max_epochs=3)
+    trainer.fit(model, data)
+
+* 估计参数与其真实的对应参数的对比
+
+.. code-block:: python
+
+    @d2l.add_to_class(LinearRegression)  #@save
+    def get_w_b(self):
+        return (self.net.weight.data, self.net.bias.data)
+    w, b = model.get_w_b()
+
+    print(f'error in estimating w: {data.w - w.reshape(data.w.shape)}')
+    print(f'error in estimating b: {data.b - b}')
+
+
+3.6. Generalization
+^^^^^^^^^^^^^^^^^^^
+
+3.6.1. Training Error and Generalization Error
+""""""""""""""""""""""""""""""""""""""""""""""
+
+* 训练误差表示为总和(训练数据集上计算的统计量)
+* 训练误差是在训练集上计算的误差，是一个统计量。
+* 它反映模型在训练集上的拟合程度。
+
+.. math::
+
+    R_{\mathrm{emp}}[\mathbf{X}, \mathbf{y}, f]=\frac{1}{n} \sum_{i=1}^{n} l\left(\mathbf{x}^{(i)}, y^{(i)}, f\left(\mathbf{x}^{(i)}\right)\right)\\
+
+* 泛化误差则表示为积分(integral)
+* 泛化误差是在真实分布上的误差，是一个期望。
+* 泛化误差是对无限多数据样本的期望。
+* 泛化误差是对基础分布的预期: 可以将泛化错误视为如果您将模型应用于从同一基础数据分布中提取的无限附加数据示例流
+
+.. math::
+
+    R[p, f]=E_{(\mathbf{x}, y) \sim P}[l(\mathbf{x}, y, f(\mathbf{x}))]=\iint l(\mathbf{x}, y, f(\mathbf{x})) p(\mathbf{x}, y) d \mathbf{x} d y
+
+
+* 有问题的是，我们永远无法准确计算泛化误差 :math:`R` 
+* 真实数据分布 :math:`p(\mathbf{x}, y)` 是未知的，我们无法直接得到真实分布。
+* 无法获取无限数据，只能在有限的训练集和测试集上进行评估。
+* 因此，泛化误差只能通过测试集近似估计，而非精确计算。
+* 在实践中，我们必须通过将我们的模型应用到一个独立的测试集来估计泛化误差，该测试集由随机选择的示例 :math:`X‘` 和从我们的训练集中保留的标签 :math:`y‘` 组成。这包括将用于计算经验训练误差的相同公式应用于测试集 :math:`X‘, y‘` 。
+
+.. note:: 请注意，我们最终得到的模型明确取决于训练集的选择，因此训练误差通常是对基础总体真实误差的有偏估计。泛化的核心问题是我们什么时候应该期望我们的训练误差接近总体误差（以及泛化误差）。
+
+
+.. note:: 【总结】训练误差是对训练数据的拟合程度，而泛化误差反映模型在真实分布上的表现。泛化误差无法直接计算，但可以通过测试集估计。泛化的核心问题是如何使训练误差与泛化误差尽可能接近，从而确保模型在新数据上的表现良好。
+
+
+3.6.2. Underfitting or Overfitting?
+"""""""""""""""""""""""""""""""""""
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/12/AhEHKr.png
+
+    Fig. 3.6.1 Influence of model complexity on underfitting and overfitting.¶
+
+3.6.3. Model Selection
+""""""""""""""""""""""
+
+* 通常，我们只有在评估了多个不同方面（不同的架构、训练目标、选定的特征、数据预处理、学习率等）的模型后才选择最终模型。在众多模型中进行选择被恰当地称为模型选择。
+* 【Cross-Validation】当训练数据稀缺时，我们甚至可能无法提供足够的数据来构成适当的验证集。此问题的一种流行解决方案是采用 K 折叠交叉验证。这里，原始训练数据被分成 K 个不重叠的子集。然后执行模型训练和验证 K 次，每次对 K-1 子集进行训练并在不同的子集（该轮中未用于训练的子集）上进行验证。最后，通过对 K 实验结果进行平均来估计训练和验证误差。
+
+
+3.6.4. Summary
+""""""""""""""
+
+* 经验法则
+    * 使用验证集（或 K-折叠交叉验证, k-fold cross-validation）进行模型选择；
+    * 更复杂的模型通常需要更多的数据；
+    * 复杂性的相关概念包括参数的数量和它们允许采用的值的范围；
+    * 在其他条件相同的情况下，更多的数据几乎总是能带来更好的概括；
+    * 在讨论模型的泛化能力时，通常假设训练数据和测试数据是独立同分布（IID）的。如果放宽这一假设，允许训练和测试期间的数据分布发生变化（即分布漂移），那么在没有其他（可能更弱的）假设的情况下，我们无法对模型的泛化能力做出任何保证。
+
+* 独立同分布（IID）假设：是许多统计学习理论的基础。它假定训练数据和测试数据来自相同的分布，且各个样本之间相互独立。
+* 在这种假设下，可以推导出模型在新数据上的表现（泛化能力）。然而，在实际应用中，训练和测试数据的分布可能不同（称为分布漂移），这违反了IID假设。在这种情况下，传统的泛化理论可能不再适用，需要引入新的假设或方法来分析和保证模型的泛化能力。
+
+
+
+3.7. Weight Decay
+^^^^^^^^^^^^^^^^^
+
+* our first **regularization** technique
+
+.. note:: 参见： ``【知识体系】权重衰减(L2正则化)``
+
+
+3.7.1. Norms and Weight Decay
+"""""""""""""""""""""""""""""
+
+* 权重衰减不是直接操纵参数的数量，而是通过限制参数可以取的值来进行操作。
+* 在深度学习领域，权重衰减通常被称为L2正则化。它是一种通过限制模型参数的取值范围来防止过拟合的技术。
+    * 与直接减少参数数量不同，权重衰减通过在损失函数中添加参数值的平方和作为惩罚项，鼓励模型学习较小的权重，从而降低模型复杂度。
+    * 这种方法的直观动机是：在所有函数中，恒等于零的函数 ``f=0`` 被认为是最简单的。因此，可以通过参数值偏离零的程度来衡量函数的复杂度。
+    * 然而，如何精确地度量函数与零之间的距离并没有唯一的答案。事实上，数学中的某些分支（如泛函分析和Banach空间理论）专门研究此类问题。
+
+
+.. note:: 【我的理解】前面说了「复杂性的相关概念包括参数的数量和它们允许采用的值的范围」这儿说了「权重衰减不是直接操纵参数的数量，而是通过限制参数可以取的值来进行操作」。所以 **权重衰减是通过降低参数的取值范围来降低模型的复杂度** 。
+
+* 【from gpt】当权重特别大时，模型会倾向于去记住数据的每一个细节（包括噪声和随机性），这样它的“复杂度”就会变得很高。但现实世界的数据往往包含噪声，我们希望模型只学到主要规律，而不是所有细节。
+* 【from gpt】较小的权重意味着模型不能对数据中的每一个小特征都过度“记住”，只能学习到大体规律，避免过度拟合。
+* 【from gpt】较小的权重降低了模型对数据的敏感度，让模型的行为更“平滑”，更少受到噪声的干扰，因此降低了模型的复杂度。这种方法通过限制模型的“表达能力”来帮助模型更好地泛化。你可以把较小的权重想象成给模型带上了“安全帽”，不让它太随意地对数据做出过度反应。
+
+
+.. note:: 在实践中，权重衰减已成为训练参数化机器学习模型时最广泛使用的正则化技术之一。通过在损失函数中添加L2正则项，模型的权重被迫减小，从而限制模型的复杂度，提升泛化能力。这在一定程度上减少了模型过拟合的问题。
+
+* 【小结】权重衰减作为一种正则化技术，通过限制模型参数的大小，帮助提高模型的泛化能力，减少过拟合现象。
+
+* 新的损失函数
+
+.. math::
+
+    L_{reg}(\mathbf{w}, b) = L(\mathbf{w}, b) + \frac{\lambda}{2} \|\mathbf{w}\|
+
+
+* L2正则化回归的小批量随机梯度下降的 **权重更新**
+
+.. math::
+
+    \begin{aligned}
+    \mathbf{w} & \leftarrow \left(1- \eta\lambda \right) \mathbf{w} - \frac{\eta}{|\mathcal{B}|} \sum_{i \in \mathcal{B}} \mathbf{x}^{(i)} \left(\mathbf{w}^\top \mathbf{x}^{(i)} + b - y^{(i)}\right)
+    \end{aligned}
+
+
+
+3.7.2. High-Dimensional Linear Regression
+"""""""""""""""""""""""""""""""""""""""""
+
+.. math::
+
+    y=0.05+\sum_{i=1}^{d} 0.01 x_{i}+\epsilon \\
+    \text { where } \epsilon \sim \mathcal{N}\left(0, 0.01^{2}\right) .
+
+.. code-block:: python
+
+    class Data(d2l.DataModule):
+        def __init__(self, num_train, num_val, num_inputs, batch_size):
+            self.save_hyperparameters()
+            n = num_train + num_val
+            self.X = torch.randn(n, num_inputs)
+            noise = torch.randn(n, 1) * 0.01
+            w, b = torch.ones((num_inputs, 1)) * 0.01, 0.05
+            self.y = torch.matmul(self.X, w) + b + noise
+
+        def get_dataloader(self, train):
+            i = slice(0, self.num_train) if train else slice(self.num_train, None)
+            return self.get_tensorloader([self.X, self.y], train, i)
+
+
+3.7.3. Implementation from Scratch
+""""""""""""""""""""""""""""""""""
+
+* 从头开始实现权重衰减
+
+3.7.3.1. Defining L2 Norm Penalty
++++++++++++++++++++++++++++++++++
+
+* 最方便的方法是将所有项平方并求和
+
+::
+
+    def l2_penalty(w):
+        return (w ** 2).sum() / 2
+
+
+3.7.3.2. Defining the Model
++++++++++++++++++++++++++++
+
+* 唯一的变化是我们的损失现在包括了惩罚项。
+
+.. code-block:: python
+
+    class WeightDecayScratch(d2l.LinearRegressionScratch):
+        def __init__(self, num_inputs, lambd, lr, sigma=0.01):
+            super().__init__(num_inputs, lr, sigma)
+            self.save_hyperparameters()
+
+        def loss(self, y_hat, y):
+            return (super().loss(y_hat, y) +
+                    self.lambd * l2_penalty(self.w))
+
+在包含 20 个示例的训练集上拟合我们的模型，并在包含 100 个示例的验证集上对其进行评估（说明：这儿是想说在较少的训练集上适合用权重衰减）:
+
+.. code-block:: python
+
+    data = Data(num_train=20, num_val=100, num_inputs=200, batch_size=5)
+    trainer = d2l.Trainer(max_epochs=10)
+
+    def train_scratch(lambd):
+        model = WeightDecayScratch(num_inputs=200, lambd=lambd, lr=0.01)
+        model.board.yscale='log'
+        trainer.fit(model, data)
+        print('L2 norm of w:', float(l2_penalty(model.w)))
+
+3.7.3.3. Training without Regularization
+++++++++++++++++++++++++++++++++++++++++
+
+::
+
+    train_scratch(0)
+    # L2 norm of w: 0.009948714636266232
+
+
+3.7.3.4. Using Weight Decay
++++++++++++++++++++++++++++
+
+::
+
+    train_scratch(3)
+    # L2 norm of w: 0.0017270983662456274
+
+
+3.7.4. Concise Implementation
+"""""""""""""""""""""""""""""
+
+* 默认情况下，PyTorch 同时衰减权重和偏差，但我们可以配置优化器根据不同的策略处理不同的参数。
+* 在这里，我们只为权重（ net.weight 参数）设置 weight_decay ，因此偏差（ net.bias 参数）不会衰减。
+
+.. code-block:: python
+
+    class WeightDecay(d2l.LinearRegression):
+        def __init__(self, wd, lr):
+            super().__init__(lr)
+            self.save_hyperparameters()
+            self.wd = wd   # weight_decay
+
+        def configure_optimizers(self):
+            return torch.optim.SGD([
+                {'params': self.net.weight, 'weight_decay': self.wd},
+                {'params': self.net.bias}], lr=self.lr)
+
+这个版本运行速度更快，更容易实现::
+
+    model = WeightDecay(wd=3, lr=0.01)
+    model.board.yscale='log'
+    trainer.fit(model, data)
+
+    print('L2 norm of w:', float(l2_penalty(model.get_w_b()[0])))
+    # L2 norm of w: 0.013779522851109505
+
+3.7.5. Summary
+""""""""""""""
+
+* 正则化是处理过拟合的常用方法。
+* 经典正则化技术在损失函数中添加惩罚项（训练时）以降低学习模型的复杂性。
+* 保持模型简单的一种特殊选择是使用 L2 惩罚。这导致小批量随机梯度下降算法的更新步骤中的权重衰减。
+* 在实践中，权重衰减功能是在深度学习框架的优化器中提供的。在同一训练循环中，不同的参数集可以有不同的更新行为。
+
+
+4. Linear Neural Networks for Classification
+--------------------------------------------
+
+4.1. Softmax Regression
+^^^^^^^^^^^^^^^^^^^^^^^
+
+4.1.1. Classification
+"""""""""""""""""""""
+
+* 统计学家很久以前就发明了一种表示分类数据的简单方法：one-hot 编码。 one-hot 编码是一个向量，其分量与类别一样多。与特定实例类别相对应的组件设置为 1，所有其他组件设置为 0。
+
+4.1.1.1. Linear Model
++++++++++++++++++++++
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/12/CbhiVl.png
+
+    Fig. 4.1.1 Softmax regression is a single-layer neural network.
+
+更简洁的表示法:
+
+.. math::
+
+    \mathbf{o} = \mathbf{Wx} + \mathbf{b}
+
+4.1.1.2. The Softmax
+++++++++++++++++++++
+
+* 未规范化的预测 o 不能直接视作输出的原因：
+
+    - 没有限制这些输出数字的总和为1
+    - 输出可能为负值
+
+* 实现此目标（并确保非负性）的一种方法是 使用指数函数 :math:`P(y=i) \propto \exp o_{i}` 。这确实满足了条件类别概率随着 :math:`o_i` 增加而增加的要求，它是单调的，并且所有概率都是非负的。然后我们可以转换这些值，使它们相加为 ``1`` ：将每个除以它们的总和。这个过程称为 **标准化**
+
+.. math::
+
+    \hat{\mathbf{y}}=\operatorname{softmax}(\mathbf{o}) \quad \\
+    \text { where } \quad \hat{y}_{i}=\frac{\exp \left(o_{i}\right)}{\sum_{j} \exp \left(o_{j}\right)} \\
+
+* 说明：向量 :math:`\mathbf{o}` 的最大坐标对应于预测概率分布 :math:`\hat{\mathbf{y}}` 中最可能的类别。 
+* 此外，由于 softmax 操作会保留输入之间的排序关系，我们实际上并不需要真正计算 softmax 的结果，就可以确定哪个类别被分配了最高的概率。
+* 所以如果选择最有可能的类别的话，可以省略 softmax 步骤，即：
+
+.. math::
+
+    \underset{j}{\operatorname{argmax}} \hat{y}_{j}=\underset{j}{\operatorname{argmax}} o_{j} .
+
+
+4.1.1.3. Vectorization
+++++++++++++++++++++++
+
+* 为了提高计算效率并且充分利用GPU, 我们通常会对小批量样本的数据执行矢量化计算(vectorize calculations)。
+* 假设我们读取了一个批量的样本  :math:`\mathbf{X}` , 其中特征维度（输入数量）为  d , 批量大小为  n  。
+* 此外, 假设我们在输出中有  q  个类别。
+* 那么小批量样本的特征为  :math:`\mathbf{X} \in \mathbb{R}^{n \times d}` , 权重为  :math:`\mathbf{W} \in \mathbb{R}^{d \times q}` , 偏置为  :math:`\mathbf{b} \in \mathbb{R}^{1 \times q}`  
+* softmax回归的矢量计算表达式为:
+
+.. math::
+
+    \begin{array}{l}
+    \mathbf{O}=\mathbf{X W}+\mathbf{b} \\
+    \hat{\mathbf{Y}}=\operatorname{softmax}(\mathbf{O})
+    \end{array}
+
+
+
+
+4.1.2. Loss Function
+""""""""""""""""""""
+
+4.1.2.1. Log-Likelihood(对数似然)
++++++++++++++++++++++++++++++++++
+
+* softmax 函数给我们一个向量 :math:`\hat{\mathbf{y}}` ，我们可以将其视为“对给定任意输入 :math:`\mathbf{x}` 的每个类的条件概率”。
+* 例如 :math:`\hat{y}_1 = P(y=\textrm{cat} \mid \mathbf{x})` 。
+* 假设对于具有特征的数据集 :math:`\mathbf{X}` 对应的标签 :math:`\mathbf{Y}` （即整个数据集 :math:`{\mathbf \{X, Y\}}` ）具有 n 个样本。
+* 其中索引 i 的样本由：特征向量 :math:`\mathbf{x}^{(i)}` 和使用 one-hot 编码的标签向量 :math:`\mathbf{y}^{(i)}` 表示。
+* 计算整个数据集的联合概率(假设每个标签 :math:`𝑦^{(𝑖)}` 都是独立从条件分布 :math:`𝑃(𝑦∣𝑥^{(𝑖)})` 中抽取的)，用于评估模型对整个数据集的预测能力：
+
+.. math::
+
+    P(\mathbf{Y} \mid \mathbf{X}) = \prod_{i=1}^n P(\mathbf{y}^{(i)} \mid \mathbf{x}^{(i)}).
+
+* 目标：我们希望最大化 ``𝑃(𝑌∣𝑋)`` ，这实际上是最大似然估计的目标。
+* 根据最大似然估计，我们最大化 :math:`P(\mathbf{Y} | \mathbf{X})` ，相当于最小化负对数似然
+
+.. math::
+
+    -\log P(\mathbf{Y} \mid \mathbf{X}) = \sum_{i=1}^n -\log P(\mathbf{y}^{(i)} \mid \mathbf{x}^{(i)})
+    = \sum_{i=1}^n l(\mathbf{y}^{(i)}, \hat{\mathbf{y}}^{(i)}),
+
+这其中任意一对标签 :math:`\mathbf{y}` 和模型预测 :math:`\hat{\mathbf{y}}` 在 q 个分类上，损失函数 l 是
+
+.. math::
+
+    l(\mathbf{y}, \hat{\mathbf{y}}) = - \sum_{j=1}^q y_j \log \hat{y}_j
+
+.. note:: 注意这儿的 **y** 是 one-hot 编码
+
+* 上面这个损失函数通常被叫 **交叉熵损失（cross-entropy loss）** 
+
+
+4.1.2.2. Softmax and Cross-Entropy Loss
++++++++++++++++++++++++++++++++++++++++
+
+1. 交叉熵损失的推导过程
+~~~~~~~~~~~~~~~~~~~~~~~
+
+1) softmax 输出的形式：
+
+.. math::
+
+    \hat{\mathbf{y}} = \frac{\exp \left(o_{j}\right)}{\sum_{k=1}^{q} \exp \left(o_{k}\right)} \\
+    其中 o_j 是模型对类别 𝑗 的原始输出 (logits)
+
+
+
+2) 将 softmax 代入交叉熵损失的定义：
+
+
+.. math::
+
+    \begin{aligned}
+    l(\mathbf{y}, \hat{\mathbf{y}}) & =-\sum_{j=1}^{q} y_{j} \log \frac{\exp \left(o_{j}\right)}{\sum_{k=1}^{q} \exp \left(o_{k}\right)}
+    \end{aligned}
+
+3) 拆分对数：
+
+.. math::
+
+    l(\mathbf{y}, \hat{\mathbf{y}}) =\sum_{j=1}^{q} y_{j} \log \sum_{k=1}^{q} \exp \left(o_{k}\right)-\sum_{j=1}^{q} y_{j} o_{j}
+
+
+
+
+4) 由于标签 𝑦 是 one-hot 编码或概率分布，标签向量的所有元素加起来总是等于 1，所以可以进一步简化：
+
+.. math::
+
+    l(\mathbf{y}, \hat{\mathbf{y}}) =\log \sum_{k=1}^{q} \exp \left(o_{k}\right)-\sum_{j=1}^{q} y_{j} o_{j} .
+
+
+2. 梯度推导 (反向传播的核心)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+对任何 :math:`o_{j}` 求导, 我们得到:
+
+.. math::
+
+    \partial_{o_{j}} l(\mathbf{y}, \hat{\mathbf{y}}) = \frac{\exp \left(o_{j}\right)}{\sum_{k=1}^{q} \exp \left(o_{k}\right)}-y_{j}
+
+简化：
+
+.. math::
+
+    \partial_{o_{j}} l(\mathbf{y}, \hat{\mathbf{y}}) =\operatorname{softmax}(\mathbf{o})_{j}-y_{j}
+
+
+* 直观理解：
+    * :math:`softmax(𝑜_𝑗)` 是模型对类别 𝑗 预测的概率。
+    * :math:`𝑦_𝑗` 是真实标签（one-hot编码），如果 𝑗 是真实类别，则 :math:`𝑦_𝑗=1` ，否则 :math:`𝑦_𝑗=0`
+    * 梯度表示模型的预测概率与真实标签之间的差距，即误差信号
+
+3. 更一般的情况: 标签分布为概率分布
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* 通常我们假设标签是 one-hot 编码的，如 (0,0,1)。但在某些任务中，标签可能是一个概率分布，如 (0.1,0.2,0.7)
+* 这种情况下，交叉熵损失的计算方式不变：
+
+.. math::
+
+    l(\mathbf{y}, \hat{\mathbf{y}}) = - \sum_{j=1}^q y_j \log \hat{y}_j
+
+* 唯一的区别是 𝑦_𝑗 不再是 0 或 1，而是一个概率值。这种形式更具一般性，允许模型处理更复杂的任务，如知识蒸馏或多标签分类问题。
+
+
+4. 交叉熵损失的意义: 信息论解释
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* 交叉熵损失可以从信息论角度理解：
+    * 它衡量了真实分布 𝑦 与模型预测分布 :math:`\hat{𝑦}` 之间的差异。
+    * 直观理解：模型越准确，交叉熵损失越小，因为模型输出分布与真实分布越接近。
+
+* 举例说明：
+    * 如果真实分布是 (0,0,1)，模型预测 (0.1,0.2,0.7)，损失较小。
+    * 如果模型预测为 (0.7,0.2,0.1)，损失较大，因为模型输出偏离真实类别更远。
+
+5. 关键信息总结
+~~~~~~~~~~~~~~~
+
+* 交叉熵损失的推导来自最大似然估计，通过 softmax 和对数运算得出。
+* 梯度的形式是模型预测概率与真实标签之间的差距，这是模型参数更新的核心。
+* 信息论角度解释：交叉熵损失衡量模型对真实标签的编码效率，模型越准确，编码代价越小。
+* 泛化性：交叉熵损失不仅适用于 one-hot 标签，还可以处理概率标签，适应更复杂的任务。
+
+
+
+4.1.3. Information Theory Basics
+""""""""""""""""""""""""""""""""
+
+* Information theory(信息论) deals with the problem of encoding, decoding, transmitting, and manipulating information (also known as data).
+
+4.1.3.1. Entropy(熵)
+++++++++++++++++++++
+
+* 信息论的核心思想是量化数据中的信息内容。
+* 在信息论中，该数值被称为分布 P 的熵（entropy）。
+* 可以通过以下方程得到：
+
+.. math::
+
+    H[P] = \sum_j{-P(j)logP(j)}
+
+* One of the fundamental theorems of information theory states that in order to encode data drawn randomly from the distribution P, we need at least  ``H[P]“nats”`` to encode it (Shannon, 1948).
+* If you wonder what a “nat” is, it is the equivalent of bit but when using a code with base e rather than one with base 2. Thus, one nat is :math:`\frac{1}{log(2)} \approx 1.44` bit.
+
+4.1.3.2. Surprisal(惊讶度)
+++++++++++++++++++++++++++
+
+1. 压缩与预测的联系
+~~~~~~~~~~~~~~~~~~~
+
+* 压缩(compression)与预测(prediction)的关系
+* 核心观点：如果一个数据流很容易预测，那么它也很容易压缩。
+* 例子：举一个极端的例子，流中的每个标记始终采用相同的值。
+* 解释：
+    * 容易预测：由于数据有很强的规律性，我们可以准确地预测下一个符号是什么。
+    * 容易压缩：压缩算法只需记录这个规律，而不用传输大量冗余数据。
+* 结论：
+    * “易预测” ⟹ “易压缩”
+    * “难预测” ⟹ “难压缩”
+
+2. 预测失败与“惊讶度”
+~~~~~~~~~~~~~~~~~~~~~
+
+
+* 解释：当一个低概率事件发生时，我们会感到“惊讶”。
+* 示例：掷骰子，结果是 7。这会非常令人惊讶，因为 𝑃(7)=0
+* 量化惊讶度-克劳德·香农 (Claude Shannon) 提出了一个公式来衡量这种惊讶程度(Surprisal)：
+
+.. math::
+
+    惊讶度(surprisal) = \log \frac{1}{P(j)} = -\log P(j)
+
+* 概率越小，惊讶度越大。
+* 如果 ``𝑃(𝑗)=1`` ，即事件必然发生，惊讶度为 0
+* 如果 ``𝑃(𝑗)=0.01`` ，惊讶度较大。
+
+
+3. 熵: 期望的惊讶度
+~~~~~~~~~~~~~~~~~~~
+
+* 定义：熵 (Entropy) 是所有可能事件的“平均惊讶度”：
+
+.. math::
+
+    H(p) = - \sum_j{P(j)logP(j)}
+
+
+* 解释：熵衡量了一个系统的“不确定性”。如果系统的熵很高，说明事件分布很分散，难以预测。
+* 极端例子：
+    * 如果一个事件总是发生 (概率为 1)，熵为 0（完全可预测）。
+    * 如果所有事件概率均等，熵达到最大（最不确定，最难预测）。
+
+4. 交叉熵: 预测与真实分布的差距
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* 为什么交叉熵是损失函数：交叉熵衡量模型预测分布 :math:`\hat{y}` 和真实分布 𝑦 之间的差异：
+    * 如果模型预测与真实分布接近，交叉熵较小。
+    * 如果模型预测远离真实分布，交叉熵较大。
+
+5. 直观例子
+~~~~~~~~~~~
+
+* 假设
+* 真实概率分布 y=(0,0,0,0,0,1) 表示只会掷出 6
+* 模型预测分布为 :math:`\hat{y} =(0.1,0.1,0.1,0.1,0.1,0.5)`
+* 计算交叉熵损失：
+
+.. math::
+
+    H(y, \hat{y}) = - \sum_{j=1}^6{y_j log{\hat{y}_j}} \\
+        - log(0.5) = 0.693
+
+
+
+4.1.3.3. Cross-Entropy Revisited
+++++++++++++++++++++++++++++++++
+
+* 结合上面的惊讶度(Surprisal)的理解
+* 可以把 **熵H(P)** 看成 ``一个知道真实概率的人在经历概率事件时的惊讶度(Surprisal)``
+    * 直观理解：
+    * 如果我们对数据的分布非常了解 (即 𝑃 是我们预测的分布)，那么熵就是我们对未来事件的“平均惊讶度”。
+    * 这是最佳压缩的理论极限。
+* 那么 **交叉熵H(P, Q)** 描述的是我们用主观概率分布 𝑄 预测真实分布 𝑃 数据时的平均惊讶度。
+    * 直观解释：
+    * 真实分布 𝑃 表示实际发生的情况，而模型预测 𝑄 代表我们对数据的“主观理解”。
+    * 如果模型 𝑄 偏离了真实分布 𝑃，我们在看到真实数据时会感到更“惊讶”。
+
+* 【示例】
+* 真实分布 𝑃：骰子掷出每个面的概率均为 𝑃(𝑗)=1/6
+* 模型分布 𝑄 (预测分布)：模型错误地认为骰子掷出6的概率是 𝑄(6)=0.5，其他面的概率是 𝑄(𝑗)=0.1。
+* 计算熵和交叉熵：
+    * 熵: :math:`H(P)=-\sum_{j=1}^6{\frac{1}{6}log{\frac{1}{6}}} = log6`
+    * 交叉熵:  :math:`H(P, Q) = -\sum_{j=1}^6{\frac{1}{6}log{Q(j)}} = -\frac{5}{6}log{0.1} -\frac{1}{6}log{0.5} = \frac{5}{6}log10 + \frac{1}{6}log2`
+
+::
+
+    # 熵(1.7918)
+    torch.log(torch.tensor(6))
+
+    # 交叉熵(2.0343)
+    -5/6 * torch.log(torch.tensor(0.1)) -1/6 * torch.log(torch.tensor(0.5))
+    5/6 * torch.log(torch.tensor(10)) + 1/6 * torch.log(torch.tensor(2))
+
+
+.. note:: 【解读】当 𝑃=𝑄(模型预测准确) 时，交叉熵达到最小值，此时：𝐻(𝑃,𝑃)=𝐻(𝑃) ❇️=》也就是说：真实分布和预测分布一致时，交叉熵等于熵。
+
+* 以从两个角度理解交叉熵分类目标函数：
+    * 最大化观察到的数据的似然 (likelihood)；
+    * 最小化模型对真实标签的惊讶度（即减少编码标签所需的比特数）。
+
+
+4.2. The Image Classification Dataset
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* 主要讲了 torchvision 的基本使用
+
+
+4.3. The Base Classification Model
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+4.3.1. The Classifier Class
+"""""""""""""""""""""""""""
+
+定义Classifier类
+
+.. code-block:: python
+
+    class Classifier(d2l.Module):  #@save
+        """The base class of classification models."""
+        def validation_step(self, batch):
+            Y_hat = self(*batch[:-1])
+            self.plot('loss', self.loss(Y_hat, batch[-1]), train=False)
+            self.plot('acc', self.accuracy(Y_hat, batch[-1]), train=False)
+
+使用随机梯度下降优化器，在小批量上运行
+
+.. code-block:: python
+
+    @d2l.add_to_class(d2l.Module)  #@save
+    def configure_optimizers(self):
+        return torch.optim.SGD(self.parameters(), lr=self.lr)
+
+
+4.3.2. Accuracy
+"""""""""""""""
+
+.. code-block:: python
+
+    @d2l.add_to_class(Classifier)  #@save
+    def accuracy(self, Y_hat, Y, averaged=True):
+        """Compute the number of correct predictions."""
+        Y_hat = Y_hat.reshape((-1, Y_hat.shape[-1]))
+        preds = Y_hat.argmax(axis=1).type(Y.dtype)
+        compare = (preds == Y.reshape(-1)).type(torch.float32)
+        return compare.mean() if averaged else compare
+
+
+
+4.4. Softmax Regression Implementation from Scratch
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+4.4.1. The Softmax
+""""""""""""""""""
+
+计算 softmax 需要三个步骤::
+
+    i) 每一项求幂
+    ii) 每行求和以计算每个示例的归一化常数
+    iii) 将每一行除以其归一化常数，确保结果总和为 1
+
+4.4.2. The Model
+""""""""""""""""
+
+.. code-block:: python
+
+    class SoftmaxRegressionScratch(d2l.Classifier):
+        def __init__(self, num_inputs, num_outputs, lr, sigma=0.01):
+            super().__init__()
+            self.save_hyperparameters()
+            self.W = torch.normal(0, sigma, size=(num_inputs, num_outputs),
+                                  requires_grad=True)
+            self.b = torch.zeros(num_outputs, requires_grad=True)
+
+        def parameters(self):
+            return [self.W, self.b]
+
+网络如何将每个输入映射到输出:
+
+.. code-block:: python
+
+    @d2l.add_to_class(SoftmaxRegressionScratch)
+    def forward(self, X):
+        X = X.reshape((-1, self.W.shape[0]))
+        return softmax(torch.matmul(X, self.W) + self.b)
+
+
+4.4.3. The Cross-Entropy Loss
+"""""""""""""""""""""""""""""
+
+* 创建了示例数据y_hat其中包含 2 个示例 预测 3 个类别的概率及其相应的标签 y
+
+.. code-block:: python
+
+    y = torch.tensor([0, 2])
+    y_hat = torch.tensor([[0.1, 0.3, 0.6], [0.3, 0.2, 0.5]])
+    y_hat[[0, 1], y]
+    # tensor([0.1000, 0.5000])
+
+
+对所选概率的对数进行平均来实现交叉熵损失函数：
+
+.. code-block:: python
+
+    def cross_entropy(y_hat, y):
+        y2 = y_hat[list(range(len(y_hat))), y]   # tensor([0.1000, 0.5000])
+        return -torch.log(y2).mean()
+    cross_entropy(y_hat, y)
+    # tensor(1.4979)
+
+* 定义损失函数::
+
+    @d2l.add_to_class(SoftmaxRegressionScratch)
+    def loss(self, y_hat, y):
+        return cross_entropy(y_hat, y)
+
+4.4.4. Training
+"""""""""""""""
+
+.. code-block:: python
+
+    data = d2l.FashionMNIST(batch_size=256)
+    model = SoftmaxRegressionScratch(num_inputs=784, num_outputs=10, lr=0.1)
+    trainer = d2l.Trainer(max_epochs=10)
+    trainer.fit(model, data)
+
+4.4.5. Prediction
+"""""""""""""""""
+
+.. code-block:: python
+
+    X, y = next(iter(data.val_dataloader()))
+    preds = model(X).argmax(axis=1)
+    preds.shape
+    # torch.Size([256])
+
+我们对错误标记的图像更感兴趣。通过将它们的实际标签（文本输出的第一行）与模型的预测（文本输出的第二行）进行比较来可视化它们::
+
+    wrong = preds.type(y.dtype) != y
+    X, y, preds = X[wrong], y[wrong], preds[wrong]
+    labels = [a+'\n'+b for a, b in zip(
+        data.text_labels(y), data.text_labels(preds))]
+    data.visualize([X, y], labels=labels)
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/12/o23wtV.png
+
+
+
+4.5. Concise Implementation of Softmax Regression
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+4.5.1. Defining the Model
+"""""""""""""""""""""""""
+
+* 内置的__call__方法就会调用forward
+
+.. code-block:: python
+
+    class SoftmaxRegression(d2l.Classifier):  #@save
+        """The softmax regression model."""
+        def __init__(self, num_outputs, lr):
+            super().__init__()
+            self.save_hyperparameters()
+            self.net = nn.Sequential(nn.Flatten(),
+                                     nn.LazyLinear(num_outputs))
+        def forward(self, X):
+            return self.net(X)
+
+4.5.2. Softmax Revisited
+""""""""""""""""""""""""
+
+* 原始 softmax 计算方式在实际实现中可能存在数值稳定性问题，主要包括：
+    * 上溢 (Overflow)：如果 :math:`o_k` 非常大，:math:`\exp(o_k)` 可能超出计算机能表示的最大值，导致溢出。
+    * 下溢 (Underflow)：如果所有 :math:`o_k` 都非常小 (负数很大)， :math:`\exp(o_k)` 会趋近于 0，可能导致下溢。
+* 数值不稳定性的具体原因
+    *  计算机表示浮点数的范围有限。例如，单精度浮点数的表示范围约为 :math:`10^{-38}` 到 :math:`10^{38}`
+    *  如果最大的 :math:`o_k` 超出区间 ``[-90, 90]``，结果就会变得不稳定。
+* 解决方案
+    * 核心思想：为了避免溢出或下溢，可以通过平移 logits，使得最大的 logits 变为 0，从而让所有 logits 都位于一个较小的范围内。
+    * 具体方法：
+        * 设 :math:`\bar{o}=\max_k{o_k}`
+        * 从所有 logits 中减去 :math:`\bar{o}` ：
+        * :math:`\hat{y}_{j}=\frac{\exp \left(o_{j}-\bar{o}\right)}{\sum_{k} \exp \left(o_{k}-\bar{o}\right)}`
+    * 分析
+        * 防止上溢：因为 :math:`\exp(0) = 1` ，而 :math:`\exp(负数)` 的值始终介于 ``(0, 1]``
+        * 防止下溢：如果 :math:`o_j - \bar{o}` 非常小， :math:`\exp(o_j - \bar{o})` 可能趋近 0，但不会溢出，最多导致 :math:`\hat y_j = 0`
+        * 但我们可以利用 softmax 和交叉熵的组合，避免直接计算 :math:`\hat{y}_j` ，而是计算： :math:`log{\hat{y}_i} = o_j - \bar{o} - log{\sum_k{\exp(o_k - \bar{o})}}`
+
+* 推理过程
+
+.. math::
+
+    \begin{array}{l}
+    \hat{y}_{j}=\frac{\exp \left(o_{j}-\bar{o}\right)}{\sum_{k} \exp \left(o_{k}-\bar{o}\right)} \\
+    \text{两边求对数=>}  \\
+    \log \hat{y}_i = o_j - \bar{o} - log{\sum_k{\exp (o_k - \bar{o})}}
+    \end{array}
+
+.. code-block:: python
+
+    @d2l.add_to_class(d2l.Classifier)  #@save
+    def loss(self, Y_hat, Y, averaged=True):
+        Y_hat = Y_hat.reshape((-1, Y_hat.shape[-1]))
+        Y = Y.reshape((-1,))
+        return F.cross_entropy(
+            Y_hat, Y, reduction='mean' if averaged else 'none')
+
+4.5.3. Training
+"""""""""""""""
+
+.. code-block:: python
+
+    data = d2l.FashionMNIST(batch_size=256)
+    model = SoftmaxRegression(num_outputs=10, lr=0.1)
+    trainer = d2l.Trainer(max_epochs=10)
+    trainer.fit(model, data)
+
+4.6. Generalization in Classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+4.6.1. The Test Set
+"""""""""""""""""""
+
+1. 经验误差 (Empirical Error)
++++++++++++++++++++++++++++++
+
+公式解析：
+
+.. math::
+
+    \epsilon_\mathcal{D}(f) = \frac{1}{n}\sum_{i=1}^n \mathbf{1}(f(\mathbf{x}^{(i)}) \neq y^{(i)})
+
+* 其中
+* :math:`\epsilon_\mathcal{D}(f)` : 在测试集 :math:`\mathcal{D}` 上的分类误差
+* :math:`\mathbf{1}(\cdot)` 是指示函数 (indicator function)， :math:`\mathbf{1}(\text{condition})` 的值只有两个可能：如果条件为真， :math:`\mathbf{1}(\text{condition}) = 1` ;如果条件为 假， :math:`\mathbf{1}(\text{condition}) = 0`
+* :math:`\mathbf{1}(f(\mathbf{x}^{(i)}) \neq y^{(i)})` ：如果预测 :math:`f(\mathbf{x}^{(i)})` 与真实标签 :math:`y^{(i)}` 不一致，则输出 **1**，否则输出 **0**
+* 含义：模型在测试集 :math:`\mathcal{D}` 上预测错误的比例，即模型在实际数据上的表现。
+
+
+* 指示函数的直观理解： :math:`\mathbf{1}` 相当于一个开关，用来判断是否满足某个条件：满足条件就“打开” (1)，不满足条件就“关闭” (0)。在误差计算中，它帮助统计模型在测试集上的错误样本数量。
+
+
+
+2. 总体误差 (Population Error)
+++++++++++++++++++++++++++++++
+
+公式解析：
+
+.. math::
+
+    \epsilon(f) =  E_{(\mathbf{x}, y) \sim P} \mathbf{1}(f(\mathbf{x}) \neq y) \\
+    = \int\int \mathbf{1}(f(\mathbf{x}) \neq y) p(\mathbf{x}, y) \;d\mathbf{x} dy
+
+* 其中
+* :math:`\epsilon(f)` ：模型在真实数据分布下的期望误差，是理想状态下模型真正的误差。
+* :math:`p(\mathbf{x}, y)` ：数据分布的概率密度函数。
+* 含义：模型在整个潜在数据分布中分类错误的期望概率。
+* 问题：无法直接计算，因为真实分布 :math:`p(\mathbf{x}, y)` 通常未知。
+
+
+* 由于测试集 :math:`\mathcal{D}` 在统计上代表了潜在总体，我们可以将 :math:`\epsilon_\mathcal{D}(f)` 视为总体误差 :math:`\epsilon(f)` 的统计估计量。
+* 此外，由于我们感兴趣的量 :math:`\epsilon(f)` 是随机变量 :math:`\mathbf{1}(f(X) \neq Y)` 的期望值，对应的估计量 :math:`\epsilon_\mathcal{D}(f)` 是样本均值，因此估计总体误差其实是一个经典的均值估计问题。
+
+
+
+
+3. 中心极限定理 (CLT) 和误差收敛速度
+++++++++++++++++++++++++++++++++++++
+
+* 我们关心的随机变量 :math:`\mathbf{1}(f(X) \neq Y)` 只能取 0 和 1 两个值，因此是一个伯努利随机变量，其参数表示该变量取值为 1 的概率。
+* Bernoulli 分布的随机变量单个样本误差的方差是： :math:`\sigma^2=\epsilon(f)(1-\epsilon(f))`
+* 虽然 :math:`\epsilon(f)` 最初是未知的，但我们知道它不会大于 1。进一步分析这个函数会发现，当 :math:`\epsilon(f) \approx 0.5` 时方差最大，而当 :math:`\epsilon(f)` 接近 0 或 1 时方差较小。这表明，估计量 :math:`\epsilon_\mathcal{D}(f)` 的渐近标准差不会超过： :math:`\sqrt{\frac{0.25}{N}}`
+
+
+* 中心极限定理表明，当样本量 :math:`n \to \infty` 时，测试误差 :math:`\epsilon_\mathcal{D}(f)` 将以速率 :math:`\mathcal{O}(1/\sqrt{n})` 收敛到真实误差 :math:`\epsilon(f)`
+* 直观含义：
+    * 想把测试误差减少一半，需要 4 倍的样本量。
+    * 如果要将误差减少 100 倍，需要 10,000 倍的样本量。
+    * 例如，如果希望误差的估计精确到 ``±0.01`` ，大约需要 2,500 个样本。
+        * Bernoulli 分布的随机变量单个样本误差的方差是： :math:`\sigma^2=\epsilon(f)(1-\epsilon(f))`
+        * 方差 :math:`\sigma^2` 在 :math:`\epsilon(f) = 0.5` 时达到最大值 0.25
+        * 如果希望误差波动在 $±0.01$ 以内，则需要满足
+        * :math:`\sqrt{\frac{0.25}{n}}=0.01`
+        * 解得 n=2500
+
+* 通常情况下，这种 :math:`\mathcal{O}(1/\sqrt{n})` 的速率是统计学中我们能期望的最优速率。
+* 中心极限定理的核心思想：中心极限定理告诉我们，无论总体分布如何，如果从总体中抽取大量独立同分布的随机样本，并计算样本均值，这个样本均值的分布将近似服从正态分布 (Normal Distribution)，只要样本数量足够大。
+
+
+
+4. Hoeffding 不等式和有限样本误差界
++++++++++++++++++++++++++++++++++++
+
+* 前面的分析主要针对渐近情况，即随着样本数量趋近无穷时的行为。
+* 然而，幸运的是，由于我们的随机变量是有界的，我们可以通过 Hoeffding (1963) 提出的一个不等式得到有限样本下的有效界限：
+
+.. math::
+
+    P(\epsilon_\mathcal{D}(f) - \epsilon(f) \geq t) < \exp\left( - 2n t^2 \right)
+
+* 为确保在 95% 置信水平下， :math:`\epsilon_\mathcal{D}(f)` 与 :math:`\epsilon(f)` 之间的距离不超过 0.01，我们需要的最小样本量大约为 15,000，略多于渐近分析得出的 10,000。
+* 这种趋势在统计学中普遍存在。适用于有限样本的保证通常比渐近分析更保守一些。然而，这两者给出的数值差距不大，反映出渐近分析在实际应用中仍然具有相当的参考价值，即使它们无法提供完全的保证。
+
+
+* 解释：这条不等式提供了在有限样本下的误差估计。
+* t 表示允许误差的容忍范围。
+* 当 ``t = 0.01`` （即希望误差在 ``±0.01`` 范围内）时，需要约 15,000 个样本，比中心极限定理估计的 10,000 样本略多。
+* 结论：有限样本下的误差估计比无穷样本下略保守，但两者差距不大，表明中心极限定理提供了很好的估计。
+
+
+4.6.2. Test Set Reuse
+"""""""""""""""""""""
+
+* 分析：测试集重用问题与风险
+
+核心观点
++++++++++++
+
+* 测试集是机器学习模型评估的基准，但重用测试集可能带来严重的问题，主要涉及到：
+    * 假发现率（False Discovery Rate）问题
+    * 自适应过拟合（Adaptive Overfitting）风险
+
+1) 假发现率问题
++++++++++++++++
+
+* 背景：在评估模型 :math:`f_1` 之后，用户可能继续开发新模型 :math:`f_2, f_3, ..., f_k` ，并在相同的测试集上评估它们的性能。
+* 风险：
+    * 每次模型评估都存在 5% 的误导风险（置信水平95%）。
+    * 如果在相同测试集上评估 k 个模型，即使每个模型独立地有95%置信度，整体出现至少一个误导结果的概率大大增加。
+    * 举例：当 :math:`k = 20` 时，至少一个模型误导的概率 :math:`= 1 - (0.95)^{20} \approx 64%`。
+    * 影响：错误的模型可能被误选为最佳模型，导致实际性能不佳。
+
+2) 自适应过拟合
++++++++++++++++
+
+* 背景：如果模型 :math:`f_2` 是在观察 :math:`f_1` 的测试集结果后设计的，那么 :math:`f_2` 的性能已受到测试集信息的影响。
+* 风险：
+    * 测试集在评估 :math:`f_2` 时已不再是真正的“未知数据”，使得模型评估的结果偏乐观。
+    * 这破坏了机器学习模型评估的核心原则，即模型不能“见过”测试集数据。
+    * 例子：在 Kaggle 比赛中，如果多次在私有测试集上提交模型并调整参数，最终的模型可能只是在测试集上表现很好，而在真实场景中表现较差。
+* 本质：模型不断根据测试集反馈优化，测试集逐渐退化为训练集的延伸，无法有效反映模型的真实泛化能力。
+
+缓解策略与实践建议
+++++++++++++++++++
+
+1) 避免重复使用同一测试集。策略：构建多个独立的测试集，每轮评估后将旧测试集降级为验证集，避免反复使用同一批数据。
+2) 考虑多重假设检验。方法：在评估多个模型时，采用 **Bonferroni校正** 等方法降低假发现率。例如，对于 k 个模型评估，将置信水平调整为 :math:`1 - \frac{0.05}{k}` ，确保整体误导概率维持在 5% 左右。
+3) 限制对测试集的访问频率。实践：设置明确的测试集访问次数上限（如最多3次），严格记录每次访问目的。在重大模型评估前，尽量减少对测试集的接触，仅在最终模型准备发布前使用测试集。
+4) 加大数据集规模。理由：大数据集更能抵抗过拟合风险，即使有一定程度的信息泄露，大规模数据仍能提供可靠评估。
+
+
+
+4.6.3. Statistical Learning Theory
+""""""""""""""""""""""""""""""""""
+
+核心观点
+++++++++
+
+* 模型泛化的根本难题在于如何保证训练误差接近真实误差。
+* 解决路径：通过数学工具（如VC维度）建立泛化误差的上界，量化模型复杂性与数据样本数量之间的关系。
+* 目标：实现一致收敛性，确保模型在训练集和测试集上的误差差距在可控范围内。
+
+主要问题拆解
+++++++++++++
+
+* 1) 泛化问题的本质：“测试集是我们唯一的参考”：机器学习模型的性能评估依赖于测试集，但测试集的结果仅能反映事后泛化能力，无法提供事前泛化保证。困难点：即使一个模型在测试集上表现良好，也无法保证下一个模型（f_2, f_3, ...）能持续泛化。
+* 2) 泛化误差与样本误差的差距：核心问题：经验误差 :math:`\epsilon_\mathcal{S}` 接近真实误差 :math:`\epsilon` 吗？如果模型仅在训练集上表现优秀，但在测试集或真实数据上效果不佳，就发生了过拟合。
+* 3) 模型类 :math:`\mathcal{F}` 的复杂性：挑战：如何在复杂模型类中挑选既能拟合训练集又能泛化的模型？线性分类器通常泛化良好，但复杂的深度学习模型（函数集合非常大，$|\mathcal{F}| = \infty$）更容易过拟合。
+
+解决思路:一致收敛性与VC维度
++++++++++++++++++++++++++++
+
+1) 一致收敛性(Uniform Convergence)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* 目标：确保所有模型在训练集和真实分布上的误差收敛到同一个小范围内。
+* 定义：对于模型类中的所有模型 :math:`f \in \mathcal{F}` ，希望以高概率保证：
+
+.. math::
+
+    |\epsilon(f)-\epsilon_{\mathcal{S}}(f)| < \alpha \quad \text { (for all } f \in \mathcal{F})
+
+* 其中 :math:`\alpha` 是误差界限
+* 挑战：
+    * 过于灵活的模型类（如记忆机，能记住训练集上所有数据但泛化性极差）很难满足一致收敛性。
+    * 过于刚性的模型类则风险在于欠拟合，难以捕捉训练数据的规律。
+* 平衡：学习理论的目标是在 **模型灵活性（高方差）和模型刚性（高偏差）** 之间找到平衡点。
+
+
+2) Vapnik-Chervonenkis (VC) 维度
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* VC 维度：衡量模型类的复杂性，反映模型拟合任意数据点的能力。
+* VC 维度提供了一种量化模型类复杂性的方法，但在实际应用中可能过于保守。
+
+
+
+现实意义与应用
+++++++++++++++
+
+1) 经验误差 vs. 泛化误差
+    * 小数据场景：训练误差低并不代表模型能泛化，可能是过拟合。
+    * 大数据场景：随着数据量 ``n`` 增加，经验误差逐渐收敛到真实误差。
+
+2) 工程实践
+    * 深度学习：复杂模型往往需要大量样本，即使训练集误差接近 0，也不能简单假设泛化误差很低。
+    * 自动驾驶等领域：高风险场景下通常采用更大的数据集和多重交叉验证，降低泛化误差的不确定性。
+
+
+4.7. Environment and Distribution Shift
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* 分布漂移（Distribution Shift）
+
+4.7.1. Types of Distribution Shift
+""""""""""""""""""""""""""""""""""
+
+* 引言：
+    * 提出分布漂移的概念，指出训练数据和测试数据可能来自不同的分布，直接影响模型性能。
+    * 强调在缺乏关于分布关系的假设下，鲁棒分类器的学习是不可能的。
+    * 通过二分类问题（猫狗分类）引出一个极端例子：如果输入分布保持不变，但标签完全反转，将无法区分分布是否发生变化。
+* 转折：
+    * 说明在适当假设下，可以检测分布漂移，并可能动态调整模型以提升性能。
+
+* 核心思想
+    * 分布漂移不可避免，但在合理假设下，可以检测和适应漂移。
+    * 关键是理解漂移来源（特征变化、标签变化或标签定义变化），并选择合适的算法来应对。
+    * 协变量漂移是最常研究的方向，因为特征分布变化直观且更易被监测到。
+    * 标签漂移更具挑战，通常需要在低维标签空间中操作，而不是直接在高维特征空间中处理漂移。
+    * 概念漂移最复杂，通常依赖外部知识或元学习方法来逐渐适应。
+
+
+4.7.1.1. Covariate Shift
+++++++++++++++++++++++++
+
+* 定义： 特征的分布 :math:`p(\mathbf{x})` 发生变化，但标签条件分布 :math:`P(y \mid \mathbf{x})` 保持不变。
+* 示例：训练集是实物照片，测试集是卡通图像，特征分布（图片风格）变了，但猫狗的本质定义不变。
+* 解释：协变量漂移常见于因果关系中，特征 :math:`\mathbf{x}` 影响标签 y 。需要重点关注模型如何适应新分布的特征。
+
+
+4.7.1.2. Label Shift
+++++++++++++++++++++
+
+* 定义： 标签分布 :math:`P(y)` 发生变化，但类条件特征分布 :math:`P(\mathbf{x} \mid y)` 保持不变。
+* 示例：不同疾病的患病率变化，但疾病表现出的症状不变。
+* 解释：
+    * 标签漂移通常出现在标签 y 影响特征 :math:`\mathbf{x}` 的因果关系中。
+    * 操作标签的模型（低维）通常更易处理这种情况，而操作特征的模型（高维）难度较大。
+
+4.7.1.3. Concept Shift
+++++++++++++++++++++++
+
+* 定义： 标签本身的定义发生变化，即 :math:`P(y \mid \mathbf{x})` 变化。
+* 示例：
+    * 不同地区对同一种软饮料有不同称呼（如 "pop" 和 "soda"）。
+    * 疾病诊断标准或时尚趋势随时间和地域变化。
+* 解释：
+    * 概念漂移难以察觉，因为标签定义可能随时间或地理位置逐渐变化。
+    * 在自然语言处理或机器翻译中，概念漂移尤为明显。
+
+
+
+4.7.2. Examples of Distribution Shift
+"""""""""""""""""""""""""""""""""""""
+
+4.7.2.1. Medical Diagnostics
+++++++++++++++++++++++++++++
+
+* 医疗诊断（Medical Diagnostics）
+* 背景：目标是开发癌症检测算法，使用健康人和病人的血液样本进行训练。
+* 问题：由于健康男性样本难以收集，创业公司选择了大学生血样作为对照组。
+* 结果：分类器可以轻松区分健康和病人群体，但这是因为大学生和老年病人之间存在大量无关变量（年龄、激素水平、生活方式等）差异，而非疾病相关特征。
+* 本质：极端协变量漂移（Covariate Shift），健康对照组和真实病人群体特征存在巨大差异，导致模型在真实世界表现不佳。
+* 启示：数据采样过程必须匹配真实应用环境。不能仅为解决数据稀缺问题随意选择不具代表性的样本。
+
+4.7.2.2. Self-Driving Cars
+++++++++++++++++++++++++++
+
+* 背景：公司希望用游戏引擎合成数据训练道路探测器，以减少标注数据的成本。
+* 问题：在引擎测试数据上表现良好，但在真实环境中完全失败。
+* 原因：道路纹理在游戏引擎中过于简单，并且所有道路都使用相同纹理。模型学习到的是纹理差异，而非真正的道路特征。
+* 类似案例：美军曾试图通过航拍照片训练坦克探测器，但模型实际上只是学会了区分早晨和中午的树影差异。
+* 本质：概念漂移或协变量漂移， 模型学到了错误特征，导致真实场景下表现不佳。
+* 启示：合成数据需尽量贴近现实。避免训练数据和实际应用场景间存在严重差距。需要混合多种真实和合成数据来源，以减少模型对无关特征的依赖。
+
+
+4.7.2.3. Nonstationary Distributions
+++++++++++++++++++++++++++++++++++++
+
+* 非平稳分布（Nonstationary Distributions）
+* 定义： 分布随时间缓慢变化，模型未能及时更新。
+* 典型案例：
+    * 广告模型未及时更新，新设备（如iPad）推出后未纳入训练，模型失效。
+    * 垃圾邮件过滤器过时，新型垃圾邮件逃过检测。
+    * 产品推荐系统滞后，仍推荐圣诞帽，未能适应季节变化。
+* 本质：分布缓慢漂移， 随着时间推移模型性能逐渐下降。
+* 启示：模型需要定期更新和重新训练 以适应环境变化。引入在线学习机制，使模型可以持续学习新数据。
+
+4.7.3. Correction of Distribution Shift
+"""""""""""""""""""""""""""""""""""""""
+
+* 本节是比较高级的功能，不理解也不影响后面章节的学习
+
+4.7.3.1. Empirical Risk and Risk
+++++++++++++++++++++++++++++++++
+
+* 风险定义与训练目标：训练模型时，我们的目标是使模型在训练数据上的损失最小化。
+
+1. 经验风险 (Empirical Risk)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. math::
+
+    \operatorname{minimize}_{f} \frac{1}{n} \sum_{i=1}^{n} l\left(f\left(\mathbf{x}_{i}\right), y_{i}\right)
+
+* 经验风险最小化, 即在训练数据集上计算损失并最小化平均损失。
+
+2. 真实风险 (True Risk)
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. math::
+
+    E_{p(\mathbf{x}, y)}[l(f(\mathbf{x}), y)]=\iint l(f(\mathbf{x}), y) p(\mathbf{x}, y) d \mathbf{x} d y
+
+* 真实风险考虑的是整个数据分布 :math:`p(\mathbf{x}, y)` ，但实际情况中无法获取整个分布，所以只能使用经验风险近似最小化真实风险。
+
+
+4.7.3.2. Covariate Shift Correction
++++++++++++++++++++++++++++++++++++
+
+* 定义：特征的分布 :math:`p(\mathbf{x})` 发生变化，但条件分布 :math:`p(y|\mathbf{x})` 保持不变。
+* 问题：训练数据来自源分布 :math:`q(\mathbf{x})` ，但测试数据来自目标分布 :math:`p(\mathbf{x})` 。如果源分布和目标分布不同，模型在测试集上的表现可能很差。
+* 解决方案：通过重加权 (Re-weighting) 技术调整训练数据的权重，使其更符合目标分布。
+
+.. math::
+
+    \begin{aligned}
+    \int\int l(f(\mathbf{x}), y) p(y \mid \mathbf{x})p(\mathbf{x}) \;d\mathbf{x}dy =
+    \int\int l(f(\mathbf{x}), y) q(y \mid \mathbf{x})q(\mathbf{x})\frac{p(\mathbf{x})}{q(\mathbf{x})} \;d\mathbf{x}dy.
+    \end{aligned}
+
+* 即，将每个样本的权重乘以 :math:`\beta_i = \frac{p(\mathbf{x}_i)}{q(\mathbf{x}_i)}` ，从而校正协变量漂移。
+
+* 实际操作步骤：
+    * 训练一个分类器，区分目标分布 :math:`p(\mathbf{x})`  和源分布 :math:`q(\mathbf{x})`  的样本。
+    * 使用逻辑回归计算 :math:`\beta_i = \exp(h(\mathbf{x}_i))` ，得到校正权重。
+    * 在模型训练时，对每个样本 :math:`(\mathbf{x}_i, y_i)`  乘以 :math:`\beta_i`  进行加权经验风险最小化。
+
+
+
+4.7.3.3. Label Shift Correction
++++++++++++++++++++++++++++++++
+
+* 解决方案：通过计算标签分布 p(y) 和 q(y) 的比值 :math:`\beta_i = \frac{p(y_i)}{q(y_i)}` 进行校正。
+* 公式推导：
+
+.. math::
+
+    \begin{aligned}
+    \int\int l(f(\mathbf{x}), y) p(\mathbf{x} \mid y)p(y) \;d\mathbf{x}dy =
+    \int\int l(f(\mathbf{x}), y) q(\mathbf{x} \mid y)q(y)\frac{p(y)}{q(y)} \;d\mathbf{x}dy.
+    \end{aligned}
+
+
+4.7.3.4. Concept Shift Correction
++++++++++++++++++++++++++++++++++
+
+* 问题：例如，从区分猫和狗转变为区分白色和黑色动物，这种变化很难通过简单的方法校正。
+* 解决方案：
+    * 对于渐变的漂移，可以在现有模型上进行少量更新，而非从头训练新模型。
+    * 对于剧烈的漂移，通常需要重新收集数据和标签，重新训练模型。
+* 实际应用示例：
+    * 广告推荐：用户兴趣变化，新产品上线。
+    * 交通摄像头：镜头老化导致图像质量下降。
+    * 新闻推荐：新闻内容不断更新，新事件出现。
+    * 通过持续学习 (Continual Learning) 或迁移学习 (Transfer Learning) 应对概念漂移。
+
+
+4.7.4. A Taxonomy of Learning Problems
+""""""""""""""""""""""""""""""""""""""
+
+4.7.4.1. Batch Learning
++++++++++++++++++++++++
+
+* 概念：在批量学习中，我们拥有一个完整的训练数据集 :math:`{(\mathbf{x}_1, y_1), \dots, (\mathbf{x}_n, y_n)}`
+    * 模型 :math`f(\mathbf{x})` 是在所有数据都已知的情况下训练完成的。
+    * 训练完成后，模型部署在真实环境中，不再进行更新（除非有重大错误或特殊情况）。
+* 示例：训练一个猫狗分类器，用于智能猫门。当模型训练完成并安装在客户家中后，它不会再改变或学习新的数据。
+* 特点：
+    * 训练和推理是分开的。
+    * 适用于静态、不经常变化的任务。
+    * 训练数据与未来数据分布一致时效果最好。
+
+4.7.4.2. Online Learning
+++++++++++++++++++++++++
+
+* 概念：数据逐个到达，模型需要逐步学习，每次接收一个样本 :math:`(\mathbf{x}_i, y_i)`
+    * 在观察到标签 :math:`y_i` 之前，模型先基于 :math:`\mathbf{x}_i` 给出预测。
+    * 在得到标签后，模型根据损失进行更新，逐渐变得更好。
+* 示例：股票价格预测：每天预测第二天的股价，等到实际价格出来后，再更新模型，调整预测方式。
+* 流程：
+    * 使用模型 :math:`f_t` 对新的数据 :math:`\mathbf{x}_t` 进行预测。
+    * 观察真实标签 :math:`y_t` 并计算损失。
+    * 更新模型 :math:`f_{t+1}` 以改进下一次预测。
+
+.. math::
+
+    f_t \rightarrow \mathbf{x}_t \rightarrow f_t(\mathbf{x}_t) \rightarrow y_t \rightarrow l(y_t, f_t(\mathbf{x}_t)) \rightarrow f_{t+1}
+
+* 特点：
+    * 持续学习和更新模型
+    * 适用于环境动态变化、数据不断流入的场景
+    * 可应对概念漂移（concept shift）
+
+
+4.7.4.3. Bandits
+++++++++++++++++
+
+* 概念：
+    * 多臂老虎机是一类特殊的在线学习问题
+    * 不同于连续参数模型（如神经网络），Bandit 只有有限个动作或选择
+    * 目标是找到收益最高的“拉杆”或动作
+* 示例：
+    * 在线广告推荐：在多个广告中选择一个展示，观察点击率，不断调整选择策略。
+* 特点：
+    * 只需在有限选项中进行决策
+    * 通常具有较强的理论保证和优化策略
+    * 算法更简单，但问题范围更狭窄
+
+4.7.4.4. Control
+++++++++++++++++
+
+* 概念：
+    * 环境会记住模型的决策，下一次的观测值依赖于之前的行为。
+    * 不一定是对抗性的，但模型的行为会影响未来状态。
+* 示例：
+    * 咖啡机的温度控制器：是否继续加热取决于当前温度以及之前的加热状态。
+    * 新闻推荐系统：用户是否点击新闻取决于之前推荐的内容。
+* 特点：
+    * 模型需要记忆和考虑过去的行为。
+    * 经常使用控制理论方法，如 PID 控制器。
+    * 可用于环境交互式决策问题。
+
+
+
+4.7.4.5. Reinforcement Learning
++++++++++++++++++++++++++++++++
+
+* 概念：
+    * 强化学习是在复杂环境中进行决策的更高级形式。
+    * 环境可能是合作的（例如多玩家合作游戏），也可能是竞争的（如象棋、围棋）。
+    * 模型需要通过与环境交互，不断学习以最大化累积奖励。
+* 示例：
+    * 游戏 AI：在象棋、围棋或电子竞技游戏中，自主学习对抗策略。
+    * 自动驾驶：其他车辆的行为会受到自动驾驶车辆的影响。
+* 特点：
+    * 适用于复杂、有记忆的动态环境。
+    * 强调长期策略和累积奖励。
+    * 环境的反馈（奖励或惩罚）决定模型更新方式。
+
+4.7.4.6. Considering the Environment
+++++++++++++++++++++++++++++++++++++
+
+* 核心思想：
+    * 不同环境下，模型的表现和策略可能完全不同
+    * 在静态环境中，一个有效的策略可能在动态环境中失效
+    * 环境的变化速度和方式，决定了需要使用哪种学习方法
+* 示例：
+    * 金融市场：套利机会一旦被发现并利用，市场会迅速调整，套利机会消失。
+    * 推荐系统：用户兴趣随时间变化，需要动态更新模型。
+* 解决方法：
+    * 缓慢变化的环境：
+        * 约束模型的更新速度，使其缓慢适应环境变化。
+    * 快速但偶尔变化的环境：
+        * 在环境突然变化时允许模型迅速调整，但日常变化较少。
+
+总结
+++++
+
+* 批量学习：静态、一次性训练。
+* 在线学习：逐步更新模型，适应动态环境。
+* Bandit：有限动作选择问题，优化奖励。
+* 控制：环境会记住模型的行为，状态依赖历史。
+* 强化学习：复杂动态环境中通过奖励学习策略。
+
+
+5. Multilayer Perceptrons
+-------------------------
+
+5.1. Multilayer Perceptrons
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+5.1.1. Hidden Layers
+""""""""""""""""""""
+
+5.1.1.1. Limitations of Linear Models
++++++++++++++++++++++++++++++++++++++
+
+* 线性模型的局限性：线性模型假输出是输入的线性变换。这种假设太强，导致模型难以拟合复杂关系。
+* 如：预测贷款偿还概率时，收入增长对偿还概率的影响并非线性（收入从 0 美元增加到 5 万美元可能比从 100 万美元增加到 105 万美元对应的还款可能性更大）。
+* 如：体温与健康关系：对于正常体温高于 37°C (98.6°F) 的人来说，温度越高表明风险越大。然而，如果体温低于37°C，较低的温度表明风险更大！
+* 如：图像分类问题：简单线性模型假设像素强度与输出类别直接相关，这对于复杂任务（如猫狗分类）效果很差。
+
+5.1.1.2. Incorporating Hidden Layers
+++++++++++++++++++++++++++++++++++++
+
+* 多层感知机引入隐藏层
+* 通过叠加隐藏层，使模型学习数据复杂的非线性关系。
+* MLP由多个全连接层组成，前面几层负责学习特征表示，最后一层执行线性预测。
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/12/5DOnFP.png
+
+    Fig. 5.1.1 An MLP(multilayer perceptron) with a hidden layer of five hidden units.
+
+5.1.1.3. From Linear to Nonlinear
++++++++++++++++++++++++++++++++++
+
+* 激活函数的必要性
+* 如果隐藏层仅仅是线性变换，模型仍然等效于单层线性模型，无法真正提升表达能力。
+
+.. math::
+
+    \mathbf{O} = (\mathbf{X} \mathbf{W}^{(1)} + \mathbf{b}^{(1)})\mathbf{W}^{(2)} + \mathbf{b}^{(2)} \\
+               = \mathbf{X} \mathbf{W}^{(1)}\mathbf{W}^{(2)} + \mathbf{b}^{(1)} \mathbf{W}^{(2)} + \mathbf{b}^{(2)} \\
+               = \mathbf{X} \mathbf{W} + \mathbf{b}.
+
+
+* 解决方法：在每个隐藏单元后引入非线性激活函数（如ReLU），破除线性限制，使模型具备拟合复杂函数的能力。
+
+.. math::
+
+    \begin{aligned}
+        \mathbf{H} & = \sigma(\mathbf{X} \mathbf{W}^{(1)} + \mathbf{b}^{(1)}), \\
+        \mathbf{O} & = \mathbf{H}\mathbf{W}^{(2)} + \mathbf{b}^{(2)}.\\
+    \end{aligned}
+
+* 为了构建更通用的 MLP，我们可以继续堆叠这样的隐藏层
+
+.. math::
+
+    \mathbf{H}^{(1)} = \sigma_1(\mathbf{X} \mathbf{W}^{(1)} + \mathbf{b}^{(1)}) \\
+    \mathbf{H}^{(2)} = \sigma_2(\mathbf{H}^{(1)} \mathbf{W}^{(2)} + \mathbf{b}^{(2)})
+
+5.1.1.4. Universal Approximators
+++++++++++++++++++++++++++++++++
+
+* 通用逼近定理：即使只有一个隐藏层，只要神经元足够多，MLP可以逼近任意复杂函数。
+* 深度网络的优势：尽管单隐藏层能拟合任意函数，但更深的网络可以用更少的参数表达复杂函数，更高效、更易训练。
+
+* MLP是解决复杂任务的基石，但设计深度和宽度需权衡。
+* 实际中，MLP与卷积网络、递归网络等结合，进一步提升模型表现。
+
+
+5.1.2. Activation Functions
+"""""""""""""""""""""""""""
+
+* 激活函数通过计算加权和并进一步添加偏差来决定是否应该激活神经元。
+* 它们是可微分算子，用于将输入信号转换为输出，但大多数都增加了非线性。
+
+
+* 5.1.2.1. ReLU Function
+* 5.1.2.2. Sigmoid Function
+* 5.1.2.3. Tanh Function
+
+
+5.2. Implementation of Multilayer Perceptrons
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+5.2.1. Implementation from Scratch
+""""""""""""""""""""""""""""""""""
+
+5.2.1.1. Initializing Model Parameters::
+
+    class MLPScratch(d2l.Classifier):
+        def __init__(self, num_inputs, num_outputs, num_hiddens, lr, sigma=0.01):
+            super().__init__()
+            self.save_hyperparameters()
+            self.W1 = nn.Parameter(torch.randn(num_inputs, num_hiddens) * sigma)
+            self.b1 = nn.Parameter(torch.zeros(num_hiddens))
+            self.W2 = nn.Parameter(torch.randn(num_hiddens, num_outputs) * sigma)
+            self.b2 = nn.Parameter(torch.zeros(num_outputs))
+
+5.2.1.2. Model::
+
+    def relu(X):
+        a = torch.zeros_like(X)
+        return torch.max(X, a)
+
+    @d2l.add_to_class(MLPScratch)
+    def forward(self, X):
+        X = X.reshape((-1, self.num_inputs))
+        H = relu(torch.matmul(X, self.W1) + self.b1)
+        return torch.matmul(H, self.W2) + self.b2
+
+
+5.2.1.3. Training::
+
+    # 训练循环与 softmax 回归完全相同
+    model = MLPScratch(num_inputs=784, num_outputs=10, num_hiddens=256, lr=0.1)
+    data = d2l.FashionMNIST(batch_size=256)
+    trainer = d2l.Trainer(max_epochs=10)
+    trainer.fit(model, data)
+
+5.2.2. Concise Implementation
+"""""""""""""""""""""""""""""
+
+5.2.2.1. Model::
+
+    # 和之前的区别是这儿有两个全连接层(第一个隐藏层，第二个输出层)
+    class MLP(d2l.Classifier):
+        def __init__(self, num_outputs, num_hiddens, lr):
+            super().__init__()
+            self.save_hyperparameters()
+            self.net = nn.Sequential(
+                nn.Flatten(), 
+                nn.LazyLinear(num_hiddens),
+                nn.ReLU(), 
+                nn.LazyLinear(num_outputs)
+            )
+
+
+5.2.2.2. Training::
+
+    # 与实现 softmax 回归时完全相同。这种模块化使我们能够将有关模型架构的问题与其他无关的因素分离开来
+    model = MLP(num_outputs=10, num_hiddens=256, lr=0.1)
+    trainer.fit(model, data)
+
+
+5.3. Forward Propagation, Backward Propagation, and Computational Graphs
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+5.3.1. Forward Propagation
+""""""""""""""""""""""""""
+
+* 前向传播是神经网络的核心计算步骤，它指的是按照从输入层到输出层的顺序，计算和存储中间变量（包括输出）。简单来说，就是把输入数据一层层地传递，最终得到输出结果。
+
+1. 输入与权重矩阵
++++++++++++++++++
+
+* 假设我们有一个输入样本 :math:`\mathbf{x} \in \mathbb{R}^d` ，表示 d 维特征的数据。
+* 隐藏层的权重矩阵 :math:`\mathbf{W}^{(1)} \in \mathbb{R}^{h \times d}` 将输入 :math:`\mathbf{x}` 映射到隐藏层：
+
+.. math::
+
+    \mathbf{z} = \mathbf{W}^{(1)}\mathbf{x}
+
+* **z** 是隐藏层的线性变换结果，长度为 h，表示隐藏层有 h 个神经元
+
+2. 激活函数与隐藏层输出
++++++++++++++++++++++++
+
+* 应用一个激活函数 :math:`\phi` ：
+
+.. math::
+
+    \mathbf{h} = \phi(\mathbf{z})
+
+
+* **h** 是隐藏层的激活输出，长度为 h
+* 激活函数 :math:`\phi` 引入了非线性，确保模型能学习复杂的非线性关系
+
+3. 输出层计算
++++++++++++++
+
+* 隐藏层输出 :math:`\mathbf{h}` 再次经过输出层的权重矩阵 :math:`\mathbf{W}^{(2)} \in \mathbb{R}^{q \times h}` 变换，生成最终输出：
+
+.. math::
+
+    \mathbf{o} = \mathbf{W}^{(2)}\mathbf{h}
+
+* :math:`\mathbf{o}` 是输出层的结果，长度为 q，表示有 q 个输出单元。
+
+4. 计算损失
++++++++++++
+
+输出 :math:`\mathbf{o}` 通过损失函数 l 与真实标签 y 计算损失：
+
+.. math::
+
+    L = l(\mathbf{o}, y)
+
+* L 是单个样本的损失值，反映了模型输出与真实值之间的差距。
+
+5. 正则化项
++++++++++++
+
+* 为了防止过拟合，我们可以引入 :math:`\ell_2` 正则化项：
+
+.. math::
+
+    s = \frac{\lambda}{2} \left( \|\mathbf{W}^{(1)}\|_F^2 + \|\mathbf{W}^{(2)}\|_F^2 \right)
+
+* 其中 :math:`\lambda` 是正则化强度的超参数。
+* :math:`\|\mathbf{W}^{(1)}\|_F^2` 和 :math:`\|\mathbf{W}^{(2)}\|_F^2` 分别是权重矩阵的 Frobenius 范数，相当于将矩阵展平后计算 :math:`\ell_2` 范数。
+
+6. 目标函数
++++++++++++
+
+最终的目标函数是：
+
+.. math::
+
+    𝐽 = 𝐿 + 𝑠
+
+* J 表示带正则化的损失函数，是模型需要最小化的目标
+* 在训练过程中，我们优化的是 J，以便在损失与模型复杂度之间取得平衡
+
+
+5.3.2. Computational Graph of Forward Propagation
+"""""""""""""""""""""""""""""""""""""""""""""""""
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/12/BvIxOt.png
+
+    Fig. 5.3.1 Computational graph of forward propagation.
+
+
+* 其中正方形表示变量，圆圈表示运算符。
+* 左下角表示输入，右上角表示 输出。
+
+
+
+5.3.3. Backpropagation
+""""""""""""""""""""""
+
+* 反向传播是神经网络中用于计算参数梯度的方法。
+* 简单来说，它是通过从输出层向输入层的反向遍历，根据微积分中的链式法则逐步计算梯度的过程。
+
+1. 链式法则
++++++++++++
+
+.. math::
+
+    \frac{\partial \mathsf{Z}}{\partial \mathsf{X}} = \textrm{prod}\left(\frac{\partial \mathsf{Z}}{\partial \mathsf{Y}}, \frac{\partial \mathsf{Y}}{\partial \mathsf{X}}\right)
+
+2. 反向传播目标
++++++++++++++++
+
+* 假设一个简单的单隐藏层神经网络，参数包括：
+
+.. math::
+
+    隐藏层权重矩阵： \mathbf{W}^{(1)} \\
+    输出层权重矩阵： \mathbf{W}^{(2)} \\
+
+    目标是计算梯度： \\
+    \partial J / \partial \mathbf{W}^{(1)} \\
+    \partial J / \partial \mathbf{W}^{(2)}
+
+3. 逐步计算过程
++++++++++++++++
+
+
+1. 计算目标函数对损失项和正则化项的梯度
+
+.. math::
+
+    \frac{\partial J}{\partial L} = 1 \quad \text{和} \quad \frac{\partial J}{\partial s} = 1
+
+
+2. 计算对输出层变量 :math:`\mathbf{o}` 的梯度
+
+.. math::
+
+    \frac{\partial J}{\partial \mathbf{o}} = \frac{\partial L}{\partial \mathbf{o}} \in \mathbb{R}^q
+
+3. 计算正则化项对参数的梯度
+
+.. math::
+
+    \frac{\partial s}{\partial \mathbf{W}^{(1)}} = \lambda \mathbf{W}^{(1)} \quad \text{和} \quad \frac{\partial s}{\partial \mathbf{W}^{(2)}} = \lambda \mathbf{W}^{(2)}
+
+
+4. 计算输出层参数 :math:`\mathbf{W}^{(2)}` 的梯度
+
+.. math::
+
+    \frac{\partial J}{\partial \mathbf{W}^{(2)}} = \frac{\partial J}{\partial \mathbf{o}} \mathbf{h}^\top + \lambda \mathbf{W}^{(2)}
+
+- 输出层权重梯度等于 **损失对输出的梯度** 乘以 **隐藏层激活输出** ，再加上 **正则化项**
+
+5. 计算隐藏层输出 :math:`\mathbf{h}` 的梯度
+
+.. math::
+
+    \frac{\partial J}{\partial \mathbf{h}} = {\mathbf{W}^{(2)}}^\top \frac{\partial J}{\partial \mathbf{o}}
+
+
+6. 计算隐藏层激活前变量 :math:`\mathbf{z}` 的梯度
+
+.. math::
+
+    \frac{\partial J}{\partial \mathbf{z}} = \frac{\partial J}{\partial \mathbf{h}} \odot \phi'(\mathbf{z})
+
+- 这里使用逐元素乘法 :math:`\odot` ，表示对激活函数的导数。
+
+7. 计算输入层参数 :math:`\mathbf{W}^{(1)}` 的梯度
+
+.. math::
+
+    \frac{\partial J}{\partial \mathbf{W}^{(1)}} = \frac{\partial J}{\partial \mathbf{z}} \mathbf{x}^\top + \lambda \mathbf{W}^{(1)}
+
+- 最终，输入层权重的梯度是损失对 :math:`\mathbf{z}`  的梯度乘以输入 :math:`\mathbf{x}` ，再加上正则化项。
+
+小结
+++++
+
+- 反向传播逐层计算梯度，从输出层反向回溯到输入层。  
+- 每一步都应用链式法则，将损失项和正则化项对参数的梯度进行累积。  
+- 最终计算出的梯度用于更新模型参数，逐步降低目标函数 J，实现模型优化。
+
+
+5.3.4. Training Neural Networks
+"""""""""""""""""""""""""""""""
+
+* 训练神经网络时，前向传播和后向传播相互依赖。
+* 正向传播：按计算图的依赖关系，从输入层开始，一直到输出层，计算并存储中间变量。
+* 反向传播：在反方向上，从输出层回到输入层，利用正向传播中存储的中间变量计算梯度。
+
+
+训练过程的交替进行
+++++++++++++++++++
+
+* 模型初始化：先初始化模型参数。
+* 交替进行：
+    * 正向传播：计算输出和损失函数，存储中间变量。
+    * 反向传播：利用存储的中间变量，计算梯度并更新模型参数。
+* 关键点：反向传播重用正向传播存储的中间变量，避免重复计算。
+
+
+内存占用
+++++++++
+
+* 中间变量的保留：正向传播产生的中间变量需要保留，直到反向传播完成。这是训练阶段内存占用较高的主要原因之一。
+* 内存消耗的影响因素：
+    * 网络层数：层数越多，中间变量越多，占用的内存越大。
+    * 批大小 (batch size)：批量大小越大，中间变量的数量和大小也会增加。
+
+.. note:: 在训练神经网络时，一旦模型参数初始化，我们就交替前向传播和反向传播，使用反向传播给出的梯度来更新模型参数。请注意，反向传播重用前向传播中存储的中间值以避免重复计算。结果之一是我们需要保留中间值，直到反向传播完成。这也是训练比普通预测需要更多内存的原因之一。
+
+5.3.5. Summary
+""""""""""""""
+
+* 前向传播顺序计算并存储神经网络定义的计算图中的中间变量。它从输入层进行到输出层。
+* 反向传播以相反的顺序顺序计算并存储神经网络内中间变量和参数的梯度。
+* 在训练深度学习模型时，前向传播和反向传播是相互依赖的，并且训练需要的内存明显多于预测。
+
+
+5.4. Numerical Stability and Initialization
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+5.4.1. Vanishing and Exploding Gradients
+""""""""""""""""""""""""""""""""""""""""
+
+* 核心问题：在深度神经网络中，随着网络层数增加，反向传播过程中梯度可能变得非常小（消失）或非常大（爆炸）。这会导致模型难以收敛或学习速度极慢。
+
+1. 数学背景与直观理解
++++++++++++++++++++++
+
+* 考虑一个深度网络 ``L layers`` ，输入 **x** 和输出 **o** 。
+* With each layer l defined by a transformation :math:`f_l` parametrized by weights :math:`\mathbf{W}^{(l)}`
+* 其隐藏层输出为 :math:`\mathbf{h}^{(l)}` （让 :math:`\mathbf{h}^{(0)} = \mathbf{x}` ），我们的网络可以表示为：
+
+.. math::
+
+    \mathbf{h}^{(l)} = f_l (\mathbf{h}^{(l-1)}) \\
+    因此: \mathbf{o} = f_L \circ \cdots \circ f_1(\mathbf{x}) \\
+
+    \mathbf{h}^{(l)} 表示第 $l$ 层的输出，$\mathbf{W}^{(l)}$ 是第 $l$ 层的权重
+
+* 如果所有隐藏层的输出和输入都是向量，我们可以写成 :math:`\mathbf{o}` 相对于任何一组参数 :math:`\mathbf{W}^{(l)}` 的梯度
+
+.. math::
+
+    \partial_{\mathbf{W}^{(l)}} \mathbf{o} = \underbrace{\partial_{\mathbf{h}^{(L-1)}} \mathbf{h}^{(L)}}_{ \mathbf{M}^{(L)} \stackrel{\textrm{def}}{=}} \cdots \underbrace{\partial_{\mathbf{h}^{(l)}} \mathbf{h}^{(l+1)}}_{ \mathbf{M}^{(l+1)} \stackrel{\textrm{def}}{=}} \underbrace{\partial_{\mathbf{W}^{(l)}} \mathbf{h}^{(l)}}_{ \mathbf{v}^{(l)} \stackrel{\textrm{def}}{=}}
+
+
+直观理解::
+
+    梯度爆炸：梯度非常大，参数更新太剧烈，模型无法收敛，甚至损坏。
+    梯度消失：梯度接近零，参数更新缓慢或不更新，学习停滞。
+
+
+2. 梯度消失(Vanishing Gradient)
++++++++++++++++++++++++++++++++
+
+* 主要原因：激活函数的选择，尤其是 sigmoid 函数。
+    * sigmoid 函数在输入值非常大或非常小时，导数接近零。
+    * 导致反向传播过程中，梯度层层相乘，最终趋近于零。
+
+* 解决方案：
+    * 使用 ReLU（Rectified Linear Unit）激活函数：
+    * ReLU 函数在正区间梯度为 1，在负区间梯度为 0，避免了梯度消失问题。
+
+
+3. 梯度爆炸(Exploding Gradient)
++++++++++++++++++++++++++++++++
+
+* 主要原因：权重矩阵 :math:`\mathbf{W}^{(l)}` 的初始值不合适，或者网络太深。
+    * 层与层之间权重矩阵乘积可能导致梯度指数级增长。
+    * 权重矩阵的特征值较大，导致整体梯度爆炸。
+
+示例-多次相乘后，矩阵值爆炸::
+
+    M = torch.normal(0, 1, size=(4, 4))
+    for i in range(100):
+        M = M @ torch.normal(0, 1, size=(4, 4))
+    print(M)
+    # 输出
+    tensor([[-7.9222e+22, -1.1940e+23,  1.0915e+23,  1.0751e+23],
+            [ 3.8837e+22,  5.8528e+22, -5.3505e+22, -5.2693e+22],
+            [-1.9618e+22, -2.9577e+22,  2.7037e+22,  2.6641e+22],
+            [ 3.0163e+22,  4.5455e+22, -4.1554e+22, -4.0923e+22]])
+
+* 解决方案：
+    * 梯度裁剪（Gradient Clipping）：设置梯度阈值，超过阈值的梯度会被缩放。
+    * 权重初始化：使用 Xavier 初始化或 He 初始化，保持初始梯度稳定。
+
+
+4. 对称性破坏问题(Breaking Symmetry)
+++++++++++++++++++++++++++++++++++++
+
+* 问题描述：
+    * 网络初始化时，如果所有权重相等，隐藏层神经元将输出相同的值。
+    * 这种对称性会导致网络只能学习到有限的特征，浪费网络容量。
+* 解决方案：
+    * 在初始化时，引入随机性，确保权重不同。
+    * Dropout 正则化方法可以帮助打破对称性，使不同神经元学习不同的特征。
+
+
+5.4.2. Parameter Initialization
+"""""""""""""""""""""""""""""""
+
+* 解决（或至少减轻）上述问题的一种方法是对神经网络中的参数初始化方法的处理。
+
+5.4.2.1. Default Initialization
++++++++++++++++++++++++++++++++
+
+* 如果不特别指定，深度学习框架会使用默认的随机初始化，通常是从正态分布中随机抽取权重。这个方法在中等规模问题中效果不错，但对于非常深的网络可能会导致梯度问题。
+
+
+5.4.2.2. Xavier Initialization
++++++++++++++++++++++++++++++++
+
+* Xavier初始化（或Glorot初始化）是一种专门设计来保持前向和反向传播中输出的方差相对稳定的方法。
+* 目标：防止信号在层与层之间传递时逐渐消失或爆炸。
+* 方法推导：
+    * 假设一个无激活函数的全连接层，输出 :math:`o_i = \sum_{j=1}^{n_\text{in}} w_{ij} x_j`
+    * 假设权重 :math:`w_{ij}` 服从均值为0、方差为 :math:`\sigma^2` 的分布
+    * 输入 :math:`x_j` 也具有均值0、方差 :math:`\gamma^2` ，且 :math:`x_j` 和 :math:`w_{ij}` 相互独立
+
+计算输出方差：
+
+.. math::
+
+    \begin{aligned}
+        E[o_i] & = \sum_{j=1}^{n_\textrm{in}} E[w_{ij} x_j] \\
+        &= \sum_{j=1}^{n_\textrm{in}} E[w_{ij}] E[x_j] \\
+        &= 0
+    \end{aligned}
+
+and the variance:
+
+.. math::
+
+    \begin{aligned}
+        \textrm{Var}[o_i] & = E[o_i^2] - (E[o_i])^2 \\
+            & = \sum_{j=1}^{n_\textrm{in}} E[w^2_{ij} x^2_j] - 0 \\
+            & = \sum_{j=1}^{n_\textrm{in}} E[w^2_{ij}] E[x^2_j] \\
+            & = n_\textrm{in} \sigma^2 \gamma^2.
+    \end{aligned}
+
+
+* 为了保持输出的方差固定，需要满足条件： :math:`n_\textrm{in} \sigma^2 = 1`
+* 在反向传播时，类似的方差条件需要满足： :math:`n_\textrm{out} \sigma^2 = 1`
+* 由于无法同时满足两个条件，Xavier初始化取折中：
+
+.. math::
+
+    \begin{aligned}
+        \frac{1}{2} (n_\textrm{in} + n_\textrm{out}) \sigma^2 = 1 \\
+        \textrm{ 于是得到： } \\
+        \sigma = \sqrt{\frac{2}{n_\textrm{in} + n_\textrm{out}}}
+    \end{aligned}
+
+实操
+~~~~
+
+如果从正态分布中抽取权重：
+
+.. math::
+
+    \mathbb{N}\left(0, \frac{2}{n_\textrm{in}+n_\textrm{out}}\right)
+
+
+如果使用均匀分布 :math:`U(-a, a)` 则这儿的 :math:`a` 为
+
+.. math::
+
+    a = \sqrt{\frac{6}{n_\textrm{in}+n_\textrm{out}}}
+
+
+* 实践效果
+    * 尽管推导假设没有使用激活函数，但在实际网络中，即使有非线性激活，Xavier初始化依然表现良好。
+    * 它解决了一部分梯度消失/爆炸问题，使得网络更容易收敛。
+
+
+5.4.3. Summary
+""""""""""""""
+
+* 梯度消失和爆炸是深度网络中的常见问题。
+* 在参数初始化时需要非常小心，以确保梯度和参数保持良好的控制。需要初始化启发法来确保初始梯度既不太大也不太小。随机初始化是确保优化之前打破对称性的关键。 
+* Xavier 初始化表明，对于每一层，任何输出的方差不受输入数量的影响，并且任何梯度的方差不受输出数量的影响。 ReLU 激活函数缓解了梯度消失问题。这可以加速收敛。
+
+
+5.5. Generalization in Deep Learning
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+5.5.1. Revisiting Overfitting and Regularization
+""""""""""""""""""""""""""""""""""""""""""""""""
+
+引入背景与传统认知
+++++++++++++++++++
+
+* “无免费午餐定理”（no free lunch theorem）
+    * 强调所有学习算法在某些分布上表现更好，而在其他分布上表现更差。
+    * 根据Wolpert（1995）提出的这一理论，任何学习算法在某些数据分布上会表现得更好，在其他分布上则可能更差。
+    * 这意味着对于有限的训练集，模型需要依赖于一些假设来达到人类级别的性能，而这些假设被称为归纳偏好。
+
+* 归纳偏置（inductive biases）
+    * 它指的是模型对具有某些特性的解决方案的偏好。例如，深层多层感知器（MLP）倾向于通过组合简单函数来构建复杂函数。
+    * 为了弥补有限训练数据的局限性），即类似人类对世界的思考方式，从而偏向具有特定性质的解决方案。
+
+* 两阶段训练
+    * 首先是使模型尽可能好地拟合训练数据，其次是在保留的测试数据集上估计泛化误差。
+    * 泛化差距是指训练误差与测试误差之间的差异；当这个差距较大时，表示模型过拟合了训练数据。
+
+* 过拟合
+    * 经典观点：如果模型过于复杂，可能会导致过拟合。此时可以通过减少特征数量、非零参数的数量或参数大小来解决这个问题。
+    * 过拟合是训练误差和测试误差之间的差距，当模型复杂度过高时，容易发生过拟合。
+
+
+深度学习的反常现象
+++++++++++++++++++
+
+* 深度学习中的过拟合：
+    * 不同于经典的观点，深度学习打破了经典的“模型复杂度 vs. 误差”的简单关系。深度学习模型往往足够表达力强，以至于可以完美拟合每个训练样本。
+    * 尽管如此，我们仍可以通过增加模型的表达能力（如添加层数、节点数或延长训练周期）来减少泛化误差，这与传统认知相悖。
+
+* 反直觉现象
+    * 传统观点认为，模型在复杂度轴的极端位置时，泛化误差会增加，因此需要通过正则化或降低模型复杂度来减少过拟合。
+    * 在深度学习中，即使模型完全拟合训练数据，增加模型复杂度（如增加层数或节点）反而可能减少泛化误差。
+    * 这种现象被称为双重下降（double descent）。
+    * 双重下降现象：随着模型复杂度的增加，泛化差距起初会增大，但之后又会减小。这种现象表明，模型复杂度与泛化性能之间的关系并非单调。
+    * 深度学习实践者的工具包：包括一些看似限制模型的方法（如正则化），以及一些看似增强模型表达能力的方法，所有这些都是为了减轻过拟合的问题。
+
+
+挑战传统理论
+++++++++++++
+
+* 深度学习的成功使得传统学习理论难以解释其泛化能力。尽管可以使用 :math:`\ell_2` 正则化等方法优化使用，但传统复杂度度量（如VC维或Rademacher复杂度）仍无法有效解释深度神经网络为何具有良好的泛化性能。
+* 关键矛盾在于，神经网络即使能够拟合任意标签数据，实际测试误差依然可能较低，说明现有理论存在局限性。
+* 这表明，对于深度学习模型，我们需要新的理论框架来理解其泛化能力。
+
+
+关键词解析
+++++++++++
+
+* Inductive Bias：模型在学习过程中偏向于特定类型的解决方案或假设，有助于提高泛化能力。
+* Generalization Gap：训练误差与测试误差之间的差距。
+* Double Descent：模型复杂度增加时，误差先下降再上升，随后再次下降的现象，打破了经典“U型”误差曲线的概念。
+* VC Dimension/Rademacher Complexity：衡量模型复杂度的经典理论工具，在深度学习领域面临解释能力不足的问题。
+
+
+5.5.2. Inspiration from Nonparametrics
+""""""""""""""""""""""""""""""""""""""
+
+* 探讨了深度学习与非参数模型（nonparametric models）之间的关系，挑战了将深度神经网络仅视为参数化模型的直觉，并展示了如何从非参数视角来看待神经网络的行为。
+
+深度学习的参数化与非参数化对比
+++++++++++++++++++++++++++++++
+
+* 深度学习模型拥有大量的参数，因此直观上看，它们是参数化模型。在训练过程中，模型的参数不断更新，保存时也写入参数。
+* 然而，文本指出，尽管神经网络有大量参数，从某些角度来看，它们的行为更像是非参数模型。这种思维方式可以帮助我们更好地理解神经网络的泛化能力和训练机制。
+
+
+非参数模型的定义
+++++++++++++++++
+
+* 非参数模型的复杂度通常随着数据量的增加而增加。经典的非参数模型例子是 **k-最近邻算法** （k-nearest neighbor，KNN）。
+* KNN模型在训练阶段只是记住数据集，而在预测时，通过寻找最接近的训练点来进行分类或回归。
+* 当 ``k=1`` 时，KNN模型可以实现零训练误差，但这并不意味着它没有泛化能力。事实上，在某些条件下， ``1-最近邻算法`` 会随着数据量的增加而收敛到最优预测器。
+
+
+度量函数和归纳偏置
+++++++++++++++++++
+
+* 1-最近邻算法的关键是距离函数（distance function），也即如何将数据转换为特征向量（featurizing data）。
+* 不同的距离度量代表不同的归纳偏置，即对数据底层结构的假设。选择不同的度量方式将影响模型的泛化能力。
+
+
+神经网络的“非参数性”
+++++++++++++++++++++
+
+* 神经网络的特点是过度参数化（over-parameterized），即拥有远多于训练数据所需的参数。由于过度参数化，神经网络在训练数据上常常能够完美拟合（interpolate），这种行为与非参数模型相似。
+* 深度学习的最新理论研究表明，大型神经网络与非参数方法，特别是核方法（kernel methods），之间有深刻的联系。
+* 具体来说，神经切线核（neural tangent kernel）理论表明，当多层感知机（MLP）的宽度趋于无穷大时，它们的行为趋近于非参数的核方法。
+
+神经切线核理论
+++++++++++++++
+
+* 神经切线核（neural tangent kernel，NTK）是一种特殊的核函数，用来描述深度神经网络的行为。
+* 尽管当前的NTK模型可能不能完全解释现代深度网络的行为，但它为分析过度参数化的深度神经网络提供了有力的工具，并强调了非参数建模在理解深度网络行为中的重要性。
+
+结论
+++++
+
+* 通过对比传统的参数化和非参数化模型，强调了神经网络在某些方面表现得像非参数模型。
+* 尽管神经网络有大量参数，但其过度参数化的特性使其在训练数据上的拟合方式与非参数方法类似，尤其是在训练数据量增大时。通过神经切线核的理论，研究表明神经网络与核方法之间有着深刻的联系，这一理论为理解现代深度学习模型提供了新的视角。
+
+5.5.3. Early Stopping
+"""""""""""""""""""""
+
+* 本文探讨了 **早停法（Early Stopping）** 在深度学习中的作用及其在处理标签噪声（label noise）问题上的重要性。
+
+
+早停法的动机与背景
+++++++++++++++++++
+
+* 深度神经网络具备拟合任意标签的能力，即使标签是随机分配或错误的。然而，这种拟合能力通常需要多次训练迭代后才会显现。
+* 研究发现，神经网络在训练过程中，首先拟合干净的标签数据，随后逐步拟合带噪声的标签数据。这意味着，如果训练在模型拟合干净数据后停止，模型仍能保持良好的泛化能力。
+* 当模型只拟合干净数据，而未完全拟合随机标签时，实际上可以确保模型具备良好的泛化能力。
+
+
+早停法的机制
+++++++++++++
+
+* 早停法是一种经典的正则化技术，与直接约束权重值不同，它通过 **限制训练的迭代次数（epoch）** 来防止模型过拟合。
+* 早停的典型方法是监控验证集误差，在训练过程中，每个epoch结束后评估一次验证集误差。当验证误差在连续多个epoch内未显著减少（减少幅度小于 :math:`epsilon` ），训练就会提前终止。这种策略被称为耐心准则（patience criterion）。
+
+
+早停法的优点
+++++++++++++
+
+* 提高泛化能力：特别是在标签存在噪声或标签固有不确定性的场景下，早停能防止模型过度拟合带噪声数据，进而提升泛化能力。
+* 节约计算资源：早停可以显著减少训练时间。对于大型模型（如GPT等），训练可能需要数天且消耗大量GPU资源，早停能够节省大量计算成本。
+
+适用场景
+++++++++
+
+* 标签存在噪声或不确定性：例如医疗领域的死亡率预测，患者数据通常带有不确定性和噪声，早停尤为关键。
+* 真实可分数据集（realizable datasets）：例如区分猫和狗的任务，如果数据集无标签噪声且类别完全可分，早停对泛化能力的提升 **不显著** 。
+* 错误做法：如果继续训练直到模型完全拟合带噪声的数据，通常会导致模型泛化能力下降，表现出较高的测试误差。
+
+
+关键词解析
+++++++++++
+
+* Label Noise（标签噪声）：训练数据中存在错误或随机分配的标签，常见于真实世界的数据集中。
+* Generalization（泛化）：模型在未见过的新数据上的表现能力。
+* Patience Criterion（耐心准则）：在验证误差多次不降低后停止训练的策略，用于防止模型在带噪声数据上继续拟合。
+
+结论
+++++
+
+* 早停法是应对深度学习中过拟合问题的重要手段，尤其在标签噪声存在的情况下，它能够有效提升模型的泛化能力，同时降低训练时间和成本。
+* 虽然在理想、无噪声的数据集上效果有限，但在现实中，标签噪声和数据的不确定性使得早停法成为深度学习训练的常见技巧之一。
+
+5.5.4. Classical Regularization Methods for Deep Networks
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+* 本节探讨了深度学习中的经典正则化方法，主要围绕 **权重衰减（weight decay）** 和正则化技术在防止过拟合中的作用和局限性。
+
+
+经典正则化方法的回顾
+++++++++++++++++++++
+
+* 在传统机器学习中，正则化通过在损失函数中添加惩罚项来限制模型复杂度，从而防止过拟合。
+* 主要方法包括：
+    * 岭回归（ridge regularization）：惩罚 :math:`\ell_2` 范数，限制权重的平方和。
+    * 套索回归（lasso regularization）：惩罚 :math:`\ell_1` 范数，使部分权重趋于零，促进稀疏性。
+* 这些方法通常足够强大，可以防止模型拟合随机标签（即防止模型学到噪声）。
+
+
+深度学习中的应用与挑战
+++++++++++++++++++++++
+
+* 在深度学习中，权重衰减依然是流行的正则化工具。然而，研究表明：
+    * 典型的 :math:`\ell_2` 正则化强度不足，无法完全防止神经网络对训练数据的插值（即完全拟合训练集，甚至拟合噪声标签）。
+    * 换句话说，单独依靠权重衰减可能无法有效抑制过拟合。
+    * 其真正的价值可能体现在与 **早停法（early stopping）** 的组合使用中，形成双重正则化策略。
+
+对正则化方法的新解释
+++++++++++++++++++++
+
+* 在深度学习中，正则化方法的作用可能与传统理论不同。
+* 即使正则化不能直接限制模型的拟合能力，它可能通过引入**归纳偏置（inductive biases）**来促进模型对数据内在模式的学习。
+* 类比于k近邻算法中距离度量的选择，不同的正则化方法可能更多地是通过改变模型的学习方式，而非显著限制模型复杂度来提升泛化能力。
+
+
+正则化方法的扩展与创新
+++++++++++++++++++++++
+
+* 深度学习研究者不仅继续使用传统正则化方法，还基于这些方法发展了新的技术，如：
+    * 在模型输入上添加噪声：这可以在训练过程中增加模型的鲁棒性，减少对训练数据的过度依赖。
+    * Dropout：通过随机丢弃一部分神经元的输出，防止神经网络对特定路径过度依赖，是深度学习中最流行的正则化方法之一。
+    * 即使dropout的理论基础尚不完全清晰，它在实践中的有效性已被广泛验证。
+
+
+关键词解析
+++++++++++
+
+* Weight Decay（权重衰减）：通过在损失函数中添加 :math:`\ell_2` 或 :math:`\ell_1` 惩罚项，防止模型参数无限增大，从而减少过拟合风险。
+* Inductive Bias（归纳偏置）：模型在学习过程中表现出的倾向性或假设，有助于模型更好地理解数据分布。
+* Dropout：训练过程中随机丢弃神经元输出，减少神经元之间的共适应性，降低过拟合风险。
+
+结论
+++++
+
+* 这段文字强调了深度学习对经典正则化方法的借鉴和创新。
+* 尽管传统正则化方法如权重衰减仍然广泛使用，但在深度学习中，它们的作用机制可能更复杂，且往往需要与其他策略（如早停法）结合使用。
+* 未来，探索这些正则化方法背后的理论基础，将是理解深度学习泛化能力的重要方向。
+
+5.6. Dropout
+^^^^^^^^^^^^
+
+* 这部分介绍了Dropout，一种在训练神经网络时防止过拟合的正则化技术。
+
+1. 为什么需要Dropout::
+
+    简化模型是提高泛化能力的核心思路之一：
+        减少模型参数的维度。
+        使用权重衰减（L2正则化），限制参数的大小。
+        提高模型的平滑性，使模型对输入的小扰动不敏感。
+    直观解释：在图像分类任务中，如果输入图像的像素增加了一些随机噪声，模型仍应给出相同的分类结果。
+
+2. Dropout的提出::
+
+    Dropout 源自Bishop提出的一个理论：
+        在输入中加入随机噪声，相当于Tikhonov正则化，可以提高模型对输入扰动的鲁棒性。
+
+    Srivastava等人将这一思想推广到网络的内部层，提出了Dropout方法。
+        Dropout的核心思想：
+            在每次前向传播时，随机“丢弃”一部分神经元，即将它们的输出置零。
+            训练过程中，每次迭代都会对不同的神经元进行随机屏蔽。
+
+    这种方法打破了神经网络中过度依赖特定激活模式的问题，防止神经元之间形成共适应（co-adaptation）。
+        作者将其类比于生物的有性繁殖打破基因共适应的过程。
+
+3. Dropout的实现::
+
+    在前向传播中，神经元以概率$p$被丢弃（置零），其余神经元以概率$1-p$保留。
+    为了保持输出期望不变，保留的神经元的输出被除以$(1-p)$进行缩放。
+
+公式：
+
+.. math::
+
+    \begin{aligned}
+    h' =
+    \begin{cases}
+        0 & \textrm{ with probability } p \\
+        \frac{h}{1-p} & \textrm{ otherwise}
+    \end{cases}
+    \end{aligned}
+
+* 其中
+* ``h`` 是原始激活值
+* ``h'`` 是Dropout后的激活值
+* 这样设计的目的是确保期望不变
+
+
+
+小结::
+
+    Dropout是一种简单而有效的正则化方法，在大多数深度学习框架中已成为标准做法。
+    它可以有效地减少过拟合，使模型对输入数据的微小扰动更加鲁棒。
+    Dropout打破了神经元之间的共适应关系，提高了模型的泛化能力。
+
+
+
+5.6.1. Dropout in Practice
+""""""""""""""""""""""""""
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/12/Q2aH1f.png
+
+    Fig. 5.6.1 MLP before and after dropout. :math:`h_2` 和 :math:`h_5` 被删除。因此，输出的计算不再依赖于 :math:`h_2` 或 :math:`h_5` ，并且在执行反向传播时它们各自的梯度也会消失。这样，输出层的计算就不能过度依赖于 :math:`h_1, ..., h_5` 的任何一个元素。
+
+
+5.6.2. Implementation from Scratch
+""""""""""""""""""""""""""""""""""
+
+* 实现了一个 dropout_layer 函数，该函数以 dropout 概率丢弃张量输入 X 中的元素，并按上述方式重新调整余数：除以 1.0-dropout 的幸存者::
+
+    def dropout_layer(X, dropout):
+        assert 0 <= dropout <= 1
+        if dropout == 1: return torch.zeros_like(X)
+        mask = (torch.rand(X.shape) > dropout).float()
+        return mask * X / (1.0 - dropout)
+
+将输入 X 通过 dropout 操作传递，概率分别为 0、0.5 和 1::
+
+    X = torch.arange(16, dtype = torch.float32).reshape((2, 8))
+    print('dropout_p = 0:', dropout_layer(X, 0))
+    print('dropout_p = 0.5:', dropout_layer(X, 0.5))
+    print('dropout_p = 1:', dropout_layer(X, 1))
+    # 输出
+    # dropout_p = 0: tensor([[ 0.,  1.,  2.,  3.,  4.,  5.,  6.,  7.],
+    #         [ 8.,  9., 10., 11., 12., 13., 14., 15.]])
+    # dropout_p = 0.5: tensor([[ 0.,  2.,  0.,  6.,  8.,  0.,  0.,  0.],
+    #         [16., 18., 20., 22., 24., 26., 28., 30.]])
+    # dropout_p = 1: tensor([[0., 0., 0., 0., 0., 0., 0., 0.],
+    #         [0., 0., 0., 0., 0., 0., 0., 0.]])
+
+
+5.6.2.1. Defining the Model
++++++++++++++++++++++++++++
+
+下面的模型将 dropout 应用于每个隐藏层的输出（在激活函数之后）::
+
+    class DropoutMLPScratch(d2l.Classifier):
+        def __init__(self, num_outputs, num_hiddens_1, num_hiddens_2,
+                     dropout_1, dropout_2, lr):
+            super().__init__()
+            self.save_hyperparameters()
+            self.lin1 = nn.LazyLinear(num_hiddens_1)
+            self.lin2 = nn.LazyLinear(num_hiddens_2)
+            self.lin3 = nn.LazyLinear(num_outputs)
+            self.relu = nn.ReLU()
+
+        def forward(self, X):
+            H1 = self.relu(self.lin1(X.reshape((X.shape[0], -1))))
+            if self.training:
+                H1 = dropout_layer(H1, self.dropout_1)
+            H2 = self.relu(self.lin2(H1))
+            if self.training:
+                H2 = dropout_layer(H2, self.dropout_2)
+            return self.lin3(H2)
+
+5.6.2.2. Training
++++++++++++++++++
+
+.. code-block:: python
+
+    hparams = {'num_outputs':10, 'num_hiddens_1':256, 'num_hiddens_2':256,
+               'dropout_1':0.5, 'dropout_2':0.5, 'lr':0.1}
+    model = DropoutMLPScratch(**hparams)
+    data = d2l.FashionMNIST(batch_size=256)
+    trainer = d2l.Trainer(max_epochs=10)
+    trainer.fit(model, data)
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/12/aeAT6f.png
+
+
+5.6.3. Concise Implementation
+"""""""""""""""""""""""""""""
+
+* 在每个全连接层之后添加一个 Dropout 层，将 dropout 概率作为唯一参数传递给其构造函数
+* 在训练过程中， Dropout 层将根据指定的丢弃概率随机丢弃前一层的输出（或等效地，后续层的输入）。
+* 当不处于训练模式时， Dropout 层仅在测试期间传递数据。
+
+.. code-block:: python
+
+    class DropoutMLP(d2l.Classifier):
+        def __init__(self, num_outputs, num_hiddens_1, num_hiddens_2,
+                     dropout_1, dropout_2, lr):
+            super().__init__()
+            self.save_hyperparameters()
+            self.net = nn.Sequential(
+                nn.Flatten(), nn.LazyLinear(num_hiddens_1), nn.ReLU(),
+                nn.Dropout(dropout_1), nn.LazyLinear(num_hiddens_2), nn.ReLU(),
+                nn.Dropout(dropout_2), nn.LazyLinear(num_outputs))
+
+训练模型::
+
+    model = DropoutMLP(**hparams)
+    trainer.fit(model, data)
+
+5.6.4. Summary
+""""""""""""""
+
+* 除了控制维数和权重向量的大小之外，dropout 是避免过度拟合的另一种工具。
+* 通常，工具是联合使用的。
+* 请注意，dropout 仅在训练期间使用：它将激活 h 替换为具有预期值 h 的随机变量
+
+
+5.7. Predicting House Prices on Kaggle
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* 以一个 Kaggle 上的示例进行讲解
+
+
+
+
+Part 2: Modern Deep Learning Techniques
+=======================================
+
+6. Builders’ Guide
+------------------
+
+* 除了庞大的数据集和强大的硬件之外，还有出色的软件工具 在深度学习的快速进展中发挥了不可或缺的作用 学习。
+* 在本章中，我们将深入挖掘深度学习计算的关键组成部分，即模型构建、参数访问和初始化、设计自定义层和块、将模型读写到磁盘，以及利用 GPU 实现梦幻般的加速。
+* 虽然本章没有介绍任何新模型或数据集，但接下来的高级建模章节在很大程度上依赖于这些技术。
+
+
+6.1. Layers and Modules
+^^^^^^^^^^^^^^^^^^^^^^^
+
+* Individual layers can be modules. 
+* Many layers can comprise a module. 
+* Many modules can comprise a module.
+
+
+6.2. Parameter Management
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+示例::
+
+    net = nn.Sequential(nn.LazyLinear(8),
+                        nn.ReLU(),
+                        nn.LazyLinear(1))
+
+    X = torch.rand(size=(2, 4))
+    net(X).shape
+    # torch.Size([2, 1])
+
+
+6.2.1. Parameter Access
+"""""""""""""""""""""""
+
+检查第二个全连接层的参数::
+
+    # 执行 net(X) 前
+    $ net[2].state_dict()
+    # OrderedDict([('weight', <UninitializedParameter>),
+             ('bias', <UninitializedParameter>)])
+
+    # 执行 net(X) 后
+    $ net[2].state_dict()
+    # OrderedDict([('weight',
+              tensor([[-0.1649,  0.0605,  0.1694, -0.2524,  0.3526, -0.3414, -0.2322,  0.0822]])),
+             ('bias', tensor([0.0709]))])
+
+
+
+6.2.1.1. Targeted Parameters
+++++++++++++++++++++++++++++
+
+从第二个神经网络层提取偏差，该层返回参数类实例，并进一步访问该参数的值::
+
+    $ type(net[2].bias), net[2].bias.data
+    # (torch.nn.parameter.Parameter, tensor([0.0709]))
+
+    $ net[2].weight
+    Parameter containing:
+    tensor([[ 0.0205, -0.1554, -0.2950,  0.1296, -0.2784,  0.1173, -0.0230, -0.1530]],
+           requires_grad=True)
+
+.. note:: 参数是复杂的对象，包含值、梯度和附加信息。
+
+
+6.2.1.2. All Parameters at Once
++++++++++++++++++++++++++++++++
+
+::
+
+    $ [(name, param.shape) for name, param in net.named_parameters()]
+    # [('0.weight', torch.Size([8, 4])),
+       ('0.bias', torch.Size([8])),
+       ('2.weight', torch.Size([1, 8])),
+       ('2.bias', torch.Size([1]))]
+
+6.2.2. Tied Parameters
+""""""""""""""""""""""
+
+跨多个层共享参数::
+
+    # We need to give the shared layer a name so that we can refer to its parameters
+    shared = nn.LazyLinear(8)
+    net = nn.Sequential(nn.LazyLinear(8), nn.ReLU(),
+                        shared, nn.ReLU(),
+                        shared, nn.ReLU(),
+                        nn.LazyLinear(1))
+
+    net(X)
+    # Check whether the parameters are the same
+    print(net[2].weight.data[0] == net[4].weight.data[0])
+    net[2].weight.data[0, 0] = 100
+    # Make sure that they are actually the same object rather than just having the
+    # same value
+    print(net[2].weight.data[0] == net[4].weight.data[0])
+    # 输出
+    # tensor([True, True, True, True, True, True, True, True])
+    # tensor([True, True, True, True, True, True, True, True])
+
+
+.. note:: 由于模型参数包含梯度，因此在反向传播时将第二隐藏层和第三隐藏层的梯度相加。
+
+
+6.3. Parameter Initialization
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* 使用内置和自定义初始化程序来初始化参数。
+
+示例::
+
+    net = nn.Sequential(nn.LazyLinear(8), nn.ReLU(), nn.LazyLinear(1))
+    X = torch.rand(size=(2, 4))
+    net(X).shape
+
+
+6.3.1. Built-in Initialization
+""""""""""""""""""""""""""""""
+
+初使状态::
+
+    net[0].weight.data[0], net[0].bias.data[0]
+    # Out[27]: (tensor([ 0.4112, -0.0801,  0.4687,  0.3344]), tensor(-0.1189))
+
+示例1-将所有权重参数初始化为标准差为 0.01 的高斯随机变量，而偏差参数则清除为零::
+
+    def init_normal(module):
+        if type(module) == nn.Linear:
+            nn.init.normal_(module.weight, mean=0, std=0.01)
+            nn.init.zeros_(module.bias)
+
+    net.apply(init_normal)
+    net[0].weight.data[0], net[0].bias.data[0]
+    # 输出
+    # (tensor([-0.0082,  0.0074,  0.0116, -0.0061]), tensor(0.))
+
+示例2-将所有参数初始化为给定的常量值（例如 1）::
+
+    def init_constant(module):
+        if type(module) == nn.Linear:
+            nn.init.constant_(module.weight, 1)
+            nn.init.zeros_(module.bias)
+
+    net.apply(init_constant)
+    net[0].weight.data[0], net[0].bias.data[0]
+    # 输出
+    (tensor([1., 1., 1., 1.]), tensor(0.))
+
+示例3-为某些块应用不同的初始化器。例如，下面我们使用 Xavier 初始化器初始化第一层，并将第二层初始化为常量值 42::
+
+    def init_xavier(module):
+        if type(module) == nn.Linear:
+            nn.init.xavier_uniform_(module.weight)
+
+    def init_42(module):
+        if type(module) == nn.Linear:
+            nn.init.constant_(module.weight, 42)
+
+    net[0].apply(init_xavier)
+    net[2].apply(init_42)
+    print(net[0].weight.data[0])
+    print(net[2].weight.data)
+    # 输出
+    tensor([-0.0974,  0.1707,  0.5840, -0.5032])
+    tensor([[42., 42., 42., 42., 42., 42., 42., 42.]])
+
+6.4. Lazy Initialization
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+* 延迟初始化很方便，允许框架自动推断参数形状，从而可以轻松修改架构并消除一种常见的错误源。我们可以通过模型传递数据来让框架最终初始化参数。
+
+
+实例化一个 MLP::
+
+    net = nn.Sequential(nn.LazyLinear(256), nn.ReLU(), nn.LazyLinear(10))
+
+尝试访问以下参数进行确认::
+
+    net[0].weight
+    # 输出
+    <UninitializedParameter>
+
+通过网络传递数据，让框架最终初始化参数::
+
+    X = torch.rand(2, 20)
+    net(X)
+
+一旦知道所有参数形状，框架就可以最终初始化参数::
+
+    net[0].weight.shape
+    # 输出
+    torch.Size([256, 20])
+
+
+6.5. Custom Layers
+^^^^^^^^^^^^^^^^^^
+
+* 通过基本图层类来设计自定义图层。
+* 这使我们能够定义灵活的新层，其行为与库中任何现有层不同。一旦定义，自定义层就可以在任意上下文和架构中调用。层可以具有本地参数，可以通过内置函数创建这些参数。
+
+6.5.1. Layers without Parameters
+""""""""""""""""""""""""""""""""
+
+
+::
+
+    class CenteredLayer(nn.Module):
+        def __init__(self):
+            super().__init__()
+
+        def forward(self, X):
+            return X - X.mean()
+
+使用::
+
+    layer = CenteredLayer()
+    layer(torch.tensor([1.0, 2, 3, 4, 5]))
+    # 输出
+    tensor([-2., -1.,  0.,  1.,  2.])
+
+incorporate our layer as a component in constructing more complex models::
+
+    net = nn.Sequential(nn.LazyLinear(128), CenteredLayer())
+
+使用::
+
+    Y = net(torch.rand(4, 8))
+    Y.mean()
+
+6.5.2. Layers with Parameters
+"""""""""""""""""""""""""""""
+
+具有可通过训练调整的参数的层::
+
+    class MyLinear(nn.Module):
+        def __init__(self, in_units, units):
+            super().__init__()
+            self.weight = nn.Parameter(torch.randn(in_units, units))
+            self.bias = nn.Parameter(torch.randn(units,))
+
+        def forward(self, X):
+            linear = torch.matmul(X, self.weight.data) + self.bias.data
+            return F.relu(linear)
+
+
+6.6. File I/O
+^^^^^^^^^^^^^
+
+6.6.1. Loading and Saving Tensors
+"""""""""""""""""""""""""""""""""
+
+对于单个张量，我们可以直接调用load和save 分别读取和写入它们的函数::
+
+    x = torch.arange(4)
+    torch.save(x, 'x-file')
+
+    x2 = torch.load('x-file')
+    x2
+    # 输出
+    tensor([0, 1, 2, 3])
+
+
+存储张量列表并将它们读回内存::
+
+    y = torch.zeros(4)
+    torch.save([x, y],'x-files')
+    x2, y2 = torch.load('x-files')
+    (x2, y2)
+
+编写和读取从字符串映射到张量的字典::
+
+    mydict = {'x': x, 'y': y}
+    torch.save(mydict, 'mydict')
+    mydict2 = torch.load('mydict')
+    mydict2
+
+6.6.2. Loading and Saving Model Parameters
+""""""""""""""""""""""""""""""""""""""""""
+
+模型示例::
+
+    class MLP(nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.hidden = nn.LazyLinear(256)
+            self.output = nn.LazyLinear(10)
+
+        def forward(self, x):
+            return self.output(F.relu(self.hidden(x)))
+
+    net = MLP()
+    X = torch.randn(size=(2, 20))
+    Y = net(X)
+
+将模型的参数存储为名为“mlp.params”的文件::
+
+    torch.save(net.state_dict(), 'mlp.params')
+
+恢复模型::
+
+    clone = MLP()
+    clone.load_state_dict(torch.load('mlp.params'))
+    clone.eval()
+    # 输出
+    MLP(
+      (hidden): LazyLinear(in_features=0, out_features=256, bias=True)
+      (output): LazyLinear(in_features=0, out_features=10, bias=True)
+    )
+
+.. note:: 可以通过参数字典保存和加载网络的整套参数。保存架构必须通过代码而不是参数来完成。
+
+
+
+
+6.7. GPUs
+^^^^^^^^^
+
+.. note:: 要运行本节中的程序，您至少需要两个 GPU。
+
+6.7.1. Computing Devices
+""""""""""""""""""""""""
+
+指定用于存储和计算的设备::
+
+    def cpu():  #@save
+        """Get the CPU device."""
+        return torch.device('cpu')
+
+    def gpu(i=0):  #@save
+        """Get a GPU device."""
+        return torch.device(f'cuda:{i}')
+
+    cpu(), gpu(), gpu(1)
+    # 输出
+    (device(type='cpu'),
+     device(type='cuda', index=0),
+     device(type='cuda', index=1))
+
+
+查询可用GPU的数量::
+
+    def num_gpus():  #@save
+        """Get the number of available GPUs."""
+        return torch.cuda.device_count()
+
+    num_gpus()
+
+工具(GPU不存在则使用CPU)::
+
+    def try_gpu(i=0):  #@save
+        """Return gpu(i) if exists, otherwise return cpu()."""
+        if num_gpus() >= i + 1:
+            return gpu(i)
+        return cpu()
+
+    def try_all_gpus():  #@save
+        """Return all available GPUs, or [cpu(),] if no GPU exists."""
+        return [gpu(i) for i in range(num_gpus())]
+
+    try_gpu(), try_gpu(10), try_all_gpus()
+
+
+6.7.2. Tensors and GPUs
+"""""""""""""""""""""""
+
+6.7.2.1. Storage on the GPU
++++++++++++++++++++++++++++
+
+使用第一个GPU::
+
+    X = torch.ones(2, 3, device=try_gpu())
+    X
+    # 输出
+    tensor([[1., 1., 1.],
+            [1., 1., 1.]], device='cuda:0')
+
+
+如果有两个GPU::
+
+    Y = torch.rand(2, 3, device=try_gpu(1))
+    Y
+    # 输出
+    tensor([[0.0022, 0.5723, 0.2890],
+            [0.1456, 0.3537, 0.7359]], device='cuda:1')
+
+
+6.7.2.2. Copying
+++++++++++++++++
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/OCgG4P.png
+
+    Fig. 6.7.1 Copy data to perform an operation on the same device.
+
+
+由于 Y 位于第二个 GPU 上，因此我们需要将 X 移动到那里，然后才能将两者相加::
+
+    Z = X.cuda(1)
+    print(X)
+    print(Z)
+    # 输出
+    tensor([[1., 1., 1.],
+            [1., 1., 1.]], device='cuda:0')
+    tensor([[1., 1., 1.],
+            [1., 1., 1.]], device='cuda:1')
+
+
+现在数据（ Z 和 Y ）都在同一个 GPU 上::
+
+    Y + Z
+    # 输出
+    tensor([[1.0022, 1.5723, 1.2890],
+            [1.1456, 1.3537, 1.7359]], device='cuda:1')
+
+6.7.3. Neural Networks and GPUs
+"""""""""""""""""""""""""""""""
+
+神经网络模型可以指定设备。以下代码将模型参数放在 GPU 上::
+
+    net = nn.Sequential(nn.LazyLinear(1))
+    net = net.to(device=try_gpu())
+
+Let the trainer support GPU::
+
+    @d2l.add_to_class(d2l.Trainer)  #@save
+    def __init__(self, max_epochs, num_gpus=0, gradient_clip_val=0):
+        self.save_hyperparameters()
+        self.gpus = [d2l.gpu(i) for i in range(min(num_gpus, d2l.num_gpus()))]
+
+    @d2l.add_to_class(d2l.Trainer)  #@save
+    def prepare_batch(self, batch):
+        if self.gpus:
+            batch = [a.to(self.gpus[0]) for a in batch]
+        return batch
+
+    @d2l.add_to_class(d2l.Trainer)  #@save
+    def prepare_model(self, model):
+        model.trainer = self
+        model.board.xlim = [0, self.max_epochs]
+        if self.gpus:
+            model.to(self.gpus[0])
+        self.model = model
+
+6.7.4. Summary
+""""""""""""""
+
+* 默认情况下，数据在主存中创建，然后使用CPU进行计算。
+* 深度学习框架要求计算的所有输入数据都位于同一设备上，无论是CPU还是同一个GPU。
+* 如果不小心移动数据，您可能会损失显着的性能。
+
+.. note:: 一个典型的错误如下：计算 GPU 上每个小批量的损失并在命令行上将其报告给用户（或将其记录在 NumPy ndarray 中）将触发全局解释器锁定，该锁定会停止所有 GPU。最好在 GPU 内部分配内存用于日志记录，并且只移动较大的日志。
+
+* 跨设备传输数据会导致性能损失。比如，数据从 CPU 传到 GPU，或者在多个 GPU 之间频繁传输，都会增加开销。关键点是： **尽量避免不必要的数据传输，尤其是小批量数据的频繁移动。**
+* 错误示例：在 GPU 上计算每个小批量（minibatch）的损失（loss），然后将其传回 CPU 并转换为 NumPy 数组进行记录或显示。 问题：这种方式会触发全局解释器锁（Global Interpreter Lock，GIL），导致 GPU 暂停，等待 CPU 完成操作，从而降低计算效率。
+* 优化建议：最佳做法是直接在 GPU 上分配内存记录日志，减少数据在 CPU 和 GPU 之间频繁移动。等日志累积到足够大的批次时，再将其移动到 CPU 进行后续处理或显示。
+
+
+7. Convolutional Neural Networks
+--------------------------------
+
+7.1. From Fully Connected Layers to Convolutions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+7.1.1. Invariance(不变性)
+"""""""""""""""""""""""""
+
+* 解释 CNN 如何通过平移不变性和局部性来减少模型复杂度，提高对图像中物体位置的鲁棒性（即使位置变化也能识别）。
+* CNN 通过模拟人类视觉的逐层处理方式，能够有效学习图像特征，并在不同位置进行一致识别。
+
+定义
+++++
+
+* 目标：识别图像中的对象时，希望模型对对象在图像中的具体位置不敏感。
+* 核心思想是：识别一个对象时，关注对象的特征，而不是其位置。
+* 比如，无论一只猪出现在图像顶部还是底部，我们都应该能够识别出它是一只猪。这种位置不敏感性就是不变性（invariance）。
+
+
+CNN 如何实现这种不变性
+++++++++++++++++++++++
+
+* (1) 平移不变性（Translation Invariance）：
+    * 无论图像的某个局部区域（patch）出现在什么位置，网络都应该对它有相似的响应。
+    * 卷积层通过在图像上滑动一个滤波器（kernel）来实现这一点，即使物体的位置发生变化，滤波器依然可以检测到它。
+    * 例子：在一张猫的图片中，滤波器在猫的耳朵上或猫的爪子上滑动时，都会产生相应的激活，从而检测到猫的存在。
+
+* (2) 局部性原则（Locality）：
+    * 在网络的前几层，卷积操作主要关注局部区域（local region），而不考虑图像中远处的内容。
+    * 这种方法模拟了人类视觉系统中对局部特征（如边缘、角等）的关注。
+    * 意义：每次只处理一小部分图像，有助于减少计算量，并捕捉基本特征。最终，通过不断堆叠卷积层和池化层，模型可以聚合这些局部特征，形成对整个图像的理解。
+
+* (3) 深层特征提取：
+    * 随着网络逐渐加深，感受野（receptive field）变大，网络可以学习到更长距离的特征关系，类似于更高级别的视觉感知。
+    * 这种方式使得 CNN 能够捕捉更复杂、更抽象的图像特征。
+    * 例子：在浅层，网络可能学习到边缘和纹理等简单特征，而在更深的层中，网络可能学习到眼睛、鼻子等复杂特征，最终能够识别出整个脸部。
+
+
+7.1.2. Constraining the MLP
+"""""""""""""""""""""""""""
+
+整体
+++++
+
+* 本节探讨的是如何将多层感知机（MLP）应用到二维图像上，并分析了这样做带来的挑战和参数爆炸问题。
+* 在传统的 MLP 中，输入是一个扁平的向量，但对于图像来说，我们希望保留空间结构（spatial structure），即图像的二维形状。
+
+理解 MLP 对二维图像的建模
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* 假设输入图像 :math:`\mathbf{X}` 和隐藏层表示 :math:`\mathbf{H}` 都是二维矩阵，且二者形状相同（例如 :math:`1000 \times 1000` 像素）。
+* :math:`[\mathbf{X}]{i,j}` 代表输入图像在 (i,j) 位置的像素值，而 :math:`\mathbf{H}]{i,j}` 代表隐藏层在 (i,j) 位置的激活值。
+
+
+权重矩阵到权重张量的切换
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+* 传统 MLP：在传统 MLP 中，隐藏层的每个神经元与输入层的所有像素相连，连接权重用一个二维矩阵 :math:`\mathsf{W}` 表示。
+* 二维图像 MLP：
+    * 如果将每个隐藏单元都连接到输入图像的所有像素，我们需要一个四阶权重张量 :math:`\mathsf{W}_{i,j,k,l}`
+    * 这个四阶张量表示从输入图像位置 (k,l) 到隐藏层位置 (i,j) 的权重。
+
+公式解释：
+
+.. math::
+
+    \left[\mathbf{H}\right]_{i, j} &= [\mathbf{U}]_{i, j} + \sum_k \sum_l[\mathsf{W}]_{i, j, k, l}  [\mathbf{X}]_{k, l}
+
+* 位置 (i,j) 处的隐藏单元 :math:`\mathbf{H}{i,j}` 是输入图像所有像素的加权和，再加上偏置 :math:\mathbf{U}{i,j}`
+
+卷积的引入与参数重索引
+~~~~~~~~~~~~~~~~~~~~~~
+
+* 为了减少复杂度，我们引入卷积的思想，将权重矩阵 :math:`\mathsf{W}` 重新表示为 :math:`\mathsf{V}` ，如下所示：
+
+.. math::
+
+    \left[\mathbf{H}\right]_{i, j} &= [\mathbf{U}]_{i, j} + \sum_a \sum_b [\mathsf{V}]_{i, j, a, b}  [\mathbf{X}]_{i+a, j+b}
+
+* 这里的 :math:`\mathsf{V}` 代表一个局部权重窗口，表示卷积核，只关注图像中与位置 (i,j) 相邻的局部区域。
+* 权重索引变化：
+
+.. math::
+
+    [\mathsf{V}]_{i, j, a, b} = [\mathsf{W}]_{i, j, i+a, j+k}
+
+* 这个索引变换意味着：卷积核以 (i,j) 为中心，采样相邻偏移量 (a,b) 处的像素。
+
+参数量爆炸问题
+~~~~~~~~~~~~~~
+
+* 假设输入图像大小为 :math:`1000 \times 1000` ，隐藏层表示同样为 :math:`1000 \times 1000`
+* 如果每个像素都与所有像素相连，权重张量 :math:`\mathsf{W}` 需要 :math:`1000 \times 1000 \times 1000 \times 1000 = 10^{12}` 个参数！
+* 这种参数量远远超出了计算机的处理能力。
+
+问题的根源与解决思路
+~~~~~~~~~~~~~~~~~~~~
+
+* 问题根源： MLP 的全连接结构使每个隐藏单元都与所有输入像素相连，导致参数量爆炸。
+* 解决方法：
+    * 局部感受野（local receptive field）： 仅让隐藏单元与输入图像的局部区域相连，而非整个图像。
+    * 共享权重： 通过卷积层的方式，减少参数数量并增强平移不变性。
+    * 池化层（pooling）： 进一步降低分辨率，减少计算量。
+
+小结
+~~~~
+
+* 核心思想是：直接将 MLP 应用于高维图像会导致参数量巨大，不具备实际可行性。
+* 通过引入卷积的概念，限制感受野范围，可以有效减少参数量，并保持对图像空间结构的敏感性。
+* 这种方法构成了卷积神经网络（CNN）的基础，极大提升了模型的计算效率和识别能力。
+
+
+7.1.2.1. Translation Invariance
++++++++++++++++++++++++++++++++
+
+* 平移不变性（Translation Invariance）：
+* 定义： 平移不变性意味着：如果输入图像发生平移，隐藏层的输出也应发生同样的平移，而不会改变特征本身的性质。
+* 直观理解： 如果在图像的不同位置看到相同的特征（如边缘或角），网络应当能识别它，而不在意特征的具体位置。
+
+数学解释
+~~~~~~~~
+
+* 原始表示方式中，权重 :math:`\mathsf{V}` 依赖于像素位置 (i,j) ，即 :math:`[\mathsf{V}]_{i,j,a,b}` 表示在位置 (i,j) 的权重可能与其他位置不同。
+* 引入平移不变性后： 权重只与相对偏移量 (a,b) 有关，不再依赖具体位置：
+
+.. math::
+
+    [\mathsf{V}]_{i,j,a,b} = [\mathsf{V}]_{a,b}
+
+* 偏置 :math:`\mathbf{U}` 简化为常数 u。
+
+    \left[\mathbf{H}\right]_{i, j} &= u + \sum_a \sum_b [\mathsf{V}]_{a, b}  [\mathbf{X}]_{i+a, j+b}
+
+
+
+7.1.2.2. Locality
++++++++++++++++++
+
+* 局部感受野（Locality）
+* 定义： 局部感受野意味着：隐藏层的每个神经元只关注输入图像的局部区域，而非整个图像。
+* 动机： 在图像中，远离当前像素的区域对理解该位置像素的影响较小。因此，感受野可以限制在较小范围内。
+* 实现方式： 在距离超过 :math:`\Delta` 的地方，将权重设为 0：
+
+.. math::
+
+    [\mathbf{V}]_{a, b} =0   \text{if} |a| > \Delta \text{or} |b| > \Delta
+
+* 公式表示：
+
+.. math::
+
+    [\mathbf{H}]_{i, j} = u + \sum_{a = -\Delta}^{\Delta} \sum_{b = -\Delta}^{\Delta} [\mathbf{V}]_{a, b}  [\mathbf{X}]_{i+a, j+b}
+
+* 引入局部感受野后，卷积核尺寸从 :math:`2000 \times 2000`  减少到一个较小值 :math:`\Delta \times \Delta`（通常 :math:`\Delta < 10` ）。
+* 这将参数量进一步减少到：
+
+.. math::
+
+    4\Delta^2
+
+* 结果： 参数量减少了四个数量级，使得卷积层更加高效。
+
+
+
+总结与启示
+++++++++++
+
+* 卷积核的作用： 提取图像局部特征，减少参数量，提升网络对图像的空间敏感性。
+* 平移不变性的代价： 卷积核只能感知局部特征，在处理全局信息时需要更深的网络结构（更多层的卷积+池化）。
+* 深层网络： 通过堆叠多层卷积层，可以逐层捕获更复杂、更抽象的特征，实现对整幅图像的理解。
+
+* 直观类比：可以把 CNN 的卷积核想象成放大镜或探测器，它在图像中移动，寻找感兴趣的特征。通过限制探测器的大小和移动范围，我们既减少了复杂度，又提高了模型的效率和泛化能力。
+
+CNN的优势
+++++++++++
+
+* 参数高效： CNN 只需少量参数即可处理高分辨率图像。
+* 鲁棒性强： CNN 对图像的平移和局部变化具有较强的鲁棒性，能够更好地泛化到新数据。
+* 特征层次化： 通过多层卷积，可以逐步学习低级（如边缘）到高级（如物体）特征。
+* 计算高效： 卷积操作易于并行计算，适合 GPU 加速。
+
+
+7.1.3. Convolutions
+"""""""""""""""""""
+
+定义
+++++
+
+* 卷积是信号处理和图像处理中常用的数学操作。
+* 本质上，它是一种滑动窗口操作，计算两个函数或矩阵的重叠程度。
+* 卷积的关键在于一个函数或矩阵在另一个函数或矩阵上进行滑动，并计算在每个位置上的重叠量。
+
+数学定义
+++++++++
+
+连续卷积公式
+~~~~~~~~~~~~
+
+.. math::
+
+    (f * g)(\mathbf{x}) = \int f(\mathbf{z}) g(\mathbf{x}-\mathbf{z}) d\mathbf{z}
+
+* 解释
+    * f(z)：原始信号或图像。
+    * 𝑔(𝑥−𝑧)：滤波器 (或核函数) 在位置 𝑥 处翻转后平移的结果。
+    * 积分表示对所有可能的重叠进行累加。
+* 直观理解：
+    * 类似将一个图形 𝑔 翻转后，在图形 𝑓 上逐个位置滑动，计算重叠区域的面积。
+    * 每个滑动位置都生成一个数值，表示该位置的匹配程度。
+
+
+
+离散卷积公式(一维)
+~~~~~~~~~~~~~~~~~~
+
+.. math::
+
+    (f * g)(i) = \sum_a f(a) g(i-a)
+
+* 在离散场景下，积分变为求和。滑动窗口在每个位置 𝑖 上计算 𝑓 和 𝑔 的内积。
+
+二维卷积公式
+~~~~~~~~~~~~
+
+.. math::
+
+    (f * g)(i, j) = \sum_a\sum_b f(a, b) g(i-a, j-b)
+
+* 二维卷积扩展了概念，在 𝑎,𝑏 方向滑动滤波器，计算二维图像与滤波器的重叠程度。
+
+
+卷积和交叉相关的区别
+++++++++++++++++++++
+
+* 交叉相关 (Cross-correlation)：
+    * 滤波器 𝑔 在滑动时不进行翻转，直接平移和累加。
+    * 卷积核和原始图像在相同方向滑动。
+
+.. math::
+
+    (f * g)(i, j) = \sum_a\sum_b f(a, b) g(i+a, j+b)
+
+* 卷积 (Convolution)：
+    * 卷积的滤波器 𝑔(𝑖−𝑎,𝑗−𝑏) 是翻转后的版本。
+    * 实际深度学习中，通常使用交叉相关的形式，称之为“卷积”。
+
+* 为什么使用交叉相关？
+    * 计算效率高，结果相似。
+    * 翻转操作在实现中可忽略，因此深度学习框架默认使用交叉相关。
+
+卷积的实际意义
+++++++++++++++
+
+* 卷积可在图像中提取局部特征，例如：
+    * 检测边缘、角点、纹理等。
+    * 在不同层中逐渐捕捉更复杂的模式，从低级特征 (边缘) 到高级特征 (物体轮廓或类别)。
+* 卷积是构建卷积神经网络 (CNN) 的核心操作
+
+
+7.1.4. Channels
+"""""""""""""""
+
+1. 图像的多通道特性
++++++++++++++++++++
+
+* 实际图像通常有 三通道：红 (R)、绿 (G)、蓝 (B)。
+* 每个像素点不仅包含一个灰度值，而是一个向量，表示不同颜色的组合。
+* 因此，图像是三阶张量 1024×1024×3，表示高度、宽度和通道数。
+
+2. 为什么需要多通道卷积
++++++++++++++++++++++++
+
+* 简单的二维卷积只能处理灰度图像。
+* 多通道卷积可以：
+    * 处理复杂的彩色图像。
+    * 在每个通道上分别提取特征，最终结合生成更丰富的特征表达。
+    * 允许不同滤波器学习捕捉图像的不同方面，例如边缘、纹理和颜色分布。
+
+3. 数学定义
++++++++++++
+
+多通道卷积公式：
+
+.. math::
+
+    [\mathsf{H}]_{i,j,d} = \sum_{a = -\Delta}^{\Delta} \sum_{b = -\Delta}^{\Delta} \sum_c [\mathsf{V}]_{a, b, c, d} [\mathsf{X}]_{i+a, j+b, c}
+
+* i,j：表示卷积在图像上的空间位置。
+* 𝑐：输入通道索引。
+* 𝑑：输出通道索引 (不同滤波器产生不同的输出通道)。
+* 核 𝑉 是一个四阶张量，维度为 𝑎,𝑏,𝑐,𝑑，即滤波器大小和输入输出通道数。
+
+4. 直观理解
++++++++++++
+
+* 将滤波器在每个通道上分别滑动，然后在所有通道上的结果相加，得到最终的输出特征。
+* 这种方式类似于对图像的不同部分进行特征组合，生成更加复杂的表达。
+
+5. 隐藏表示和特征图 (Feature Maps)
+++++++++++++++++++++++++++++++++++
+
+* 每个卷积层的输出也是多通道的，即隐藏表示 𝐻 也是三阶张量。
+* 每个隐藏通道捕捉不同类型的特征。例如：
+    * 第一个通道检测边缘。
+    * 第二个通道检测角点。
+    * 第三个通道检测纹理或复杂形状。
+* 这些输出通道常称为“特征图”或“特征通道”。
+
+6. 多层卷积的特征提取机制
++++++++++++++++++++++++++
+
+* 低层卷积层： 提取简单特征 (如边缘)。
+* 中层卷积层： 组合低层特征，提取更复杂的形状或结构。
+* 高层卷积层： 识别物体或场景中的高级特征，如人脸或特定物体。
+
+
+7. 通道的现实意义
++++++++++++++++++
+
+* 多通道卷积帮助模型捕捉更复杂的视觉特征，提高模型表达能力。
+* 深度卷积网络 (CNN) 在图像分类、目标检测和分割等任务中表现卓越，部分原因在于多通道卷积的强大能力。
+
+8. 关键点总结
++++++++++++++
+
+* 通道允许卷积层处理彩色图像或多维特征，使CNN在实际应用中表现更强大。
+* 多通道输出表示不同层次的特征组合，为网络提供更全面的图像表示能力。
+
+
+7.1.5. Summary and Discussion
+"""""""""""""""""""""""""""""
+
+关键点
+++++++
+
+* 平移不变性 (Translation Invariance)：图像中的物体无论出现在图像的哪个位置，卷积操作都能以相同的方式处理它。这种不变性是 CNN 设计的重要原则之一。
+* 局部性 (Locality)：每个卷积核仅关注图像的小区域 (局部感受野)，并通过滑动窗口机制逐个位置计算特征，逐步构建全局理解。
+
+理解
+++++
+
+* 解释：CNN 的核心优势在于能够高效地提取局部特征，并保持对位置信息的不敏感性，这种设计使 CNN 适用于图像分类、目标检测等任务。
+* 类比：想象一个人观察一张图片时，通常不会一次性关注整张图像，而是逐个区域观察并理解细节。这种局部关注和逐步汇总的方式与 CNN 的工作方式相似。
+
+
+降低复杂度与参数数量
+++++++++++++++++++++
+
+* 问题：大规模图像或高维数据通常具有极高的维度，直接建模计算量巨大且参数过多，容易导致模型过拟合或计算不可行。
+* 解决方案：CNN 通过卷积操作，强制模型只关注局部区域，减少参数数量，同时保留足够的表达能力。这种策略将复杂的计算问题转化为可行的模型，避免了计算和统计上的不可行性。
+* 示例：假设原始图像大小为 1024×1024×3，如果直接使用全连接层，参数量非常庞大。而卷积核通常大小为 3×3 或 5×5，参数数量显著减少。
+* 理解要点：降维和特征提取的同时不丢失关键信息，是 CNN 在高效处理复杂数据时的重要特性。
+
+引入通道 (Channels) 增强模型能力
+++++++++++++++++++++++++++++++++
+
+* 背景：卷积核的局部性和平移不变性在降低复杂度的同时，也限制了模型的表达能力。
+* 解决方法：引入多个通道 (如 RGB)，允许模型学习更复杂和多样的特征，弥补了局部卷积带来的表达能力损失。
+* 进一步扩展：图像中常见的三个通道 (红、绿、蓝)，是基本的颜色信息。然而，实际应用中可能存在更多通道。例如：
+    * 卫星图像： 可能包含几十甚至上百个通道 (多光谱或高光谱图像)，记录不同波长的反射数据。
+    * 医学成像： MRI 或 CT 扫描中不同通道可能代表不同的层面或组织特性。
+* 理解：通过引入额外通道，CNN 可以处理更复杂的数据，学习多维度的特征表示，从而提升模型的表现力和泛化能力。
+
+
+
+7.2. Convolutions for Images
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+7.2.1. The Cross-Correlation Operation
+""""""""""""""""""""""""""""""""""""""
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/vuP5GV.png
+
+    输入是一个高度为3、宽度为3的二维张量。我们将张量的形状标记为 ``3x3 或 (3，3）``。kernel的高度和宽度都是2。kernel window (or convolution window)的形状由内核的高度和宽度给出（这里是 ``2x2`` ）。
+
+* 在二维互相关运算(two-dimensional cross-correlation operation)中，我们从位于输入张量左上角的卷积窗口开始，并将其从左到右、从上到下滑动穿过输入张量。
+* 当卷积窗口滑动到某个位置时，该窗口中包含的输入子张量与内核张量按元素相乘，并将所得张量相加，生成单个标量值。
+* 该结果给出了相应位置处的输出张量的值。
+
+.. math::
+
+    0\times0+1\times1+3\times2+4\times3=19,\\
+    1\times0+2\times1+4\times2+5\times3=25,\\
+    3\times0+4\times1+6\times2+7\times3=37,\\
+    4\times0+5\times1+7\times2+8\times3=43.
+
+* 输出大小由输入大小 :math:`n_h \times n_w` 减去 kernel 大小 :math:`k_h \times k_w`
+
+.. math::
+
+    (n_h - k_h +1) \times (n_w - k_w +1)
+
+代码::
+
+    def corr2d(X, K):  #@save
+        """Compute 2D cross-correlation."""
+        h, w = K.shape
+        Y = torch.zeros((X.shape[0] - h + 1, X.shape[1] - w + 1))
+        for i in range(Y.shape[0]):
+            for j in range(Y.shape[1]):
+                Y[i, j] = (X[i:i + h, j:j + w] * K).sum()
+        return Y
+
+    X = torch.tensor([[0.0, 1.0, 2.0], 
+                      [3.0, 4.0, 5.0], 
+                      [6.0, 7.0, 8.0]])
+    K = torch.tensor([[0.0, 1.0], [2.0, 3.0]])
+    corr2d(X, K)
+    # 输出
+    tensor([[19., 25.],
+        [37., 43.]])
+
+
+7.2.2. Convolutional Layers
+"""""""""""""""""""""""""""
+
+前向传播方法::
+
+    class Conv2D(nn.Module):
+        def __init__(self, kernel_size):
+            super().__init__()
+            self.weight = nn.Parameter(torch.rand(kernel_size))
+            self.bias = nn.Parameter(torch.zeros(1))
+
+        def forward(self, x):
+            return corr2d(x, self.weight) + self.bias
+
+
+
+
+
+7.3. Padding and Stride
+^^^^^^^^^^^^^^^^^^^^^^^
+
+
+7.4. Multiple Input and Multiple Output Channels
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+7.5. Pooling
+^^^^^^^^^^^^
+
+
+7.6. Convolutional Neural Networks (LeNet)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+
+
+
+Part 3: Scalability, Efficiency, and Applications
+=================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

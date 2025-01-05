@@ -1,0 +1,396 @@
+Usage
+#####
+
+LoRA Adapters
+=============
+
+instantiate the base model and pass in the enable_lora=True flag::
+
+    from vllm import LLM, SamplingParams
+    from vllm.lora.request import LoRARequest
+
+    llm = LLM(model="meta-llama/Llama-2-7b-hf", enable_lora=True)
+
+
+submit the prompts and call llm.generate with the lora_request parameter::
+
+    from huggingface_hub import snapshot_download
+    sql_lora_path = snapshot_download(repo_id="yard1/llama-2-7b-sql-lora-test")
+
+    sampling_params = SamplingParams(
+        temperature=0,
+        max_tokens=256,
+        stop=["[/assistant]"]
+    )
+
+    prompts = [
+         "[user] Write a SQL query to answer the question based on the table schema.\n\n context: CREATE TABLE table_name_74 (icao VARCHAR, airport VARCHAR)\n\n question: Name the ICAO for lilongwe international airport [/user] [assistant]",
+         "[user] Write a SQL query to answer the question based on the table schema.\n\n context: CREATE TABLE table_name_11 (nationality VARCHAR, elector VARCHAR)\n\n question: When Anchero Pantaleone was the elector what is under nationality? [/user] [assistant]",
+    ]
+
+    # LoRARequest 参数
+    #   1. a human identifiable name
+    #   2. a globally unique ID
+    #   3. path to the LoRA adapter
+    outputs = llm.generate(
+        prompts,
+        sampling_params,
+        lora_request=LoRARequest("sql_adapter", 1, sql_lora_path)
+    )
+
+
+
+Serving LoRA Adapters
+---------------------
+
+specify each LoRA module when we kickoff the server::
+
+    vllm serve meta-llama/Llama-2-7b-hf \
+        --enable-lora \
+        --lora-modules sql-lora=$HOME/.cache/huggingface/hub/models--yard1--llama-2-7b-sql-lora-test/snapshots/0dfa347e8877a4d4ed19ee56c140fa518470028c/
+
+
+请求::
+
+    curl http://localhost:8000/v1/completions \
+        -H "Content-Type: application/json" \
+        -d '{
+            "model": "sql-lora",
+            "prompt": "San Francisco is a",
+            "max_tokens": 7,
+            "temperature": 0
+        }' | jq
+
+
+
+Dynamically serving LoRA Adapters
+---------------------------------
+
+.. warning:: Note: Enabling this feature in production environments is risky as user may participate model adapter management.
+
+
+To enable dynamic LoRA loading and unloading::
+
+    export VLLM_ALLOW_RUNTIME_LORA_UPDATING=True
+
+request to load a LoRA adapter::
+
+    curl -X POST http://localhost:8000/v1/load_lora_adapter \
+    -H "Content-Type: application/json" \
+    -d '{
+        "lora_name": "sql_adapter",
+        "lora_path": "/path/to/sql-lora-adapter"
+    }'
+
+
+request to unload a LoRA adapter::
+
+    curl -X POST http://localhost:8000/v1/unload_lora_adapter \
+    -H "Content-Type: application/json" \
+    -d '{
+        "lora_name": "sql_adapter"
+    }'
+
+
+
+
+New format for --lora-modules
+-----------------------------
+
+provide LoRA modules via key-value pair::
+
+    --lora-modules sql-lora=$HOME/.cache/huggingface/hub/models--yard1--llama-2-7b-sql-lora-test/snapshots/0dfa347e8877a4d4ed19ee56c140fa518470028c/
+
+
+specify a ``base_model_name`` alongside the name and path using JSON format::
+
+    --lora-modules '{"name": "sql-lora", "path": "/path/to/lora", "base_model_name": "meta-llama/Llama-2-7b"}'
+
+
+Lora model lineage in model card
+--------------------------------
+
+.. code-block:: python
+
+    $ curl http://localhost:8000/v1/models
+
+    {
+        "object": "list",
+        "data": [
+            {
+            "id": "meta-llama/Llama-2-7b-hf",
+            "object": "model",
+            "created": 1715644056,
+            "owned_by": "vllm",
+            "root": "~/.cache/huggingface/hub/models--meta-llama--Llama-2-7b-hf/snapshots/01c7f73d771dfac7d292323805ebc428287df4f9/",
+            "parent": null,
+            "permission": [
+                {
+                .....
+                }
+            ]
+            },
+            {
+            "id": "sql-lora",
+            "object": "model",
+            "created": 1715644056,
+            "owned_by": "vllm",
+            "root": "~/.cache/huggingface/hub/models--yard1--llama-2-7b-sql-lora-test/snapshots/0dfa347e8877a4d4ed19ee56c140fa518470028c/",
+            "parent": meta-llama/Llama-2-7b-hf,
+            "permission": [
+                {
+                ....
+                }
+            ]
+            }
+        ]
+    }
+
+
+Multimodal Inputs
+=================
+
+
+Image
+-----
+
+.. code-block:: python
+
+    llm = LLM(model="llava-hf/llava-1.5-7b-hf")
+
+    # Refer to the HuggingFace repo for the correct format to use
+    prompt = "USER: <image>\nWhat is the content of this image?\nASSISTANT:"
+
+    # Load the image using PIL.Image
+    image = PIL.Image.open(...)
+
+    # Single prompt inference
+    outputs = llm.generate({
+        "prompt": prompt,
+        "multi_modal_data": {"image": image},
+    })
+
+    for o in outputs:
+        generated_text = o.outputs[0].text
+        print(generated_text)
+
+    # Batch inference
+    image_1 = PIL.Image.open(...)
+    image_2 = PIL.Image.open(...)
+    outputs = llm.generate(
+        [
+            {
+                "prompt": "USER: <image>\nWhat is the content of this image?\nASSISTANT:",
+                "multi_modal_data": {"image": image_1},
+            },
+            {
+                "prompt": "USER: <image>\nWhat's the color of this image?\nASSISTANT:",
+                "multi_modal_data": {"image": image_2},
+            }
+        ]
+    )
+
+    for o in outputs:
+        generated_text = o.outputs[0].text
+        print(generated_text)
+
+
+
+multiple images::
+
+    llm = LLM(
+        model="microsoft/Phi-3.5-vision-instruct",
+        trust_remote_code=True,  # Required to load Phi-3.5-vision
+        max_model_len=4096,  # Otherwise, it may not fit in smaller GPUs
+        limit_mm_per_prompt={"image": 2},  # The maximum number to accept
+    )
+
+    # Refer to the HuggingFace repo for the correct format to use
+    prompt = "<|user|>\n<|image_1|>\n<|image_2|>\nWhat is the content of each image?<|end|>\n<|assistant|>\n"
+
+    # Load the images using PIL.Image
+    image1 = PIL.Image.open(...)
+    image2 = PIL.Image.open(...)
+
+    outputs = llm.generate({
+        "prompt": prompt,
+        "multi_modal_data": {
+            "image": [image1, image2]
+        },
+    })
+
+    for o in outputs:
+        generated_text = o.outputs[0].text
+        print(generated_text)
+
+
+
+Multi-image input can be extended to perform video captioning::
+
+    # Specify the maximum number of frames per video to be 4. This can be changed.
+    llm = LLM("Qwen/Qwen2-VL-2B-Instruct", limit_mm_per_prompt={"image": 4})
+
+    # Create the request payload.
+    video_frames = ... # load your video making sure it only has the number of frames specified earlier.
+    message = {
+        "role": "user",
+        "content": [
+            {"type": "text", "text": "Describe this set of frames. Consider the frames to be a part of the same video."},
+        ],
+    }
+    for i in range(len(video_frames)):
+        base64_image = encode_image(video_frames[i]) # base64 encoding.
+        new_image = {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
+        message["content"].append(new_image)
+
+    # Perform inference and log output.
+    outputs = llm.chat([message])
+
+    for o in outputs:
+        generated_text = o.outputs[0].text
+        print(generated_text)
+
+
+
+
+Video
+-----
+
+* examples/offline_inference_vision_language.py
+
+
+Audio
+-----
+
+* examples/offline_inference_audio_language.py
+
+
+
+Tool Calling
+============
+
+Quickstart
+----------
+
+use the llama3 tool calling chat template::
+
+    vllm serve meta-llama/Llama-3.1-8B-Instruct \
+        --enable-auto-tool-choice \
+        --tool-call-parser llama3_json \
+        --chat-template examples/tool_chat_template_llama3_json.jinja
+
+
+request to the model::
+
+    from openai import OpenAI
+    import json
+
+    client = OpenAI(base_url="http://localhost:8000/v1", api_key="dummy")
+
+    def get_weather(location: str, unit: str):
+        return f"Getting the weather for {location} in {unit}..."
+    tool_functions = {"get_weather": get_weather}
+
+    tools = [{
+        "type": "function",
+        "function": {
+            "name": "get_weather",
+            "description": "Get the current weather in a given location",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "location": {"type": "string", "description": "City and state, e.g., 'San Francisco, CA'"},
+                    "unit": {"type": "string", "enum": ["celsius", "fahrenheit"]}
+                },
+                "required": ["location", "unit"]
+            }
+        }
+    }]
+
+    response = client.chat.completions.create(
+        model=client.models.list().data[0].id,
+        messages=[{"role": "user", "content": "What's the weather like in San Francisco?"}],
+        tools=tools,
+        tool_choice="auto"
+    )
+
+    tool_call = response.choices[0].message.tool_calls[0].function
+    print(f"Function called: {tool_call.name}")
+    print(f"Arguments: {tool_call.arguments}")
+    print(f"Result: {get_weather(**json.loads(tool_call.arguments))}")
+
+输出::
+
+    Function called: get_weather
+    Arguments: {"location": "San Francisco, CA", "unit": "fahrenheit"}
+    Result: Getting the weather for San Francisco, CA in fahrenheit...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

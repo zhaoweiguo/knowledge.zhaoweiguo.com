@@ -1,0 +1,243 @@
+Models
+######
+
+Loading a Model
+===============
+
+HuggingFace Hub
+---------------
+
+* default
+
+The easiest way to check if your model is really supported at runtime::
+
+    from vllm import LLM
+
+    # For generative models (task=generate) only
+    llm = LLM(model=..., task="generate")  # Name or path of your model
+    output = llm.generate("Hello, my name is")
+    print(output)
+
+    # For pooling models (task={embed,classify,reward,score}) only
+    llm = LLM(model=..., task="embed")  # Name or path of your model
+    output = llm.encode("Hello, my name is")
+    print(output)
+
+* If vLLM successfully returns text (for generative models) or hidden states (for pooling models), it indicates that your model is supported.
+
+
+
+ModelScope
+----------
+
+环境变量::
+
+    $ export VLLM_USE_MODELSCOPE=True
+
+And use with trust_remote_code=True::
+
+    from vllm import LLM
+
+    llm = LLM(model=..., revision=..., task=..., trust_remote_code=True)
+
+    # For generative models (task=generate) only
+    output = llm.generate("Hello, my name is")
+    print(output)
+
+    # For pooling models (task={embed,classify,reward,score}) only
+    output = llm.encode("Hello, my name is")
+    print(output)
+
+
+
+
+List of Models
+--------------
+
+* 当前支持的模型(文本模型、多模态模型)
+* https://docs.vllm.ai/en/stable/models/supported_models.html
+
+
+Generative Models
+=================
+
+Offline Inference
+-----------------
+
+LLM.generate
+^^^^^^^^^^^^
+
+基本::
+
+    llm = LLM(model="facebook/opt-125m")
+    outputs = llm.generate("Hello, my name is")
+
+    for output in outputs:
+        prompt = output.prompt
+        generated_text = output.outputs[0].text
+        print(f"Prompt: {prompt!r}, Generated text: {generated_text!r}")
+
+
+
+use greedy sampling by setting temperature=0::
+
+    llm = LLM(model="facebook/opt-125m")
+    params = SamplingParams(temperature=0)
+    outputs = llm.generate("Hello, my name is", params)
+
+    for output in outputs:
+        prompt = output.prompt
+        generated_text = output.outputs[0].text
+        print(f"Prompt: {prompt!r}, Generated text: {generated_text!r}")
+
+
+LLM.beam_search
+^^^^^^^^^^^^^^^
+
+search using 5 beams and output at most 50 tokens::
+
+    llm = LLM(model="facebook/opt-125m")
+    params = BeamSearchParams(beam_width=5, max_tokens=50)
+    outputs = llm.generate("Hello, my name is", params)
+
+    for output in outputs:
+        prompt = output.prompt
+        generated_text = output.outputs[0].text
+        print(f"Prompt: {prompt!r}, Generated text: {generated_text!r}")
+
+
+LLM.chat
+^^^^^^^^
+
+.. note:: In general, only instruction-tuned models have a chat template. Base models may perform poorly as they are not trained to respond to the chat conversation.
+
+.. code-block::python
+
+    llm = LLM(model="meta-llama/Meta-Llama-3-8B-Instruct")
+    conversation = [
+        {
+            "role": "system",
+            "content": "You are a helpful assistant"
+        },
+        {
+            "role": "user",
+            "content": "Hello"
+        },
+        {
+            "role": "assistant",
+            "content": "Hello! How can I assist you today?"
+        },
+        {
+            "role": "user",
+            "content": "Write an essay about the importance of higher education.",
+        },
+    ]
+    outputs = llm.chat(conversation)
+
+    for output in outputs:
+        prompt = output.prompt
+        generated_text = output.outputs[0].text
+        print(f"Prompt: {prompt!r}, Generated text: {generated_text!r}")
+
+
+
+If the model doesn’t have a chat template or you want to specify another one, you can explicitly pass a chat template::
+
+    from vllm.entrypoints.chat_utils import load_chat_template
+
+    # You can find a list of existing chat templates under `examples/`
+    custom_template = load_chat_template(chat_template="<path_to_template>")
+    print("Loaded chat template:", custom_template)
+
+    outputs = llm.chat(conversation, chat_template=custom_template)
+
+
+Online Inference
+----------------
+
+::
+
+    vllm serve <model>
+
+
+Pooling Models
+==============
+
+LLM.encode::
+
+    llm = LLM(model="Qwen/Qwen2.5-Math-RM-72B", task="reward")
+    (output,) = llm.encode("Hello, my name is")
+
+    data = output.outputs.data
+    print(f"Data: {data!r}")
+
+
+LLM.embed::
+
+    llm = LLM(model="intfloat/e5-mistral-7b-instruct", task="embed")
+    (output,) = llm.embed("Hello, my name is")
+
+    embeds = output.outputs.embedding
+    print(f"Embeddings: {embeds!r} (size={len(embeds)})")
+
+LLM.classify::
+
+    llm = LLM(model="jason9693/Qwen2.5-1.5B-apeach", task="classify")
+    (output,) = llm.classify("Hello, my name is")
+
+    probs = output.outputs.probs
+    print(f"Class Probabilities: {probs!r} (size={len(probs)})")
+
+LLM.score::
+
+    llm = LLM(model="BAAI/bge-reranker-v2-m3", task="score")
+    (output,) = llm.score("What is the capital of France?",
+                          "The capital of Brazil is Brasilia.")
+
+    score = output.outputs.score
+    print(f"Score: {score}")
+
+
+Adding a New Model
+==================
+
+* 指定如何自己适配一个新的模型
+* https://docs.vllm.ai/en/stable/models/adding_model.html
+
+
+Enabling Multimodal Inputs
+==========================
+
+* vllm 默认不支持多模态，需要按本节完成配置
+* https://docs.vllm.ai/en/stable/models/enabling_multimodal_inputs.html
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
