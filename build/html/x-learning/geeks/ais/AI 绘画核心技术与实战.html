@@ -9,7 +9,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>AI 绘画核心技术与实战 &mdash; 新溪-gordon V1.7.22 文档</title>
+  <title>AI 绘画核心技术与实战 &mdash; 新溪-gordon V2025.02 文档</title>
   
 
   
@@ -72,7 +72,7 @@
             
             
               <div class="version">
-                V1.7.22
+                V2025.02
               </div>
             
           
@@ -2455,6 +2455,17 @@
 <li class="toctree-l4"><a class="reference internal" href="../../papers/FineTunes/2403.13372_LlamaFactory.html#conclusion-and-future-work">6 Conclusion and Future Work</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../papers/FineTunes/2412.14135_Scaling_of_Search_and_Learning.html">Scaling of Search and Learning: A Roadmap to Reproduce o1 from Reinforcement Learning Perspective</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../papers/FineTunes/2412.14135_Scaling_of_Search_and_Learning.html#fromgpt">FromGPT</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../papers/FineTunes/2412.14135_Scaling_of_Search_and_Learning.html#introduction">1. Introduction</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../papers/FineTunes/2412.14135_Scaling_of_Search_and_Learning.html#background">2. Background</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../papers/FineTunes/2412.14135_Scaling_of_Search_and_Learning.html#id2">3. Policy Initialization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../papers/FineTunes/2412.14135_Scaling_of_Search_and_Learning.html#id3">4. Reward Design</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../papers/FineTunes/2412.14135_Scaling_of_Search_and_Learning.html#id5">5. Search</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../papers/FineTunes/2412.14135_Scaling_of_Search_and_Learning.html#id7">6. Learning</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../papers/FineTunes/2412.14135_Scaling_of_Search_and_Learning.html#open-source-o1-project">7 Open-source o1 Project</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../paper.html#nlp-llm">NLP LLM</a><ul>
@@ -2495,6 +2506,11 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../papers/LLMs/2405.04434_DeepSeek-V2.html">DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../papers/LLMs/2406.12793_ChatGLM.html">ChatGLM: A Family of Large Language Models from GLM-130B to GLM-4 All Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../paper.html#moe-llm">MoE LLM</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../papers/LLMMoEs/2410.07490_MoDEM.html">MoDEM: Mixture of Domain Expert Models</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../papers/LLMMoEs/2408.15664_AUXILIARY-LOSS-FREE_LB.html">AUXILIARY-LOSS-FREE LOAD BALANCING STRATEGY FOR MIXTURE-OF-EXPERTS</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../paper.html#vision-llm">Vision LLm</a><ul>
@@ -3231,8 +3247,8 @@
 <li><p>对于图像分割任务，每个像素都需要进行分类，也就是判断这个像素属于哪一个类别。因此，我们需要对图像中每一个像素都计算交叉熵损失，用平均或者求和的方式将这些损失合并，得到最终的损失值。</p></li>
 </ul>
 <p>图像分类任务和图像分割任务中交叉熵损失函数的代码实现:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="k">def</span> <span class="nf">cross_entropy_classification</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">):</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">cross_entropy_classification</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    y_true: 真实标签。这是任务的真实答案，通常由人类标注或事先知道。</span>
 <span class="sd">    对于分类任务（如猫狗分类），y_true可以是类别的索引或 one-hot 编码表示。</span>
@@ -3242,7 +3258,7 @@
     <span class="n">y_pred</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">y_pred</span><span class="p">,</span> <span class="mf">1e-9</span><span class="p">,</span> <span class="mi">1</span> <span class="o">-</span> <span class="mf">1e-9</span><span class="p">)</span>  <span class="c1"># 数值稳定性处理，将预测值限制在[1e-9, 1-1e-9]范围内</span>
     <span class="k">return</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">y_true</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">y_pred</span><span class="p">))</span>
 
-<span class="k">def</span> <span class="nf">cross_entropy_segmentation</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">cross_entropy_segmentation</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    y_true: 真实标签。这是任务的真实答案，通常由人类标注或事先知道。</span>
 <span class="sd">    对于分割任务（如语义分割），y_true是一个二维或多维数组，</span>
@@ -4185,7 +4201,7 @@ LoRA
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../',
-            VERSION:'V1.7.22',
+            VERSION:'V2025.02',
             LANGUAGE:'zh-CN',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',

@@ -9,7 +9,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>较复杂的 &mdash; 新溪-gordon V1.7.22 文档</title>
+  <title>较复杂的 &mdash; 新溪-gordon V2025.02 文档</title>
   
 
   
@@ -72,7 +72,7 @@
             
             
               <div class="version">
-                V1.7.22
+                V2025.02
               </div>
             
           
@@ -335,6 +335,7 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../../githubs/gitpod.html">gitpod </a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../githubs/command.html">github命令</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../githubs/proxy.html">github加速代理</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../githubs/plugin.html">插件</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../githubs/plugin.html#imgbot">ImgBot</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../githubs/plugin.html#id3">参考</a></li>
@@ -597,14 +598,14 @@ unnest(map) as table(key_name, value_name)
 </pre></div>
 </div>
 <p>统计数组中的每个元素的和:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">*</span> <span class="o">|</span> <span class="n">select</span>   <span class="nb">sum</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>    <span class="kn">from</span> <span class="nn">log</span><span class="p">,</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">*</span> <span class="o">|</span> <span class="n">select</span>   <span class="nb">sum</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>    <span class="kn">from</span><span class="w"> </span><span class="nn">log</span><span class="p">,</span>
     <span class="n">unnest</span><span class="p">(</span>
         <span class="n">cast</span><span class="p">(</span> <span class="n">json_parse</span><span class="p">(</span><span class="n">array_column</span><span class="p">)</span>   <span class="k">as</span> <span class="n">array</span><span class="p">(</span><span class="n">bigint</span><span class="p">)</span> <span class="p">)</span>
     <span class="p">)</span> <span class="k">as</span>  <span class="n">t</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>按照数组中的每个元素进行group by计算:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">*</span> <span class="o">|</span> <span class="n">select</span>   <span class="n">a</span><span class="p">,</span> <span class="n">count</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>    <span class="kn">from</span> <span class="nn">log</span><span class="p">,</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">*</span> <span class="o">|</span> <span class="n">select</span>   <span class="n">a</span><span class="p">,</span> <span class="n">count</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>    <span class="kn">from</span><span class="w"> </span><span class="nn">log</span><span class="p">,</span>
     <span class="n">unnest</span><span class="p">(</span>
         <span class="n">cast</span><span class="p">(</span> <span class="n">json_parse</span><span class="p">(</span><span class="n">array_column</span><span class="p">)</span>   <span class="k">as</span> <span class="n">array</span><span class="p">(</span><span class="n">bigint</span><span class="p">)</span> <span class="p">)</span>
     <span class="p">)</span> <span class="k">as</span>  <span class="n">t</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>     <span class="n">group</span> <span class="n">by</span> <span class="n">a</span>
@@ -614,14 +615,14 @@ unnest(map) as table(key_name, value_name)
 <section id="map">
 <h2>遍历Map<a class="headerlink" href="#map" title="此标题的永久链接">¶</a></h2>
 <p>遍历Map中的元素:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">*</span> <span class="o">|</span> <span class="n">select</span>  <span class="n">map_column</span> <span class="p">,</span> <span class="n">a</span><span class="p">,</span><span class="n">b</span>    <span class="kn">from</span> <span class="nn">log</span><span class="p">,</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">*</span> <span class="o">|</span> <span class="n">select</span>  <span class="n">map_column</span> <span class="p">,</span> <span class="n">a</span><span class="p">,</span><span class="n">b</span>    <span class="kn">from</span><span class="w"> </span><span class="nn">log</span><span class="p">,</span>
     <span class="n">unnest</span><span class="p">(</span>
         <span class="n">cast</span><span class="p">(</span> <span class="n">json_parse</span><span class="p">(</span><span class="n">map_column</span><span class="p">)</span>   <span class="k">as</span> <span class="nb">map</span><span class="p">(</span><span class="n">varchar</span><span class="p">,</span> <span class="n">bigint</span><span class="p">)</span> <span class="p">)</span>
     <span class="p">)</span> <span class="k">as</span>  <span class="n">t</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>按照Map的key进行group by 统计:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">*</span> <span class="o">|</span> <span class="n">select</span>   <span class="n">key</span><span class="p">,</span>  <span class="nb">sum</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>    <span class="kn">from</span> <span class="nn">log</span><span class="p">,</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">*</span> <span class="o">|</span> <span class="n">select</span>   <span class="n">key</span><span class="p">,</span>  <span class="nb">sum</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>    <span class="kn">from</span><span class="w"> </span><span class="nn">log</span><span class="p">,</span>
     <span class="n">unnest</span><span class="p">(</span>
         <span class="n">cast</span><span class="p">(</span> <span class="n">json_parse</span><span class="p">(</span><span class="n">map_column</span><span class="p">)</span>   <span class="k">as</span> <span class="nb">map</span><span class="p">(</span><span class="n">varchar</span><span class="p">,</span> <span class="n">bigint</span><span class="p">)</span> <span class="p">)</span>
     <span class="p">)</span> <span class="k">as</span>  <span class="n">t</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="n">value</span><span class="p">)</span>    <span class="n">GROUP</span>  <span class="n">BY</span>  <span class="n">key</span>
@@ -636,7 +637,7 @@ unnest(map) as table(key_name, value_name)
 </div>
 <p>您可以通过unnest语法，把JSON展开成多行配置视图，例如:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">*</span> <span class="o">|</span> <span class="n">select</span>  <span class="n">key</span> <span class="p">,</span> <span class="n">value</span>  <span class="n">from</span><span class="p">(</span>
-    <span class="n">select</span> <span class="n">histogram</span><span class="p">(</span><span class="n">method</span><span class="p">)</span> <span class="k">as</span> <span class="n">his</span> <span class="kn">from</span> <span class="nn">log</span>
+    <span class="n">select</span> <span class="n">histogram</span><span class="p">(</span><span class="n">method</span><span class="p">)</span> <span class="k">as</span> <span class="n">his</span> <span class="kn">from</span><span class="w"> </span><span class="nn">log</span>
 <span class="p">)</span> <span class="p">,</span> <span class="n">unnest</span><span class="p">(</span><span class="n">his</span> <span class="p">)</span> <span class="k">as</span> <span class="n">t</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="n">value</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -646,7 +647,7 @@ unnest(map) as table(key_name, value_name)
 </div>
 <p>numeric_histogram的输出格式化展示:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">*</span> <span class="o">|</span>  <span class="n">select</span> <span class="n">key</span><span class="p">,</span><span class="n">value</span> <span class="n">from</span><span class="p">(</span>
-    <span class="n">select</span> <span class="n">numeric_histogram</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">Latency</span><span class="p">)</span> <span class="k">as</span> <span class="n">his</span> <span class="kn">from</span> <span class="nn">log</span>
+    <span class="n">select</span> <span class="n">numeric_histogram</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">Latency</span><span class="p">)</span> <span class="k">as</span> <span class="n">his</span> <span class="kn">from</span><span class="w"> </span><span class="nn">log</span>
 <span class="p">)</span> <span class="p">,</span> <span class="n">unnest</span><span class="p">(</span><span class="n">his</span><span class="p">)</span> <span class="k">as</span> <span class="n">t</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="n">value</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -725,7 +726,7 @@ unnest(map) as table(key_name, value_name)
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../../',
-            VERSION:'V1.7.22',
+            VERSION:'V2025.02',
             LANGUAGE:'zh-CN',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',

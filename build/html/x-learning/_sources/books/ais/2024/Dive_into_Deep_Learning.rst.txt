@@ -3927,17 +3927,17 @@ Let the trainer support GPU::
 CNN 如何实现这种不变性
 ++++++++++++++++++++++
 
-* (1) 平移不变性（Translation Invariance）：
+* (1)平移不变性（Translation Invariance）：
     * 无论图像的某个局部区域（patch）出现在什么位置，网络都应该对它有相似的响应。
     * 卷积层通过在图像上滑动一个滤波器（kernel）来实现这一点，即使物体的位置发生变化，滤波器依然可以检测到它。
     * 例子：在一张猫的图片中，滤波器在猫的耳朵上或猫的爪子上滑动时，都会产生相应的激活，从而检测到猫的存在。
 
-* (2) 局部性原则（Locality）：
+* (2)局部性原则（Locality）：
     * 在网络的前几层，卷积操作主要关注局部区域（local region），而不考虑图像中远处的内容。
     * 这种方法模拟了人类视觉系统中对局部特征（如边缘、角等）的关注。
     * 意义：每次只处理一小部分图像，有助于减少计算量，并捕捉基本特征。最终，通过不断堆叠卷积层和池化层，模型可以聚合这些局部特征，形成对整个图像的理解。
 
-* (3) 深层特征提取：
+* (3)深层特征提取：
     * 随着网络逐渐加深，感受野（receptive field）变大，网络可以学习到更长距离的特征关系，类似于更高级别的视觉感知。
     * 这种方式使得 CNN 能够捕捉更复杂、更抽象的图像特征。
     * 例子：在浅层，网络可能学习到边缘和纹理等简单特征，而在更深的层中，网络可能学习到眼睛、鼻子等复杂特征，最终能够识别出整个脸部。
@@ -4315,7 +4315,7 @@ CNN的优势
     corr2d(X, K)
     # 输出
     tensor([[19., 25.],
-        [37., 43.]])
+            [37., 43.]])
 
 
 7.2.2. Convolutional Layers
@@ -4332,24 +4332,4163 @@ CNN的优势
         def forward(self, x):
             return corr2d(x, self.weight) + self.bias
 
+7.2.3. Object Edge Detection in Images
+""""""""""""""""""""""""""""""""""""""
+
+构建一个 6x8 像素的“图像”。中间四列是黑色（ 0 ），其余是白色（ 1 ）::
+
+    X = torch.ones((6, 8))
+    X[:, 2:6] = 0
+    X
+    # 输出
+    tensor([[1., 1., 0., 0., 0., 0., 1., 1.],
+            [1., 1., 0., 0., 0., 0., 1., 1.],
+            [1., 1., 0., 0., 0., 0., 1., 1.],
+            [1., 1., 0., 0., 0., 0., 1., 1.],
+            [1., 1., 0., 0., 0., 0., 1., 1.],
+            [1., 1., 0., 0., 0., 0., 1., 1.]])
 
 
+* 构造一个高度为1、宽度为2的 kernel K
+* 此内核是有限差分运算符的特例: At location :math:`(i,j)` it computes :math:`x_{i,j} - x_{(i+1),j}` ，即计算水平相邻像素的值之间的差异
+* 代码实现::
+
+    K = torch.tensor([[1.0, -1.0]])
+
+参数 X （我们的 input） 和 K （我们的 kernel） 执行 cross-correlation operation::
+
+    Y = corr2d(X, K)
+    Y
+    # 输出
+    tensor([[ 0.,  1.,  0.,  0.,  0., -1.,  0.],
+            [ 0.,  1.,  0.,  0.,  0., -1.,  0.],
+            [ 0.,  1.,  0.,  0.,  0., -1.,  0.],
+            [ 0.,  1.,  0.,  0.,  0., -1.,  0.],
+            [ 0.,  1.,  0.,  0.,  0., -1.,  0.],
+            [ 0.,  1.,  0.,  0.,  0., -1.,  0.]])
+
+将内核应用于转置图像。正如预期的那样，它消失了。内核 K 仅检测垂直边缘::
+
+    corr2d(X.t(), K)
+    # 输出
+    tensor([[0., 0., 0., 0., 0.],
+            [0., 0., 0., 0., 0.],
+            [0., 0., 0., 0., 0.],
+            [0., 0., 0., 0., 0.],
+            [0., 0., 0., 0., 0.],
+            [0., 0., 0., 0., 0.],
+            [0., 0., 0., 0., 0.],
+            [0., 0., 0., 0., 0.]])
+
+7.2.4. Learning a Kernel
+""""""""""""""""""""""""
+
+.. code-block:: python
+
+    # Construct a two-dimensional convolutional layer with 1 output channel and a kernel of shape (1, 2). 
+    # For the sake of simplicity, we ignore the bias here
+    conv2d = nn.LazyConv2d(1, kernel_size=(1, 2), bias=False)
+
+    # The two-dimensional convolutional layer uses four-dimensional input and output in the format of (example, channel, height, width), 
+    # where the batch size (number of examples in the batch) and the number of channels are both 1
+    X = X.reshape((1, 1, 6, 8))
+    Y = Y.reshape((1, 1, 6, 7))
+    lr = 3e-2  # Learning rate
+
+    for i in range(10):
+        Y_hat = conv2d(X)
+        l = (Y_hat - Y) ** 2
+        conv2d.zero_grad()
+        l.sum().backward()
+        # Update the kernel
+        conv2d.weight.data[:] -= lr * conv2d.weight.grad
+        if (i + 1) % 2 == 0:
+            print(f'epoch {i + 1}, loss {l.sum():.3f}')
+    # 输出
+    epoch 2, loss 16.481
+    epoch 4, loss 5.069
+    epoch 6, loss 1.794
+    epoch 8, loss 0.688
+    epoch 10, loss 0.274
+
+
+学习的 kernel tensor::
+
+    # 与我们之前定义的核张量 K 非常接近
+    conv2d.weight.data.reshape((1, 2))
+    # 输出
+    tensor([[ 1.0398, -0.9328]])
+
+
+
+7.2.5. Cross-Correlation and Convolution
+""""""""""""""""""""""""""""""""""""""""
+
+交叉相关 (Cross-Correlation) 与卷积 (Convolution) 的关系::
+
+    核心差异：
+        交叉相关 (Cross-Correlation)： 不翻转卷积核，直接在输入上滑动并计算加权和。
+        卷积 (Convolution)： 在执行交叉相关之前，先将卷积核水平和垂直翻转，然后再进行滑动和计算。
+
+* 交叉相关公式
+
+.. math::
+
+    (f * g)(t) = \sum_x{f(x)g(x+t)}
+
+* 卷积公式
+
+.. math::
+
+    (f * g)(t) = \sum_x{f(x)g(t-x)}
+
+* 核心区别：
+    * 交叉相关不对信号进行翻转，只是简单地滑动并计算重叠部分的内积。
+    * 卷积对信号进行翻转（即 ``𝑔(𝑡)→𝑔(−𝑡)`` ），然后滑动并计算内积。
+
+
+* 为什么深度学习中交叉相关和卷积无实质区别::
+    * 在深度学习中，卷积核 (filter) 是从数据中学习的。
+    * 不论卷积层执行的是严格卷积还是交叉相关，卷积核的学习过程都会自动调整，使得输出结果一致。
+    * 直观理解：卷积核在训练过程中是动态调整的，即便在数学上交叉相关和卷积稍有不同，训练后最终得到的卷积核已经隐含这种差异，使得两种操作的输出一致。
+
+* 深度学习术语的约定俗成
+    * 尽管在严格意义上，交叉相关和卷积存在差异，但在深度学习文献中，交叉相关通常也直接被称为“卷积”。
+    * 这种约定使得术语更加简洁，避免在描述模型架构时反复强调二者的区别。
+
+* 总结要点：
+    * 交叉相关与卷积： 数学上存在差异，卷积涉及卷积核的翻转，但在深度学习中通常不加以区分。
+    * 实质影响： 卷积核在训练过程中自动调整，因此不论执行交叉相关还是严格卷积，输出结果保持一致。
+    * 术语约定： 深度学习文献中，交叉相关操作通常直接称为卷积。
+    * 简化理解： 深度学习模型实现卷积层时，关注点在于卷积核的学习和特征提取效果，而非严格的数学定义差异。
+
+
+7.2.6. Feature Map and Receptive Field
+""""""""""""""""""""""""""""""""""""""
+
+* 特征图 (Feature Map) 与感受野 (Receptive Field) 的定义
+    * 特征图 (Feature Map)：特征图是卷积层的输出，它可以被看作是对输入空间维度（如宽度和高度）的学习表示。特征图在每一层提取输入数据的不同特征，供后续层进一步处理。
+    * 感受野 (Receptive Field)：感受野是指卷积网络中某个元素 (如特征图中的一个像素) 受到前面哪些输入元素影响的范围。换句话说，感受野表示了输出中某个元素在输入中“看到”的区域大小。
+    * 关键点：
+        * 感受野不仅取决于当前层，还取决于所有前面层的累积影响。
+        * 感受野可以比输入本身更大，表示该位置的特征汇集了更大区域的信息。
+    * 直观理解：
+        * 每堆叠一层卷积，输出的感受野都会扩大，使得网络能够捕捉更广泛的空间信息。
+
+* 总结要点：
+    * 特征图： 是卷积层输出的空间表示，用于提取输入的局部特征。
+    * 感受野： 指卷积层输出中某个元素在输入中“看到”的区域大小。感受野可以随着网络深度增加而扩大，帮助模型捕捉更大范围的信息。
+    * 层次特征提取： 较低层提取边缘和简单形状，高层提取复杂模式和语义特征。
+    * 生物启发： 卷积的设计灵感源于视觉皮层的研究，证明了卷积在生物和计算机视觉领域的有效性。
+
+
+7.2.7. Summary
+""""""""""""""
+
+* 卷积层核心计算：
+    * 卷积层的核心计算是互相关 (cross-correlation) 操作。
+    * 计算互相关非常简单，使用一个嵌套的 for 循环即可完成，这表明卷积操作的计算是直接且局部的 (local)。
+    * 关键点：
+        * 局部性： 互相关只涉及输入数据的局部区域，这种局部操作在硬件优化方面非常重要。
+        * 矩阵运算： 当有多个输入和输出通道时，卷积层的计算相当于在通道之间进行矩阵乘法操作，进一步强调了计算的简洁性和局部性。
+
+* 卷积的应用场景：
+    * 边缘检测 (Edge Detection)： 识别图像中的边缘和轮廓。
+    * 线条检测 (Line Detection)： 提取图像中的线条和形状。
+    * 图像模糊 (Blurring)： 平滑图像，减少噪声。
+    * 图像锐化 (Sharpening)： 增强图像的细节和对比度。
+
+* 卷积核学习：
+    *  传统方法需要人工设计滤波器（如 Sobel 滤波器或 Canny 边缘检测），但卷积神经网络 (CNN) 能够直接从数据中学习最优的滤波器。
+    *  这种方式避免了复杂的特征工程，通过数据驱动的方法自动学习特征，极大提高了模型的表现能力。
+    *  核心优势：取代了手工设计特征的启发式方法，转而使用基于数据的统计方法来学习有效特征。
 
 
 7.3. Padding and Stride
 ^^^^^^^^^^^^^^^^^^^^^^^
 
+7.3.1. Padding
+""""""""""""""
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/MRcs2k.png
+
+    Fig. 7.3.1 Pixel utilization for convolutions of size 1x1, 2x2, and 3x3 respectively.
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/DfsuXi.png
+
+    Fig. 7.3.2 Two-dimensional cross-correlation with padding.
+
+
+* In general, if we add a total of :math:`p_h` rows of padding (roughly half on top and half on bottom) and a total of :math:`p_w` columns of padding (roughly half on the left and half on the right), the output shape will be:
+
+.. math::
+
+    (n_h - k_h + p_h +1) \times (n_w - k_w + p_w +1)
+
+* In many cases, we will want to set :math:`p_h = k_h -1` and :math:`p_w = k_w -1` to give the input and output the same height and width. 
+* This will make it easier to predict the output shape of each layer when constructing the network. 
+* 所以，CNN 通常使用高度和宽度值为奇数的卷积核( :math:`k_h \time k_w` )，例如 1、3、5 或 7。选择奇数的内核大小的好处是，我们可以在顶部和底部使用相同的行数，左侧和右侧具有相同数量的列数进行填充时保持维度（因为Kernel是奇数时，Padding是偶数）。
+
+创建一个高度和宽度均为 3 的二维卷积层，并在所有侧面应用 1 个像素的填充。给定一个 height 和 width 为 8 的输入，我们发现输出的 height 和 width 也是 8
+
+.. code-block:: python
+
+    # We define a helper function to calculate convolutions. 
+    # It initializes the convolutional layer weights and performs corresponding dimensionality elevations and reductions on the input and output
+    def comp_conv2d(conv2d, X):
+        # (1, 1) indicates that batch size and the number of channels are both 1
+        X = X.reshape((1, 1) + X.shape)
+        Y = conv2d(X)
+        # Strip the first two dimensions: examples and channels
+        return Y.reshape(Y.shape[2:])
+
+    # 1 row and column is padded on either side, so a total of 2 rows or columns are added
+    conv2d = nn.LazyConv2d(1, kernel_size=3, padding=1)
+    X = torch.rand(size=(8, 8))
+    comp_conv2d(conv2d, X).shape
+
+当卷积核的高度和宽度不同时，我们可以通过为 height 和 width 设置不同的填充数来使 output 和 input 具有相同的 height 和 width::
+
+    # We use a convolution kernel with height 5 and width 3. 
+    # The padding on either side of the height and width are 2 and 1, respectively
+    conv2d = nn.LazyConv2d(1, kernel_size=(5, 3), padding=(2, 1))
+    comp_conv2d(conv2d, X).shape
+
+* 填充的作用和意义
+    * 核心作用：填充通过在输入图像的边缘添加额外像素（通常是零）来增加输出的高度和宽度。
+    * 目的：
+        * 防止输出尺寸缩小： 在卷积过程中，每次卷积都会导致输出尺寸缩小。如果不希望输出变小，可以使用填充保持输入和输出的尺寸一致。
+        * 保持所有像素的平等使用： 在无填充的情况下，边缘像素的使用频率较低。填充确保边缘像素与中心像素一样频繁地参与计算，从而提升模型对边缘特征的学习能力。
+    * 常见方式：
+        * 对称填充： 在输入图像的高度和宽度两侧均匀添加相同数量的像素，记作 :math:`(𝑝_ℎ,𝑝_𝑤)`
+        * 简化记法： 如果垂直和水平填充相等，直接记作 p
+
+* 零填充的优点
+    * 计算简单： 直接在图像边缘补零，计算和实现都很简单，硬件优化更容易。
+    * 隐含位置信息： CNN可以学习到填充值的分布，从而理解图像的边缘和中心区域的差异。
+    * 内存友好： 不需要额外分配大量内存，可以在卷积操作中隐式完成。
+* 非零填充的情况
+    * 存在多种非零填充方法： 虽然零填充是最常用的，但也有其他方式（如镜像填充、重复边缘值等）。
+    * 使用场景： 通常只有在发现零填充带来不良的视觉或特征提取效果时，才会考虑使用其他类型的填充。
+
+
+7.3.2. Stride
+"""""""""""""
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/XbNI1B.png
+
+    Fig. 7.3.3 Cross-correlation with strides of 3 and 2 for height and width, respectively.
+
+改变步长的作用::
+
+    计算效率： 较大的步长可以减少计算量，因为滑动窗口覆盖的位置更少，输出张量的尺寸也更小。
+    下采样 (Downsampling)： 较大的步长可以对输入进行下采样，减少分辨率的同时保留关键信息。
+    大卷积核： 如果卷积核较大，它本身已能捕获大范围的特征，此时使用较大步长可以减少冗余计算。
+
+
+
+
+当 height 的 stride 为 :math:`s_h` 且 width 的 stride 为 :math:`s_w` 时，输出形状为
+
+.. math::
+
+    \lfloor\frac{(n_\textrm{h}-k_\textrm{h}+p_\textrm{h}+s_\textrm{h})}{s_\textrm{h}}\rfloor \times \lfloor\frac{(n_\textrm{w}-k_\textrm{w}+p_\textrm{w}+s_\textrm{w})}{s_\textrm{w}}\rfloor
+
+* If we set :math:`p_\textrm{h}=k_\textrm{h}-1` and :math:`p_\textrm{w}=k_\textrm{w}-1` , then the output shape can be simplified to :math:`\lfloor\frac{(n_\textrm{h}+s_\textrm{h}-1)}{s_\textrm{h}}\rfloor \times \lfloor\frac{(n_\textrm{w}+s_\textrm{w}-1)}{s_\textrm{w}}\rfloor` .
+* 进一步简化，输出尺寸 **约** 等于 :math:`(n_\textrm{h}/s_\textrm{h}) \times (n_\textrm{w}/s_\textrm{w})` .
+
+将 height 和 width 的步幅都设置为 2，从而将输入的 height 和 width 减半::
+
+    X = torch.rand(size=(8, 8))
+
+    conv2d = nn.LazyConv2d(1, kernel_size=3, padding=1, stride=2)
+    comp_conv2d(conv2d, X).shape
+    # 输出
+    torch.Size([4, 4])
+    # shape计算过程
+    (n-k+s+1)/s = (8-3+2+1)/2 = 4
+
+稍微复杂一点的例子::
+
+    conv2d = nn.LazyConv2d(1, kernel_size=(3, 5), padding=(0, 1), stride=(3, 4))
+    comp_conv2d(conv2d, X).shape
+    # 输出
+    torch.Size([2, 2])
+    # 说明
+    第一维: (8-3+0+3)/3 = 2.67   -> 2
+    第二维: (8-5+2+4)/4 = 2.25   -> 2
+
+
+* 步幅的作用和意义
+    * 核心作用：步幅控制卷积窗口在输入图像上滑动的步长（移动距离）。
+    * 目的：
+        * 降低输出分辨率： 步幅大于1时，每次卷积窗口滑动会跳过部分位置，从而减少输出尺寸。例如，步幅为2时，输出的尺寸是输入的 1/2。
+        * 加速计算： 大步幅减少了卷积计算次数，提高了计算效率。
+    * 常见方式：
+        * 对称步幅： 如果水平和垂直步幅相同，直接记作 𝑠
+        * 默认设置： 填充默认为0，步幅默认为1，即不填充且滑动一个像素。
+
+计算输出尺寸
+""""""""""""
+
+* GPT的输出（好像不对，待确定）
+
+.. math::
+
+    \begin{array}{l}
+    H_{\text {out }}=\left\lfloor\frac{H_{\text {in }}+2 \times \text { padding }- \text { dilation } \times(\text { kernel_size }-1)-1}{\text { stride }}+1\right\rfloor \\
+    W_{\text {out }}=\left\lfloor\frac{W_{\text {in }}+2 \times \text { padding }- \text { dilation } \times(\text { kernel_size }-1)-1}{\text { stride }}+1\right\rfloor
+    \end{array}
+
+* 输入高度和宽度：H_in = 32, W_in = 32
+* 卷积核大小：kernel_size = 3
+* 步幅：stride = 1
+* 填充：padding = 1
+* 扩张率：dilation = 1
+
+
+
+总结
+""""
+
+* 填充和步幅是卷积层的重要超参数，它们影响输出尺寸、计算效率和特征提取效果。
+    * 填充： 保持尺寸一致，防止边缘信息丢失。
+    * 步幅： 控制分辨率，减少计算量。
+
+
+
 
 7.4. Multiple Input and Multiple Output Channels
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+7.4.1. Multiple Input Channels
+""""""""""""""""""""""""""""""
+
+核心要点
+++++++++
+
+* 多通道输入的卷积核心要求：
+    * 当输入数据有多个通道（channels）时，卷积核的通道数需要和输入数据的通道数相同，才能进行逐通道的交叉相关运算。
+    * 如果输入数据有 :math:`𝑐_{in}`  个通道，那么卷积核也需要有 :math:`𝑐_{in}` 个通道。
+
+* 卷积核的结构：
+    * 当输入数据只有一个通道（ :math:`𝑐_{in}=1` ），卷积核是一个简单的二维张量，形状是 :math:`𝑘_h \times 𝑘_w`
+    * 当输入数据有多个通道（ :math:`𝑐_{in}>1` ），卷积核对每个输入通道都有一个二维张量，最终的卷积核形状为 :math:`𝑐_{in} \times 𝑘_h \times 𝑘_w`
+
+* 多通道卷积计算方式：
+    * 对每个通道分别进行二维交叉相关操作，然后将每个通道的结果相加，得到最终的输出。
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/QkorY1.png
+
+    Fig. 7.4.1 Cross-correlation computation with two input channels.
+
+实现具有多个 input 通道的交叉相关操作::
+
+    def corr2d_multi_in(X, K):
+        # Iterate through the 0th dimension (channel) of K first, then add them up
+        return sum(d2l.corr2d(x, k) for x, k in zip(X, K))
+
+构造与图 7.4.1 中的值 K 相对应的输入张量 X 和核张量，以验证互相关运算的输出::
+
+    X = torch.tensor([[[0.0, 1.0, 2.0], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]],
+                      [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]])
+    K = torch.tensor([[[0.0, 1.0], [2.0, 3.0]], 
+                      [[1.0, 2.0], [3.0, 4.0]]])
+    corr2d_multi_in(X, K)
+    # 输出
+    tensor([[ 56.,  72.],
+            [104., 120.]])
+    # 计算: n-k+1 = 3-2+1 = 2
+    # shape: torch.Size([2, 2])
+
+
+7.4.2. Multiple Output Channels
+"""""""""""""""""""""""""""""""
+
+* 要产生多个输出通道，需要为每个输出通道创建一个单独的卷积核。
+* 此时，卷积核成为一个 4 维张量，形状为 ( :math:`c_o \times c_i \times k_h \times k_w` )
+* 其中 ( :math:`c_o, c_i` ) 是输出和输入通道的数量； ( :math:`k_h, k_w` ) 是内核的高度和宽度
+* 每个输出通道的结果都由其对应的卷积核计算得出，并从所有输入通道获取输入。
+
+
+实现一个互相关函数来计算多个通道的输出::
+
+    def corr2d_multi_in_out(X, K):
+        # Iterate through the 0th dimension of K, and each time, perform cross-correlation operations with input X. 
+        # All of the results are stacked together
+        return torch.stack([corr2d_multi_in(X, k) for k in K], 0)
+
+We construct a trivial convolution kernel with three output channels by concatenating the kernel tensor for K with K+1 and K+2::
+
+    K = torch.stack((K, K + 1, K + 2), 0)
+    K.shape
+    # 输出
+    torch.Size([3, 2, 2, 2])
+
+对 X 具有核张量的输入张量执行互相关运算 K::
+
+    corr2d_multi_in_out(X, K)
+    # 输出
+    tensor([[[ 56.,  72.],
+             [104., 120.]],
+
+            [[ 76., 100.],
+             [148., 172.]],
+
+            [[ 96., 128.],
+             [192., 224.]]])
+    # shape计算过程
+
+    # shape: torch.Size([3, 2, 2])
+
+
+
+7.4.3. 1x1 Convolutional Layer
+""""""""""""""""""""""""""""""
+
+* 1x1 卷积核不考虑高度和宽度维度上的相邻像素，仅在通道维度上进行操作。
+* 它对输入图像中相同位置的元素进行线性组合。
+* 可以将其视为在每个像素位置应用的全连接层，将 ( :math:`c_i` ) 个输入值转换为 ( :math:`c_o` ) 个输出值，但权重在像素位置之间共享。
+* 它需要 ( :math:`c_o \times c_i` ) 个权重（加上偏置）
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/m0G1zI.png
+
+    Fig. 7.4.2 The cross-correlation computation uses the convolution kernel with three input channels and two output channels. The input and output have the same height and width.
+
+使用全连接层实现 1x1 卷积::
+
+    def corr2d_multi_in_out_1x1(X, K):
+        c_i, h, w = X.shape
+        c_o = K.shape[0]
+        X = X.reshape((c_i, h * w))
+        K = K.reshape((c_o, c_i))
+        # Matrix multiplication in the fully connected layer
+        Y = torch.matmul(K, X)
+        return Y.reshape((c_o, h, w))
+
+用一些示例数据来检查::
+
+    X = torch.normal(0, 1, (3, 3, 3))
+    K = torch.normal(0, 1, (2, 3, 1, 1))
+    Y1 = corr2d_multi_in_out_1x1(X, K)
+    Y2 = corr2d_multi_in_out(X, K)
+    assert float(torch.abs(Y1 - Y2).sum()) < 1e-6
+
+7.4.4. Discussion
+"""""""""""""""""
+
+* 计算成本
+    * 卷积操作复杂度：
+        * 给定一个大小为 ``ℎ×𝑤`` 的图像，使用一个 ``𝑘×𝑘`` 的卷积核
+            * 计算复杂度是： :math:`𝑂(ℎ⋅𝑤⋅𝑘^2)`
+        * 如果输入通道数是 :math:`𝑐_i` ，输出通道数是 :math:`𝑐_o` 
+            * 复杂度增加为： :math:`𝑂(ℎ⋅𝑤⋅𝑘^2⋅𝑐_i⋅𝑐_o)`
+    * 计算示例：
+        * 对一个 256×256 的图像，使用 5×5 的卷积核，输入和输出通道数均为 128，计算量超过 530 亿次操作（乘法和加法分开计算）。
+        * 这是因为卷积操作不仅需要遍历整个图像，还要在所有通道上进行运算，计算量会迅速增加。
+
+* 关键理解：
+    * 多通道增加了模型的表达能力，但也带来了计算成本的上升。
+    * 设计 CNN 结构时，需要在计算复杂度和模型表达能力之间找到平衡。
+    * 未来的模型设计中，降低计算成本是重要的研究方向之一。
 
 7.5. Pooling
 ^^^^^^^^^^^^
 
+* 池化的目的:
+    * 减少卷积层对输入特征精确位置的敏感性，即提高平移不变性。这意味着即使特征稍微移动，模型仍然可以检测到它。
+    * 在空间上对特征表示进行下采样。这会降低特征图的空间分辨率，从而减少表示的大小，并加快计算速度
+
+
+7.5.1. Maximum Pooling and Average Pooling
+""""""""""""""""""""""""""""""""""""""""""
+
+* 池化操作使用 **固定形状的窗口（池化窗口）** 在输入上滑动
+* 与卷积层中 inputs 和 kernel 的互相关计算不同，池化层不包含任何参数（没有 kernel ）
+* 最大池化 (max-pooling) 计算每个池化窗口内的最大值
+* 平均池化 (average pooling) 计算每个池化窗口内的平均值
+* 在大多数情况下，最大池化优于平均池化。最大池化的概念源于认知神经科学，用于描述对象识别中信息的层级聚合
+* 平均池化可以看作是对图像进行下采样的一种方式，通过组合多个相邻像素的信息来提高信噪比
+
+* 池化如何工作:
+    * 池化窗口从左到右、从上到下滑动输入张量。
+    * 在每个位置，它计算窗口内输入子张量的最大值或平均值.
+    * 一个 ( :math:`p \times q` ) 的池化层会在该尺寸的区域上进行聚合。例如，对输入张量 [,,] 进行 (2\times 2) 最大池化，会产生输出
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/5x5Tif.png
+
+    Fig. 7.5.1 Max-pooling with a pooling window shape of 2x2. The shaded portions are the first output element as well as the input tensor elements used for the output computation: ``max(0,1,3,4)=4`` .说明：2x2滑动容器的最大池化就是，这获取4个元素里面的最大值
+
+
+池化层的正向传播(不需要内核，将输出计算为输入中每个区域的最大值或平均值)::
+
+    def pool2d(X, pool_size, mode='max'):
+        p_h, p_w = pool_size
+        Y = torch.zeros((X.shape[0] - p_h + 1, X.shape[1] - p_w + 1))
+        for i in range(Y.shape[0]):
+            for j in range(Y.shape[1]):
+                if mode == 'max':
+                    Y[i, j] = X[i: i + p_h, j: j + p_w].max()
+                elif mode == 'avg':
+                    Y[i, j] = X[i: i + p_h, j: j + p_w].mean()
+        return Y
+
+验证二维最大池化层的输出::
+
+    X = torch.tensor([[0.0, 1.0, 2.0], 
+                      [3.0, 4.0, 5.0], 
+                      [6.0, 7.0, 8.0]])
+    pool2d(X, (2, 2))
+    # 输出
+    tensor([[4., 5.],
+            [7., 8.]])
+
+平均池化层::
+
+    pool2d(X, (2, 2), 'avg')
+    # 输出
+    tensor([[2., 3.],
+            [5., 6.]])
+
+
+7.5.2. Padding and Stride
+"""""""""""""""""""""""""
+
+用内置的二维 max-pooling 层来演示 padding 和 strides 在池化层中的使用::
+
+    X = torch.arange(16, dtype=torch.float32).reshape((1, 1, 4, 4))
+    X
+    # 输出
+    tensor([[[[ 0.,  1.,  2.,  3.],
+              [ 4.,  5.,  6.,  7.],
+              [ 8.,  9., 10., 11.],
+              [12., 13., 14., 15.]]]])
+
+深度学习框架默认匹配池化窗口大小和步幅(if we use a pooling window of shape (3, 3) we get a stride shape of (3, 3) by default)::
+
+    pool2d = nn.MaxPool2d(3)
+    # Pooling has no model parameters, hence it needs no initialization
+    pool2d(X)
+    # 输出
+    tensor([[[[10.]]]])
+
+手动指定步幅和填充来覆盖框架默认值::
+
+    pool2d = nn.MaxPool2d(3, padding=1, stride=2)
+    pool2d(X)
+    # 输出
+    tensor([[[[ 5.,  7.],
+              [13., 15.]]]])
+
+指定一个任意高度和宽度的任意矩形池化窗口::
+
+    pool2d = nn.MaxPool2d((2, 3), stride=(2, 3), padding=(0, 1))
+    pool2d(X)
+    # 输出
+    tensor([[[[ 5.,  7.],
+              [13., 15.]]]])
+
+
+7.5.3. Multiple Channels
+""""""""""""""""""""""""
+
+* 在处理多通道 input 数据时，pooling layer 单独池化每个 input 通道，而不是像卷积层那样在 channels 上对 inputs 求和。这意味着池化层的输出通道数与输入通道数相同
+* 连接张 X 量 和 X + 1 通道维度，以构造具有两个通道的输入::
+
+    X = torch.cat((X, X + 1), 1)
+    X
+    # 输出
+    tensor([[[[ 0.,  1.,  2.,  3.],
+              [ 4.,  5.,  6.,  7.],
+              [ 8.,  9., 10., 11.],
+              [12., 13., 14., 15.]],
+
+             [[ 1.,  2.,  3.,  4.],
+              [ 5.,  6.,  7.,  8.],
+              [ 9., 10., 11., 12.],
+              [13., 14., 15., 16.]]]])
+
+pooling 后 output channels 的数量仍然是 2::
+
+    pool2d = nn.MaxPool2d(3, padding=1, stride=2)
+    pool2d(X)
+    # tensor([[[[ 5.,  7.],
+                [13., 15.]],
+
+               [[ 6.,  8.],
+                [14., 16.]]]])
+
+
+7.5.4. Summary
+""""""""""""""
+
+* 池化是一个非常简单的操作。
+* pooling 与 channels 无关，即，它保持 channels 数量不变，并且分别应用于每个 channel。
+* 在两种流行的池化选项中，max-pooling 比 average pooling 更可取，因为它为 output 赋予了一定程度的不变性。
+* 一种常见的选择是选择池化窗口大小 2x2 ，以将输出的原空间分辨率的四分之一。
+* 扩展
+    * stochastic pooling (Zeiler and Fergus, 2013)
+    * fractional max-pooling (Graham, 2014)
+
 
 7.6. Convolutional Neural Networks (LeNet)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+7.6.1. LeNet
+""""""""""""
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/jCTEhQ.png
+
+    Fig. 7.6.1 Data flow in LeNet. The input is a handwritten digit, the output is a probability over 10 possible outcomes.
+
+* The basic units in each **convolutional** block are a convolutional layer, a sigmoid activation function, and a subsequent average pooling operation.
+* Each convolutional layer uses a 5x5 kernel and a sigmoid activation function. 
+* 这些层将空间排列的输入映射到许多二维特征图，通常会增加通道的数量。第一个卷积层有 6 个输出通道，而第二个卷积层有 16 个输出通道。
+
+代码实现此类模型::
+
+    def init_cnn(module):  #@save
+        """Initialize weights for CNNs."""
+        if type(module) == nn.Linear or type(module) == nn.Conv2d:
+            nn.init.xavier_uniform_(module.weight)
+
+    class LeNet(d2l.Classifier):  #@save
+        """The LeNet-5 model."""
+        def __init__(self, lr=0.1, num_classes=10):
+            super().__init__()
+            self.save_hyperparameters()
+            self.net = nn.Sequential(
+                nn.LazyConv2d(6, kernel_size=5, padding=2), nn.Sigmoid(),
+                nn.AvgPool2d(kernel_size=2, stride=2),
+                nn.LazyConv2d(16, kernel_size=5), nn.Sigmoid(),
+                nn.AvgPool2d(kernel_size=2, stride=2),
+                nn.Flatten(),
+                nn.LazyLinear(120), nn.Sigmoid(),
+                nn.LazyLinear(84), nn.Sigmoid(),
+                nn.LazyLinear(num_classes))
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/fsDzSL.png
+
+    Fig. 7.6.2 Compressed notation for LeNet-5.
+
+
+.. code-block:: python
+
+    @d2l.add_to_class(d2l.Classifier)  #@save
+    def layer_summary(self, X_shape):
+        X = torch.randn(*X_shape)
+        for layer in self.net:
+            X = layer(X)
+            print(layer.__class__.__name__, 'output shape:\t', X.shape)
+
+    model = LeNet()
+    model.layer_summary((1, 1, 28, 28))
+    # 输出
+    Conv2d output shape:         torch.Size([1, 6, 28, 28])
+    Sigmoid output shape:        torch.Size([1, 6, 28, 28])
+    AvgPool2d output shape:      torch.Size([1, 6, 14, 14])
+    Conv2d output shape:         torch.Size([1, 16, 10, 10])
+    Sigmoid output shape:        torch.Size([1, 16, 10, 10])
+    AvgPool2d output shape:      torch.Size([1, 16, 5, 5])
+    Flatten output shape:        torch.Size([1, 400])
+    Linear output shape:         torch.Size([1, 120])
+    Sigmoid output shape:        torch.Size([1, 120])
+    Linear output shape:         torch.Size([1, 84])
+    Sigmoid output shape:        torch.Size([1, 84])
+    Linear output shape:         torch.Size([1, 10])
+
+
+7.6.2. Training
+"""""""""""""""
+
+计算成本比类似深度的 MLP 更高::
+
+    trainer = d2l.Trainer(max_epochs=10, num_gpus=1)
+    data = d2l.FashionMNIST(batch_size=128)
+    model = LeNet(lr=0.1)
+    model.apply_init([next(iter(data.get_dataloader(True)))[0]], init_cnn)
+    trainer.fit(model, data)
+
+
+
+8. Modern Convolutional Neural Networks
+---------------------------------------
+
+* 现代 CNN 不仅可以被使用 直接用于视觉任务，但它们也作为基本特征 用于更高级任务（例如跟踪）的生成器 （ Zhang et al. ，2021 ） ，分割 （ Long et al. ，2015 ） ，物体检测 （ Redmon 和 Farhadi，2018 ） ，或风格转变 （盖蒂斯等人，2016 ） 。
+* 从 AlexNet 开始现代 CNN 之旅 （ Krizhevsky et al. ，2012 ） ，第一个大规模部署网络以击败传统计算机视觉方法 大规模的视力挑战； 
+* VGG网络 （ Simonyan 和 Zisserman，2014 ） ，它利用了一些 重复的元素块；
+* 网络中的网络 (NiN) 在输入上逐块卷积整个神经网络 （林等人，2013 ） ； 
+* GoogLeNet 使用多分支卷积网络（ Szegedy等人，2015 ） ；
+* 残差网络（ResNet） （ He et al. ，2016 ） ，它仍然是计算机视觉中最流行的现成架构之一； ResNeXt 块（ Xie et al. , 2017 ）用于稀疏连接；
+* DenseNet （ Huang et al. ，2017 ）用于残差架构的泛化。
+
+8.1. Deep Convolutional Neural Networks (AlexNet)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+8.1.1. Representation Learning
+""""""""""""""""""""""""""""""
+
+* 在 AlexNet 出现之前，卷积神经网络（CNN）在计算机视觉领域并未占据主导地位。尽管 LeNet 在早期的小型数据集上取得了不错的效果，但在更大的、更真实的数据集上训练 CNN 的性能和可行性尚未得到证实。
+* 第一个现代 CNN（Krizhevsky 等人，2012）以其发明者之一 Alex Krizhevsky 的名字命名为 AlexNet，很大程度上是对 LeNet 的进化改进。它在2012年ImageNet挑战赛中取得了优异的表现。
+* AlexNet (2012) 及其前身 LeNet (1995) 共享许多架构元素。这就引出了一个问题：为什么花了这么长时间？一个关键的区别是，在过去的二十年里，可用的数据量和计算能力显着增加。因此，AlexNet 规模要大得多：与 1995 年可用的 CPU 相比，它使用更多的数据和更快的 GPU 进行训练。
+
+
+8.1.2. AlexNet
+""""""""""""""
+
+* AlexNet 采用 8 层 CNN，以大幅优势赢得了 2012 年 ImageNet 大规模视觉识别挑战赛 (Russakovsky et al., 2013)。该网络首次表明，通过学习获得的特征可以超越人工设计的特征，打破了计算机视觉以往的范式。
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/tGioru.png
+
+    Fig. 8.1.2 From LeNet (left) to AlexNet (right).
+
+
+.. code-block:: python
+
+    class AlexNet(d2l.Classifier):
+        def __init__(self, lr=0.1, num_classes=10):
+            super().__init__()
+            self.save_hyperparameters()
+            self.net = nn.Sequential(
+                nn.LazyConv2d(96, kernel_size=11, stride=4, padding=1),
+                nn.ReLU(), nn.MaxPool2d(kernel_size=3, stride=2),
+                nn.LazyConv2d(256, kernel_size=5, padding=2), nn.ReLU(),
+                nn.MaxPool2d(kernel_size=3, stride=2),
+                nn.LazyConv2d(384, kernel_size=3, padding=1), nn.ReLU(),
+                nn.LazyConv2d(384, kernel_size=3, padding=1), nn.ReLU(),
+                nn.LazyConv2d(256, kernel_size=3, padding=1), nn.ReLU(),
+                nn.MaxPool2d(kernel_size=3, stride=2), nn.Flatten(),
+                nn.LazyLinear(4096), nn.ReLU(), nn.Dropout(p=0.5),
+                nn.LazyLinear(4096), nn.ReLU(),nn.Dropout(p=0.5),
+                nn.LazyLinear(num_classes))
+            self.net.apply(d2l.init_cnn)
+        def layer_summary(self, X_shape):
+            X = d2l.randn(*X_shape)
+            for layer in self.net:
+                X = layer(X)
+                print(layer.__class__.__name__, 'output shape:\t', X.shape)
+
+
+构造一个高和宽均为224的单通道数据示例来观察每一层的输出形状::
+
+    AlexNet().layer_summary((1, 1, 224, 224))
+    # 输出
+    Conv2d output shape:         torch.Size([1, 96, 54, 54])
+    ReLU output shape:   torch.Size([1, 96, 54, 54])
+    MaxPool2d output shape:      torch.Size([1, 96, 26, 26])
+    Conv2d output shape:         torch.Size([1, 256, 26, 26])
+    ReLU output shape:   torch.Size([1, 256, 26, 26])
+    MaxPool2d output shape:      torch.Size([1, 256, 12, 12])
+    Conv2d output shape:         torch.Size([1, 384, 12, 12])
+    ReLU output shape:   torch.Size([1, 384, 12, 12])
+    Conv2d output shape:         torch.Size([1, 384, 12, 12])
+    ReLU output shape:   torch.Size([1, 384, 12, 12])
+    Conv2d output shape:         torch.Size([1, 256, 12, 12])
+    ReLU output shape:   torch.Size([1, 256, 12, 12])
+    MaxPool2d output shape:      torch.Size([1, 256, 5, 5])
+    Flatten output shape:        torch.Size([1, 6400])
+    Linear output shape:         torch.Size([1, 4096])
+    ReLU output shape:   torch.Size([1, 4096])
+    Dropout output shape:        torch.Size([1, 4096])
+    Linear output shape:         torch.Size([1, 4096])
+    ReLU output shape:   torch.Size([1, 4096])
+    Dropout output shape:        torch.Size([1, 4096])
+    Linear output shape:         torch.Size([1, 10])
+
+
+8.1.3. Training
+"""""""""""""""
+
+::
+
+    model = AlexNet(lr=0.01)
+    data = d2l.FashionMNIST(batch_size=128, resize=(224, 224))  # 使用 resize 参数执行此大小调整，为了适配模型改造的数据
+    trainer = d2l.Trainer(max_epochs=10, num_gpus=1)
+    trainer.fit(model, data)
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/yeTMvt.png
+
+
+8.2. Networks Using Blocks (VGG)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* VGG (Visual Geometry Group)
+
+背景和概念演进
+""""""""""""""
+
+* 深度网络设计的演变
+    * AlexNet 证明了深度卷积神经网络（CNN）的有效性，但没有提供通用的设计模板。
+    * 随着研究的发展，网络设计逐渐从单个神经元扩展到整层，再到如今的“模块化设计”，即基于重复模式的块（blocks）。这种模块化理念源自芯片设计领域中逻辑单元到逻辑块的抽象过程。
+* VGG 的提出
+    * VGG 是由牛津大学的视觉几何组（Visual Geometry Group）提出的网络，其核心创新是通过重复的卷积块设计深度网络。
+    * VGG 的设计旨在探索深层网络与宽网络的性能差异，最终验证了深而窄的网络在性能上优于浅而宽的网络。
+
+
+VGG 的核心设计
+""""""""""""""
+
+8.2.1. VGG Blocks
++++++++++++++++++
+
+* 一个 VGG 块由多个 3x3 的卷积层组成，每个卷积层后接一个非线性激活（如 ReLU），再接一个 2x2 的最大池化层（stride 为 2）。
+* 使用多个 3x3 卷积层替代单个较大卷积（如 5x5 或 7x7），既能减少参数数量，又能提高性能。
+
+.. code-block:: python
+
+    def vgg_block(num_convs, out_channels):
+        layers = []
+        for _ in range(num_convs):
+            layers.append(nn.LazyConv2d(out_channels, kernel_size=3, padding=1))
+            layers.append(nn.ReLU())
+        layers.append(nn.MaxPool2d(kernel_size=2,stride=2))
+        return nn.Sequential(*layers)
+
+
+
+
+8.2.2. VGG Network
+++++++++++++++++++
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/WFgQj9.png
+
+    Fig. 8.2.1 From AlexNet to VGG. The key difference is that VGG consists of blocks of layers, whereas AlexNet’s layers are all designed individually.
+
+
+* VGG 网络可以划分为两部分：
+    * 卷积部分：由多个 VGG 块组成，逐渐减少空间分辨率。
+    * 全连接部分：与 AlexNet 类似，包含多个全连接层。
+* 原始 VGG-11 网络包括 5 个卷积块，最初的两个块各有 1 层卷积，后三个块各有 2 层卷积。每个块的输出通道数逐步翻倍，从 64 增加到 512。
+
+.. code-block:: python
+
+    class VGG(d2l.Classifier):
+        def __init__(self, arch, lr=0.1, num_classes=10):
+            super().__init__()
+            self.save_hyperparameters()
+            conv_blks = []
+            for (num_convs, out_channels) in arch:
+                conv_blks.append(vgg_block(num_convs, out_channels))
+            self.net = nn.Sequential(
+                *conv_blks, 
+                nn.Flatten(),
+                nn.LazyLinear(4096), nn.ReLU(), nn.Dropout(0.5),
+                nn.LazyLinear(4096), nn.ReLU(), nn.Dropout(0.5),
+                nn.LazyLinear(num_classes))
+            self.net.apply(d2l.init_cnn)
+
+
+8.2.3. Training
++++++++++++++++
+
+.. code-block:: python
+
+    model = VGG(arch=((1, 16), (1, 32), (2, 64), (2, 128), (2, 128)), lr=0.01)
+    trainer = d2l.Trainer(max_epochs=10, num_gpus=1)
+    data = d2l.FashionMNIST(batch_size=128, resize=(224, 224))
+    model.apply_init([next(iter(data.get_dataloader(True)))[0]], d2l.init_cnn)
+    trainer.fit(model, data)
+
+
+意义和扩展
+""""""""""
+
+* VGG 的贡献
+    * VGG 是首个真正现代化的 CNN 网络，引入了“模块化设计”的理念，通过深而窄的架构显著提升性能。
+    * 它开创了设计“网络家族”的趋势，即通过调整块的数量和参数，形成具有不同性能和复杂度的网络变体。
+* 性能权衡
+    * 在实际应用中，设计者可以根据需要在速度和精度之间找到适合的平衡点。
+* 新方向
+    * 最近的研究（如 ParNet）表明，通过更多并行计算，浅层网络也可以实现竞争性性能，这可能为未来的网络架构设计提供新思路。
+
+总结
+""""
+
+* VGG 的设计不仅奠定了现代深度学习网络的基础，也为深度学习的普及和快速实现提供了便利。其模块化设计思想至今仍被后续研究广泛借鉴。
+
+
+
+
+8.3. Network in Network (NiN)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* NiN 网络在 LeNet、AlexNet 和 VGG 的基础上进一步改进
+* VGG 等这些网络通过卷积层和池化层提取空间特征，并通过全连接层进行后续处理。
+* 这种设计存在两个主要问题：
+    * 全连接层参数量大：传统的全连接层需要大量的参数和内存，例如 VGG-11 的全连接层就占据了近 400MB 内存。这在移动设备和嵌入式设备上难以实现。
+    * 无法在网络早期引入全连接层：在网络早期引入全连接层会破坏空间结构，同时还会进一步增加内存需求。
+
+* NiN 的创新点
+    * 1x1 卷积：作为局部全连接层，在不改变空间维度的情况下为每个像素位置添加非线性。
+    * 全局平均池化：在网络最后一层通过全局平均池化整合空间信息，完全替代全连接层，大幅减少参数量。
+
+
+
+
+8.3.1. NiN Blocks
+"""""""""""""""""
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/8X2MQC.png
+
+    Fig. 8.3.1 Comparing the architectures of VGG and NiN, and of their blocks.
+
+* 注意 NiN 块中的差异（初始卷积后面是 1x1 卷积，而 VGG 保留 3x3 卷积）以及最后我们不再需要巨大的全连接层。
+* 结构特点
+    * 卷积设计：初始卷积层与 AlexNet 类似，使用 11x11、5x5 和 3x3 的卷积核。
+    * NiN 块：每个块包含一个标准卷积层，后接两个 1x1 卷积层，提升特征提取效率。
+    * 全局平均池化：在最后的特征表示层通过全局平均池化代替全连接层，用于生成分类的 logits。
+
+* 优势
+    * 参数量显著减少：不需要大型的全连接层，适合内存受限的设备。
+    * 提升平移不变性：全局平均池化增强了模型对平移的鲁棒性。
+    * 提高非线性建模能力：通过 1x1 卷积在每个位置捕获通道间的交互，提高网络表达能力。
+
+
+.. code-block:: python
+
+    def nin_block(out_channels, kernel_size, strides, padding):
+        return nn.Sequential(
+            nn.LazyConv2d(out_channels, kernel_size, strides, padding), nn.ReLU(),
+            nn.LazyConv2d(out_channels, kernel_size=1), nn.ReLU(),
+            nn.LazyConv2d(out_channels, kernel_size=1), nn.ReLU())
+
+
+8.3.2. NiN Model
+""""""""""""""""
+
+* NiN 与 AlexNet 和 VGG 之间的第二个显着区别是 NiN 完全避免了全连接层。
+* NiN 使用 NiN 块，其输出通道数等于标签类的数量，后跟全局平均池化层，产生 logits 向量。这种设计显着减少了所需模型参数的数量，但代价是可能会增加训练时间。
+
+.. code-block:: python
+
+    class NiN(d2l.Classifier):
+        def __init__(self, lr=0.1, num_classes=10):
+            super().__init__()
+            self.save_hyperparameters()
+            self.net = nn.Sequential(
+                nin_block(96, kernel_size=11, strides=4, padding=0),
+                nn.MaxPool2d(3, stride=2),
+                nin_block(256, kernel_size=5, strides=1, padding=2),
+                nn.MaxPool2d(3, stride=2),
+                nin_block(384, kernel_size=3, strides=1, padding=1),
+                nn.MaxPool2d(3, stride=2),
+                nn.Dropout(0.5),
+                nin_block(num_classes, kernel_size=3, strides=1, padding=1),
+                nn.AdaptiveAvgPool2d((1, 1)),
+                nn.Flatten())
+            self.net.apply(d2l.init_cnn)
+
+
+创建一个数据示例来查看每个块的输出形状::
+
+    NiN().layer_summary((1, 1, 224, 224))
+    # 输出
+    Sequential output shape:     torch.Size([1, 96, 54, 54])
+    MaxPool2d output shape:      torch.Size([1, 96, 26, 26])
+    Sequential output shape:     torch.Size([1, 256, 26, 26])
+    MaxPool2d output shape:      torch.Size([1, 256, 12, 12])
+    Sequential output shape:     torch.Size([1, 384, 12, 12])
+    MaxPool2d output shape:      torch.Size([1, 384, 5, 5])
+    Dropout output shape:        torch.Size([1, 384, 5, 5])
+    Sequential output shape:     torch.Size([1, 10, 5, 5])
+    AdaptiveAvgPool2d output shape:      torch.Size([1, 10, 1, 1])
+    Flatten output shape:        torch.Size([1, 10])
+
+
+
+
+
+8.3.3. Training
+"""""""""""""""
+
+.. code-block:: python
+
+    model = NiN(lr=0.05)
+    trainer = d2l.Trainer(max_epochs=10, num_gpus=1)
+    data = d2l.FashionMNIST(batch_size=128, resize=(224, 224))
+    model.apply_init([next(iter(data.get_dataloader(True)))[0]], d2l.init_cnn)
+    trainer.fit(model, data)
+
+8.3.4. Summary
+""""""""""""""
+
+* NiN 的参数比 AlexNet 和 VGG 少得多。这主要源于这样一个事实：它不需要巨大的全连接层。相反，它使用全局平均池来聚合网络主体最后阶段之后的所有图像位置。这消除了对昂贵的（学习的）归约操作的需要，并用简单的平均值代替它们。
+* 选择较少的宽核卷积并将其替换为 1x1 卷积有助于进一步减少参数。它可以满足任何给定位置内跨通道的大量非线性。 1x1 卷积和全局平均池化都显着影响了后续的 CNN 设计。
+
+* 【影响】NiN 的 1x1 卷积和全局平均池化设计对后续的 CNN 网络架构产生了深远影响，使得模型在保持高准确率的同时变得更加高效。
+
+
+8.4. Multi-Branch Networks (GoogLeNet)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* 2014 年，GoogLeNet 赢得了 ImageNet 挑战赛（Szegedy 等人，2015 年），其结构结合了 NiN（Lin 等人，2013 年）、重复块（Simonyan 和 Zisserman，2014 年）以及混合卷积的优点内核。
+* GoogLeNet 的关键贡献是网络主体的设计。它巧妙地解决了卷积核选择的问题。
+
+设计概述
+""""""""
+
+* 创新点
+    * **NiN（Network in Network）** 的思想，即利用 1x1 卷积来提取特征并减少计算量。
+    * 重复模块的设计，类似于VGG网络的模块化思想。
+    * 多种卷积核的结合，通过多分支结构同时使用不同大小的卷积核，而不是单独选择某一种。
+
+* GoogLeNet首次明确了卷积神经网络的三部分结构：
+    * Stem(输入部分): 
+        * 前两三个卷积层，用于提取低级特征。
+        * 以AlexNet和LeNet为基础的 7x7 卷积和最大池化。
+    * Body(主体部分): 
+        * 多个卷积块，用于深层次特征提取。
+        * 每组包含多个Inception块，依次增加通道数。
+    * Head(输出部分): 
+        * 将提取的特征映射到特定的任务（分类、检测等）。
+        * 通过全局平均池化，直接输出分类结果。
+
+
+
+
+8.4.1. Inception Blocks
+"""""""""""""""""""""""
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/hLbjyp.png
+
+    Fig. 8.4.1 Structure of the Inception block.(GoogLeNet 中的基本卷积块称为 Inception 块)
+
+* 起始块由四个并行分支组成。
+    * 使用 1x1 卷积提取低级特征。
+    * 使用 1x1 卷积降维后，再用 3x3 卷积提取中等尺度特征。
+    * 使用 1x1 卷积降维后，再用 5x5 卷积提取更大尺度特征。
+    * 使用 3x3 最大池化后，再用 1x1 卷积改变通道数。
+* 最后，每个分支的输出沿着通道维度连接并构成块的输出。
+* 关键超参数：每层的输出通道数，决定了不同分支分配的容量大小。
+
+.. code-block:: python
+
+    class Inception(nn.Module):
+        # c1--c4 are the number of output channels for each branch
+        def __init__(self, c1, c2, c3, c4, **kwargs):
+            super(Inception, self).__init__(**kwargs)
+            # Branch 1
+            self.b1_1 = nn.LazyConv2d(c1, kernel_size=1)
+            # Branch 2
+            self.b2_1 = nn.LazyConv2d(c2[0], kernel_size=1)
+            self.b2_2 = nn.LazyConv2d(c2[1], kernel_size=3, padding=1)
+            # Branch 3
+            self.b3_1 = nn.LazyConv2d(c3[0], kernel_size=1)
+            self.b3_2 = nn.LazyConv2d(c3[1], kernel_size=5, padding=2)
+            # Branch 4
+            self.b4_1 = nn.MaxPool2d(kernel_size=3, stride=1, padding=1)
+            self.b4_2 = nn.LazyConv2d(c4, kernel_size=1)
+
+        def forward(self, x):
+            b1 = F.relu(self.b1_1(x))
+            b2 = F.relu(self.b2_2(F.relu(self.b2_1(x))))
+            b3 = F.relu(self.b3_2(F.relu(self.b3_1(x))))
+            b4 = F.relu(self.b4_2(self.b4_1(x)))
+            return torch.cat((b1, b2, b3, b4), dim=1)
+
+
+8.4.2. GoogLeNet Model
+""""""""""""""""""""""
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/bXEC5A.png
+
+    Fig. 8.4.2 The GoogLeNet architecture.
+
+* GoogLeNet 使用总共 9 个初始块的堆栈，分为三组，中间有最大池化，头部有全局平均池化来生成估计。
+* 初始块之间的最大池化降低了维度。
+
+第一个模块使用 64 通道 7x7 卷积层::
+
+    class GoogleNet(d2l.Classifier):
+        def b1(self):
+            return nn.Sequential(
+                nn.LazyConv2d(64, kernel_size=7, stride=2, padding=3),
+                nn.ReLU(), 
+                nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
+
+第二个模块使用两个卷积层：首先是 64 通道 1x1 卷积层，然后是通道数量增加三倍的 3x3 卷积层::
+
+    @d2l.add_to_class(GoogleNet)
+    def b2(self):
+        return nn.Sequential(
+            nn.LazyConv2d(64, kernel_size=1), nn.ReLU(),
+            nn.LazyConv2d(192, kernel_size=3, padding=1), nn.ReLU(),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
+
+第三个模块串联两个完整的Inception块::
+
+    # 第一个 Inception 块的输出通道数为:  64+128+32+32 = 256
+    # 第二个 Inception 块的输出通道数为: 128+192+96+64 = 480
+    @d2l.add_to_class(GoogleNet)
+    def b3(self):
+        return nn.Sequential(Inception(64, (96, 128), (16, 32), 32),
+                             Inception(128, (128, 192), (32, 96), 64),
+                             nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
+
+第四个模块比较复杂。它串联连接了五个 Inception 块::
+
+    @d2l.add_to_class(GoogleNet)
+    def b4(self):
+        return nn.Sequential(Inception(192, (96, 208), (16, 48), 64),
+                             Inception(160, (112, 224), (24, 64), 64),
+                             Inception(128, (128, 256), (24, 64), 64),
+                             Inception(112, (144, 288), (32, 64), 64),
+                             Inception(256, (160, 320), (32, 128), 128),
+                             nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
+
+第五个模块带有两个 Inception 块::
+
+    @d2l.add_to_class(GoogleNet)
+    def b5(self):
+        return nn.Sequential(Inception(256, (160, 320), (32, 128), 128),
+                             Inception(384, (192, 384), (48, 128), 128),
+                             nn.AdaptiveAvgPool2d((1,1)), nn.Flatten())
+
+将它们全部组装成一个完整的网络::
+
+    @d2l.add_to_class(GoogleNet)
+    def __init__(self, lr=0.1, num_classes=10):
+        super(GoogleNet, self).__init__()
+        self.save_hyperparameters()
+        self.net = nn.Sequential(self.b1(), self.b2(), self.b3(), self.b4(),
+                                 self.b5(), nn.LazyLinear(num_classes))
+        self.net.apply(d2l.init_cnn)
+
+看看各个模块之间输出形状的变化::
+
+    model = GoogleNet().layer_summary((1, 1, 96, 96))
+    # 输出
+    Sequential output shape:     torch.Size([1, 64, 24, 24])
+    Sequential output shape:     torch.Size([1, 192, 12, 12])
+    Sequential output shape:     torch.Size([1, 480, 6, 6])
+    Sequential output shape:     torch.Size([1, 832, 3, 3])
+    Sequential output shape:     torch.Size([1, 1024])
+    Linear output shape:         torch.Size([1, 10])
+
+
+8.4.3. Training
+"""""""""""""""
+
+.. code-block:: python
+
+    model = GoogleNet(lr=0.01)
+    trainer = d2l.Trainer(max_epochs=10, num_gpus=1)
+    data = d2l.FashionMNIST(batch_size=128, resize=(96, 96))
+    model.apply_init([next(iter(data.get_dataloader(True)))[0]], d2l.init_cnn)
+    trainer.fit(model, data)
+
+
+8.4.4. Discussion
+"""""""""""""""""
+
+* GoogLeNet 的一个关键特征是，它的计算成本实际上比其前身更便宜，同时提供更高的准确性。
+* 现在，您可以自豪地实现了可以说是第一个真正现代的 CNN。
+
+* 优势
+    * 多尺度特征提取：通过并行使用不同大小的卷积核，能够有效捕获图像的细节和全局信息。
+    * 参数高效：利用 1x1 卷积降维和全局平均池化，显著减少了参数量。
+    * 模块化设计：方便扩展和调整，适合深度学习模型的快速迭代。
+
+
+
+
+
+8.5. Batch Normalization
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+* 训练深度神经网络很难，特别是在收敛速度和稳定性上。
+* 批量归一化通过标准化中间层的激活值，解决了激活分布漂移的问题，从而加速训练并提高模型稳定性。
+* 它还有额外的正则化效果，可以减少过拟合。
+
+
+8.5.1. Training Deep Networks
+"""""""""""""""""""""""""""""
+
+批量归一化通过在每个训练步骤中对输入进行标准化，得到零均值和单位方差：
+
+.. math::
+
+    \textrm{BN}(\mathbf{x}) = \boldsymbol{\gamma} \odot \frac{\mathbf{x} - \hat{\boldsymbol{\mu}}_\mathcal{B}}{\hat{\boldsymbol{\sigma}}_\mathcal{B}} + \boldsymbol{\beta}
+
+* :math:`\hat{\boldsymbol{\mu}}\mathcal{B}` 和 :math:`\hat{\boldsymbol{\sigma}}\mathcal{B}` 是基于当前小批量计算的均值和标准差。
+* :math:`\boldsymbol{\gamma}` 和 :math:`\boldsymbol{\beta}` 是需要训练的缩放和偏移参数，恢复丢失的自由度。
+
+* 批量归一化具有以下优点：
+    * 预处理：标准化激活值，减少梯度爆炸或消失问题。
+    * 数值稳定性：使优化器能使用更大的学习率。
+    * 正则化：引入了噪声，有效减少过拟合。
+
+
+
+
+
+8.5.2. Batch Normalization Layers
+"""""""""""""""""""""""""""""""""
+
+8.5.2.1. Fully Connected Layers
++++++++++++++++++++++++++++++++
+
+* 通常应用在仿射变换之后，激活函数之前：
+
+.. math::
+
+    \mathbf{h} = \phi(\textrm{BN}(\mathbf{W}\mathbf{x} + \mathbf{b}) )
+
+
+8.5.2.2. Convolutional Layers
++++++++++++++++++++++++++++++
+
+*  对于卷积层，我们可以在卷积之后但非线性激活函数之前应用批量归一化。与全连接层中的批量归一化的主要区别在于，我们在所有位置的每个通道的基础上应用该操作。
+* 对每个通道独立标准化：
+    * 汇总所有空间位置的值（例如卷积输出的高度和宽度）来计算均值和方差。
+    * 每个通道有自己的缩放和偏移参数。
+
+8.5.2.3. Layer Normalization
+++++++++++++++++++++++++++++
+
+* 针对小批量（甚至批量大小为1）或序列任务，层归一化对每个样本的所有特征进行标准化：
+
+.. math::
+
+    \mathbf{x} \rightarrow \textrm{LN}(\mathbf{x}) =  \frac{\mathbf{x} - \hat{\mu}}{\hat\sigma}
+
+
+* 独立于批量大小，适用于单样本场景。
+* 避免了因小批量引入的不稳定性。
+
+8.5.2.4. Batch Normalization During Prediction
+++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+
+8.5.3. Implementation from Scratch
+""""""""""""""""""""""""""""""""""
+
+.. code-block:: python
+
+    def batch_norm(X, gamma, beta, moving_mean, moving_var, eps, momentum):
+        # Use is_grad_enabled to determine whether we are in training mode
+        if not torch.is_grad_enabled():
+            # In prediction mode, use mean and variance obtained by moving average
+            X_hat = (X - moving_mean) / torch.sqrt(moving_var + eps)
+        else:
+            assert len(X.shape) in (2, 4)
+            if len(X.shape) == 2:
+                # When using a fully connected layer, calculate the mean and
+                # variance on the feature dimension
+                mean = X.mean(dim=0)
+                var = ((X - mean) ** 2).mean(dim=0)
+            else:
+                # When using a two-dimensional convolutional layer, calculate the
+                # mean and variance on the channel dimension (axis=1). Here we
+                # need to maintain the shape of X, so that the broadcasting
+                # operation can be carried out later
+                mean = X.mean(dim=(0, 2, 3), keepdim=True)
+                var = ((X - mean) ** 2).mean(dim=(0, 2, 3), keepdim=True)
+            # In training mode, the current mean and variance are used
+            X_hat = (X - mean) / torch.sqrt(var + eps)
+            # Update the mean and variance using moving average
+            moving_mean = (1.0 - momentum) * moving_mean + momentum * mean
+            moving_var = (1.0 - momentum) * moving_var + momentum * var
+        Y = gamma * X_hat + beta  # Scale and shift
+        return Y, moving_mean.data, moving_var.data
+
+.. code-block:: python
+
+    class BatchNorm(nn.Module):
+        # num_features: the number of outputs for a fully connected layer 
+        #       or the number of output channels for a convolutional layer. 
+        # num_dims: 2 for a fully connected layer and 4 for a convolutional layer
+        def __init__(self, num_features, num_dims):
+            super().__init__()
+            if num_dims == 2:
+                shape = (1, num_features)
+            else:
+                shape = (1, num_features, 1, 1)
+            # The scale parameter and the shift parameter (model parameters) are initialized to 1 and 0
+            self.gamma = nn.Parameter(torch.ones(shape))
+            self.beta = nn.Parameter(torch.zeros(shape))
+            # The variables that are not model parameters are initialized to 0 and 1
+            self.moving_mean = torch.zeros(shape)
+            self.moving_var = torch.ones(shape)
+
+        def forward(self, X):
+            # If X is not on the main memory, copy moving_mean and moving_var to the device where X is located
+            if self.moving_mean.device != X.device:
+                self.moving_mean = self.moving_mean.to(X.device)
+                self.moving_var = self.moving_var.to(X.device)
+            # Save the updated moving_mean and moving_var
+            Y, self.moving_mean, self.moving_var = batch_norm(
+                X, self.gamma, self.beta, self.moving_mean,
+                self.moving_var, eps=1e-5, momentum=0.1)
+            return Y
+
+
+
+
+8.5.4. LeNet with Batch Normalization
+"""""""""""""""""""""""""""""""""""""
+
+.. code-block:: python
+
+    class BNLeNetScratch(d2l.Classifier):
+        def __init__(self, lr=0.1, num_classes=10):
+            super().__init__()
+            self.save_hyperparameters()
+            self.net = nn.Sequential(
+                nn.LazyConv2d(6, kernel_size=5), BatchNorm(6, num_dims=4),
+                nn.Sigmoid(), nn.AvgPool2d(kernel_size=2, stride=2),
+                nn.LazyConv2d(16, kernel_size=5), BatchNorm(16, num_dims=4),
+                nn.Sigmoid(), nn.AvgPool2d(kernel_size=2, stride=2),
+                nn.Flatten(), nn.LazyLinear(120),
+                BatchNorm(120, num_dims=2), nn.Sigmoid(), nn.LazyLinear(84),
+                BatchNorm(84, num_dims=2), nn.Sigmoid(),
+                nn.LazyLinear(num_classes))
+
+    trainer = d2l.Trainer(max_epochs=10, num_gpus=1)
+    data = d2l.FashionMNIST(batch_size=128)
+    model = BNLeNetScratch(lr=0.1)
+    model.apply_init([next(iter(data.get_dataloader(True)))[0]], d2l.init_cnn)
+    trainer.fit(model, data)
+
+
+::
+
+    model.net[1].gamma.reshape((-1,)), model.net[1].beta.reshape((-1,))
+
+
+8.5.5. Concise Implementation
+"""""""""""""""""""""""""""""
+
+.. code-block:: python
+
+    class BNLeNet(d2l.Classifier):
+        def __init__(self, lr=0.1, num_classes=10):
+            super().__init__()
+            self.save_hyperparameters()
+            self.net = nn.Sequential(
+                nn.LazyConv2d(6, kernel_size=5), nn.LazyBatchNorm2d(),
+                nn.Sigmoid(), nn.AvgPool2d(kernel_size=2, stride=2),
+                nn.LazyConv2d(16, kernel_size=5), nn.LazyBatchNorm2d(),
+                nn.Sigmoid(), nn.AvgPool2d(kernel_size=2, stride=2),
+                nn.Flatten(), nn.LazyLinear(120), nn.LazyBatchNorm1d(),
+                nn.Sigmoid(), nn.LazyLinear(84), nn.LazyBatchNorm1d(),
+                nn.Sigmoid(), nn.LazyLinear(num_classes))
+
+::
+
+    trainer = d2l.Trainer(max_epochs=10, num_gpus=1)
+    data = d2l.FashionMNIST(batch_size=128)
+    model = BNLeNet(lr=0.1)
+    model.apply_init([next(iter(data.get_dataloader(True)))[0]], d2l.init_cnn)
+    trainer.fit(model, data)
+
+
+
+
+8.6. Residual Networks (ResNet) and ResNeXt
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* 残差网络 (ResNet)
+* 何凯明等人2016年提出的残差网络（ResNet），该网络引入了残差块（residual block），其核心思想是让每一层除了学习到期望的底层映射外，还能更轻松地包含恒等映射作为一个元素。这解决了非常深的网络难以训练的问题，并且ResNet在2015年的ImageNet大规模视觉识别挑战赛中取得了胜利。此设计对后续深度神经网络的发展有着深远的影响。
+* 残差块的工作原理：输入可以直接跳过某些层传递到后面的层，形成所谓的“残差连接”或“捷径连接”。这样做的好处是可以使网络更容易学习到恒等映射，因为当需要学习的映射为恒等映射时，网络只需将权重调整为零即可。
+
+
+8.7. Densely Connected Networks (DenseNet)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* 主要讲了DenseNet（密集连接网络）相较于 ResNet 的特点、数学原理以及实现方式。
+
+核心概念
+""""""""
+
+* 密集连接模式：DenseNet 的每一层与之前所有层相连接。这种连接方式通过 **特征级拼接(concatenation)** 来保留和复用特征，而不是像 ResNet 中通过相加（addition）连接。
+* 特征复用：每一层的输出作为后续层的输入，这样可以确保每层都能直接访问最初输入和每层中间结果，从而减少信息丢失。
+
+关键组成部分
+""""""""""""
+
+* Dense Block（密集块）：
+    * 每个 Dense Block 包括多个卷积块，输入和每个卷积块的输出在通道维度上拼接。
+    * 生长率：每个 Dense Block 增加输出通道数的速率。
+* Transition Layer（过渡层）：
+    * 控制模型复杂度，减少通道数并通过平均池化降低分辨率。
+    * 使用 :math:`1 \times 1` 卷积减少通道数，确保通道增长不会过快。
+
+DenseNet 的优点
+"""""""""""""""
+
+* 高效特征复用：每层的特征都直接提供给后续层，减少冗余计算。
+* 更轻的模型：相比 ResNet，DenseNet 在参数量上更高效。
+* 缓解梯度消失问题：密集连接模式提供了更短的梯度传播路径。
+
+
+
+8.8. Designing Convolution Network Architectures
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/mcdubD.png
+
+    Fig. 8.8.1 The AnyNet design space.
+
+* The numbers :math:`(\mathit{c}, \mathit{r})` along each arrow indicate the number of channels ``c`` and the resolution :math:`\mathit{r} \times \mathit{r}` of the images at that point. 
+* From left to right: generic network structure composed of ``stem`` , ``body`` , and ``head`` ; 
+    * body composed of four stages; 
+    * detailed structure of a stage; 
+    * two alternative structures for blocks, 
+        * one without downsampling and one that halves the resolution in each dimension. 
+    * Design choices include 
+        * depth :math:`\mathit{d_i}` , 
+        * the number of output channels :math:`\mathit{c_i}` , 
+        * the number of groups $\mathit{g_i}$, 
+        * and bottleneck ratio $\mathit{k_i}$ for any stage $\mathit{i}$.](../img/anynet.svg)
+
+
+传统架构设计的直觉性
+""""""""""""""""""""
+
+* 早期的 CNN 架构（如 AlexNet 和 VGG）依赖科学家的直觉设计。
+* 常见方法包括堆叠卷积层（如 3x3 卷积）来增加深度，以提升网络性能。
+* NiN 引入了 1x1 卷积，解决了局部非线性问题，并优化了信息聚合。
+* GoogLeNet 的多分支设计（Inception 模块）结合了 VGG 和 NiN 的优点。
+* ResNet 改变了归纳偏置，通过引入残差连接使得训练更深的网络成为可能。
+* SENet 和 ResNeXt 等后续架构进一步优化了网络计算效率和参数权衡。
+
+神经架构搜索(NAS)
+"""""""""""""""""
+
+* NAS 是通过自动化方法（如遗传算法、强化学习）探索最佳网络架构。
+* 虽然 NAS 能生成高性能网络（如 EfficientNets），但其计算成本极高。
+
+RegNet 与设计空间优化
+"""""""""""""""""""""
+
+* 相比寻找“单一最佳网络”，探索整个网络设计空间更有价值。
+* Radosavovic 等人提出了一种结合手动设计和 NAS 优势的方法，通过优化网络分布，而非单一实例，得到了 RegNet 系列。
+* RegNet 提供了性能良好的 CNN 设计指导原则，强调在设计过程中既要科学探索，又要保证计算成本低廉。
+
+AnyNet 设计空间
+"""""""""""""""
+
+* AnyNet 是一个通用的设计模板，由“stem”（初始处理）、“body”（核心计算）和“head”（输出层）组成。
+* 设计的核心在于“body”，它通过多个阶段和模块（如 ResNeXt 块）逐步提取特征。
+* 为了有效探索设计空间，需要调整诸多参数（如通道数、深度、分组数等）并优化它们的组合。
+
+分布优化与假设
+""""""""""""""
+
+* 网络性能优化的目标从寻找单一最佳参数，转为寻找“好的参数分布”。
+* 假设包括：
+    * 好的设计原则存在，并适用于多个网络。
+    * 不需要完全训练网络，早期性能可以提供指导。
+    * 小规模实验结果可以推广到大规模网络。
+    * 设计问题可以分解成相对独立的模块。
+
+
+
+9. Recurrent Neural Networks
+----------------------------
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/2Rj2To.png
+
+    Fig. 9.1 On the left recurrent connections are depicted via cyclic edges. On the right, we unfold the RNN over time steps. Here, recurrent edges span adjacent time steps, while conventional connections are computed synchronously.
+
+* RNN 在 2010 年代开始流行（Graves 等人，2008 年） ）、机器翻译（Sutskever 等人，2014）以及识别医疗诊断（Lipton 等人，2016）。
+
+
+
+9.1. Working with Sequences
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+1. 序列数据的特点
+"""""""""""""""""
+
+* 传统单输入模型：之前我们讨论的模型输入是单一特征向量 :math:`\mathbf{x} \in \mathbb{R}^d` 。
+* 序列输入的区别：序列输入由一组按时间顺序排列的特征向量 :math:`\mathbf{x}_1, \dots, \mathbf{x}_T` 组成，每个特征向量 :math:`\mathbf{x}_t` 有时间步(time step) t 的索引。
+* 序列数据的例子包括：
+
+    * 文档序列：每个文档是一组单词序列。
+    * 医院患者数据：一个住院过程由一系列事件组成。
+    * 股票价格序列：按时间记录的股价数据。
+
+* 在序列数据中，相邻时间步的数据通常存在依赖关系（如单词之间的上下文关系或患者治疗方案的时间顺序），而不是独立采样的。
+
+2. 序列建模的目标
+"""""""""""""""""
+
+* 预测固定目标：如根据影评文本判断情感（正向或负向）。
+* 预测序列目标：如根据图片生成描述文本。
+* 序列到序列建模：如机器翻译，将一个语言的句子转换为另一语言。
+
+
+3. 序列建模的基本方法
+"""""""""""""""""""""
+
+9.1.1. Autoregressive Models
+++++++++++++++++++++++++++++
+
+* 目标：通过历史数据 :math:`\mathbf{x}_{t-1}, \dots, \mathbf{x}_1` 预测下一个时间步的数据 :math:`\mathbf{x}_t`
+* 问题：历史数据的长度随着时间增长，输入特征的数量也随之越来越长。
+* 解决方法：
+    * 限制窗口大小：仅考虑固定长度窗口 :math:`\tau` 的历史数据，如 :math:`\mathbf{x}{t-1}, \dots, \mathbf{x}{t-\tau}` 。
+    * 隐变量表示：用一个隐藏状态 :math:`h_t` 总结历史信息，并通过更新公式 :math:`h_t = g(h_{t-1}, x_{t-1})` 动态维护。
+
+
+
+9.1.2. Sequence Models(Markov Models)
++++++++++++++++++++++++++++++++++++++
+
+* 如果可以仅依赖最近的 :math:`\tau` 个时间步的信息预测未来，则满足马尔科夫条件。
+* 一阶马尔科夫模型：只考虑最近的一个时间步 :math:`x_{t-1}` ，预测 :math:`P(x_t \mid x_{t-1})`
+* 虽然实际数据可能不完全符合马尔科夫条件，但在实际应用中，这种近似简化了计算。
+
+4. 语言模型与序列模型
+"""""""""""""""""""""
+
+语言模型 (Language Model)
++++++++++++++++++++++++++
+
+* 用于估计整个序列（如句子）的联合概率 :math:`P(x_1, \dots, x_T)`
+* 利用链式法则，将联合概率分解为条件概率的乘积： 
+
+.. math::
+
+    P(x_1, \ldots, x_T) = P(x_1) \prod_{t=2}^T P(x_t \mid x_{t-1}, \ldots, x_1)
+
+* 语言模型可用于自然语言生成、语音识别、机器翻译等任务。
+
+解码顺序
+++++++++
+
+* 一般从左到右建模（与阅读习惯一致），因为预测相邻单词更容易。
+* 未来事件可能影响后续结果，但不会影响过去。
+
+
+5. 实际应用
+^^^^^^^^^^^
+
+* 股票价格预测：如通过历史股价数据预测下一时刻价格。
+* 患者病程建模：根据前几天的治疗方案，预测第十天的用药。
+* 文本生成与补全：基于已知前缀，预测可能的后续文本。
+
+
+
+
+
+9.2. Converting Raw Text into Sequence Data
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Typical preprocessing pipelines execute the following steps::
+
+    1. Load text as strings into memory.
+    2. Split the strings into tokens (e.g., words or characters).
+    3. Build a vocabulary dictionary to associate each vocabulary element with a numerical index.
+    4. Convert the text into sequences of numerical indices.
+
+
+
+
+9.2.1. Reading the Dataset
+""""""""""""""""""""""""""
+
+.. code-block:: python
+
+    class TimeMachine(d2l.DataModule): #@save
+        """The Time Machine dataset."""
+        def _download(self):
+            fname = d2l.download(d2l.DATA_URL + 'timemachine.txt', self.root,
+                                 '090b5e7e70c295757f55df93cb0a180b9691891a')
+            with open(fname) as f:
+                return f.read()
+
+    data = TimeMachine()
+    raw_text = data._download()
+    raw_text[:60]
+
+    @d2l.add_to_class(TimeMachine)  #@save
+    def _preprocess(self, text):
+        return re.sub('[^A-Za-z]+', ' ', text).lower()
+
+    text = data._preprocess(raw_text)
+    text[:60]
+    # 输出
+    # 'the time machine by h g wells i the time traveller for so it'
+
+
+
+9.2.2. Tokenization
+"""""""""""""""""""
+
+::
+
+    @d2l.add_to_class(TimeMachine)  #@save
+    def _tokenize(self, text):
+        return list(text)
+
+    tokens = data._tokenize(text)
+    ','.join(tokens[:30])
+    # 输出
+    # 't,h,e, ,t,i,m,e, ,m,a,c,h,i,n,e, ,b,y, ,h, ,g, ,w,e,l,l,s, '
+
+
+
+9.2.3. Vocabulary
+"""""""""""""""""
+
+.. code-block:: python
+
+    class Vocab:  #@save
+        """Vocabulary for text."""
+        def __init__(self, tokens=[], min_freq=0, reserved_tokens=[]):
+            # Flatten a 2D list if needed
+            if tokens and isinstance(tokens[0], list):
+                tokens = [token for line in tokens for token in line]
+            # Count token frequencies
+            counter = collections.Counter(tokens)
+            self.token_freqs = sorted(counter.items(), key=lambda x: x[1],
+                                      reverse=True)
+            # The list of unique tokens
+            self.idx_to_token = list(sorted(set(['<unk>'] + reserved_tokens + [
+                token for token, freq in self.token_freqs if freq >= min_freq])))
+            self.token_to_idx = {token: idx
+                                 for idx, token in enumerate(self.idx_to_token)}
+
+        def __len__(self):
+            return len(self.idx_to_token)
+
+        def __getitem__(self, tokens):
+            if not isinstance(tokens, (list, tuple)):
+                return self.token_to_idx.get(tokens, self.unk)
+            return [self.__getitem__(token) for token in tokens]
+
+        def to_tokens(self, indices):
+            if hasattr(indices, '__len__') and len(indices) > 1:
+                return [self.idx_to_token[int(index)] for index in indices]
+            return self.idx_to_token[indices]
+
+        @property
+        def unk(self):  # Index for the unknown token
+            return self.token_to_idx['<unk>']
+
+使用::
+
+    vocab = Vocab(tokens)
+    indices = vocab[tokens[:10]]
+    print('indices:', indices)
+    print('words:', vocab.to_tokens(indices))
+    # 输出
+    #    indices: [21, 9, 6, 0, 21, 10, 14, 6, 0, 14]
+    #    words: ['t', 'h', 'e', ' ', 't', 'i', 'm', 'e', ' ', 'm']
+
+
+
+
+9.2.4. Putting It All Together
+""""""""""""""""""""""""""""""
+
+::
+
+    @d2l.add_to_class(TimeMachine)  #@save
+    def build(self, raw_text, vocab=None):
+        tokens = self._tokenize(self._preprocess(raw_text))
+        if vocab is None: vocab = Vocab(tokens)
+        corpus = [vocab[token] for token in tokens]
+        return corpus, vocab
+
+    corpus, vocab = data.build(raw_text)
+    len(corpus), len(vocab)
+    # (173428, 28)
+
+
+
+9.2.5. Exploratory Language Statistics
+""""""""""""""""""""""""""""""""""""""
+
+使用真实的语料库和针对单词定义的 Vocab 类::
+
+    words = text.split()
+    vocab = Vocab(words)
+    vocab.token_freqs[:10]
+    # 输出
+    [('the', 2261),
+     ('i', 1267),
+     ('and', 1245),
+     ('of', 1155),
+     ('a', 816),
+     ('to', 695),
+     ('was', 552),
+     ('in', 541),
+     ('that', 443),
+     ('my', 440)]
+
+::
+
+    bigram_tokens = ['--'.join(pair) for pair in zip(words[:-1], words[1:])]
+    bigram_vocab = Vocab(bigram_tokens)
+    bigram_vocab.token_freqs[:10]
+    # 输出
+    [('of--the', 309),
+     ('in--the', 169),
+     ('i--had', 130),
+     ('i--was', 112),
+     ('and--the', 109),
+     ('the--time', 102),
+     ('it--was', 99),
+     ('to--the', 85),
+     ('as--i', 78),
+     ('of--a', 73)]
+
+
+
+9.2.6. Summary
+""""""""""""""
+
+* 文本是深度学习中最常见的序列数据形式之一。
+* 构成标记的常见选择是字符、单词和单词片段。
+* 为了预处理文本，我们通常 
+    * (i) 将文本拆分为标记； 
+    * (ii) 构建词汇表以将标记字符串映射到数字索引； 
+    * (iii) 将文本数据转换为标记索引以供模型操作。
+* 在实践中，单词的频率往往遵循齐普夫定律。这不仅适用于单个单词（一元语法），也适用于 n-gram
+
+
+
+9.3. Language Models
+^^^^^^^^^^^^^^^^^^^^
+
+9.3.1. Learning Language Models
+"""""""""""""""""""""""""""""""
+
+* 语言模型的基础公式
+
+.. math::
+
+    P(x_1, x_2, \ldots, x_T) = \prod_{t=1}^T P(x_t  \mid  x_1, \ldots, x_{t-1})
+
+例如，包含四个单词的文本序列的概率(联合概率)如下：
+
+.. math::
+
+    P(\textrm{deep}, \textrm{learning}, \textrm{is}, \textrm{fun}) \\
+    =&P(\textrm{deep}) P(\textrm{learning}  \mid  \textrm{deep}) P(\textrm{is}  \mid  \textrm{deep}, \textrm{learning}) P(\textrm{fun}  \mid  \textrm{deep}, \textrm{learning}, \textrm{is})
+
+
+9.3.1.1. Markov Models and n-grams
+++++++++++++++++++++++++++++++++++
+
+* 为了简化计算，语言模型通常假设序列满足马尔可夫性质，即只考虑有限长度的上下文：
+    * Unigram（单词独立）: :math:`P(x_1, x_2, x_3, x_4) = P(x_1)P(x_2)P(x_3)P(x_4)`
+    * Bigram（二元组）: :math:`P(x_4 \mid x_3)`
+    * Trigram（三元组）: :math:`P(x_4 \mid x_2, x_3)`
+
+9.3.1.2. Word Frequency
++++++++++++++++++++++++
+
+* 在大规模语料库（如Wikipedia或Project Gutenberg）中，词的概率可以通过频率计算：
+* :math:`P(\textrm{deep})` ：文本中单词“deep”的出现次数占比。
+
+.. math::
+
+    \hat{P}(\textrm{learning} \mid \textrm{deep}) = \frac{n(\textrm{deep, learning})}{n(\textrm{deep})}
+
+9.3.1.3. Laplace Smoothing
+++++++++++++++++++++++++++
+
+* 拉普拉斯平滑
+* 为了解决低频或未见词组的问题，使用平滑方法在计数中加入小常数 :math:`\epsilon` ：
+    * 单词概率： :math:`\hat{P}(x) = \frac{n(x) + \epsilon/m}{n + \epsilon}`
+    * 二元组概率： :math:`\hat{P}(x' \mid x) = \frac{n(x, x') + \epsilon}{n(x) + \epsilon}`
+* 尽管平滑方法有效，它依然有局限性，例如高阶组合的稀疏性和存储成本问题。
+
+
+9.3.2. Perplexity
+"""""""""""""""""
+
+* 困惑度衡量语言模型对文本预测的好坏：
+* 定义为交叉熵的指数形式：
+
+.. math::
+
+    Perplexity = \exp\left(-\frac{1}{n} \sum_{t=1}^n \log P(x_t \mid x_{t-1}, \ldots, x_1)\right)
+
+
+* 理解：
+    * 最优模型：困惑度=1（完美预测）。
+    * 随机模型：困惑度接近词汇表大小。
+
+
+
+9.3.3. Partitioning Sequences
+"""""""""""""""""""""""""""""
+
+* 训练语言模型时，将长序列分割成多个子序列，并将输入与目标错开一位。
+* 例如：
+    * 输入： :math:`[x_1, x_2, x_3, x_4, x_5]`
+    * 目标： :math:`[x_2, x_3, x_4, x_5, x_6]`
+* 这种分区方式使模型能够学习预测下一个词的能力。
+
+
+
+9.4. Recurrent Neural Networks
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+1. 语言模型的局限性与改进
+"""""""""""""""""""""""""
+
+* 传统的 n元(n-grams)模型假设一个时间步 t 的词 :math:`x_t` 只依赖于前 n-1 个词。
+    * 缺点：如果要捕捉更长的上下文信息，需要增加 n ，但这样参数数量会指数级增长（ :math:`|\mathcal{V}|^n` ， :math:`\mathcal{V}` 是词汇表）。
+* 解决方案：引入隐变量模型，用一个“隐藏状态” h_{t-1} 来存储从 t-1 之前的序列信息：
+
+
+2. 隐藏状态的定义与作用
+"""""""""""""""""""""""
+
+* 隐藏状态（hidden state）： :math:`h_t` 根据当前输入 :math:`x_t` 和前一个隐藏状态 :math:`h_{t-1}` 计算得出：
+
+.. math::
+
+    H_t = f(X_t, h_{t-1})
+
+
+* :math:`h_t` 可以视为一个“记忆单元”，它记录了从序列开始到当前时间步 t 的历史信息。
+* 好处：相比 n-grams 模型，隐藏状态允许我们在参数不随时间步增加的情况下捕获长程依赖。
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/TGFa1e.png
+
+    Fig. 9.4.1 An RNN with a hidden state.
+
+
+
+
+3. RNN的计算逻辑
+""""""""""""""""
+
+* a. RNN的隐藏层输出（即隐藏状态）公式：
+
+.. math::
+
+    \mathbf{H}_t = \phi(\mathbf{X}_t \mathbf{W}_{\textrm{xh}} + \mathbf{H}_{t-1} \mathbf{W}_{\textrm{hh}}  + \mathbf{b}_\textrm{h})
+
+* 其中
+    * :math:`\mathbf{X}_t` ：当前时间步的输入。
+    * :math:`\mathbf{H}_{t-1}` ：前一个时间步的隐藏状态。
+    * :math:`\mathbf{W}{\text{xh}}, \mathbf{W}{\text{hh}}` ：权重矩阵，分别用于处理输入和隐藏状态。
+    * :math:`\phi` ：激活函数（例如ReLU或tanh）。
+
+* b. 输出层的计算：
+
+.. math::
+
+    \mathbf{O}_t = \mathbf{H}_t \mathbf{W}_{\textrm{hq}} + \mathbf{b}_\textrm{q}
+
+
+* c.特点：
+    * 隐藏状态的计算是递归的（recurrent）。
+    * 参数( :math:`\mathbf{W}` 和 :math:`\mathbf{b}` )在所有时间步之间共享，参数数量与时间步数无关。
+
+
+4. RNN与MLP的区别
+"""""""""""""""""
+
+* MLP（多层感知机）：
+    *  每个输入样本独立处理，不考虑时间步之间的关联。
+    *  隐藏层的输出公式： :math:`𝐻=𝜙(𝑋𝑊_{xh}+𝑏_h)`
+* RNN：
+    * 利用隐藏状态捕获时间步之间的依赖关系。
+    * 隐藏状态递归计算，具备“记忆”能力。
+
+5. RNN的应用
+""""""""""""
+
+* 字符级语言模型（character-level language model）：
+    * 输入序列（如“machin”）的每个字符作为一个时间步的输入。
+    * 输出序列是预测的下一个字符（如“achine”）。
+    * RNN通过隐藏状态捕捉历史上下文信息，并逐步预测下一个字符。
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/TJg72T.png
+
+    Fig. 9.4.2 A character-level language model based on the RNN. The input and target sequences are “machin” and “achine”, respectively.
+
+
+
+
+6. RNN的优点与局限
+""""""""""""""""""
+
+优点::
+
+    捕获序列数据的依赖关系。
+    参数共享，适合处理长序列。
+
+局限::
+
+    可能存在梯度消失或梯度爆炸问题，特别是处理长序列时。
+    为此，通常会改进为LSTM或GRU等变种模型。
+
+
+总结
+""""
+
+* RNN是一种能够捕获序列信息的神经网络，通过递归计算隐藏状态，实现了对时间序列数据的有效建模。
+* 它的关键思想在于共享模型参数并利用隐藏状态记录序列历史信息，在语言模型等任务中具有广泛的应用。
+
+
+
+
+9.5. Recurrent Neural Network Implementation from Scratch
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+9.5.1. RNN Model
+""""""""""""""""
+
+.. code-block:: python
+
+    class RNNScratch(d2l.Module):  #@save
+        """The RNN model implemented from scratch."""
+        def __init__(self, num_inputs, num_hiddens, sigma=0.01):
+            super().__init__()
+            self.save_hyperparameters()
+            self.W_xh = nn.Parameter(
+                torch.randn(num_inputs, num_hiddens) * sigma)
+            self.W_hh = nn.Parameter(
+                torch.randn(num_hiddens, num_hiddens) * sigma)
+            self.b_h = nn.Parameter(torch.zeros(num_hiddens))
+
+    @d2l.add_to_class(RNNScratch)  #@save
+    def forward(self, inputs, state=None):
+        if state is None:
+            # Initial state with shape: (batch_size, num_hiddens)
+            state = torch.zeros((inputs.shape[1], self.num_hiddens),
+                              device=inputs.device)
+        else:
+            state, = state
+        outputs = []
+        for X in inputs:  # Shape of inputs: (num_steps, batch_size, num_inputs)
+            state = torch.tanh(torch.matmul(X, self.W_xh) +
+                             torch.matmul(state, self.W_hh) + self.b_h)
+            outputs.append(state)
+        return outputs, state
+
+应用::
+
+    batch_size, num_inputs, num_hiddens, num_steps = 2, 16, 32, 100
+    rnn = RNNScratch(num_inputs, num_hiddens)
+    X = torch.ones((num_steps, batch_size, num_inputs))
+    outputs, state = rnn(X)
+
+
+    def check_len(a, n):  #@save
+        """Check the length of a list."""
+        assert len(a) == n, f'list\'s length {len(a)} != expected length {n}'
+
+    def check_shape(a, shape):  #@save
+        """Check the shape of a tensor."""
+        assert a.shape == shape, \
+                f'tensor\'s shape {a.shape} != expected shape {shape}'
+
+    check_len(outputs, num_steps)
+    check_shape(outputs[0], (batch_size, num_hiddens))
+    check_shape(state, (batch_size, num_hiddens))
+
+
+
+9.5.2. RNN-Based Language Model
+"""""""""""""""""""""""""""""""
+
+.. code-block:: python
+
+    class RNNLMScratch(d2l.Classifier):  #@save
+        """The RNN-based language model implemented from scratch."""
+        def __init__(self, rnn, vocab_size, lr=0.01):
+            super().__init__()
+            self.save_hyperparameters()
+            self.init_params()
+
+        def init_params(self):
+            self.W_hq = nn.Parameter(
+                torch.randn(self.rnn.num_hiddens, self.vocab_size) * self.rnn.sigma)
+            self.b_q = nn.Parameter(torch.zeros(self.vocab_size))
+
+        def training_step(self, batch):
+            l = self.loss(self(*batch[:-1]), batch[-1])
+            self.plot('ppl', torch.exp(l), train=True)
+            return l
+
+        def validation_step(self, batch):
+            l = self.loss(self(*batch[:-1]), batch[-1])
+            self.plot('ppl', torch.exp(l), train=False)
+
+9.5.2.1. One-Hot Encoding
++++++++++++++++++++++++++
+
+示例::
+
+    F.one_hot(torch.tensor([0, 2]), 5)
+    # 输出
+    tensor([[1, 0, 0, 0, 0],
+            [0, 0, 1, 0, 0]])
+
+
+.. code-block:: python
+
+    @d2l.add_to_class(RNNLMScratch)  #@save
+    def one_hot(self, X):
+        # Output shape: (num_steps, batch_size, vocab_size)
+        return F.one_hot(X.T, self.vocab_size).type(torch.float32)
+
+
+9.5.2.2. Transforming RNN Outputs
++++++++++++++++++++++++++++++++++
+
+.. code-block:: python
+
+    @d2l.add_to_class(RNNLMScratch)  #@save
+    def output_layer(self, rnn_outputs):
+        outputs = [torch.matmul(H, self.W_hq) + self.b_q for H in rnn_outputs]
+        return torch.stack(outputs, 1)
+
+    @d2l.add_to_class(RNNLMScratch)  #@save
+    def forward(self, X, state=None):
+        embs = self.one_hot(X)
+        rnn_outputs, _ = self.rnn(embs, state)
+        return self.output_layer(rnn_outputs)
+
+检查前向计算是否产生具有正确形状的输出::
+
+    model = RNNLMScratch(rnn, num_inputs)
+    outputs = model(torch.ones((batch_size, num_steps), dtype=torch.int64))
+    check_shape(outputs, (batch_size, num_steps, num_inputs))
+
+
+9.5.3. Gradient Clipping
+""""""""""""""""""""""""
+
+* 梯度截断（gradient clipping）
+* 【序列长度与深度】神经网络之所以被称为“深”网络，是因为它们通常有许多层从输入到输出的传递。而在RNN中，由于处理的是时间序列数据，序列的长度引入了一种新的“深度”概念。具体来说，RNN不仅仅是处理输入到输出的网络，它还需要在时间维度上跨越多个时间步长，因此在一个输入序列的前期时间步上的信息必须通过每一个时间步的“层”逐步传递，以影响最终的输出。
+* 【反向传播中的时间维度】在反向传播过程中，梯度是通过时间反向传播的，也就是说，不仅是网络的层之间传递信息，还涉及每个时间步之间的传播。随着时间步数的增加，反向传播需要通过的矩阵乘法链条长度为 T（时间步长），这使得梯度的计算变得更复杂，可能导致数值不稳定。
+* 【梯度剪切（Gradient Clipping）】为了解决梯度爆炸问题，一种常用的“hack”是梯度剪切。梯度剪切通过对梯度进行限制，确保它们的范数不会超过一个设定的最大值 :math:`\theta` 。这样做的好处是即使梯度在某些时间步长上突然变大，也不会对训练造成严重影响。
+
+
+
+.. code-block:: python
+
+    @d2l.add_to_class(d2l.Trainer)  #@save
+    def clip_gradients(self, grad_clip_val, model):
+        params = [p for p in model.parameters() if p.requires_grad]
+        norm = torch.sqrt(sum(torch.sum((p.grad ** 2)) for p in params))
+        if norm > grad_clip_val:
+            for param in params:
+                param.grad[:] *= grad_clip_val / norm
+
+
+
+
+
+9.5.4. Training
+"""""""""""""""
+
+.. code-block:: python
+
+    data = d2l.TimeMachine(batch_size=1024, num_steps=32)
+    rnn = RNNScratch(num_inputs=len(data.vocab), num_hiddens=32)
+    model = RNNLMScratch(rnn, vocab_size=len(data.vocab), lr=1)
+    trainer = d2l.Trainer(max_epochs=100, gradient_clip_val=1, num_gpus=1)
+    trainer.fit(model, data)
+
+
+
+
+9.5.5. Decoding
+"""""""""""""""
+
+.. code-block:: python
+
+    @d2l.add_to_class(RNNLMScratch)  #@save
+    def predict(self, prefix, num_preds, vocab, device=None):
+        state, outputs = None, [vocab[prefix[0]]]
+        for i in range(len(prefix) + num_preds - 1):
+            X = torch.tensor([[outputs[-1]]], device=device)
+            embs = self.one_hot(X)
+            rnn_outputs, state = self.rnn(embs, state)
+            if i < len(prefix) - 1:  # Warm-up period
+                outputs.append(vocab[prefix[i + 1]])
+            else:  # Predict num_preds steps
+                Y = self.output_layer(rnn_outputs)
+                outputs.append(int(Y.argmax(axis=2).reshape(1)))
+        return ''.join([vocab.idx_to_token[i] for i in outputs])
+
+    model.predict('it has', 20, data.vocab, d2l.try_gpu())
+    # 输出
+    'it has in the the the the '
+
+
+
+
+
+
+9.6. Concise Implementation of Recurrent Neural Networks
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+9.6.1. Defining the Model
+"""""""""""""""""""""""""
+
+.. code-block:: python
+
+    class RNN(d2l.Module):  #@save
+        """The RNN model implemented with high-level APIs."""
+        def __init__(self, num_inputs, num_hiddens):
+            super().__init__()
+            self.save_hyperparameters()
+            self.rnn = nn.RNN(num_inputs, num_hiddens)
+
+        def forward(self, inputs, H=None):
+            return self.rnn(inputs, H)
+
+    class RNNLM(d2l.RNNLMScratch):  #@save
+        """The RNN-based language model implemented with high-level APIs."""
+        def init_params(self):
+            self.linear = nn.LazyLinear(self.vocab_size)
+
+        def output_layer(self, hiddens):
+            return self.linear(hiddens).swapaxes(0, 1)
+
+
+9.6.2. Training and Predicting
+""""""""""""""""""""""""""""""
+
+.. code-block:: python
+
+    data = d2l.TimeMachine(batch_size=1024, num_steps=32)
+    rnn = RNN(num_inputs=len(data.vocab), num_hiddens=32)
+    model = RNNLM(rnn, vocab_size=len(data.vocab), lr=1)
+    model.predict('it has', 20, data.vocab)
+    # 输出
+    'it hasoadd dd dd dd dd dd '
+
+训练::
+
+    trainer = d2l.Trainer(max_epochs=100, gradient_clip_val=1, num_gpus=1)
+    trainer.fit(model, data)
+
+训练后推理::
+
+    model.predict('it has', 20, data.vocab, d2l.try_gpu())
+
+
+
+
+
+
+9.7. Backpropagation Through Time
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* 时间反向传播（Backpropagation Through Time, BPTT）
+
+
+应对梯度问题的方法
+""""""""""""""""""
+
+* 全计算（Full Computation）：完整计算所有时间步的梯度。
+    * 缺点：
+        * 计算代价高。
+        * 容易受到梯度爆炸和数值不稳定的影响。
+    * 实际上很少使用。
+
+* 时间步截断（Truncating Time Steps）：只计算最近 :math:`\tau` 个时间步的梯度，忽略更早的时间步。
+    * 优点：
+        * 简化计算，避免梯度爆炸。
+        * 偏向短期依赖，有一定正则化效果。
+    * 缺点：
+        * 可能丢失长期依赖的信息。
+
+* 随机截断（Randomized Truncation）：用随机变量替代部分梯度计算，以截断序列长度。
+    * 优点：
+        * 截断位置随机化，可能提升训练的泛化能力。
+    * 缺点：
+        * 增加梯度估计的方差，实际效果不显著。
+
+数学分析
+""""""""
+
+* 每个时间步的隐藏状态和输出是
+    * f 是隐藏层的变换
+    * g 是输出层的变换
+
+.. math::
+
+    \begin{aligned}
+        h_t &= f(x_t, h_{t-1}, w_\textrm{h}),\\
+        o_t &= g(h_t, w_\textrm{o}),
+    \end{aligned}
+
+
+* 前向传播相当简单
+    * 通过所有 T 时间步长的目标函数来评估输出 :math:`o_t` 与所需目标 :math:`y_t` 之间的差异
+
+.. math::
+
+    L(x_1, \ldots, x_T, y_1, \ldots, y_T, w_\textrm{h}, w_\textrm{o}) = \frac{1}{T}\sum_{t=1}^T l(y_t, o_t)
+
+* 反向传播，事情有点棘手
+    * 根据链式法则
+    * 乘积的第一和第二因子很容易计算。第三个因素 :math:`\partial h_t/\partial w_\textrm{h}` 是事情变得棘手的地方，因为需要递归地累积每个时间步对 :math:`w_\text{h}` 的影响。
+
+.. math::
+
+    \begin{aligned}
+        \frac{\partial L}{\partial w_\textrm{h}}  
+            & = \frac{1}{T}\sum_{t=1}^T \frac{\partial l(y_t, o_t)}{\partial w_\textrm{h}}  \\
+            & = \frac{1}{T}\sum_{t=1}^T \frac{\partial l(y_t, o_t)}{\partial o_t} \frac{\partial g(h_t, w_\textrm{o})}{\partial h_t}  \frac{\partial h_t}{\partial w_\textrm{h}}
+    \end{aligned}
+
+
+为了导出上述梯度，假设我们有三个序列 :math:`\{a_{t}\},\{b_{t}\},\{c_{t}\}` 对于 :math:`t=1, 2,\ldots` 满足 :math:`a_{0}=0` and :math:`a_{t}=b_{t}+c_{t}a_{t-1}` .那么对于 :math:`t\geq 1` , 很容易得出
+
+.. math::
+
+    a_{t}=b_{t}+\sum_{i=1}^{t-1}\left(\prod_{j=i+1}^{t}c_{j}\right)b_{i}
+
+由于：
+
+.. math::
+
+    \begin{aligned}
+        a_t &= \frac{\partial h_t}{\partial w_\textrm{h}},\\
+        b_t &= \frac{\partial f(x_{t},h_{t-1},w_\textrm{h})}{\partial w_\textrm{h}}, \\
+        c_t &= \frac{\partial f(x_{t},h_{t-1},w_\textrm{h})}{\partial h_{t-1}}
+    \end{aligned}$$
+
+把上面两公式代入一起，即可删除循环计算可得如下公式
+
+.. math::
+
+    \frac{\partial h_t}{\partial w_\textrm{h}}
+        =\frac{\partial f(x_{t},h_{t-1},w_\textrm{h})}{\partial w_\textrm{h}}
+            +\sum_{i=1}^{t-1}\left(\prod_{j=i+1}^{t} \frac{\partial f(x_{j},h_{j-1},w_\textrm{h})}{\partial h_{j-1}} \right) 
+                \frac{\partial f(x_{i},h_{i-1},w_\textrm{h})}{\partial w_\textrm{h}}
+
+总结与实践意义
+""""""""""""""
+
+* 在实际中，时间步截断（Truncated BPTT）是最常用的方法，它在计算效率和模型稳定性之间达成了平衡。
+* 对于处理长序列数据的任务（如文本序列），这种方法既能捕获短期依赖，又能避免梯度问题带来的训练困难。
+
+
+10. Modern Recurrent Neural Networks
+------------------------------------
+
+
+10.1. Long Short-Term Memory (LSTM)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* 虽然梯度裁剪有助于梯度爆炸，但处理梯度消失似乎需要更复杂的解决方案。 
+* Hochreiter 和 Schmidhuber (1997) 提出的解决梯度消失问题的第一个也是最成功的技术之一是长短期记忆 (LSTM) 模型。 
+* LSTM 类似于标准的循环神经网络，但这里每个普通的循环节点都被一个记忆单元取代。
+* 每个记忆单元包含一个内部状态，即具有固定权重1的自连接循环边的节点，确保梯度可以跨越许多时间步而不会消失或爆炸。
+
+* “长短期记忆”一词来自以下直觉:
+    * 简单的循环神经网络具有权重形式的长期记忆。
+        * 权重在训练过程中缓慢变化，编码有关数据的一般知识。
+    * 它们还具有短暂激活形式的短期记忆，从每个节点传递到连续的节点。 
+    * LSTM 模型通过记忆单元引入了中间类型的存储。
+    * 存储单元是一个复合单元，由特定连接模式中的简单节点构建而成，并新颖地包含乘法节点。
+
+
+
+10.1.1. Gated Memory Cell
+"""""""""""""""""""""""""
+
+10.1.1.1. Gated Hidden State
+++++++++++++++++++++++++++++
+
+* 普通 RNN 和 LSTM 之间的主要区别在于后者支持隐藏状态的门控。
+* 这意味着我们有专门的机制来确定何时应该更新隐藏状态以及何时应该重置隐藏状态。
+
+10.1.1.2. Input Gate, Forget Gate, and Output Gate
+++++++++++++++++++++++++++++++++++++++++++++++++++
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/nDlrQH.png
+
+    Fig. 10.1.1 Computing the input gate, the forget gate, and the output gate in an LSTM model.
+
+
+* The data feeding into the LSTM gates are the ``input`` at the current time step and the ``hidden state`` of the previous time step
+* The  ``input`` gate determines how much of the input node’s value should be added to the current memory cell internal state. 
+* The ``forget`` gate determines whether to keep the current value of the memory or flush it. 
+* The ``output`` gate determines whether the memory cell should influence the output at the current time step.
+
+* 从数学上讲，假设有 h 个隐藏单元，批量大小为 n ，输入数量为 d 
+* 因此，输入是 :math:`\mathbf{X}_t \in \mathbb{R}^{n \times d}` ，前一个时间步的隐藏状态是 :math:`\mathbf{H}_{t-1} \in \mathbb{R}^{n \times h}`
+* Correspondingly, the gates at time step ``t`` are defined as follows: 
+    * the  input gate is :math:`\mathbf{I}_t \in \mathbb{R}^{n \times h}` ,
+    * the forget gate is :math:`\mathbf{F}_t \in \mathbb{R}^{n \times h}` ,
+    * the output gate is :math:`\mathbf{O}_t \in \mathbb{R}^{n \times h}` .
+* 公式：
+
+.. math::
+
+    \begin{aligned}
+        \mathbf{I}_t &= \sigma(\mathbf{X}_t \mathbf{W}_{\textrm{xi}} + \mathbf{H}_{t-1} \mathbf{W}_{\textrm{hi}} + \mathbf{b}_\textrm{i}),\\
+        \mathbf{F}_t &= \sigma(\mathbf{X}_t \mathbf{W}_{\textrm{xf}} + \mathbf{H}_{t-1} \mathbf{W}_{\textrm{hf}} + \mathbf{b}_\textrm{f}),\\
+        \mathbf{O}_t &= \sigma(\mathbf{X}_t \mathbf{W}_{\textrm{xo}} + \mathbf{H}_{t-1} \mathbf{W}_{\textrm{ho}} + \mathbf{b}_\textrm{o}),
+    \end{aligned}
+
+* where :math:`\mathbf{W}_{\textrm{xi}}, \mathbf{W}_{\textrm{xf}}, \mathbf{W}_{\textrm{xo}} \in \mathbb{R}^{d \times h}` 
+*   and :math:`\mathbf{W}_{\textrm{hi}}, \mathbf{W}_{\textrm{hf}}, \mathbf{W}_{\textrm{ho}} \in \mathbb{R}^{h \times h}` are weight parameters 
+*   and :math:`\mathbf{b}_\textrm{i}, \mathbf{b}_\textrm{f}, \mathbf{b}_\textrm{o} \in \mathbb{R}^{1 \times h}` are bias parameters.
+
+
+10.1.1.3. Input Node
+++++++++++++++++++++
+
+* 公式和上述三个门类似，但使用取值范围为 (-1, 1) 的 ``tanh`` 函数作为激活函数。
+
+.. math::
+
+    \tilde{\mathbf{C}}_t = \textrm{tanh}(\mathbf{X}_t \mathbf{W}_{\textrm{xc}} + \mathbf{H}_{t-1} \mathbf{W}_{\textrm{hc}} + \mathbf{b}_\textrm{c})
+
+* *input node* : :math:`\tilde{\mathbf{C}}_t \in \mathbb{R}^{n \times h}`
+* where :math:`\mathbf{W}_{\textrm{xc}} \in \mathbb{R}^{d \times h}` 
+* and   :math:`\mathbf{W}_{\textrm{hc}} \in \mathbb{R}^{h \times h}` are weight parameters and $\mathbf{b}_\textrm{c} \in \mathbb{R}^{1 \times h}$ is a bias parameter.
+
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/HvpMT7.png
+
+    Fig. 10.1.2 Computing the input node in an LSTM model.
+
+
+10.1.1.4. Memory Cell Internal State
+++++++++++++++++++++++++++++++++++++
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/G2kAIc.png
+
+    Fig. 10.1.3 Computing the memory cell internal state in an LSTM model.
+
+
+* In LSTMs, the input gate :math:`\mathbf{I}_t` governs how much we take new data into account via :math:`\tilde{\mathbf{C}}_t` 
+    * and the forget gate :math:`\mathbf{F}_t` addresses how much of the old cell internal state :math:`\mathbf{C}_{t-1} \in \mathbb{R}^{n \times h}` we retain. 
+* Using the Hadamard (elementwise) product operator :math:`\odot` we arrive at the following update equation:
+
+.. math::
+
+    \mathbf{C}_t = \mathbf{F}_t \odot \mathbf{C}_{t-1} + \mathbf{I}_t \odot \tilde{\mathbf{C}}_t
+
+
+10.1.1.5. Hidden State
+++++++++++++++++++++++
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/sMfLde.png
+
+    Fig. 10.1.4 Computing the hidden state in an LSTM model.
+
+Now compute the output of the memory cell(the hidden state :math:`\mathbf{H}_t \in \mathbb{R}^{n \times h}` )
+
+.. math::
+
+    \mathbf{H}_t = \mathbf{O}_t \odot \tanh(\mathbf{C}_t)
+
+
+
+10.1.2. Implementation from Scratch
+"""""""""""""""""""""""""""""""""""
+
+10.1.2.1. Initializing Model Parameters
++++++++++++++++++++++++++++++++++++++++
+
+.. code-block:: python
+
+    class LSTMScratch(d2l.Module):
+        def __init__(self, num_inputs, num_hiddens, sigma=0.01):
+            super().__init__()
+            self.save_hyperparameters()
+
+            init_weight = lambda *shape: nn.Parameter(torch.randn(*shape) * sigma)
+            triple = lambda: (init_weight(num_inputs, num_hiddens),
+                              init_weight(num_hiddens, num_hiddens),
+                              nn.Parameter(torch.zeros(num_hiddens)))
+            self.W_xi, self.W_hi, self.b_i = triple()  # Input gate
+            self.W_xf, self.W_hf, self.b_f = triple()  # Forget gate
+            self.W_xo, self.W_ho, self.b_o = triple()  # Output gate
+            self.W_xc, self.W_hc, self.b_c = triple()  # Input node
+
+    @d2l.add_to_class(LSTMScratch)
+    def forward(self, inputs, H_C=None):
+        if H_C is None:
+            # Initial state with shape: (batch_size, num_hiddens)
+            H = torch.zeros((inputs.shape[1], self.num_hiddens),
+                          device=inputs.device)
+            C = torch.zeros((inputs.shape[1], self.num_hiddens),
+                          device=inputs.device)
+        else:
+            H, C = H_C
+        outputs = []
+        for X in inputs:
+            I = torch.sigmoid(torch.matmul(X, self.W_xi) +
+                            torch.matmul(H, self.W_hi) + self.b_i)
+            F = torch.sigmoid(torch.matmul(X, self.W_xf) +
+                            torch.matmul(H, self.W_hf) + self.b_f)
+            O = torch.sigmoid(torch.matmul(X, self.W_xo) +
+                            torch.matmul(H, self.W_ho) + self.b_o)
+            C_tilde = torch.tanh(torch.matmul(X, self.W_xc) +
+                               torch.matmul(H, self.W_hc) + self.b_c)
+            C = F * C + I * C_tilde
+            H = O * torch.tanh(C)
+            outputs.append(H)
+        return outputs, (H, C)
+
+
+10.1.2.2. Training and Prediction
++++++++++++++++++++++++++++++++++
+
+::
+
+    data = d2l.TimeMachine(batch_size=1024, num_steps=32)
+    lstm = LSTMScratch(num_inputs=len(data.vocab), num_hiddens=32)
+    model = d2l.RNNLMScratch(lstm, vocab_size=len(data.vocab), lr=4)
+    trainer = d2l.Trainer(max_epochs=50, gradient_clip_val=1, num_gpus=1)
+    trainer.fit(model, data)
+
+
+
+10.1.3. Concise Implementation
+""""""""""""""""""""""""""""""
+
+.. code-block:: python
+
+    class LSTM(d2l.RNN):
+        def __init__(self, num_inputs, num_hiddens):
+            d2l.Module.__init__(self)
+            self.save_hyperparameters()
+            self.rnn = nn.LSTM(num_inputs, num_hiddens)
+
+        def forward(self, inputs, H_C=None):
+            return self.rnn(inputs, H_C)
+
+    lstm = LSTM(num_inputs=len(data.vocab), num_hiddens=32)
+    model = d2l.RNNLM(lstm, vocab_size=len(data.vocab), lr=4)
+    trainer.fit(model, data)
+
+使用::
+
+    model.predict('it has', 20, data.vocab, d2l.try_gpu())
+    # 输出
+    'it has a the time travelly'
+
+
+10.1.4. Summary
+"""""""""""""""
+
+* LSTM 于 1997 年发布，但在 2000 年代中期的预测竞赛中取得了一些胜利，使其声名鹊起，并从 2011 年开始成为序列学习的主导模型，直到 2017 年开始 Transformer 模型的兴起。
+* LSTM 具有三种类型的门：输入门、遗忘门和控制信息流的输出门。 LSTM的隐藏层输出包括隐藏状态和记忆单元内部状态。只有隐藏状态被传递到输出层，而存储单元内部状态完全保持在内部。 LSTM 可以缓解梯度消失和爆炸。
+
+
+
+10.2. Gated Recurrent Units (GRU)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* 门控循环单元 (GRU)（Cho 等人，2014）提供了 LSTM 存储单元的简化版本，通常可以实现相当的性能，但具有计算速度更快的优点（Chung 等人，2014）。
+
+10.2.1. Reset Gate and Update Gate
+""""""""""""""""""""""""""""""""""
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/yvWA3J.png
+
+    Fig. 10.2.1 Computing the reset gate and the update gate in a GRU model. 给定当前时间步的输入和前一个时间步的隐藏状态。
+
+* LSTM 的三个门被替换为两个：重置门和更新门。
+* 直观上，
+    * 重置门控制着我们可能仍想记住多少先前的状态。
+    * 更新门将允许我们控制新状态中有多少只是旧状态的副本。
+
+* Mathematically, for a given time step ``t`` , suppose that the input is a minibatch :math:`\mathbf{X}_t \in \mathbb{R}^{n \times d}` (``number of examples =n; number of inputs =d``)
+* and the hidden state of the previous time step is :math:`\mathbf{H}_{t-1} \in \mathbb{R}^{n \times h}` (``number of hidden units =h``). 
+* Then the reset gate :math:`\mathbf{R}_t \in \mathbb{R}^{n \times h}` and update gate :math:`\mathbf{Z}_t \in \mathbb{R}^{n \times h}` are computed as follows:
+
+.. math::
+
+    \begin{aligned}
+        \mathbf{R}_t = \sigma(\mathbf{X}_t \mathbf{W}_{\textrm{xr}} + \mathbf{H}_{t-1} \mathbf{W}_{\textrm{hr}} + \mathbf{b}_\textrm{r}),\\
+        \mathbf{Z}_t = \sigma(\mathbf{X}_t \mathbf{W}_{\textrm{xz}} + \mathbf{H}_{t-1} \mathbf{W}_{\textrm{hz}} + \mathbf{b}_\textrm{z}),
+    \end{aligned}
+
+
+
+10.2.2. Candidate Hidden State
+""""""""""""""""""""""""""""""
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/8A9kVr.png
+
+    Fig. 10.2.2 Computing the candidate hidden state in a GRU model.
+
+公式:
+
+.. math::
+
+    \tilde{\mathbf{H}}_t = \tanh(\mathbf{X}_t \mathbf{W}_{\textrm{xh}} + \left(\mathbf{R}_t \odot \mathbf{H}_{t-1}\right) \mathbf{W}_{\textrm{hh}} + \mathbf{b}_\textrm{h})
+
+
+* 当重置门 :math:`\mathbf{R}_t` 中的条目接近 1 时，我们就会恢复一个普通的 RNN
+* 当重置门 :math:`\mathbf{R}_t` 中的条目接近 0 时，候选隐藏状态是以 :math:`\mathbf{X}_t` 作为输入的 MLP 的结果。
+
+
+10.2.3. Hidden State
+""""""""""""""""""""
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/yy2z50.png
+
+    Fig. 10.2.3 Computing the hidden state in a GRU model.
+
+
+.. math::
+
+    \mathbf{H}_t = \mathbf{Z}_t \odot \mathbf{H}_{t-1}  + (1 - \mathbf{Z}_t) \odot \tilde{\mathbf{H}}_t
+
+
+* 每当更新门 :math:`\mathbf{Z}_t` 接近1时，返回前一个隐藏状态。在这种情况下，来自 :math:`\mathbf{X}_t` 的信息将被忽略，从而有效地跳过依赖链中的时间步 t 。
+* 相反，每当 :math:`\mathbf{Z}_t` 接近 0 时，新的潜在状态 :math:`\mathbf{H}_t` 就会接近候选潜在状态 :math:`\tilde{\mathbf{H}}_t` 。
+
+* GRU有以下两个显着特征：
+    * Reset gates help capture short-term dependencies in sequences.
+    * Update gates help capture long-term dependencies in sequences.
+
+
+10.2.4. Implementation from Scratch
+"""""""""""""""""""""""""""""""""""
+
+10.2.4.1. Initializing Model Parameters
++++++++++++++++++++++++++++++++++++++++
+
+.. code-block:: python
+
+    class GRUScratch(d2l.Module):
+        def __init__(self, num_inputs, num_hiddens, sigma=0.01):
+            super().__init__()
+            self.save_hyperparameters()
+
+            init_weight = lambda *shape: nn.Parameter(torch.randn(*shape) * sigma)
+            triple = lambda: (init_weight(num_inputs, num_hiddens),
+                              init_weight(num_hiddens, num_hiddens),
+                              nn.Parameter(torch.zeros(num_hiddens)))
+            self.W_xz, self.W_hz, self.b_z = triple()  # Update gate
+            self.W_xr, self.W_hr, self.b_r = triple()  # Reset gate
+            self.W_xh, self.W_hh, self.b_h = triple()  # Candidate hidden state
+
+10.2.4.2. Defining the Model
+++++++++++++++++++++++++++++
+
+.. code-block:: python
+
+    @d2l.add_to_class(GRUScratch)
+    def forward(self, inputs, H=None):
+        if H is None:
+            # Initial state with shape: (batch_size, num_hiddens)
+            H = torch.zeros((inputs.shape[1], self.num_hiddens),
+                          device=inputs.device)
+        outputs = []
+        for X in inputs:
+            Z = torch.sigmoid(torch.matmul(X, self.W_xz) +
+                            torch.matmul(H, self.W_hz) + self.b_z)
+            R = torch.sigmoid(torch.matmul(X, self.W_xr) +
+                            torch.matmul(H, self.W_hr) + self.b_r)
+            H_tilde = torch.tanh(torch.matmul(X, self.W_xh) +
+                               torch.matmul(R * H, self.W_hh) + self.b_h)
+            H = Z * H + (1 - Z) * H_tilde
+            outputs.append(H)
+        return outputs, H
+
+10.2.4.3. Training
+++++++++++++++++++
+
+::
+
+    data = d2l.TimeMachine(batch_size=1024, num_steps=32)
+    gru = GRUScratch(num_inputs=len(data.vocab), num_hiddens=32)
+    model = d2l.RNNLMScratch(gru, vocab_size=len(data.vocab), lr=4)
+    trainer = d2l.Trainer(max_epochs=50, gradient_clip_val=1, num_gpus=1)
+    trainer.fit(model, data)
+
+
+10.2.5. Concise Implementation
+""""""""""""""""""""""""""""""
+
+::
+
+    class GRU(d2l.RNN):
+        def __init__(self, num_inputs, num_hiddens):
+            d2l.Module.__init__(self)
+            self.save_hyperparameters()
+            self.rnn = nn.GRU(num_inputs, num_hiddens)
+
+    gru = GRU(num_inputs=len(data.vocab), num_hiddens=32)
+    model = d2l.RNNLM(gru, vocab_size=len(data.vocab), lr=4)
+    trainer.fit(model, data)
+
+使用::
+
+    model.predict('it has', 20, data.vocab, d2l.try_gpu())
+    # 输出
+    'it has so it and the time '
+
+
+
+10.2.6. Summary
+"""""""""""""""
+
+* 与 LSTM 相比，GRU 实现了相似的性能，但计算量往往更轻。
+* 当重置门打开时，GRU 包含基本的 RNN 作为其极端情况。
+* 当更新门打开时，可以用来跳过子序列。
+
+
+
+10.3. Deep Recurrent Neural Networks
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/AmmtES.png
+
+    Fig. 10.3.1 Architecture of a deep RNN.
+
+* the hidden state of the :math:`l^\textrm{th}` hidden layer ( :math:`l=1,\ldots,L` ) be :math:`\mathbf{H}_t^{(l)} \in \mathbb{R}^{n \times h}` (``number of hidden units =h``)
+* the output layer variable be :math:`\mathbf{O}_t \in \mathbb{R}^{n \times q}` (``number of outputs: q``).
+* Setting :math:`\mathbf{H}_t^{(0)} = \mathbf{X}_t`
+* the hidden state of the :math:`l^\textrm{th}` hidden layer that uses the activation function :math:`\phi_l` is calculated as follows:
+
+.. math::
+
+    \mathbf{H}_t^{(l)} = \phi_l(\mathbf{H}_t^{(l-1)} \mathbf{W}_{\textrm{xh}}^{(l)} + \mathbf{H}_{t-1}^{(l)} \mathbf{W}_{\textrm{hh}}^{(l)}  + \mathbf{b}_\textrm{h}^{(l)})
+
+
+最后，输出层的计算仅基于最终 :math:`\mathbf{L}^{th}` 隐藏层的隐藏状态：
+
+.. math::
+
+    \mathbf{O}_t = \mathbf{H}_t^{(L)} \mathbf{W}_{\textrm{hq}} + \mathbf{b}_\textrm{q}
+
+
+
+
+10.3.1. Implementation from Scratch
+"""""""""""""""""""""""""""""""""""
+
+.. code-block:: python
+
+    class StackedRNNScratch(d2l.Module):
+        def __init__(self, num_inputs, num_hiddens, num_layers, sigma=0.01):
+            super().__init__()
+            self.save_hyperparameters()
+            self.rnns = nn.Sequential(*[d2l.RNNScratch(
+                num_inputs if i==0 else num_hiddens, num_hiddens, sigma)
+                                        for i in range(num_layers)])
+
+    @d2l.add_to_class(StackedRNNScratch)
+    def forward(self, inputs, Hs=None):
+        outputs = inputs
+        if Hs is None: Hs = [None] * self.num_layers
+        for i in range(self.num_layers):
+            outputs, Hs[i] = self.rnns[i](outputs, Hs[i])
+            outputs = torch.stack(outputs, 0)
+        return outputs, Hs
+
+使用(为了简单起见，我们将层数设置为 2)::
+
+    data = d2l.TimeMachine(batch_size=1024, num_steps=32)
+    rnn_block = StackedRNNScratch(num_inputs=len(data.vocab),
+                                  num_hiddens=32, num_layers=2)
+    model = d2l.RNNLMScratch(rnn_block, vocab_size=len(data.vocab), lr=2)
+    trainer = d2l.Trainer(max_epochs=100, gradient_clip_val=1, num_gpus=1)
+    trainer.fit(model, data)
+
+
+
+10.3.2. Concise Implementation
+""""""""""""""""""""""""""""""
+
+.. code-block:: python
+
+    class GRU(d2l.RNN):  #@save
+        """The multilayer GRU model."""
+        def __init__(self, num_inputs, num_hiddens, num_layers, dropout=0):
+            d2l.Module.__init__(self)
+            self.save_hyperparameters()
+            self.rnn = nn.GRU(num_inputs, num_hiddens, num_layers,
+                              dropout=dropout)
+
+    gru = GRU(num_inputs=len(data.vocab), num_hiddens=32, num_layers=2)
+    model = d2l.RNNLM(gru, vocab_size=len(data.vocab), lr=2)
+    trainer.fit(model, data)
+
+使用::
+
+    model.predict('it has', 20, data.vocab, d2l.try_gpu())
+    # 输出
+    'it has for and the time th'
+
+
+
+
+10.3.3. Summary
+"""""""""""""""
+
+* 在深度 RNN 中，隐藏状态信息被传递到当前层的下一个时间步和下一层的当前时间步。
+* 存在许多不同风格的深度 RNN，例如 LSTM、GRU 或普通 RNN。
+
+
+10.4. Bidirectional Recurrent Neural Networks
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* 将任何单向 RNN 转换为双向 RNN（Schuster 和 Paliwal，1997）。
+* 实现两个单向 RNN 层，它们以相反的方向链接在一起并作用于相同的输入
+* 对于第一个 RNN 层，第一个输入是 :math:`\mathbf{x}_1` ，最后一个输入是 :math:`\mathbf{x}_T` ，但对于第二个 RNN 层，第一个输入是 :math:`\mathbf{x}_T` ，最后一个输入是 :math:`\mathbf{x}_1` ，最终的输入是 :math:`\mathbf{x}_1` 。为了产生这个双向 RNN 层的输出，我们只需将两个底层单向 RNN 层的相应输出连接在一起。
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/iQf4dQ.png
+
+    Fig. 10.4.1 Architecture of a bidirectional RNN.
+
+前向和后向隐藏状态更新：
+
+.. math::
+
+    \begin{aligned}
+        \overrightarrow{\mathbf{H}}_t &= \phi(\mathbf{X}_t \mathbf{W}_{\textrm{xh}}^{(f)} + \overrightarrow{\mathbf{H}}_{t-1} \mathbf{W}_{\textrm{hh}}^{(f)}  + \mathbf{b}_\textrm{h}^{(f)}),\\
+        \overleftarrow{\mathbf{H}}_t &= \phi(\mathbf{X}_t \mathbf{W}_{\textrm{xh}}^{(b)} + \overleftarrow{\mathbf{H}}_{t+1} \mathbf{W}_{\textrm{hh}}^{(b)}  + \mathbf{b}_\textrm{h}^{(b)}),
+    \end{aligned}
+
+* :math:`\mathbf{H}_t \in \mathbb{R}^{n \times 2h}` 是把 :math:`\overrightarrow{\mathbf{H}}_t` 和 :math:`\overleftarrow{\mathbf{H}}_t` 合并起来得到
+* 最后，输出层计算输出 :math:`\mathbf{O}_t \in \mathbb{R}^{n \times q}` (``number of outputs =q``):
+
+.. math::
+
+    \mathbf{O}_t = \mathbf{H}_t \mathbf{W}_{\textrm{hq}} + \mathbf{b}_\textrm{q}
+
+
+
+10.4.1. Implementation from Scratch
+"""""""""""""""""""""""""""""""""""
+
+.. code-block:: python
+
+    class BiRNNScratch(d2l.Module):
+        def __init__(self, num_inputs, num_hiddens, sigma=0.01):
+            super().__init__()
+            self.save_hyperparameters()
+            self.f_rnn = d2l.RNNScratch(num_inputs, num_hiddens, sigma)
+            self.b_rnn = d2l.RNNScratch(num_inputs, num_hiddens, sigma)
+            self.num_hiddens *= 2  # The output dimension will be doubled
+
+    @d2l.add_to_class(BiRNNScratch)
+    def forward(self, inputs, Hs=None):
+        f_H, b_H = Hs if Hs is not None else (None, None)
+        f_outputs, f_H = self.f_rnn(inputs, f_H)
+        b_outputs, b_H = self.b_rnn(reversed(inputs), b_H)
+        outputs = [torch.cat((f, b), -1) for f, b in zip(
+            f_outputs, reversed(b_outputs))]
+        return outputs, (f_H, b_H)
+
+
+
+10.4.2. Concise Implementation
+""""""""""""""""""""""""""""""
+
+.. code-block:: python
+
+    class BiGRU(d2l.RNN):
+        def __init__(self, num_inputs, num_hiddens):
+            d2l.Module.__init__(self)
+            self.save_hyperparameters()
+            self.rnn = nn.GRU(num_inputs, num_hiddens, bidirectional=True)
+            self.num_hiddens *= 2
+
+
+
+
+10.4.3. Summary
+"""""""""""""""
+
+* 在双向 RNN 中，每个时间步的隐藏状态由当前时间步之前和之后的数据同时确定。
+* 双向 RNN 最适用于序列编码和给定双向上下文的观测值估计。由于梯度链较长，双向 RNN 的训练成本非常高。
+
+
+10.5. Machine Translation and the Dataset
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+10.5.1. Downloading and Preprocessing the Dataset
+"""""""""""""""""""""""""""""""""""""""""""""""""
+
+::
+
+    class MTFraEng(d2l.DataModule):  #@save
+        """The English-French dataset."""
+        def _download(self):
+            d2l.extract(d2l.download(
+                d2l.DATA_URL+'fra-eng.zip', self.root,
+                '94646ad1522d915e7b0f9296181140edcf86a4f5'))
+            with open(self.root + '/fra-eng/fra.txt', encoding='utf-8') as f:
+                return f.read()
+
+    data = MTFraEng()
+    raw_text = data._download()
+    print(raw_text[:75])
+
+    # 输出
+    Downloading ../data/fra-eng.zip from http://d2l-data.s3-accelerate.amazonaws.com/fra-eng.zip...
+    Go. Va !
+    Hi. Salut !
+    Run!        Cours !
+    Run!        Courez !
+    Who?        Qui ?
+    Wow!        Ça alors !
+
+
+预处理(用空格替换不间断空格，将大写字母转换为小写字母，以及在单词和标点符号之间插入空格)::
+
+    @d2l.add_to_class(MTFraEng)  #@save
+    def _preprocess(self, text):
+        # Replace non-breaking space with space
+        text = text.replace('\u202f', ' ').replace('\xa0', ' ')
+        # Insert space between words and punctuation marks
+        no_space = lambda char, prev_char: char in ',.!?' and prev_char != ' '
+        out = [' ' + char if i > 0 and no_space(char, text[i - 1]) else char
+               for i, char in enumerate(text.lower())]
+        return ''.join(out)
+
+    text = data._preprocess(raw_text)
+    print(text[:80])
+
+    # 输出
+    go .        va !
+    hi .        salut !
+    run !       cours !
+    run !       courez !
+    who ?       qui ?
+    wow !       ça alors !
+
+10.5.2. Tokenization
+""""""""""""""""""""
+
+src[i] 是源语言（此处为英语）的文本序列中的标记列表， tgt[i] 是目标语言（此处为法语）的标记列表::
+
+    @d2l.add_to_class(MTFraEng)  #@save
+    def _tokenize(self, text, max_examples=None):
+        src, tgt = [], []
+        for i, line in enumerate(text.split('\n')):
+            if max_examples and i > max_examples: break
+            parts = line.split('\t')
+            if len(parts) == 2:
+                # Skip empty tokens
+                src.append([t for t in f'{parts[0]} <eos>'.split(' ') if t])
+                tgt.append([t for t in f'{parts[1]} <eos>'.split(' ') if t])
+        return src, tgt
+
+    src, tgt = data._tokenize(text)
+    src[:6], tgt[:6]
+    # 输出
+    ([['go', '.', '<eos>'],
+      ['hi', '.', '<eos>'],
+      ['run', '!', '<eos>'],
+      ['run', '!', '<eos>'],
+      ['who', '?', '<eos>'],
+      ['wow', '!', '<eos>']],
+     [['va', '!', '<eos>'],
+      ['salut', '!', '<eos>'],
+      ['cours', '!', '<eos>'],
+      ['courez', '!', '<eos>'],
+      ['qui', '?', '<eos>'],
+      ['ça', 'alors', '!', '<eos>']])
+
+
+10.5.3. Loading Sequences of Fixed Length
+"""""""""""""""""""""""""""""""""""""""""
+
+.. code-block:: python
+
+    @d2l.add_to_class(MTFraEng)  #@save
+    def __init__(self, batch_size, num_steps=9, num_train=512, num_val=128):
+        super(MTFraEng, self).__init__()
+        self.save_hyperparameters()
+        self.arrays, self.src_vocab, self.tgt_vocab = self._build_arrays(
+            self._download())
+
+    @d2l.add_to_class(MTFraEng)  #@save
+    def _build_arrays(self, raw_text, src_vocab=None, tgt_vocab=None):
+        def _build_array(sentences, vocab, is_tgt=False):
+            pad_or_trim = lambda seq, t: (
+                seq[:t] if len(seq) > t else seq + ['<pad>'] * (t - len(seq)))
+            sentences = [pad_or_trim(s, self.num_steps) for s in sentences]
+            if is_tgt:
+                sentences = [['<bos>'] + s for s in sentences]
+            if vocab is None:
+                vocab = d2l.Vocab(sentences, min_freq=2)
+            array = torch.tensor([vocab[s] for s in sentences])
+            valid_len = (array != vocab['<pad>']).type(torch.int32).sum(1)
+            return array, vocab, valid_len
+        src, tgt = self._tokenize(self._preprocess(raw_text),
+                                  self.num_train + self.num_val)
+        src_array, src_vocab, src_valid_len = _build_array(src, src_vocab)
+        tgt_array, tgt_vocab, _ = _build_array(tgt, tgt_vocab, True)
+        return ((src_array, tgt_array[:,:-1], src_valid_len, tgt_array[:,1:]),
+                src_vocab, tgt_vocab)
+
+
+10.5.4. Reading the Dataset
+"""""""""""""""""""""""""""
+
+定义 get_dataloader 方法来返回数据迭代器::
+
+    @d2l.add_to_class(MTFraEng)  #@save
+    def get_dataloader(self, train):
+        idx = slice(0, self.num_train) if train else slice(self.num_train, None)
+        return self.get_tensorloader(self.arrays, train, idx)
+
+读取英语-法语数据集中的第一个小批量::
+
+    data = MTFraEng(batch_size=3)
+    src, tgt, src_valid_len, label = next(iter(data.train_dataloader()))
+    print('source:', src.type(torch.int32))
+    print('decoder input:', tgt.type(torch.int32))
+    print('source len excluding pad:', src_valid_len.type(torch.int32))
+    print('label:', label.type(torch.int32))
+    # 输出
+    source: tensor([
+            [117, 182,   0,   3,   4,   4,   4,   4,   4],
+            [ 62,  72,   2,   3,   4,   4,   4,   4,   4],
+            [ 57, 124,   0,   3,   4,   4,   4,   4,   4]], dtype=torch.int32)
+    decoder input: tensor([
+            [  3,  37, 100,  58, 160,   0,   4,   5,   5],
+            [  3,   6,   2,   4,   5,   5,   5,   5,   5],
+            [  3, 180,   0,   4,   5,   5,   5,   5,   5]], dtype=torch.int32)
+    source len excluding pad: tensor([4, 4, 4], dtype=torch.int32)
+    label: tensor([
+            [ 37, 100,  58, 160,   0,   4,   5,   5,   5],
+            [  6,   2,   4,   5,   5,   5,   5,   5,   5],
+            [180,   0,   4,   5,   5,   5,   5,   5,   5]], dtype=torch.int32)
+
+
+.. code-block:: python
+
+    @d2l.add_to_class(MTFraEng)  #@save
+    def build(self, src_sentences, tgt_sentences):
+        raw_text = '\n'.join([src + '\t' + tgt for src, tgt in zip(
+            src_sentences, tgt_sentences)])
+        arrays, _, _ = self._build_arrays(
+            raw_text, self.src_vocab, self.tgt_vocab)
+        return arrays
+
+    src, tgt, _,  _ = data.build(['hi .'], ['salut .'])
+    print('source:', data.src_vocab.to_tokens(src[0].type(torch.int32)))
+    print('target:', data.tgt_vocab.to_tokens(tgt[0].type(torch.int32)))
+    # 输出
+    source: ['hi', '.', '<eos>', '<pad>', '<pad>', '<pad>', '<pad>', '<pad>', '<pad>']
+    target: ['<bos>', 'salut', '.', '<eos>', '<pad>', '<pad>', '<pad>', '<pad>', '<pad>']
+
+
+
+
+10.5.5. Summary
+"""""""""""""""
+
+* 在自然语言处理中，机器翻译是指将源语言中表示文本字符串的序列自动映射到目标语言中表示合理翻译的字符串的任务。
+* 使用单词级标记化，词汇量将明显大于使用字符级标记化，但序列长度会短得多。
+* 为了减轻词汇量过大的影响，我们可以将不常见的标记视为一些“未知”标记。
+* 我们可以截断和填充文本序列，以便所有文本序列都具有相同的长度以小批量加载。
+* 现代实现通常对具有相似长度的序列进行存储，以避免在填充上浪费过多的计算。
+
+
+
+
+
+10.6. The Encoder–Decoder Architecture
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* 在一般的序列到序列问题中，例如机器翻译，输入和输出的长度不同且未对齐。
+* 处理此类数据的标准方法是设计一个编码器-解码器架构
+* 该架构由两个主要组件组成： 将可变长度序列作为输入的编码器，以及解码器充当条件语言模型，接收编码输入和目标序列的左侧上下文，并预测目标序列中的后续标记。
+* 目标：通过将输入序列编码为固定形状的状态，再解码为输出序列，解决输入输出不对齐的问题。
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/P6Mywo.png
+
+    Fig. 10.6.1 The encoder–decoder architecture.
+
+
+
+
+
+
+
+10.6.1. Encoder
+"""""""""""""""
+
+.. code-block:: python
+
+    class Encoder(nn.Module):  #@save
+        """The base encoder interface for the encoder--decoder architecture."""
+        def __init__(self):
+            super().__init__()
+
+        # Later there can be additional arguments (e.g., length excluding padding)
+        def forward(self, X, *args):
+            raise NotImplementedError
+
+* Encoder 接口
+    * 功能：接收输入序列（X），并将其转换为固定形状的状态。
+    * 方法：forward 或 call，由继承类实现具体逻辑。
+
+
+
+10.6.2. Decoder
+"""""""""""""""
+
+.. code-block:: python
+
+    class Decoder(nn.Module):  #@save
+        """The base decoder interface for the encoder--decoder architecture."""
+        def __init__(self):
+            super().__init__()
+
+        # Later there can be additional arguments (e.g., length excluding padding)
+        def init_state(self, enc_all_outputs, *args):
+            raise NotImplementedError
+
+        def forward(self, X, state):
+            raise NotImplementedError
+
+* Decoder 接口
+    * 功能：
+        * 初始化状态：将编码器的输出转换为解码器的初始状态。
+        * 序列生成：基于初始状态和当前输入（如上一步生成的词），逐步生成目标序列。
+    * 方法：
+        * init_state：初始化状态。
+        * forward 或 call：处理输入并生成输出。
+
+
+
+10.6.3. Putting the Encoder and Decoder Together
+""""""""""""""""""""""""""""""""""""""""""""""""
+
+.. code-block:: python
+
+    class EncoderDecoder(d2l.Classifier):  #@save
+        """The base class for the encoder--decoder architecture."""
+        def __init__(self, encoder, decoder):
+            super().__init__()
+            self.encoder = encoder
+            self.decoder = decoder
+
+        def forward(self, enc_X, dec_X, *args):
+            enc_all_outputs = self.encoder(enc_X, *args)
+            dec_state = self.decoder.init_state(enc_all_outputs, *args)
+            # Return decoder output only
+            return self.decoder(dec_X, dec_state)[0]
+
+
+10.6.4. Summary
+"""""""""""""""
+
+* 编码器-解码器架构可以处理由可变长度序列组成的输入和输出，因此适用于序列到序列的问题，例如机器翻译。
+* 编码器将可变长度序列作为输入，并将其转换为具有固定形状的状态。解码器将固定形状的编码状态映射到可变长度序列。
+
+
+* 架构的优点
+    * 适应性强：适用于任意长度的输入输出序列。
+    * 基础性：是后续复杂序列模型（如基于 RNN 的序列模型）的基础。
+
+
+10.7. Sequence-to-Sequence Learning for Machine Translation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* 在本节中，我们将演示编码器-解码器架构在机器翻译任务中的应用，其中编码器和解码器均实现为 RNN
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/fkaE89.png
+
+    Fig. 10.7.1 Sequence-to-sequence learning with an RNN encoder and an RNN decoder.
+
+
+* 特点：输入和输出是长度可变的非对齐序列，例如机器翻译。
+* 模型结构：
+    * 编码器（Encoder）：RNN（如GRU）将可变长度的输入序列压缩为固定形状的隐藏状态，称为上下文变量（context variable）。
+    * 解码器（Decoder）：RNN从编码器生成的上下文变量和先前输出的目标序列中，逐步预测下一个输出标记。
+    * 注意机制的预告：未来章节会引入注意力机制，可以避免将整个输入压缩为固定长度，增强模型性能。
+
+
+
+10.7.1. Teacher Forcing
+"""""""""""""""""""""""
+
+* 训练方法：Teacher Forcing
+    * 解码器的输入为真实目标序列（即“ground truth”）的偏移版本，例如：<bos>、"Ils"、"regardent"、"." 对应 "Ils"、"regardent"、"."、<eos>。
+    * 通过这种方式，解码器始终以正确的先前标记作为输入，帮助模型更快收敛。
+
+
+
+10.7.2. Encoder
+"""""""""""""""
+
+* 接受输入序列，将每个时间步的特征向量( :math:`\mathbf{x}_t` )和前一隐藏状态( :math:`\mathbf{h}_{t-1}` ) 转换为当前隐藏状态( :math:`\mathbf{h}_{t}` )。
+    * 即: :math:`\mathbf{h}_t = f(\mathbf{x}_t, \mathbf{h}_{t-1})`
+* 上下文变量可以是最后一个时间步的隐藏状态，或者经过自定义函数处理的所有隐藏状态。
+    * 编码器通过自定义函数 q 将所有时间步的隐藏状态转换为上下文变量
+    * :math:`\mathbf{c}=q(\mathbf{h}_1, \cdot, \mathbf{h}_T)`
+* 可以使用单向或双向RNN，双向RNN可以捕获更多序列信息。
+
+
+.. code-block:: python
+
+    def init_seq2seq(module):  #@save
+        """Initialize weights for sequence-to-sequence learning."""
+        if type(module) == nn.Linear:
+             nn.init.xavier_uniform_(module.weight)
+        if type(module) == nn.GRU:
+            for param in module._flat_weights_names:
+                if "weight" in param:
+                    nn.init.xavier_uniform_(module._parameters[param])
+
+    class Seq2SeqEncoder(d2l.Encoder):  #@save
+        """The RNN encoder for sequence-to-sequence learning."""
+        def __init__(self, vocab_size, embed_size, num_hiddens, num_layers, dropout=0):
+            super().__init__()
+            self.embedding = nn.Embedding(vocab_size, embed_size)
+            self.rnn = d2l.GRU(embed_size, num_hiddens, num_layers, dropout)
+            self.apply(init_seq2seq)
+
+        def forward(self, X, *args):
+            # X shape: (batch_size, num_steps)
+            embs = self.embedding(X.t().type(torch.int64))
+            # embs shape: (num_steps, batch_size, embed_size)
+            outputs, state = self.rnn(embs)
+            # outputs shape: (num_steps, batch_size, num_hiddens)
+            # state shape: (num_layers, batch_size, num_hiddens)
+            return outputs, state
+
+实例化一个两层 GRU 编码器，其隐藏单元数为 16。给定一个小批量序列输入 X （批量大小 =4 ；时间步数 =9 ）是一个形状张量（时间步数、批量大小、隐藏层数）单位）::
+
+    vocab_size, embed_size, num_hiddens, num_layers = 10, 8, 16, 2
+    batch_size, num_steps = 4, 9
+    encoder = Seq2SeqEncoder(vocab_size, embed_size, num_hiddens, num_layers)
+    X = torch.zeros((batch_size, num_steps))
+    enc_outputs, enc_state = encoder(X)
+    d2l.check_shape(enc_outputs, (num_steps, batch_size, num_hiddens))
+
+
+
+10.7.3. Decoder
+"""""""""""""""
+
+* 输入包括先前时间步的输出序列( :math:`y_1, y_2, \cdot, y_{T'}` )、上下文变量( :math:`\mathbf{c}` )和前一隐藏状态( :math:`\mathbf{s}_{t'}` )。
+    * 用一个函数 g() 来表达解码器隐藏层的变换
+    * :math:`\mathbf{s}_{t'} = g(y_{t'-1}, \mathbf{c}, \mathbf{s}_{t'-1})`
+* 计算出新的隐藏状态后，通过softmax计算输出标记 :math:`t'+1` 的预测分布 :math:`p(y_{t^{\prime}+1} \mid y_1, \ldots, y_{t^\prime}, \mathbf{c})` 。
+* 通常，解码器的初始隐藏状态由编码器的最终隐藏状态初始化。
+
+.. code-block:: python
+
+    class Seq2SeqDecoder(d2l.Decoder):
+        """The RNN decoder for sequence to sequence learning."""
+        def __init__(self, vocab_size, embed_size, num_hiddens, num_layers,
+                     dropout=0):
+            super().__init__()
+            self.embedding = nn.Embedding(vocab_size, embed_size)
+            self.rnn = d2l.GRU(embed_size+num_hiddens, num_hiddens, num_layers, dropout)
+            self.dense = nn.LazyLinear(vocab_size)
+            self.apply(init_seq2seq)
+
+        def init_state(self, enc_all_outputs, *args):
+            return enc_all_outputs
+
+        def forward(self, X, state):
+            # X shape: (batch_size, num_steps)
+            # embs shape: (num_steps, batch_size, embed_size)
+            embs = self.embedding(X.t().type(torch.int32))
+            enc_output, hidden_state = state
+            # context shape: (batch_size, num_hiddens)
+            context = enc_output[-1]
+            # Broadcast context to (num_steps, batch_size, num_hiddens)
+            context = context.repeat(embs.shape[0], 1, 1)
+            # Concat at the feature dimension
+            embs_and_context = torch.cat((embs, context), -1)
+            outputs, hidden_state = self.rnn(embs_and_context, hidden_state)
+            outputs = self.dense(outputs).swapaxes(0, 1)
+            # outputs shape: (batch_size, num_steps, vocab_size)
+            # hidden_state shape: (num_layers, batch_size, num_hiddens)
+            return outputs, [enc_output, hidden_state]
+
+解码器的输出形状变为（批量大小、时间步数、词汇大小），其中张量的最终维度存储预测的标记分布::
+
+    decoder = Seq2SeqDecoder(vocab_size, embed_size, num_hiddens, num_layers)
+    state = decoder.init_state(encoder(X))
+    dec_outputs, state = decoder(X, state)
+    d2l.check_shape(dec_outputs, (batch_size, num_steps, vocab_size))
+    d2l.check_shape(state[1], (num_layers, batch_size, num_hiddens))
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/gsE5N1.png
+
+    Fig. 10.7.2 Layers in an RNN encoder–decoder model.
+
+
+
+10.7.4. Encoder–Decoder for Sequence-to-Sequence Learning
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+.. code-block:: python
+
+    class Seq2Seq(d2l.EncoderDecoder):  #@save
+        """The RNN encoder--decoder for sequence to sequence learning."""
+        def __init__(self, encoder, decoder, tgt_pad, lr):
+            super().__init__(encoder, decoder)
+            self.save_hyperparameters()
+
+        def validation_step(self, batch):
+            Y_hat = self(*batch[:-1])
+            self.plot('loss', self.loss(Y_hat, batch[-1]), train=False)
+
+        def configure_optimizers(self):
+            # Adam optimizer is used here
+            return torch.optim.Adam(self.parameters(), lr=self.lr)
+
+
+
+10.7.5. Loss Function with Masking
+""""""""""""""""""""""""""""""""""
+
+.. code-block:: python
+
+    @d2l.add_to_class(Seq2Seq)
+    def loss(self, Y_hat, Y):
+        l = super(Seq2Seq, self).loss(Y_hat, Y, averaged=False)
+        mask = (Y.reshape(-1) != self.tgt_pad).type(torch.float32)
+        return (l * mask).sum() / mask.sum()
+
+* 使用交叉熵损失函数，排除填充标记（padding tokens）的计算以避免对模型优化的干扰。
+* 掩码机制通过将无关位置设置为零实现。
+
+
+10.7.6. Training
+""""""""""""""""
+
+.. code-block:: python
+
+    data = d2l.MTFraEng(batch_size=128)
+    embed_size, num_hiddens, num_layers, dropout = 256, 256, 2, 0.2
+    encoder = Seq2SeqEncoder(
+        len(data.src_vocab), embed_size, num_hiddens, num_layers, dropout)
+    decoder = Seq2SeqDecoder(
+        len(data.tgt_vocab), embed_size, num_hiddens, num_layers, dropout)
+    model = Seq2Seq(encoder, decoder, tgt_pad=data.tgt_vocab['<pad>'],
+                    lr=0.005)
+    trainer = d2l.Trainer(max_epochs=30, gradient_clip_val=1, num_gpus=1)
+    trainer.fit(model, data)
+
+10.7.7. Prediction
+""""""""""""""""""
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/zNoJ2d.png
+
+    Fig. 10.7.3 Predicting the output sequence token by token using an RNN encoder–decoder.
+
+* 预测方法
+    * 解码器在测试时基于已预测的标记作为输入逐步生成输出，直到预测到结束标记<eos>。
+    * 流程如图所示，逐个标记预测，直到序列结束。
+
+.. code-block:: python
+
+    @d2l.add_to_class(d2l.EncoderDecoder)  #@save
+    def predict_step(self, batch, device, num_steps, save_attention_weights=False):
+        batch = [a.to(device) for a in batch]
+        src, tgt, src_valid_len, _ = batch
+        enc_all_outputs = self.encoder(src, src_valid_len)
+        dec_state = self.decoder.init_state(enc_all_outputs, src_valid_len)
+        outputs, attention_weights = [tgt[:, (0)].unsqueeze(1), ], []
+        for _ in range(num_steps):
+            Y, dec_state = self.decoder(outputs[-1], dec_state)
+            outputs.append(Y.argmax(2))
+            # Save attention weights (to be covered later)
+            if save_attention_weights:
+                attention_weights.append(self.decoder.attention_weights)
+        return torch.cat(outputs[1:], 1), attention_weights
+
+
+10.7.8. Evaluation of Predicted Sequences
+"""""""""""""""""""""""""""""""""""""""""
+
+* BLEU: Bilingual Evaluation Understudy
+    * 测量预测序列与目标序列之间的匹配度，基于 `n-gram` 的精确度计算。
+    * 权重机制：
+        * 匹配更长的 `n-gram` 赋予更高权重。
+        * 短序列惩罚项防止模型生成过短的结果。
+
+
+.. code-block:: python
+
+    def bleu(pred_seq, label_seq, k):  #@save
+        """Compute the BLEU."""
+        pred_tokens, label_tokens = pred_seq.split(' '), label_seq.split(' ')
+        len_pred, len_label = len(pred_tokens), len(label_tokens)
+        score = math.exp(min(0, 1 - len_label / len_pred))
+        for n in range(1, min(k, len_pred) + 1):
+            num_matches, label_subs = 0, collections.defaultdict(int)
+            for i in range(len_label - n + 1):
+                label_subs[' '.join(label_tokens[i: i + n])] += 1
+            for i in range(len_pred - n + 1):
+                if label_subs[' '.join(pred_tokens[i: i + n])] > 0:
+                    num_matches += 1
+                    label_subs[' '.join(pred_tokens[i: i + n])] -= 1
+            score *= math.pow(num_matches / (len_pred - n + 1), math.pow(0.5, n))
+        return score
+
+示例::
+
+    engs = ['go .', 'i lost .', 'he\'s calm .', 'i\'m home .']
+    fras = ['va !', 'j\'ai perdu .', 'il est calme .', 'je suis chez moi .']
+    preds, _ = model.predict_step(
+        data.build(engs, fras), d2l.try_gpu(), data.num_steps)
+    for en, fr, p in zip(engs, fras, preds):
+        translation = []
+        for token in data.tgt_vocab.to_tokens(p):
+            if token == '<eos>':
+                break
+            translation.append(token)
+        print(f'{en} => {translation}, bleu,'
+              f'{bleu(" ".join(translation), fr, k=2):.3f}')
+
+    # 输出
+    go . => ['va', '!'], bleu,1.000
+    i lost . => ["j'ai", 'perdu', '.'], bleu,1.000
+    he's calm . => ['elle', 'court', '.'], bleu,0.000
+    i'm home . => ['je', 'suis', 'chez', 'moi', '.'], bleu,1.000
+
+
+
+10.8. Beam Search
+^^^^^^^^^^^^^^^^^
+
+* 在序列生成任务中使用的三种搜索策略：贪婪搜索（Greedy Search）、穷举搜索（Exhaustive Search）和束搜索（Beam Search）。
+* 前面章节只提到了贪婪策略
+
+10.8.1. Greedy Search
+"""""""""""""""""""""
+
+.. math::
+
+    y_{t'} = \operatorname*{argmax}_{y \in \mathcal{Y}} P(y \mid y_1, \ldots, y_{t'-1}, \mathbf{c})
+
+* 在任何时间步骤 t' ，我们只需从 y 中选择条件概率最高的标记
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/bOIFny.png
+
+    Fig. 10.8.1 At each time step, greedy search selects the token with the highest conditional probability.
+
+* 在每个时间步，贪婪搜索都会选择条件概率最高的标记。因此，将预测输出序列“A”、“B”、“C”和“”（图10.8.1）。该输出序列的条件概率为 :math:`0.5\times0.4\times0.4\times0.6 = 0.048`
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/88RudG.png
+
+    Fig. 10.8.2 The four numbers under each time step represent the conditional probabilities of generating “A”, “B”, “C”, and “<eos>” at that time step. At time step 2, the token “C”, which has the second highest conditional probability, is selected.
+
+* 输出序列“A”、“C”、“B”、“”的条件概率为 :math:`0.5\times0.3 \times0.6\times0.6=0.054` ，大于图 10.8.1 中的贪心搜索。在本例中，贪心搜索得到的输出序列“A”、“B”、“C”和“”不是最优的。
+
+
+
+10.8.2. Exhaustive Search
+"""""""""""""""""""""""""
+
+* 枚举所有可能的输出序列及其条件概率，然后输出预测概率最高的序列。
+* 它会带来令人望而却步的计算成本 :math:`\mathcal{O}(\left|\mathcal{Y}\right|^{T'})` ，序列长度呈指数级增长，并且词汇量大小给定了巨大的基础。
+* 例如，当 :math:`|\mathcal{Y}|=10000` 和 :math:`T'=10` 与实际应用中的数字相比都较小时，我们需要评估 :math:`10000^10 = 10^40` 序列，这已经超出了任何可预见的计算机的能力。
+* 另一方面，贪婪搜索的计算成本是 :math:`\mathcal{O}(\left|\mathcal{Y}\right|{T'})` ：非常便宜，但远非最优。
+* 例如，当  :math:`|\mathcal{Y}|=10000` 和 :math:`T'=10` 时，我们只需要评估 :math:`10000 \times 10 = 10^5` 序列。
+
+
+
+
+10.8.3. Beam Search
+"""""""""""""""""""
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/0Juc3f.png
+
+    Fig. 10.8.3 The process of beam search (beam size =2; maximum length of an output sequence =3). The candidate output sequences are A, C, AB, CE, ABD, and CED.
+
+* 集束搜索的计算成本为 :math:`\mathcal{O}(k\left|\mathcal{Y}\right|T')` 。这个结果介于贪婪搜索和穷举搜索之间。贪婪搜索可以被视为当波束大小设置为 1 时出现的波束搜索的特殊情况。
+
+
+
+
+11. Attention Mechanisms and Transformers
+-----------------------------------------
+
+
+11.1. Queries, Keys, and Values
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* 【1. 传统网络的局限性（Fixed Input Size）】最初的神经网络（如CNN、RNN等）依赖于输入的大小是固定的，比如ImageNet中的图像大小是 :math:`224 \times 224` 。即使在自然语言处理（NLP）中，RNN的输入大小也是固定的。这种方法在面对长度可变的输入时（如文本翻译或变长的序列）会遇到困难。特别是对于长序列，网络需要“记住”已生成或已查看的信息，这对模型的处理能力提出了较高要求。
+* 【2. 数据库类比（Databases and Key-Value Pairs）】数据库通常包含由 ``键（k）`` 和 ``值（v）`` 组成的键值对。
+    * 例如，假设有一组姓氏和名字的键值对。如果我们查询某个特定的键（如“Li”），我们会得到相应的值（“Mu”）。这里的 ``查询（q）`` 可以返回一个结果，也可以返回多个近似结果，具体取决于数据库中的内容。
+    * 重要的概念：
+        * 查询可以不依赖于数据库的大小，这表明深度学习模型可以扩展到较大的数据集。
+        * 查询可以得到不同的答案，这与深度学习中的模型预测类似。
+        * 操作不需要对数据库进行复杂的压缩或简化。
+
+* 【3. 引入注意力机制（Attention Mechanism）】随着深度学习的发展，注意力机制作为一个非常有用的工具被引入。它模拟了查询与一组键值对之间的关系，允许模型在进行决策时重点关注重要的键（ ``k`` ）及其对应的值（ ``v`` ）。
+* 具体来说，注意力机制定义如下：
+
+.. math::
+
+    \textrm{Attention}(\mathbf{q}, \mathcal{D}) \stackrel{\textrm{def}}{=} \sum_{i=1}^m \alpha(\mathbf{q}, \mathbf{k}_i) \mathbf{v}_i
+
+* 这里的 :math:`\alpha(\mathbf{q}, \mathbf{k}_i)` 是注意力权重，表示查询与每个键的相关性，而这些权重决定了对应值的重要性。
+* 【4. 不同的权重分配方法（Weighting Mechanisms）】几种常见的权重分配方式：
+    * 非负权重：权重 :math:`\alpha(\mathbf{q}, \mathbf{k}_i)` 是非负的，这意味着结果是在值的凸锥中。
+    * 归一化权重：权重 :math:`\alpha(\mathbf{q}, \mathbf{k}_i)` 形成一个凸组合，即所有权重之和为1。这是深度学习中最常见的设置。
+    * 精确匹配：只有一个权重为1，其余为0，这类似于传统的数据库查询。
+    * 平均池化：所有权重相等，这相当于对整个数据库进行平均池化。
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/GdvkVn.png
+
+    Fig. 11.1.1 The attention mechanism computes a linear combination over values :math:`\mathbf{v}_i` via attention pooling, where weights are derived according to the compatibility between a query :math:`\mathbf{q}` and keys :math:`\mathbf{k}_i`
+
+
+
+
+
+11.1.1. Visualization
+"""""""""""""""""""""
+
+* 注意力机制的一个优势是其直观性，尤其是在权重为非负并且总和为1时。
+* 通过观察注意力权重的分布，我们可以理解哪些部分对模型的预测最为重要。
+
+.. code-block:: python
+
+    #@save
+    def show_heatmaps(matrices, xlabel, ylabel, titles=None, figsize=(2.5, 2.5),
+                      cmap='Reds'):
+        """Show heatmaps of matrices."""
+        d2l.use_svg_display()
+        num_rows, num_cols, _, _ = matrices.shape
+        fig, axes = d2l.plt.subplots(num_rows, num_cols, figsize=figsize,
+                                     sharex=True, sharey=True, squeeze=False)
+        for i, (row_axes, row_matrices) in enumerate(zip(axes, matrices)):
+            for j, (ax, matrix) in enumerate(zip(row_axes, row_matrices)):
+                pcm = ax.imshow(matrix.detach().numpy(), cmap=cmap)
+                if i == num_rows - 1:
+                    ax.set_xlabel(xlabel)
+                if j == 0:
+                    ax.set_ylabel(ylabel)
+                if titles:
+                    ax.set_title(titles[j])
+        fig.colorbar(pcm, ax=axes, shrink=0.6);
+
+使用::
+
+    attention_weights = torch.eye(10).reshape((1, 1, 10, 10))
+    show_heatmaps(attention_weights, xlabel='Keys', ylabel='Queries')
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/8nu6AD.png
+
+
+11.1.2. Summary
+"""""""""""""""
+
+* 到目前为止，我们的讨论非常抽象，只是描述了一种池化数据的方法。
+* 我们还没有解释这些神秘的查询、键和值可能从何而来。
+* 一些直觉可能会有所帮助：例如，在回归设置中，查询可能对应于应执行回归的位置。键是观察过去数据的位置，值是（回归）值本身。
+
+
+11.2. Attention Pooling by Similarity
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+
+* Nadaraya–Watson estimators的核心依赖于一些将查询 **q** 与键 **k** 相关联的相似性内核 :math:`\alpha(\mathbf{q}, \mathbf{k})` 
+
+* 一些常见的内核：
+
+.. math::
+
+    \begin{aligned}
+    \alpha(\mathbf{q}, \mathbf{k}) & = \exp\left(-\frac{1}{2} \|\mathbf{q} - \mathbf{k}\|^2 \right) && \textrm{Gaussian;} \\
+    \alpha(\mathbf{q}, \mathbf{k}) & = 1 \textrm{ if } \|\mathbf{q} - \mathbf{k}\| \leq 1 && \textrm{Boxcar;} \\
+    \alpha(\mathbf{q}, \mathbf{k}) & = \mathop{\mathrm{max}}\left(0, 1 - \|\mathbf{q} - \mathbf{k}\|\right) && \textrm{Epanechikov.}
+    \end{aligned}
+
+
+核心点-fromGPT
+""""""""""""""
+
+核心概念
+++++++++
+
+* 【Nadaraya-Watson 核回归】：统计学方法，用于回归和分类任务。该方法通过查询点与训练数据点之间的相似度（或核函数）来计算预测值。
+* 【核函数】：核函数是计算两个点（查询点和键）之间相似度的函数。高斯核给出一个平滑的、随着距离增加而衰减的相似度，而 Boxcar 核仅对在某个特定范围内的点赋予非零相似度，Epanechikov 核的效果类似，但它的截断更加柔和。
+* 【与注意力机制的联系】：在机器学习模型中，特别是深度学习中，注意力机制的工作方式与此相似：它根据不同输入对当前任务的相关性赋予不同的权重。在这里，"查询"是我们想要进行预测的点，"键"是训练数据点。每个训练点的注意力权重是通过查询点与训练点的相似度来计算的，这与 Nadaraya-Watson 回归中的核函数计算方式类似。
+
+关键见解
+++++++++
+
+* 无需训练: Nadaraya-Watson 回归不需要像传统机器学习模型那样进行训练，模型通过计算查询点与训练数据点的相似度来直接做出预测。这是一种简单的、非参数化的方法，与需要学习参数的复杂神经网络模型有所不同。
+* 核函数的可调性: 核函数的宽度（尤其是高斯核）对估计函数的平滑度有重要影响。更窄的核函数会导致估计结果更加敏感于局部变化，而更宽的核函数则会平滑掉噪声。
+
+
+关键总结
+++++++++
+
+* 早期的注意力机制: Nadaraya-Watson 回归方法是现代注意力机制的前身之一，展示了如何基于数据点之间的相似性进行加权预测。
+* 简单有效的估计: 这种方法是一种简单的非参数方法，适用于回归和分类任务，尤其在数据丰富时特别有效。
+* 核函数的选择: 核函数的选择，尤其是核函数宽度的设置，能显著影响模型的表现。这与现代注意力机制对注意力函数结构的敏感性类似。
+
+为什么重要
+++++++++++
+
+* 这一部分非常重要，因为它将经典的统计学方法与现代深度学习中的注意力机制联系起来。通过了解注意力机制的简单起源，读者可以更清楚地理解为什么注意力机制在深度学习中如此关键，并能够理解其演化过程。
+
+
+
+
+
+11.2.1. Kernels and Data
+""""""""""""""""""""""""
+
+本节中定义的所有内核 :math:`\alpha(\mathbf{q}, \mathbf{k})` 都是平移和旋转不变的；也就是说，如果我们以相同的方式移动和旋转 **k** 和 **q** ，则 :math:`\alpha` 的值保持不变。
+
+.. code-block:: python
+
+    # Define some kernels
+    def gaussian(x):
+        return torch.exp(-x**2 / 2)
+
+    def boxcar(x):
+        return torch.abs(x) < 1.0
+
+    def constant(x):
+        return 1.0 + 0 * x
+
+    def epanechikov(x):
+        return torch.max(1 - torch.abs(x), torch.zeros_like(x))
+
+    fig, axes = d2l.plt.subplots(1, 4, sharey=True, figsize=(12, 3))
+
+    kernels = (gaussian, boxcar, constant, epanechikov)
+    names = ('Gaussian', 'Boxcar', 'Constant', 'Epanechikov')
+    x = torch.arange(-2.5, 2.5, 0.1)
+    for kernel, name, ax in zip(kernels, names, axes):
+        ax.plot(x.detach().numpy(), kernel(x).detach().numpy())
+        ax.set_xlabel(name)
+
+    d2l.plt.show()
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/ONIbtE.png
+
+
+
+11.2.2. Attention Pooling via Nadaraya–Watson Regression
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/lVruiE.png
+
+    三个非平凡核（Gaussian、Boxcar 和 Epanechikov）都会产生相当可行的估计，与真实函数相差不远。
+
+
+
+11.2.3. Adapting Attention Pooling
+""""""""""""""""""""""""""""""""""
+
+* 用不同宽度的核替换高斯核。也就是说，我们可以使用 :math:`\alpha(\mathbf{q}, \mathbf{k}) = \exp\left(-\frac{1}{2 \sigma^2} \|\mathbf{q} - \mathbf{k}\|^2 \right)` ，其中 :math:`\sigma^2` 确定内核的宽度
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/FVri41.png
+
+    核越窄，估计就越不平滑。同时，它能更好地适应当地的变化。
+
+
+
+11.2.4. Summary
+"""""""""""""""
+
+* 学习这个半个多世纪历史的方法的原因：首先，它是现代注意力机制最早的先驱之一。其次，它非常适合可视化。第三，同样重要的是，它展示了手工注意力机制的局限性。更好的策略是通过学习查询和键的表示来学习该机制。
+* Nadaraya – Watson内核回归是当前注意机制的早期起源。它可以直接使用，几乎没有培训或调整，无论是用于分类还是回归。注意力的重量是根据查询和钥匙之间的相似性（或距离）分配的，并且根据有多少相似观察结果。
+
+
+11.3. Attention Scoring Functions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/IS0fQU.png
+
+    Computing the output of attention pooling as a weighted average of values, where weights are computed with the attention scoring function :math:`\mathit{a}` and the softmax operation.
+
+
+核心点-fromGPT
+""""""""""""""
+
+* 注意力评分函数（attention scoring functions）是计算注意力权重的核心函数，通常用于加权求和输入的值（values），从而产生输出。
+* 两种常见的评分函数：点积注意力（Dot Product Attention）和加法注意力（Additive Attention）
+
+
+11.3.1. Dot Product Attention
+"""""""""""""""""""""""""""""
+
+* 高斯内核(Gaussian kernel)的注意力评分函数
+
+.. math::
+
+    a(\mathbf{q}, \mathbf{k}_i) \\
+        = -\frac{1}{2} \|\mathbf{q} - \mathbf{k}_i\|^2  \\
+        = \mathbf{q}^\top \mathbf{k}_i -\frac{1}{2} \|\mathbf{k}_i\|^2  -\frac{1}{2} \|\mathbf{q}\|^2.
+
+
+* 点积注意力是最常用的注意力机制之一，广泛应用于现代的Transformer架构。核心思想是通过计算查询（query）与键（key）之间的点积来评估它们的相似性。这个相似性得分再通过softmax函数归一化，得到注意力权重。
+* 然后，通过变形公式简化得到点积注意力的公式：
+
+.. math::
+
+    a(\mathbf{q}, \mathbf{k}_i) = \mathbf{q}^\top \mathbf{k}_i / \sqrt{d}
+
+
+* 其中，d 是查询向量和键向量的维度。这个公式表明，点积注意力的核心是计算查询和键的标准化点积。
+* 最终，得到的注意力权重 :math:`\alpha(\mathbf{q}, \mathbf{k}_i)` 需要通过softmax进行归一化：
+
+.. math::
+
+    \alpha(\mathbf{q}, \mathbf{k}_i) \\
+        = \mathrm{softmax}(a(\mathbf{q}, \mathbf{k}_i)) \\
+        = \frac{\exp(\mathbf{q}^\top \mathbf{k}_i / \sqrt{d})}{\sum_{j=1} \exp(\mathbf{q}^\top \mathbf{k}_j / \sqrt{d})}
+
+
+
+* 这样做的好处是，可以保证所有的注意力权重是非负的，并且它们的和为1，确保了后续加权求和时的稳定性。
+
+
+
+11.3.2. Convenience Functions
+"""""""""""""""""""""""""""""
+
+11.3.2.1. Masked Softmax Operation
+++++++++++++++++++++++++++++++++++
+
+* 在序列模型中，常常需要处理不同长度的序列。在这种情况下，我们需要掩蔽操作来忽略填充（padding）部分对注意力计算的影响。
+* 例如，如果一个批次中有三个句子，其中一个句子较短，包含填充符 <blank>，我们需要确保这些填充部分不会影响最终的注意力计算。掩蔽操作通过将填充部分的注意力权重设置为非常小的负数（如 :math:`-10^6` ），从而使得这些部分在计算中不会起作用。
+
+
+11.3.2.2. Batch Matrix Multiplication
++++++++++++++++++++++++++++++++++++++
+
+* 在实际应用中，通常会处理多个查询、键和值，因此需要对多个矩阵进行批量矩阵乘法（BMM）。BMM 是一种高效的操作，可以在一个步骤中同时计算多个查询与键的点积。
+* 公式如下：
+
+.. math::
+
+    \textrm{BMM}(\mathbf{Q}, \mathbf{K}) \\
+        = [\mathbf{Q}_1 \mathbf{K}_1, \mathbf{Q}_2 \mathbf{K}_2, \ldots, \mathbf{Q}_n \mathbf{K}_n]
+            \in \mathbb{R}^{n \times a \times c}
+
+
+
+11.3.3. Scaled Dot Product Attention
+""""""""""""""""""""""""""""""""""""
+
+* 为了控制点积值的规模，通常使用“缩放”操作，将点积结果除以查询和键的维度的平方根
+* 这种缩放有助于避免随着向量维度增加，点积值变得过大，导致梯度不稳定的问题。
+
+
+
+11.3.4. Additive Attention
+""""""""""""""""""""""""""
+
+* 当查询向量和键向量的维度不一致时，可以使用加法注意力。加法注意力通过将查询和键向量结合（例如，使用一个权重矩阵）进行变换，之后再使用一个激活函数（通常是tanh）计算评分。
+* 其评分函数为：
+
+.. math::
+
+    a(\mathbf q, \mathbf k) = \mathbf w_v^\top \textrm{tanh}(\mathbf W_q\mathbf q + \mathbf W_k \mathbf k) \in \mathbb{R}
+
+* 其中
+* :math:`\mathbf{W_q}` 和 :math:`\mathbf{W_k}` 是学习的参数
+* :math:`\mathbf{w_v}` 是用于生成最终得分的权重向量。
+* 最后，通过softmax对得分进行归一化，得到最终的注意力权重。
+
+
+11.4. The Bahdanau Attention Mechanism
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* 在第10.7节中遇到机器翻译时，我们设计了一个基于两个RNN的序列到序列学习的 encoder–decoder 体系结构（Sutskever等，2014）。具体而言，RNN编码器将变量长度序列转换为固定形状上下文变量。然后，RNN解码器基于生成的令牌和上下文变量生成输出（目标）序列令牌。
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/qahW5M.png
+
+    Fig. 11.4.1 Sequence-to-sequence model. The state, as generated by the encoder, is the only piece of information shared between the encoder and the decoder.
+
+* 这对于简短序列来说是很合理的，但很明显，对于长篇小说，例如章节甚至是很长的句子都是不可行的。毕竟，不久之后，中间表示中根本没有足够的“空间”来存储所有重要的内容。因此，解码器将无法翻译长而复杂的句子。
+
+
+
+核心点-fromGPT
+""""""""""""""
+
+* 【定义】Bahdanau Attention Mechanism：是一个在序列到序列（sequence-to-sequence, seq2seq）模型中使用的注意力机制，它能够根据输入序列的不同部分选择性地聚焦（“注意”）最相关的信息，特别是在长序列的情况下。
+
+关键点分析
+++++++++++
+
+* 背景（Sequence-to-Sequence模型）:在经典的seq2seq模型中，使用了两个RNN，一个是编码器（encoder），将输入序列编码成一个固定维度的状态变量；另一个是解码器（decoder），根据编码器的输出生成目标序列。这个固定维度的状态变量通常无法很好地处理长序列，因为它将整个输入序列压缩成一个向量，导致信息丢失。因此，模型对长句子的翻译效果较差。
+* Bahdanau Attention机制： **问题** : 当输入序列较长时，传统的seq2seq模型中的固定状态（context variable）无法包含足够的信息，导致解码器无法准确生成目标序列。 **解决方案** : Bahdanau Attention机制提出了在解码时，不是依赖固定的上下文向量，而是根据当前解码器的状态（即上一时刻的隐藏状态）动态选择输入序列中最相关的部分。具体来说，解码器每次生成一个新token时，会基于当前的解码器状态（上一时刻的隐藏状态）作为查询（query），在编码器的所有隐藏状态中计算注意力权重，选择最相关的部分来更新上下文向量。这个上下文向量（context variable）然后用于生成下一个token。
+
+关键概念
+++++++++
+
+* 注意力机制（Attention Mechanism）：通过动态计算和聚焦在输入的不同部分，让模型能够根据当前需要的信息来生成输出，而不是依赖一个固定的上下文向量。
+* 加性注意力（Additive Attention）：通过计算当前查询和所有键之间的相关性，生成权重并对值进行加权求和，以此来动态调整上下文。
+* 动态上下文（Dynamic Context）：不是使用固定的上下文，而是根据解码器的当前状态和编码器的输出动态更新上下文向量。
+
+
+
+
+11.4.1. Model
+"""""""""""""
+
+* context variable :math:`\mathbf{c}`
+* encoder hidden states :math:`\mathbf{h}_{t}`
+* decoder hidden states :math:`\mathbf{s}_{t'-1}` 
+* The key idea is that instead of keeping the state, i.e., the ``context variable`` summarizing the source sentence, as fixed, we dynamically update it, as a function of both the original text ( ``encoder hidden states`` ) and the text that was already generated ( ``decoder hidden states`` ). 
+* This yields :math:`\mathbf{c}_{t'}` , which is updated after any decoding time step :math:`t'` . Suppose that the input sequence is of length T . In this case the context variable is the output of attention pooling:
+
+.. math::
+
+    \mathbf{c}_{t'} = \sum_{t=1}^{T} \alpha(\mathbf{s}_{t' - 1}, \mathbf{h}_{t}) \mathbf{h}_{t}
+
+* We used :math:`\mathbf{s}_{t' - 1}` as the query, and :math:`\mathbf{h}_{t}` as both the key and the value. 
+* Note that :math:`\mathbf{c}_{t'}` is then used to generate the state :math:`\mathbf{s}_{t'}` and to generate a new token.
+* In particular, the attention weight :math:`\alpha` is computed using the additive attention scoring function
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/F6i9sq.png
+
+    Fig. 11.4.2 Layers in an RNN encoder–decoder model with the Bahdanau attention mechanism.
+
+
+
+
+11.4.2. Defining the Decoder with Attention
+"""""""""""""""""""""""""""""""""""""""""""
+
+.. code-block:: python
+
+    class AttentionDecoder(d2l.Decoder):  #@save
+        """The base attention-based decoder interface."""
+        def __init__(self):
+            super().__init__()
+
+        @property
+        def attention_weights(self):
+            raise NotImplementedError
+
+    class Seq2SeqAttentionDecoder(AttentionDecoder):
+        def __init__(self, vocab_size, embed_size, num_hiddens, num_layers, dropout=0):
+            super().__init__()
+            self.attention = d2l.AdditiveAttention(num_hiddens, dropout)
+            self.embedding = nn.Embedding(vocab_size, embed_size)
+            self.rnn = nn.GRU(embed_size + num_hiddens, num_hiddens, num_layers, dropout=dropout)
+            self.dense = nn.LazyLinear(vocab_size)
+            self.apply(d2l.init_seq2seq)
+
+        def init_state(self, enc_outputs, enc_valid_lens):
+            # Shape of outputs: (num_steps, batch_size, num_hiddens).
+            # Shape of hidden_state: (num_layers, batch_size, num_hiddens)
+            outputs, hidden_state = enc_outputs
+            return (outputs.permute(1, 0, 2), hidden_state, enc_valid_lens)
+
+        def forward(self, X, state):
+            # Shape of enc_outputs: (batch_size, num_steps, num_hiddens).
+            # Shape of hidden_state: (num_layers, batch_size, num_hiddens)
+            enc_outputs, hidden_state, enc_valid_lens = state
+            # Shape of the output X: (num_steps, batch_size, embed_size)
+            X = self.embedding(X).permute(1, 0, 2)
+            outputs, self._attention_weights = [], []
+            for x in X:
+                # Shape of query: (batch_size, 1, num_hiddens)
+                query = torch.unsqueeze(hidden_state[-1], dim=1)
+                # Shape of context: (batch_size, 1, num_hiddens)
+                context = self.attention(query, enc_outputs, enc_outputs, enc_valid_lens)
+                # Concatenate on the feature dimension
+                x = torch.cat((context, torch.unsqueeze(x, dim=1)), dim=-1)
+                # Reshape x as (1, batch_size, embed_size + num_hiddens)
+                out, hidden_state = self.rnn(x.permute(1, 0, 2), hidden_state)
+                outputs.append(out)
+                self._attention_weights.append(self.attention.attention_weights)
+            # After fully connected layer transformation, shape of outputs:
+            # (num_steps, batch_size, vocab_size)
+            outputs = self.dense(torch.cat(outputs, dim=0))
+            return outputs.permute(1, 0, 2), [enc_outputs, hidden_state, enc_valid_lens]
+
+        @property
+        def attention_weights(self):
+            return self._attention_weights
+
+使用四个序列的小匹配来测试实现的解码器，每个序列长七个时间步长::
+
+    vocab_size, embed_size, num_hiddens, num_layers = 10, 8, 16, 2
+    batch_size, num_steps = 4, 7
+    encoder = d2l.Seq2SeqEncoder(vocab_size, embed_size, num_hiddens, num_layers)
+    decoder = Seq2SeqAttentionDecoder(vocab_size, embed_size, num_hiddens, num_layers)
+    X = torch.zeros((batch_size, num_steps), dtype=torch.long)
+    state = decoder.init_state(encoder(X), None)
+    output, state = decoder(X, state)
+    d2l.check_shape(output, (batch_size, num_steps, vocab_size))
+    d2l.check_shape(state[0], (batch_size, num_steps, num_hiddens))
+    d2l.check_shape(state[1][0], (batch_size, num_hiddens))
+
+
+11.4.3. Training
+""""""""""""""""
+
+指定超参数，实例化常规编码器和引起注意的解码器，然后将此模型训练以进行机器翻译::
+
+    data = d2l.MTFraEng(batch_size=128)
+    embed_size, num_hiddens, num_layers, dropout = 256, 256, 2, 0.2
+    encoder = d2l.Seq2SeqEncoder(len(data.src_vocab), embed_size, num_hiddens, num_layers, dropout)
+    decoder = Seq2SeqAttentionDecoder(len(data.tgt_vocab), embed_size, num_hiddens, num_layers, dropout)
+    model = d2l.Seq2Seq(encoder, decoder, tgt_pad=data.tgt_vocab['<pad>'], lr=0.005)
+    trainer = d2l.Trainer(max_epochs=30, gradient_clip_val=1, num_gpus=1)
+    trainer.fit(model, data)
+
+
+将一些英语句子翻译成法语并计算其BLEU分数::
+
+    engs = ['go .', 'i lost .', 'he\'s calm .', 'i\'m home .']
+    fras = ['va !', 'j\'ai perdu .', 'il est calme .', 'je suis chez moi .']
+    preds, _ = model.predict_step(
+        data.build(engs, fras), d2l.try_gpu(), data.num_steps)
+    for en, fr, p in zip(engs, fras, preds):
+        translation = []
+        for token in data.tgt_vocab.to_tokens(p):
+            if token == '<eos>':
+                break
+            translation.append(token)
+        print(f'{en} => {translation}, bleu,'
+              f'{d2l.bleu(" ".join(translation), fr, k=2):.3f}')
+    # 输出
+    go . => ['va', '!'], bleu,1.000
+    i lost . => ["j'ai", 'perdu', '.'], bleu,1.000
+    he's calm . => ['il', 'court', '.'], bleu,0.000
+    i'm home . => ['je', 'suis', 'chez', 'moi', '.'], bleu,1.000
+
+
+11.4.4. Summary
+"""""""""""""""
+
+* Bahdanau Attention机制的核心思想是在生成每个token时，解码器不再只依赖一个固定的上下文向量，而是通过注意力机制动态地选择和聚焦在输入序列的最相关部分。这使得模型能够更好地处理长序列，避免了传统seq2seq模型在处理长文本时遇到的瓶颈。
+
+
+
+11.5. Multi-Head Attention
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* 在实践中，给定相同的查询，键和值，我们可能希望我们的模型结合相同注意力机制的不同行为的知识，例如捕获各种范围的依赖性（例如，较短范围与较长范围）在序列中。因此，允许我们的注意机制共同使用查询，键和值的不同表示子空间可能是有益的。
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/01/BGyPHz.png
+
+    Fig. 11.5.1 Multi-head attention, where multiple heads are concatenated then linearly transformed.
+
+* FC: fully connected layers
+
+
+
+
+核心点-fromGPT
+""""""""""""""
+
+关键点分析
+++++++++++
+
+* 【背景和动机】：单头注意力机制通常用于从查询（query）、键（key）和值（value）中计算注意力。在实践中，我们可能希望模型能够从同一注意力机制中获得不同的行为表现，比如捕捉不同范围的依赖关系（例如，短程依赖和长程依赖）。为了实现这一目标，Multi-Head Attention机制让模型能够在多个子空间中并行计算不同的注意力，以便捕捉更多的信息。每个头（head）独立处理一个注意力池化过程，并且可以关注输入序列的不同部分。
+* 【多头注意力的优势】：每个头可以关注输入的不同部分，从而能够捕捉到不同的信息，特别是在处理复杂的、长序列时，它能够有效地捕获不同的依赖关系。通过并行计算多个头，模型可以高效地同时学习多个表示子空间的信息，增强模型的表达能力。
+* 【实现中的优化】：在实际实现中，选择缩放点积注意力（scaled dot product attention）作为每个头的注意力函数，以避免计算成本和参数量的剧烈增长。为了保证计算的高效性，查询、键和值的输出维度通常会设置为 :math:`p_q = p_k = p_v = \frac{p_o}{h}` ，其中 :math:`p_o` 是最终输出的维度， :math:`h` 是头的数量。这样可以在并行计算时保持计算和内存效率。
+
+
+关键概念
+++++++++
+
+* 注意力头（Attention Head）：每个头独立计算一个注意力过程，关注输入序列的不同部分，最终将多个头的输出进行拼接并线性变换得到最终的结果。
+* 多头注意力（Multi-Head Attention）：通过多个头的并行计算，可以在不同的子空间中学习到更多的信息，提高模型的表示能力。
+* 缩放点积注意力（Scaled Dot Product Attention）：通常用于每个头的注意力计算，采用点积方式，并通过缩放因子来避免点积过大导致梯度消失的问题。
+
+
+
+11.5.1. Model
+"""""""""""""
+
+* 【具体实现】：在多头注意力中，首先通过对查询、键和值进行线性变换，将它们映射到不同的子空间（这一步通过h个不同的线性变换实现），每个头会得到一个独立的查询、键和值。之后，将这些头的结果并行计算注意力。
+
+
+* query: :math:`\mathbf{q} \in \mathbb{R}^{d_q}`
+* key: :math:`\mathbf{k} \in \mathbb{R}^{d_k}`
+* value: :math:`\mathbf{v} \in \mathbb{R}^{d_v}`
+* attention head: :math:`\mathbf{h}_i  (i = 1, \ldots, h)`
+
+* 计算过程的公式
+
+.. math::
+
+    \mathbf{h}_i = f(\mathbf W_i^{(q)}\mathbf q, \mathbf W_i^{(k)}\mathbf k,\mathbf W_i^{(v)}\mathbf v) \in \mathbb R^{p_v}
+
+* 其中
+* :math:`f` is attention pooling,
+* :math:`\mathbf W_i^{(q)}\in\mathbb R^{p_q\times d_q}, \mathbf W_i^{(k)}\in\mathbb R^{p_k\times d_k}, and \mathbf W_i^{(v)}\in\mathbb R^{p_v\times d_v}` are learnable parameters
+
+
+* 最终的多头注意力输出是将所有头的输出拼接在一起后，再通过一个线性变换生成：
+
+.. math::
+
+    \mathbf W_o \begin{bmatrix}
+        \mathbf h_1\\\vdots\\\mathbf h_h
+    \end{bmatrix} \in \mathbb{R}^{p_o}
+
+* :math:`\mathbf{W}_o` 是用于将拼接后的结果进行线性变换的权重矩阵
+
+
+
+11.5.2. Implementation
+""""""""""""""""""""""
+
+.. code-block:: python
+
+    class MultiHeadAttention(d2l.Module):  #@save
+        """Multi-head attention."""
+        def __init__(self, num_hiddens, num_heads, dropout, bias=False, **kwargs):
+            super().__init__()
+            self.num_heads = num_heads
+            self.attention = d2l.DotProductAttention(dropout)
+            self.W_q = nn.LazyLinear(num_hiddens, bias=bias)
+            self.W_k = nn.LazyLinear(num_hiddens, bias=bias)
+            self.W_v = nn.LazyLinear(num_hiddens, bias=bias)
+            self.W_o = nn.LazyLinear(num_hiddens, bias=bias)
+
+        def forward(self, queries, keys, values, valid_lens):
+            # Shape of queries, keys, or values:
+            # (batch_size, no. of queries or key-value pairs, num_hiddens)
+            # Shape of valid_lens: (batch_size,) or (batch_size, no. of queries)
+            # After transposing, shape of output queries, keys, or values:
+            # (batch_size * num_heads, no. of queries or key-value pairs,
+            # num_hiddens / num_heads)
+            queries = self.transpose_qkv(self.W_q(queries))
+            keys = self.transpose_qkv(self.W_k(keys))
+            values = self.transpose_qkv(self.W_v(values))
+
+            if valid_lens is not None:
+                # On axis 0, copy the first item (scalar or vector) for num_heads
+                # times, then copy the next item, and so on
+                valid_lens = torch.repeat_interleave(
+                    valid_lens, repeats=self.num_heads, dim=0)
+
+            # Shape of output: (batch_size * num_heads, no. of queries,
+            # num_hiddens / num_heads)
+            output = self.attention(queries, keys, values, valid_lens)
+            # Shape of output_concat: (batch_size, no. of queries, num_hiddens)
+            output_concat = self.transpose_output(output)
+            return self.W_o(output_concat)
+
+为了允许多个头部的并行计算，上述 MultiHeadAttention 类使用下面定义的两个换位方法::
+
+    @d2l.add_to_class(MultiHeadAttention)  #@save
+    def transpose_qkv(self, X):
+        """Transposition for parallel computation of multiple attention heads."""
+        # Shape of input X: (batch_size, no. of queries or key-value pairs,
+        # num_hiddens). Shape of output X: (batch_size, no. of queries or
+        # key-value pairs, num_heads, num_hiddens / num_heads)
+        X = X.reshape(X.shape[0], X.shape[1], self.num_heads, -1)
+        # Shape of output X: (batch_size, num_heads, no. of queries or key-value
+        # pairs, num_hiddens / num_heads)
+        X = X.permute(0, 2, 1, 3)
+        # Shape of output: (batch_size * num_heads, no. of queries or key-value
+        # pairs, num_hiddens / num_heads)
+        return X.reshape(-1, X.shape[2], X.shape[3])
+
+    @d2l.add_to_class(MultiHeadAttention)  #@save
+    def transpose_output(self, X):
+        """Reverse the operation of transpose_qkv."""
+        X = X.reshape(-1, self.num_heads, X.shape[1], X.shape[2])
+        X = X.permute(0, 2, 1, 3)
+        return X.reshape(X.shape[0], X.shape[1], -1)
+
+
+示例测试我们实现的 MultiHeadAttention 类::
+
+    num_hiddens, num_heads = 100, 5
+    attention = MultiHeadAttention(num_hiddens, num_heads, 0.5)
+    batch_size, num_queries, num_kvpairs = 2, 4, 6
+    valid_lens = torch.tensor([3, 2])
+    X = torch.ones((batch_size, num_queries, num_hiddens))
+    Y = torch.ones((batch_size, num_kvpairs, num_hiddens))
+    d2l.check_shape(attention(X, Y, Y, valid_lens),
+                    (batch_size, num_queries, num_hiddens))
+
+
+
+
+11.5.3. Summary
+"""""""""""""""
+
+* 多头注意力通过查询，键和值的不同表示子空间结合了相同注意力集合的知识。要平行计算多头注意的多个头部，需要进行适当的张量操作。
+* Multi-head Attention机制通过并行计算多个头来从不同的表示子空间中学习注意力，捕捉输入的多种特征和依赖关系，尤其在长序列的情况下具有重要作用。
+* 通过适当的张量操作（tensor manipulation），可以高效地计算多个头，避免计算成本和参数量的过度增长。
+
+
+
+
+11.6. Self-Attention and Positional Encoding
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* 自注意力机制是Transformer模型的核心，广泛应用于自然语言处理等领域，而位置编码用于补偿自注意力机制无法捕捉序列中位置信息的不足。
+
+11.6.1. Self-Attention
+""""""""""""""""""""""
+
+* 自注意力机制的关键是每个输入序列中的token都可以根据其查询（query）与其他所有token的键（key）进行计算，从而决定如何更新该token的表示。
+* 具体来说，每个token的查询会与其他所有token的键进行匹配，得出兼容性分数，然后基于这些分数，按权重求和所有token的值（value），以生成最终的token表示。
+* 自注意力机制的计算过程：
+    * 给定输入序列 :math:`\mathbf{x}_1, \ldots, \mathbf{x}_n` ，每个token的表示会结合整个序列中其他token的表示，计算其加权和。
+    * 输出是一个与输入长度相同的序列 :math:`\mathbf{y}_1, \ldots, \mathbf{y}_n`
+
+
+
+11.6.2. Comparing CNNs, RNNs, and Self-Attention
+""""""""""""""""""""""""""""""""""""""""""""""""
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/02/nTybnr.png
+
+    Fig. 11.6.1 Comparing CNN (padding tokens are omitted), RNN, and self-attention architectures.
+
+
+* 自注意力的计算复杂度为 :math:`\mathcal{O}(n^2d)` ，其中 n 是序列的长度，d 是每个token的维度。这使得自注意力在处理非常长的序列时变得非常慢，因为计算量是二次增长的。
+
+* CNN
+    * CNN主要用于处理局部特征，通过卷积操作捕捉局部上下文信息。
+    * 其计算复杂度为 :math:`\mathcal{O}(knd^2)`
+    * 其中 k 是卷积核的大小。
+    * CNN具有较短的路径长度，但计算过程中存在层级结构，因此最大路径长度为 :math:`\mathcal{O}(n/k)`
+* RNN
+    * RNN按顺序处理每个token
+    * 其计算复杂度为 :math:`\mathcal{O}(nd^2)`
+    * RNN的最大路径长度为 :math:`\mathcal{O}(n)`
+    * 由于其顺序依赖性，无法并行化计算。
+* Self-Attention
+    * 相比于CNN和RNN，自注意力能够并行计算，并且每个token都能直接与其他token建立连接（即路径长度为 :math:`\mathcal{O}(1)` ）
+    * 但是，计算复杂度是 :math:`\mathcal{O}(n^2d)` ，因此对于长序列来说计算量非常大。
+
+
+.. note:: All in all, both CNNs and self-attention enjoy parallel computation and self-attention has the shortest maximum path length. However, the quadratic computational complexity with respect to the sequence length makes self-attention prohibitively slow for very long sequences.
+
+
+11.6.3. Positional Encoding
+"""""""""""""""""""""""""""
+
+* 自注意力机制不包含顺序信息，因此无法直接捕捉序列中token的相对位置。为了弥补这一点，引入了位置编码，它为每个token添加了额外的位置信息，使得模型可以感知序列的顺序。
+
+
+11.6.3.1. Absolute Positional Information
++++++++++++++++++++++++++++++++++++++++++
+
+
+* 一种基于正弦和余弦函数的固定位置编码的简单方案
+
+.. math::
+
+    \begin{aligned} 
+        p_{i, 2j} &= \sin\left(\frac{i}{10000^{2j/d}}\right),\\
+        p_{i, 2j+1} &= \cos\left(\frac{i}{10000^{2j/d}}\right)
+    \end{aligned}
+
+
+.. code-block:: python
+
+    class PositionalEncoding(nn.Module):  #@save
+        """Positional encoding."""
+        def __init__(self, num_hiddens, dropout, max_len=1000):
+            super().__init__()
+            self.dropout = nn.Dropout(dropout)
+            # Create a long enough P
+            self.P = torch.zeros((1, max_len, num_hiddens))
+            X = torch.arange(max_len, dtype=torch.float32).reshape(
+                -1, 1) / torch.pow(10000, torch.arange(
+                0, num_hiddens, 2, dtype=torch.float32) / num_hiddens)
+            self.P[:, :, 0::2] = torch.sin(X)
+            self.P[:, :, 1::2] = torch.cos(X)
+
+        def forward(self, X):
+            X = X + self.P[:, :X.shape[1], :].to(X.device)
+            return self.dropout(X)
+
+
+11.6.3.2. Relative Positional Information
++++++++++++++++++++++++++++++++++++++++++
+
+* 除了绝对位置编码，位置编码也能捕捉相对位置关系。
+* 通过对位置编码进行线性变换，可以表示任意两个token之间的相对位置偏移，从而使模型更容易学习到基于相对位置的注意力模式。
+
+
+.. math::
+
+    \begin{aligned}
+        \begin{bmatrix} \cos(\delta \omega_j) & \sin(\delta \omega_j) \\  -\sin(\delta \omega_j) & \cos(\delta \omega_j) \\ \end{bmatrix}
+        \begin{bmatrix} p_{i, 2j} \\  p_{i, 2j+1} \\ \end{bmatrix}
+        =&\begin{bmatrix} \cos(\delta \omega_j) \sin(i \omega_j) + \sin(\delta \omega_j) \cos(i \omega_j) \\  -\sin(\delta \omega_j) \sin(i \omega_j) + \cos(\delta \omega_j) \cos(i \omega_j) \\ \end{bmatrix}\\
+        =&\begin{bmatrix} \sin\left((i+\delta) \omega_j\right) \\  \cos\left((i+\delta) \omega_j\right) \\ \end{bmatrix}\\
+        =&\begin{bmatrix} p_{i+\delta, 2j} \\  p_{i+\delta, 2j+1} \\ \end{bmatrix},
+    \end{aligned}
+
+* 对于任何固定位置偏移 :math:`\delta` ，位置 :math:`i + \delta` 的位置编码可以用位置 :math:`i` 的线性投影表示
+* 其中 :math:`\omega_j = 1/10000^{2j/d}`
+* 对于任何固定偏移 :math:`\delta` 任何一对 :math:`(p_{i, 2j}, p_{i, 2j+1})` 可以线性地投影到 :math:`(p_{i+\delta, 2j}, p_{i+\delta, 2j+1})`
+
+
+11.6.4. Summary
+"""""""""""""""
+
+* 自注意力机制使得每个token可以与其他所有token进行直接交互，从而捕捉长距离依赖。相比于CNN和RNN，自注意力计算可以并行化，最大路径长度最短，但由于计算复杂度是二次的，长序列处理的开销较大。
+* 位置编码通过为每个token添加位置信息，使得自注意力机制能够处理顺序问题。位置编码可以是绝对的，也可以是相对的，帮助模型捕捉序列中的位置关系。
+* 这两种机制结合起来，构成了Transformer的强大表达能力，使得它在许多自然语言处理任务中取得了显著的成功。
+
+
+
+
+11.7. The Transformer Architecture
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+11.7.1. Model
+11.7.2. Positionwise Feed-Forward Networks
+11.7.3. Residual Connection and Layer Normalization
+11.7.4. Encoder
+11.7.5. Decoder
+11.7.6. Training
+11.7.7. Summary
+
+
+11.8. Transformers for Vision
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+11.8.1. Model
+11.8.2. Patch Embedding
+11.8.3. Vision Transformer Encoder
+11.8.4. Putting It All Together
+11.8.5. Training
+11.8.6. Summary and Discussion
+
+
+
+11.9. Large-Scale Pretraining with Transformers
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+11.9.1. Encoder-Only
+11.9.2. Encoder–Decoder
+11.9.3. Decoder-Only
+11.9.4. Scalability
+11.9.5. Large Language Models
+11.9.6. Summary and Discussion
+
+
+
 
 
 

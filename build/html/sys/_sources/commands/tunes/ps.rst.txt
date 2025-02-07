@@ -66,16 +66,85 @@ ps工具标识进程的5种状态码(STAT)::
 
 
 
-示例::
+示例
+====
 
-     ps aux     常用的输出格式
-     ps alx     另一种常用输出格式
+常用命令
+--------
 
-     // 查看所有进程
-     ps -ef    // 显示所有进程信息，连同命令行(显示父pid->ppid)
-     ps –eLf | grep java
-     ps -eF
-     ps -ely
+ps axjf::
+
+    # 查看父进程
+    $ ps axjf
+       PPID     PID    PGID     SID TTY        TPGID STAT   UID   TIME COMMAND
+          0  289233  289233  289233 pts/5     289256 Ss       0   0:00 bash
+     289233  289256  289256  289233 pts/5     289256 R+       0   0:00  \_ ps axjf
+          0  289174  289174  289174 pts/4     289187 Ss       0   0:00 bash
+     289174  289187  289187  289174 pts/4     289187 S+       0   0:00  \_ vim output.log
+
+
+ps aux::
+
+    $ ps aux
+    USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+    root         145  0.0  0.0   4632  3940 pts/0    Ss    2024   0:00 bash
+    root         159  0.0  0.0   4956  4224 pts/0    S+    2024   0:12 watch -n 1 nvidia-smi
+    root       24380  0.0  0.0   4632  4004 pts/2    Ss    2024   0:00 bash
+    root       24394  0.0  0.0   3756  3064 pts/2    S+    2024   1:17 watch -n 1 nvidia-smi
+
+ps alx::
+
+    $ ps alx
+    F   UID     PID    PPID PRI  NI    VSZ   RSS WCHAN  STAT TTY        TIME COMMAND
+    4     0     145       0  20   0   4632  3940 -      Ss   pts/0      0:00 bash
+    0     0     159     145  20   0   4956  4224 -      S+   pts/0      0:12 watch -n 1 nvidia-smi
+    4     0   15877       0  20   0   4632  4020 -      Ss   pts/1      0:00 bash
+    0     0   19933   15877  20   0   7336  3292 -      S+   pts/1      0:00 top
+    4     0   24380       0  20   0   4632  4004 -      Ss   pts/2      0:00 bash
+
+
+ps -ef::
+
+    # 显示所有进程信息，连同命令行(显示父pid->ppid)
+    $ ps -ef
+    UID          PID    PPID  C STIME TTY          TIME CMD
+    root           1       0  0  2024 ?        00:34:42 python3 -m vllm.entrypoints.openai.api_server --model /root/models/Qwen2.5-32B-Instruct
+    root         145       0  0  2024 pts/0    00:00:00 bash
+    root         159     145  0  2024 pts/0    00:00:12 watch -n 1 nvidia-smi
+    root       15877       0  0  2024 pts/1    00:00:00 bash
+    root       19933   15877  0  2024 pts/1    00:00:00 top
+
+ps –eLf::
+
+    $ ps -eLF
+    UID          PID    PPID     LWP  C NLWP    SZ   RSS PSR STIME TTY          TIME CMD
+    root           1       0       1  0   48 1686693 832260 8 2024 ?        00:33:38 python3 -m vllm.entrypoints.openai.api_server --model /root/models/Qwen2.5-32B-Instruct
+    root           1       0       7  0   48 1686693 832260 4 2024 ?        00:00:00 python3 -m vllm.entrypoints.openai.api_server --model /root/models/Qwen2.5-32B-Instruct
+    root           1       0       8  0   48 1686693 832260 6 2024 ?        00:00:00 python3 -m vllm.entrypoints.openai.api_server --model /root/models/Qwen2.5-32B-Instruct
+    root         145       0     145  0    1  1158  3940   5  2024 pts/0    00:00:00 bash
+    root         159     145     159  0    1  1239  4224  10  2024 pts/0    00:00:12 watch -n 1 nvidia-smi
+
+ps -eF::
+
+    $ ps -eF
+    UID          PID    PPID  C    SZ   RSS PSR STIME TTY          TIME CMD
+    root           1       0  0 1686693 832260 6 2024 ?        00:34:42 python3 -m vllm.entrypoints.openai.api_server --model /root/models/Qwen2.5-32B-Instruct
+    root         145       0  0  1158  3940   5  2024 pts/0    00:00:00 bash
+    root         159     145  0  1239  4224  10  2024 pts/0    00:00:12 watch -n 1 nvidia-smi
+    root       15877       0  0  1158  4020   0  2024 pts/1    00:00:00 bash
+
+ps -ely::
+
+    ps -ely
+    S   UID     PID    PPID  C PRI  NI   RSS    SZ WCHAN  TTY          TIME CMD
+    S     0      35       1  0  80   0 11332  4075 -      ?        00:00:00 python3
+    S     0     145       0  0  80   0  3940  1158 -      pts/0    00:00:00 bash
+    S     0     159     145  0  80   0  4224  1239 -      pts/0    00:00:12 watch
+    S     0   15877       0  0  80   0  4020  1158 -      pts/1    00:00:00 bash
+
+
+一些常用示例
+------------
 
 To see every process on the system using BSD syntax::
 
@@ -120,10 +189,14 @@ To see every process running as root (real & effective ID) in user format::
 
 
 
-实例::
+实例-输出指定列
+---------------
+
+
+::
 
     ps -o rss
-    ps -
+    ps -o vsz
 
 展示格式::
 
