@@ -6,6 +6,30 @@
 * 扩大深度神经网络容量被认为是提高多种机器学习任务模型质量的有效方法。在许多情况下，将模型容量增加到超出单个加速器(accelerator)的内存限制，需要开发特殊的算法或基础设施。这些解决方案通常是特定于架构的，无法迁移到其他任务。为了应对高效且与任务无关的模型并行需求，我们提出了GPipe，一种管道并行库，能够将任何可以表示为一系列层的网络进行扩展。通过在不同的加速器上流水线处理不同的子序列层，GPipe提供了将各种不同网络高效扩展到巨大规模的灵活性。此外，GPipe采用了一种新颖的批次拆分流水线算法，使得当模型在多个加速器上进行分割时，几乎能够实现线性加速。我们通过在两种不同任务上训练大规模神经网络来展示GPipe的优势，这些任务具有不同的网络架构：(i) 图像分类：我们训练了一个包含5.57亿参数的AmoebaNet模型，并在ImageNet-2012上获得了84.4%的Top-1准确率，(ii) 多语种神经机器翻译：我们训练了一个单一的60亿参数、128层的Transformer模型，该模型在跨越100多种语言的语料库上表现出比所有双语模型更好的质量。
 
 
+
+* Blog
+    * Pipeline-Parallelism: Distributed Training via Model Partitioning: http://siboehm.com/articles/22/pipeline-parallel-training
+
+
+收集
+====
+
+* 流水线并行的核心思想是：在模型并行的基础上，进一步引入数据并行的办法，即把原先的数据再划分成若干个batch，送入GPU进行训练。未划分前的数据，叫mini-batch。在mini-batch上再划分的数据，叫micro-batch。
+* Gpipe采用了一种非常简单粗暴但有效的办法：用时间换空间，在论文里，这种方法被命名为re-materalization，后人也称其为active checkpoint。具体来说，就是几乎不存中间结果，等到backward的时候，再重新算一遍forward
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/03/618ubD.png
+
+    流水线并行和张量并行都可以看作是模型并行的一种，只是对模型切分的维度不同，流水线并行可以看作是层间并行，将模型不同的层放到不同的GPU上，张量并行看作是层内并行，是对层内具体的矩阵运算进行拆分。
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/03/WXZBOV.png
+
+    将模型放到两个GPU上，前向时，只将每个GPU最后一层输出的中间结果，传递给下一个GPU并保存，在反向传播需要用到丢弃的中间激活值时，在重新计算。从而减少了显存的占用。
+
+
+
+
 1. Introduction
 ===============
 
@@ -30,6 +54,9 @@
 .. figure:: https://img.zhaoweiguo.com/uPic/2025/02/wXXIKY.png
 
     Figure 2: (a) An example neural network with sequential layers is partitioned across four accelerators. Fk is the composite forward computation function of the k-th cell. Bk is the back-propagation function, which depends on both Bk+1 from the upper layer and Fk. (b) The naive model parallelism strategy leads to severe under-utilization due to the sequential dependency of the network. (c) Pipeline parallelism divides the input mini-batch into smaller micro-batches, enabling different accelerators to work on different micro-batches simultaneously. Gradients are applied synchronously at the end.
+
+
+
 
 
 2.1 接口设计(Interface)
@@ -76,6 +103,30 @@
 
 
 * 【总结】GPipe的优点在于它能够通过重计算和流水线并行有效地扩展大规模模型，降低内存需求，尤其是在使用多个加速器时可以显著提升模型的规模。
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/03/3boqMJ.png
+
+    Table 1: Gpipe分别在AmoebaNet（图像）和Transformer（自然语言）两个大模型测试效果。
+
+
+* We evaluate GPipe performance with two very different types of model architectures: an AmoebaNet convolutional model and a Transformer sequence-to-sequence model.
+* AmoebaNet convolutional model
+    * input image size of 224×224 and mini-batch size of 128
+    * Without GPipe, a single accelerator can train up to an 82M-parameter AmoebaNet, constrained by device memory limits.
+    * Owing to re-materialization in back-propagation and batch splitting, GPipe reduces the intermediate activation memory requirements from 6.26GB to 3.46GB, enabling a 318M-parameter model on a single accelerator.
+    * With model parallelism, we were able to scale AmoebaNet to 1.8 billion parameters on 8 accelerators, 25x more than what is possible without GPipe.
+    * In this case, the maximum model size did not scale perfectly linearly due to the imbalanced distribution of model parameters over different layers in AmoebaNet.
+* Transformer sequence-to-sequence model
+    * fixed vocabulary size of 32k, sequence length 1024 and batch size 32.
+    * Each Transformer layer has 2048 for model dimension, 8192 for feed-forward hidden dimension and 32 attention heads.
+    * Re-materialization allows training a 2.7× larger model on a single accelerator. 
+    * With 128 partitions, GPipe allows scaling Transformer up to 83.9B parameters, a 298× increase than what is possible on a single accelerator. 
+    * Different from AmoebaNet, the maximum model size scales linearly with the number of accelerators for Transformer, since each layer has the same number of parameters and input sizes.
+
+.. note:: 在Transformer上，Gpipe基本实现了模型大小（参数量）和GPU个数之间的线性关系。例如从32卡增到128卡时，模型的大小也从21.08B增加到82.9B，约扩4倍。但对AmoebaNet而言，却没有完全实现线性增长。例如从4卡到8卡，模型大小从1.05B到1.8B，不满足2倍的关系。本质原因是AmoebaNet模型在切割时，没有办法像Transformer一样切得匀称，保证每一块GPU上的内存使用率是差不多的。因此对于AmoebaNet，当GPU个数上升时，某一块GPU可能成为木桶的短板。
+
+
+
 
 
 4. Image Classification

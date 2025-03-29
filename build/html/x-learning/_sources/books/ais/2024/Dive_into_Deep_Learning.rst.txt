@@ -8456,13 +8456,162 @@ src[i] 是源语言（此处为英语）的文本序列中的标记列表， tgt
 11.7. The Transformer Architecture
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* Transformer 就是 堆叠自注意力机制 + 残差连接 + 前馈网络，通过 Encoder 编码输入序列，再通过 Decoder 逐步自回归地生成输出序列，整套架构灵活且高度并行化，是现代大多数大型语言模型的基础。
+
+
 11.7.1. Model
+"""""""""""""
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/03/tlm6Qx.png
+
+    Fig. 11.7.1 The Transformer architecture.
+
+* 整体结构
+    - Transformer 是一种 Encoder-Decoder 架构，整体分为两大块：
+        - Encoder（编码器）
+        - Decoder（解码器）
+    - 它是 序列到序列学习（seq2seq learning） 的一种改进方法，相比于之前流行的 Bahdanau Attention（注意力机制），Transformer 完全基于自注意力（self-attention） 机制来处理输入和输出序列。
+
+* 输入处理
+    - 输入的 source sequence（输入序列） 和 target sequence（输出序列） 都要 先经过 embedding（词向量嵌入）
+    - 然后，位置编码（Positional Encoding） 被加到 embedding 上，告诉模型单词在序列中的位置，因为 Transformer 本身不具备序列顺序感知能力
+    - 之后，这些加了位置编码的向量会分别被送进 Encoder 和 Decoder
+
+* Encoder 结构
+    * Encoder 是由 多个相同的层叠在一起，每一层包含 两个子层（sublayers）：
+        1. 多头自注意力层（Multi-Head Self-Attention）  
+            - 自注意力机制，输入序列内部的各个词相互关注，捕捉上下文信息。
+            - 这里的 Query、Key、Value 都来自上一层 Encoder 的输出。
+        2. 前馈神经网络（Feed-Forward Network）  
+            - 逐位置应用的全连接网络，作用是增加模型的非线性表达能力。
+
+    * 残差连接（Residual Connection） 和 Layer Normalization
+        - 每个子层外面都有一个 残差连接（和 ResNet 类似），形式是： :math:`\mathbf{x} + \textrm{sublayer}(\mathbf{x})`
+        - 保证输入和输出维度一致（ :math:`\mathbb{R}^d` ），便于直接相加。
+        - 残差之后再做 LayerNorm，有助于训练稳定性。
+
+    * Encoder 最终输出：每个位置一个 d 维向量，表示输入序列中每个词的表示。
+
+* Decoder 结构
+    * Decoder 也由 多个相同层堆叠，但它比 Encoder 多了一个子层，总共 三个子层：
+        1. Masked 多头自注意力层（Masked Multi-Head Self-Attention）
+            - 也是 Query、Key、Value 都来自 Decoder 的前一层输出。
+            - 但加了 mask，防止模型看到当前时间步之后的 token，保证自回归（autoregressive）性质。
+        2. Encoder-Decoder Attention
+           - 这是 Decoder 特有的。
+           - Query 来自 Decoder，而 Key 和 Value 来自 Encoder 输出，实现输入输出序列之间的联系。
+        3. 前馈神经网络
+
+    * 同样，每个子层也带有：
+        - 残差连接（输入 + 子层输出）
+        - Layer Normalization
+
+* 总结
+    - Transformer 整个设计理念：
+        - 完全基于 Attention，没有 RNN/CNN
+        - 位置编码补充序列顺序信息
+        - 残差连接 + LayerNorm 保证训练深层网络时的稳定性
+        - Encoder 用于理解输入序列，Decoder 用于生成输出序列
+        - Decoder 的 Masked Attention 保证 自回归生成（只看当前和之前的 token）
+
+
+* 定义：残差连接(Residual Connection)
+    - 深度神经网络中常用的一种技巧，特别是在 ResNet（残差网络） 和 Transformer 里用得很多
+    - 核心思想：残差连接就是“跳过一层”直接把输入加到输出上。
+    - 公式: :math:`\mathbf{y} = \mathbf{x} + \textrm{F}(\mathbf{x})`
+    - 直观理解: 模型学的不是直接输出，而是“输入和输出的差值”，即 residual（残差）
+        + 传统网络::
+
+            输入 x → 神经网络层 → 输出 y
+
+        + 残差连接::
+
+            输入 x → 神经网络层 → 得到 F(x)
+                        ↘ 加上输入 x
+            输出：y = F(x) + x
+
+    - 为什么要这样设计
+        + 解决深度网络训练困难
+            * 随着层数加深，容易出现 梯度消失或梯度爆炸，导致训练困难
+            * 残差连接可以让梯度 直接从后层传到前层，缓解这个问题
+        + 避免性能退化
+            * 实际上，如果网络没学到什么有用的东西，残差连接至少可以让网络学到“恒等映射”（即输出和输入一样）
+            * 这样网络至少不会比浅层网络表现更差，避免“加层反而效果下降”的问题
+
+
+
+
 11.7.2. Positionwise Feed-Forward Networks
+""""""""""""""""""""""""""""""""""""""""""
+
+* 位置前馈网络（Positionwise Feed-Forward Network）
+* 为什么称为"positionwise"（位置前馈）
+    * 关键点：
+        * 每个位置的向量是独立、逐个位置处理的！
+        * 同一个 FFN（同样的参数 $W_1, b_1, W_2, b_2$）被应用到序列中的 每一个位置。
+    * → 这就叫 positionwise —— 对每个“位置”单独应用相同的 FFN。
+        * 序列有很多 token，每个 token 有自己的表示（embedding 向量）。
+        * 所有 token 的向量都用同一个 FFN 进行处理，但每个 token 是单独处理，不考虑别的位置的信息。
+* 输入和输出的形状：
+    * 输入X的形状是(batch size, number of time steps or sequence length in tokens, number of hidden units or feature dimension)。
+    * 输出Y的形状是(batch size, number of time steps, ffn_num_outputs)
+
+
+结构::
+
+    class PositionWiseFFN(nn.Module):  #@save
+        """The positionwise feed-forward network."""
+        def __init__(self, ffn_num_hiddens, ffn_num_outputs):
+            super().__init__()
+            self.dense1 = nn.LazyLinear(ffn_num_hiddens)
+            self.relu = nn.ReLU()
+            self.dense2 = nn.LazyLinear(ffn_num_outputs)
+
+        def forward(self, X):
+            return self.dense2(self.relu(self.dense1(X)))
+
+使用::
+
+    ffn = PositionWiseFFN(4, 8)
+    ffn.eval()
+    ffn(torch.ones((2, 3, 4)))[0]
+    # 输出
+    tensor([[ 0.6300,  0.7739,  0.0278,  0.2508, -0.0519,  0.4881, -0.4105,  0.5163],
+            [ 0.6300,  0.7739,  0.0278,  0.2508, -0.0519,  0.4881, -0.4105,  0.5163],
+            [ 0.6300,  0.7739,  0.0278,  0.2508, -0.0519,  0.4881, -0.4105,  0.5163]],
+           grad_fn=<SelectBackward0>)
+
+
 11.7.3. Residual Connection and Layer Normalization
+"""""""""""""""""""""""""""""""""""""""""""""""""""
+
+* 通过层规范化和批量规范化比较了不同维度上的规范化::
+
+    ln = nn.LayerNorm(2)
+    bn = nn.LazyBatchNorm1d()
+    X = torch.tensor([[1, 2], [2, 3]], dtype=torch.float32)
+    # Compute mean and variance from X in the training mode
+    print('layer norm:', ln(X), '\nbatch norm:', bn(X))
+
+
+
+
+
+
+
 11.7.4. Encoder
+"""""""""""""""
+
 11.7.5. Decoder
+"""""""""""""""
+
 11.7.6. Training
+""""""""""""""""
+
 11.7.7. Summary
+"""""""""""""""
+
+
 
 
 11.8. Transformers for Vision

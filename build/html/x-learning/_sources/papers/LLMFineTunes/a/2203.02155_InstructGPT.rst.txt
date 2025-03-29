@@ -1,0 +1,635 @@
+2203.02155_Training language models to follow instructions with human feedback(InstructGPT)
+###########################################################################################
+
+* https://arxiv.org/abs/2203.02155
+* InstructGPT
+* Google Scholar(12774, 2025-03-07)
+* 作者: OpenAI
+
+
+Abstract
+========
+
+* Making language models bigger does not inherently make them better at following a user’s intent. 
+* For example, large language models can generate outputs that are untruthful, toxic, or simply not helpful to the user. 
+* In other words, these models are not aligned with their users. 
+* In this paper, we show an avenue for aligning language models with user intent on a wide range of tasks by fine-tuning with human feedback. 
+* Starting with a set of labeler-written prompts and prompts submitted through the OpenAI API, we collect a dataset of labeler demonstrations of the desired model behavior, which we use to fine-tune GPT-3 using supervised learning. 
+* We then collect a dataset of rankings of model outputs, which we use to further fine-tune this supervised model using reinforcement learning from human feedback. 
+* We call the resulting models InstructGPT. 
+* In human evaluations on our prompt distribution, outputs from the 1.3B parameter InstructGPT model are preferred to outputs from the 175B GPT-3, despite having 100x fewer parameters. 
+* Moreover, InstructGPT models show improvements in truthfulness and reductions in toxic output generation while having minimal performance regressions on public NLP datasets. 
+* Even though InstructGPT still makes simple mistakes, our results show that fine-tuning with human feedback is a promising direction for aligning language models with human intent.
+
+
+* 核心观点
+    - 增加语言模型的规模并不会自动提升它对用户意图的对齐性，
+    - 而通过人类反馈微调（fine-tuning with human feedback）可以有效提高模型的对齐能力，使其更符合用户需求。
+
+* 关键内容解析
+    1. 大模型的问题：
+        - 仅仅增加模型参数（例如从小模型升级到大模型）不会让模型更好地理解和遵循用户的意图。
+        - 大模型可能会生成不真实（untruthful）、有害（toxic）或无用（not helpful）的内容，
+        - 说明它们并未很好地与用户需求对齐（aligned with their users）。
+
+    2. 解决方案：人类反馈微调（Human Feedback Fine-Tuning）：
+        - 第一步：使用人工标注的示例数据（labeler demonstrations）对GPT-3进行监督学习（supervised learning）微调。
+        - 第二步：收集模型输出的排名数据（人类对不同模型输出的偏好排序），
+            - 然后使用基于人类反馈的强化学习（Reinforcement Learning from Human Feedback, RLHF）进一步优化模型。
+
+    3. InstructGPT 的优势：
+       - 结果表明，微调后的1.3B参数的InstructGPT比原始的175B参数的GPT-3更受人类评估者青睐，尽管它的参数量少了100倍。
+       - InstructGPT 在生成真实（truthful）内容和减少有害（toxic）内容方面有所提升，
+       - 同时在公共NLP任务上的性能下降很小（minimal performance regressions）。
+
+    4. 结论：
+       - InstructGPT 仍然会犯一些简单错误，但整体而言，通过人类反馈进行微调是一种让语言模型更好地符合人类意图的有效方法。
+
+* 总结
+    - 核心思想是：大语言模型本身不会自动对齐用户意图，但通过人类反馈微调（特别是RLHF），可以让小模型（如InstructGPT）比大模型（如GPT-3）表现更好，尤其在减少错误和有害内容方面效果显著。
+    - 这表明未来优化AI模型的方向应该更多关注人机对齐（alignment with human intent），而不仅仅是增加参数规模。
+
+
+1. Introduction
+===============
+
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/03/FOP9Fg.png
+
+    Figure 2: A diagram illustrating the three steps of our method: (1) supervised fine-tuning (SFT), (2) reward model (RM) training, and (3) reinforcement learning via proximal policy optimization (PPO) on this reward model. Blue arrows indicate that this data is used to train one of our models. In Step 2, boxes A-D are samples from our models that get ranked by labelers. See Section 3 for more details on our method
+
+
+
+* 主要介绍了为什么仅仅扩大语言模型（如GPT-3）的规模并不能解决其固有的问题
+    * 例如捏造事实、产生偏见或有害内容，以及有时不能准确执行用户指令。
+    * 并且，原始的 GPT-3 是基于预测下一个单词的目标进行训练的，而并没有专门优化为“安全、可靠地遵循用户指令”，因此容易表现出不受控的行为。
+
+* 为了改善这一问题
+    - OpenAI 采用了基于人类反馈的强化学习（RLHF）方法来对 GPT-3 进行微调，最终训练出了 InstructGPT 模型。
+    - 具体来说：
+        1. 收集数据：从 OpenAI API 提交的用户提示（prompts）和标注员自己编写的提示语中收集示例数据。
+        2. 监督学习（Supervised Learning）微调：使用标注员编写的示例数据来训练 GPT-3，使其学习如何更好地遵循用户指令。
+        3. 训练奖励模型：收集人类标注者对不同模型输出的偏好数据，并据此训练一个奖励模型（reward model），使其能够自动评估生成文本的质量。
+        4. 强化学习优化（RLHF）：使用奖励模型作为“导师”，调整 GPT-3 的输出，使其更符合用户意图，从而获得最终的 InstructGPT 模型。
+
+* 主要结论：
+    1. InstructGPT 在用户偏好上明显优于 GPT-3  
+        - 即使是参数量更小（1.3B）的 InstructGPT 模型，其输出质量依然比 175B 版本的原始 GPT-3 更受标注者青睐。
+        - InstructGPT 模型更能理解并遵循用户指令，减少了偏见和有害内容。
+
+    2. InstructGPT 在真实性方面比 GPT-3 也有改善：
+        - 生成事实错误（hallucination）的概率更低（21% vs. 41%）。
+        - 在封闭域（例如代码摘要、基于有限上下文的问答任务）中，InstructGPT 生成的错误信息比 GPT-3 明显减少。
+
+    3. InstructGPT 仍然会犯一些简单的错误：
+        - 可能无法完全按照指令行事，编造事实，或者给出冗长而模棱两可的回答。
+        - 在避免有害内容（toxic content）方面有所改进，但在消除偏见方面（如性别偏见）提升有限。
+
+    4. 对“人类意图”的理解仍然有限：
+        - InstructGPT 主要是通过一小部分标注员的意见和研究人员的价值观来调整的，因此其行为不能简单地视作代表所有人的价值观。
+
+    5. 性能回归（Alignment Tax）：
+        - 通过 RLHF 微调后，模型在对齐性（更真实、更少有害内容）方面有所提高，但会导致部分公开 NLP 任务的表现下降
+        - 比如阅读理解和问答任务（在 SQuAD、DROP 等数据集上的表现下降）。
+
+* 总结：
+    1. 仅仅增加模型参数无法解决大模型的缺陷，比如生成虚假信息、带有偏见或有害内容、不能完全按照用户指令行事等。
+    2. OpenAI 通过基于人类反馈的强化学习（RLHF）优化了 GPT-3，得到了 InstructGPT，它更倾向于真实、不产生有害内容，并且能更好地执行用户指令。
+    3. InstructGPT 在输出质量、真实度和内容约束遵守方面都有所改善。
+    4. 但 InstructGPT 仍会犯一些简单错误，比如无意编造事实、未能完全遵循指令等。
+    5. 对齐代价（alignment tax）：使用 RLHF 进行微调后，InstructGPT 在生成更真实、无害文本的同时，也在一些标准 NLP 任务（如问答任务）上表现有所下降。
+
+
+2. Related work
+===============
+
+* 介绍了当前研究领域的一些关键方向，以及作者工作的基础和贡献。可以分为以下几个方面来理解：
+* 语言模型的对齐和人类反馈学习 (Alignment & Learning from Human Feedback)
+    - 研究背景：主要讨论了如何让模型更符合人类意图，特别是基于人类反馈的强化学习（RLHF）。
+    - 发展历程：
+        - RLHF 最早用于训练模拟环境中的机器人和 Atari 游戏（Christiano et al., 2017）。
+        - 后来应用于文本摘要（Ziegler et al., 2019; Stiennon et al., 2020）。
+        - 相关研究还涉及对话、翻译、语义解析、故事生成、评论生成、证据提取等任务。
+    - 近期进展：
+        - Madaan et al. (2022) 研究了如何使用人类书面反馈改进 GPT-3 的提示工程。
+        - Nahian et al. (2021) 探索了如何在文本环境中对齐 AI 代理。
+        - 论文认为，他们的工作是 RLHF 在语言任务上的直接应用。
+
+* “对齐”语言模型的定义 (Defining Alignment in Language Models)
+    - 近期关于“对齐性”的讨论（Gabriel, 2020）。
+    - Kenton et al. (2021) 指出语言模型的行为问题，如生成有害内容或错误地优化目标。
+    - Askell et al. (2021) 提出了用语言助手作为研究对齐性的测试平台，并研究了一些简单基线方法。
+
+* 训练语言模型以遵循指令 (Training LMs to Follow Instructions)
+    - 语言模型在跨任务泛化（cross-task generalization）方面的研究：
+        - 主要思路：让模型在多个 NLP 任务上进行微调（并添加指令），然后评估其在新任务上的表现。
+        - 研究方向的差异：不同研究在数据选择、指令格式、预训练模型大小等方面有所不同。
+        - 核心发现：训练 LMs 以遵循指令，能提升它们在新任务上的表现（零样本或小样本学习）。
+    - 相关研究：
+        - Yi et al. (2019), Mishra et al. (2021), Wei et al. (2021) 研究了跨任务指令学习。
+        - Bahdanau et al. (2018), Zhao et al. (2021) 研究了在模拟环境中的指令执行（如导航任务）。
+
+* 评估语言模型的潜在危害 (Evaluating the Harms of Language Models)
+    - 语言模型的现实世界风险（Bender et al., 2021; Bommasani et al., 2021）。
+    - 具体风险：
+        1. 偏见问题（Dhamala et al., 2021; Liang et al., 2021）
+        2. 隐私泄露（Carlini et al., 2021）
+        3. 误导性信息（假新闻）（Solaiman et al., 2019）
+        4. 恶意用途
+    - 评估方法：
+        - Gehman et al. (2020) 提出毒性评估基准。
+        - Nadeem et al. (2020) 研究刻板印象评估。
+        - Dhamala et al. (2021) 研究社会偏见评估。
+    - 挑战：
+        - 改进 LMs 行为时可能产生副作用（Welbl et al., 2021）。
+        - 例如：减少毒性的同时，可能会降低对少数群体语言风格的学习能力（Xu et al., 2021）。
+
+* 如何修改语言模型的行为以减少危害 (Modifying LM Behavior to Mitigate Harms)
+    - 方法一：微调模型，使其遵循特定价值观（Solaiman & Dennison, 2021）。
+    - 方法二：过滤训练数据，去除包含有害内容的文本（Ngo et al., 2021）。
+    - 方法三：使用安全策略（Xu et al., 2020）：
+        - 数据过滤
+        - 屏蔽敏感词
+        - 控制 tokens
+        - 人类反馈数据收集
+    - 其他方法：
+        - 词嵌入正则化（Liu et al., 2019）
+        - 数据增强（Sheng et al., 2019）
+        - null space projection（消除敏感 token 的分布偏差）（Liang et al., 2021）
+        - 目标函数优化（Qian et al., 2019）
+        - 因果推理（Vig et al., 2020）
+    - 引导 LMs 生成合适文本的手段：
+        - 使用第二个（较小的）LM 作为控制器（Dathathri et al., 2019）。
+        - Schick et al. (2021) 研究了如何用这个方法减少 LM 的毒性。
+
+* 总结
+    1. RLHF 在语言模型中的应用，用于对齐 AI 与人类期望。
+    2. 跨任务泛化研究，表明通过指令微调可以增强语言模型的适应能力。
+    3. 如何评估语言模型的危害（偏见、隐私泄露、假新闻等）。
+    4. 如何减少语言模型的有害行为（数据过滤、微调、目标函数优化等）。
+
+
+
+3. Methods and experimental details
+===================================
+
+* 描述了一种训练 AI 语言模型的方法，主要包括数据收集、监督训练、奖励建模（Reward Modeling, RM）以及强化学习（Reinforcement Learning, RL）优化过程，整体流程与 InstructGPT 的训练方法类似。
+
+3.1 High-level methodology
+--------------------------
+
+* 该方法借鉴了 Ziegler et al., (2019) 和 Stiennon et al., (2020) 在文本续写和摘要领域的研究，并采用 GPT-3 作为基础模型。
+* 整个训练流程包括：
+    1. 收集示例数据并进行监督学习（SFT, Supervised Fine-Tuning）：
+        - 人工标注员（labelers）提供示例回答，对 GPT-3 进行监督微调，使其学习特定任务的理想响应模式。
+    2. 收集对比数据并训练奖励模型（RM, Reward Model）：
+        - 通过对比模型输出的不同版本，标注员选择更优的答案，训练一个 奖励模型（Reward Model, RM），用于评分不同回答的质量。
+    3. 使用强化学习优化策略（PPO, Proximal Policy Optimization）：
+        - 利用 奖励模型 作为优化目标，通过 近端策略优化（PPO） 进一步优化 GPT-3，使其更符合人类偏好。
+* 这三个步骤可以不断循环迭代，提高模型的对齐能力。
+
+3.2 Dataset
+-----------
+
+* 数据来源
+    - 数据主要来自 OpenAI API（早期的 InstructGPT 版本）以及人工编写的任务提示（prompts）：
+    - API 用户数据（主要用于 RM 和 PPO 训练）
+    - 人工编写数据（用于 SFT 训练，包括三种类型）：
+        1. Plain：标注员自由编写的任务。
+        2. Few-shot：提供一个任务，并给出多个示例输入/输出。
+        3. User-based：根据 API 等候名单中的用户需求编写。
+
+* 数据集划分：
+    - SFT 数据集（13k 个任务）——用于监督微调
+    - RM 数据集（33k 个任务）——用于奖励模型
+    - PPO 数据集（31k 个任务）——用于强化学习
+
+* 数据类别
+    - 文本生成（45.6%）
+    - 开放式问答（12.4%）
+    - 头脑风暴（11.2%）
+    - 聊天（8.4%）
+    - 改写（6.6%）
+    - 摘要（4.2%）
+    - 分类（3.5%）
+    - 信息提取（1.9%）
+
+
+3.4 Human data collection
+-------------------------
+
+- 40 名标注员 通过 Upwork 和 ScaleAI 招募，并经过筛选测试，确保其能识别有害内容，并理解不同人群的偏好。
+- 任务包含 敏感或争议性话题，需要标注员在“有帮助”与“无害”之间做出权衡。
+- 标注一致性：训练集内标注员一致率 72.6% ± 1.5%，独立标注员一致率 77.3% ± 1.3%。
+
+3.5 Models
+----------
+
+* 监督微调（SFT）
+    - 在标注员示例数据上对 GPT-3 进行微调。
+    - 训练 16 个 epoch，使用 余弦学习率衰减（cosine decay） 和 残差 dropout（0.2）。
+
+* 奖励建模（RM）
+    - 以 SFT 模型为基础，去除最终的嵌入层，并训练一个 奖励模型 评分不同回答的优劣。
+    - 采用 对比学习：标注员在多个答案中选择最优解，并用交叉熵损失训练 RM 预测人类偏好。
+
+* 强化学习（RL, PPO）
+    - 使用 PPO 进一步优化 SFT 模型，使其输出更符合奖励模型的评分标准。
+    - 策略改进：
+        - PPO：仅使用 RL 进行优化。
+        - PPO-ptx：结合预训练梯度（pretraining gradients），防止 RL 造成 NLP 任务能力下降。
+
+* 最终的 InstructGPT 模型采用 PPO-ptx 版本。
+
+总结
+----
+
+- 该方法以 GPT-3 预训练模型 为基础，先 监督学习（SFT），再 奖励建模（RM），最后通过 强化学习（PPO） 优化模型，使其更符合人类偏好。
+- 数据集来源广泛，包括 API 用户数据 和 人工编写数据，以 生成任务 为主。
+- 人工标注员 负责数据收集、示例标注、对比选择，确保模型学习人类喜好，同时过滤 潜在有害内容。
+- PPO-ptx 版本 的 InstructGPT 模型是最终优化版本，平衡了 强化学习和 NLP 任务能力，避免 RL 过度优化导致的泛化能力下降。
+- 这套方法是 OpenAI 在 InstructGPT 及后续 ChatGPT 训练中的核心流程，也广泛用于大模型的对齐优化。
+
+
+4. Results
+==========
+
+* 这段内容是 InstructGPT 论文的实验结果部分，主要分析了 InstructGPT 相较于 GPT-3 在多个方面的表现。这里是关键要点的解析：
+
+
+4.1 Results on the API distribution
+------------------------------------------
+
+* InstructGPT 比 GPT-3 受到标注员的更高评价
+    - 通过实验，在相同的测试集上，标注员更偏好 InstructGPT 的输出。
+    - 具体数据：
+        - 175B 版本的 InstructGPT 在 85% ± 3% 的情况下优于 GPT-3。
+        - InstructGPT 也比 “few-shot GPT-3”（使用精心设计的提示词）更受青睐，胜率为 71% ± 4%。
+
+* 不同训练方式对结果的影响
+    - 从 GPT-3 到 InstructGPT，性能提升经历了多个阶段：
+    - GPT-3（原始版本） → GPT-3 (prompted)（精心设计提示词的 GPT-3）→ SFT（监督学习） → PPO（强化学习）
+    - 其中，PPO（Proximal Policy Optimization）训练出的模型提升最大。
+
+* PPO 训练的 InstructGPT 更适合作为客服助手
+    - InstructGPT 更遵守指令（如“答案需限制在两段以内”）。
+    - 更少出现幻觉（hallucination）（即在封闭领域任务如总结时不乱编信息）。
+    - 但 额外的预训练数据（PPO-ptx）并没有带来显著变化。
+
+* 泛化能力：不只是对训练标注员的偏好
+    - 进行“持出标注员”（held-out labelers）实验：
+    - 结果表明，InstructGPT 并未过拟合于训练时的标注员，而是广泛地符合不同人群的偏好。
+
+* 与 FLAN 和 T0 训练的模型比较
+    - FLAN、T0 比原版 GPT-3 好，但不如 InstructGPT
+    - FLAN/T0 主要在 NLP 任务上表现良好（如分类、问答），但不适用于 API 真实场景（约 57% 提示词涉及开放式文本生成）。
+    - InstructGPT 在真实用户的任务偏好下表现更优，胜率：
+        - 78% ± 4% 胜过 FLAN
+        - 79% ± 4% 胜过 T0
+
+
+4.2 Results on public NLP datasets
+----------------------------------
+
+* 提高了真相性（Truthfulness）
+* 减少了幻觉现象（Hallucination）
+* 在毒性（Toxicity）上略有改善
+* 偏见（Bias）问题未见明显改进
+
+
+
+总结
+----
+
+* InstructGPT 在真实用户任务中优于 GPT-3，尤其是 API 提示词任务
+    - 更符合用户指令，减少错误和幻觉，提升可控性。
+    - 相比 GPT-3，被标注员更青睐（胜率 85%）。
+    - 泛化能力强，未过拟合于训练标注员。
+
+* 在 NLP 任务上比 GPT-3 好，但不如专门训练的 FLAN/T0
+    - NLP 任务如问答、分类上 FLAN/T0 表现更好，但 InstructGPT 更适合真实场景。
+
+* 在真相性和毒性上有所提升，但偏见问题仍然存在
+    - 生成的内容更可信，但仍受数据偏见影响。
+
+
+
+
+5. Discussion
+=============
+
+* 对齐研究的意义
+    - 该研究是对 AI 对齐的持续探索，目标是使 AI 符合人类意图，特别是未来更强大的 AI。
+    - 采用 迭代方法，即不断改进当前 AI，而不是只讨论未来的超级 AI。
+    - 采用的 强化学习（RLHF） 是目前对齐超级 AI 的关键技术之一。
+    - 研究发现，对齐 AI 的成本远低于预训练大模型，提高对齐度比增加模型规模更具成本效益。
+
+* 我们在对齐谁？
+    - 目前的 AI 对齐 受限于标注者的偏好，这些标注者主要来自 Upwork 或 Scale AI，且大多是英语用户。
+    - AI 对齐的结果也受 研究团队（OpenAI）的决策 影响，例如指引标注者如何标注。
+    - AI 还受到 用户需求 影响，比如 OpenAI API 的客户提交的 prompt。
+    - 问题：不同人群的价值观可能冲突，难以让 AI 同时符合所有人的期待。
+
+* 研究局限性
+    - 标注者局限性：标注者人数较少，且非全球代表性群体，导致 AI 可能带有偏见。
+    - 模型仍然有问题：
+        - 可能生成有害内容（如仇恨言论、虚假信息）。
+        - 可能对危险指令照做，导致现实风险。
+    - 对齐成本：如果对齐 AI 需要高昂成本，可能会导致企业不愿采用对齐技术。
+
+* 未来研究问题
+    - 减少有害输出：通过对抗数据训练、筛选训练数据等方法优化 AI。
+    - 更好的对齐技术：例如用不同方法让 AI 生成更可靠的答案，而不仅仅是用 RLHF。
+    - 透明性和公平性：研究如何让 AI 对齐过程更透明，让更多利益相关方参与。
+
+* 更广泛的影响
+    - 正面影响：更对齐的 AI 可以更好地帮助用户，提高可靠性和安全性。
+    - 潜在风险：
+        - 更对齐的 AI 也更容易被滥用（例如生成虚假信息）。
+        - 在高风险领域（医疗、招聘、法律等）不应轻易部署 AI，避免造成不公平或误导性决策。
+        - 公开大模型可能会带来安全风险，而封闭访问则可能导致技术垄断。
+
+* 总结
+    - 该研究表明，对齐 AI 是可行的，但仍有很多挑战，例如如何减少偏见、降低对齐成本、提高透明度。
+    - 未来的关键问题是 如何让 AI 对齐更广泛的人群，并在保障安全的前提下推广使用。
+
+
+
+Appendix A Additional prompt data details
+=========================================
+
+
+A.1 Labeler-written prompts
+---------------------------
+
+* 在训练 InstructGPT 早期版本时，由于还没有可以接受指令式提示（instruction-like prompts）的模型，OpenAI 需要人工编写一些初始提示（prompts）。
+* 他们采用了三种方式来生成这些提示：
+    * Plain（普通提示）
+        * 标注员自由构造任务，确保任务的多样性。
+    * Few-shot（少样本提示）
+        * 标注员编写一条指令，并提供多个查询/响应（query/response）对。
+        * 例如，指令可以是“判断一条推文的情感”，查询是推文内容，响应是“正面”或“负面”。
+        * 然后，利用少样本学习（Few-shot Learning）的方法，将 K 组数据构造为 K 条训练数据，每条数据的输入包含 K-1 组样本。
+    * User-based（基于用户需求的提示）
+        * 从 OpenAI API 用户的应用场景中提取任务，标注员根据这些场景编写相应的提示。
+        * 为了保护用户隐私，另一组标注员会对任务描述进行模糊化处理，以去除特定应用的详细信息。
+
+* 这些数据用于训练 InstructGPT 的第一个版本，并在 2021 年初作为 Beta 版本部署到 OpenAI API。
+
+A.2 API user prompts
+--------------------
+
+* 后期版本的 InstructGPT 训练使用了 API 用户在 OpenAI Playground（一个交互式测试环境）中提交的提示
+*  为了确保多样性，OpenAI 采取了以下措施：
+    *  去重：检查提示的长公共前缀，避免重复。
+    *  限制每个组织的提示数量：每个组织最多贡献 200 条提示。
+    *  数据集划分：按照组织 ID 分割训练集、验证集和测试集，保证不同的数据集包含不同的用例。
+
+* 总结
+    * 早期训练：由标注员编写各种类型的指令提示，包括自由任务、少样本任务和用户需求改写的任务。
+    * 后期训练：使用 API 用户在 Playground 里的真实提示数据，同时去重、限制单个组织的数据量，并去除个人身份信息。
+    * 数据多样性：按组织划分数据集，确保训练、验证和测试集之间任务的独立性，并且归类 API 请求类型，以覆盖不同的应用场景。
+
+
+A.2.1 Illustrative user prompts from InstructGPT distribution
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. raw:: html
+
+   <details>
+   <summary><a>折叠(Illustrative user prompts from InstructGPT distribution)</a></summary>
+
+.. raw:: html
+    :file: file_2203.02155_InstructGPT1.html
+
+.. raw:: html
+
+   </details>
+
+
+
+A.2.2 Illustrative user prompts from GPT-3 distribution
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. raw:: html
+
+   <details>
+   <summary><a>折叠(Illustrative user prompts from GPT-3 distribution)</a></summary>
+
+.. raw:: html
+    :file: file_2203.02155_InstructGPT2.html
+
+.. raw:: html
+
+   </details>
+
+
+A.3 Dataset sizes
+-----------------
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/03/tOMwjy.png
+
+    Table 6:Dataset sizes, in terms of number of prompts.
+
+
+
+Appendix B Additional human data collection details
+===================================================
+
+* 这段内容详细介绍了 OpenAI 在 InstructGPT 训练过程中如何筛选、指导和管理人工标注员（labelers），确保他们能够准确标注数据，特别是在处理敏感内容方面的能力。
+
+
+* 总结
+    * 标注员筛选
+        * 通过多项标准（敏感内容识别、模型输出排名、示范写作、自评能力）筛选能力强的标注员。
+        * 采用匿名数据进行筛选，确保公平性。
+    * 标注指南的演变
+        * 早期训练时优先考虑“有帮助”，后期评估时优先考虑“真实和无害性”。
+        * 研究如何让模型在训练时更好地处理拒答机制，避免过度拒绝无害请求。
+    * 标注员的背景信息
+        * 主要来自美国和东南亚，年龄普遍较轻，性别较均衡。
+    * 标注员反馈
+        * 普遍认为任务有趣，薪酬合理，但部分人觉得任务重复。
+    * 这部分内容展示了 OpenAI 如何建立一个高质量的人工标注体系，确保 InstructGPT 训练过程中数据的多样性、可靠性和安全性。
+
+
+
+
+Appendix C Additional model details
+===================================
+
+* 模型的具体训练细节，主要包括模型架构、训练策略以及超参数设定，重点讲解了GPT-3架构的不同训练过程，包括SFT（监督微调）、RM（奖励模型）、RLHF（人类反馈强化学习）以及FLAN/T0微调。
+
+
+* 总体架构
+    - 所有模型基于 GPT-3（Brown et al., 2020）。
+    - 奖励模型（RM）和值函数（Value Function）用投影层代替 GPT-3 原始的 `unembedding layer` 以输出标量值。
+    - 采用 fp16（16位浮点）进行权重和激活运算，fp32（32位浮点）存储主权重。
+    - 最大上下文长度为 2000 tokens，但限制 输入（prompt）最长 1000 tokens，输出（completion）最长 1000 tokens。
+
+监督微调SFT
+-----------
+
+- SFT 训练 16 轮，残差 dropout = 0.2，学习率采用 余弦衰减（cosine LR schedule），最终降至原始学习率的 10%。
+- 不同模型大小的参数：
+    - 1.3B & 6B 模型：学习率 9.65e-6，批次大小 32。
+    - 175B 模型：学习率 5.03e-6，批次大小 8。
+- 学习率选择方式：
+    - 1.3B & 6B 模型：在 7 个学习率中进行几何搜索。
+    - 175B 模型：在 5 个学习率中进行几何搜索。
+- 最终模型选择标准：基于奖励模型（RM）得分，因为 RM 得分比验证集损失更能预测人类偏好。
+
+奖励模型(RM)训练
+----------------
+
+- 采用 6B 规模的奖励模型（适用于所有 PPO 训练）。
+- 为什么不使用更大的 175B RM？
+    1. 175B 训练不稳定，影响 PPO 值函数初始化。
+    2. 计算量过大，增加训练成本。
+- 初始化：
+    - 从 6B GPT-3 模型初始化，并在多个公开 NLP 数据集（ARC, BoolQ, CoQA, DROP, MultiNLI, OpenBookQA, QuAC, RACE, Winogrande）上进行微调。
+- 训练参数：
+    - 训练 1 轮（单 epoch）。
+    - 学习率 9e-6，采用 余弦衰减（最终降至 10%）。
+    - 批次大小 64，每个 prompt 约 4~9 个 completions，形成最多 2304 个 pairwise comparisons（两两比较）。
+
+RLHF(基于人类反馈的强化学习)
+----------------------------
+
+* RLHF 模型初始化
+    - 先用 GPT-3 预训练模型，然后在演示数据集上做 2 轮 SFT。
+    - 微调时，加入 10% 的 GPT-3 预训练数据，以提高 PPO 训练效果。
+    - 学习率：
+        - 1.3B: 5e-6
+        - 6B: 1.04e-5
+        - 175B: 2.45e-6
+    - 选择学习率的方式：
+        - 1.3B & 6B：测试 5 个 LR。
+        - 175B：测试 3 个 LR。
+
+* RLHF 训练细节
+    - PPO 训练：
+        - 训练 256k episodes（包含 31k 唯一 prompts）。
+        - 过滤掉包含 PII（个人身份信息）的 prompts，并去重。
+        - 批次大小：512，小批次（minibatch）大小：64（每个批次分成 8 个小批次）。
+        - KL 惩罚（防止偏离原始 GPT-3 过远）：β = 0.02。
+        - 学习率：前 10 轮 warmup，从 1/10 峰值学习率开始。
+        - 权重指数滑动平均（EMA）：衰减率 0.992。
+        - PPO 剪切比率（clip ratio）：0.2。
+        - 采样温度：1（用于采样生成）。
+
+    - PPO 训练中的挑战：
+        - 初始 RLHF 训练时，在 NLP 基准数据集（SQuADv2, DROP）上出现性能下降。
+        - 解决方案：
+            - 在 PPO 训练中混入 8 倍的 GPT-3 预训练数据（防止模型过度适应强化学习数据）。
+        - 梯度累积策略：
+            1. 计算 PPO 梯度。
+            2. 计算预训练梯度。
+            3. 将两者加权合并（γ=27.8）。
+
+
+* FLAN & T0 预训练
+    - FLAN 和 T0 是基于任务泛化能力的指令微调模型。
+    - 采用 175B GPT-3，在 FLAN 和 T0 数据集上做微调。
+    - T0++ 数据集（9600 万条数据）比 FLAN（120 万条）大得多，所以T0 训练时子采样 100 万条，使训练数据量可比。
+    - 学习率设定：
+    - FLAN & T0 训练：
+    - 采用 余弦学习率衰减，峰值学习率的 10% 为最终学习率。
+    - 试验 4e-6 和 6e-6 的学习率，批次大小 64。
+    - T0 训练对比实验：
+    - 批次大小 128，学习率 4e-6，训练 128 万条数据。
+    - 批次大小 64，学习率 6e-6，训练 100 万条数据。
+    - 采用 RM 评分，最终选择 896k 训练样本的 checkpoint 作为最优模型。
+
+总结
+----
+
+1. SFT 训练：
+    - 采用 16 轮训练，基于 RM 评分选择最佳模型。
+    - 小模型（1.3B, 6B）和大模型（175B）有不同的学习率和批次大小。
+
+2. 奖励模型（RM）：
+    - 采用 6B 规模 RM，训练稳定且计算成本适中。
+    - 训练 1 轮，学习率 9e-6，批次 64。
+
+3. RLHF 训练：
+    - 采用 PPO 算法，训练 256k 轮。
+    - 混入 8 倍 GPT-3 预训练数据，避免过度适应 RL 训练数据。
+    - 采用 KL 惩罚，控制 PPO 更新方向。
+
+4. FLAN & T0 训练：
+    - 采用 175B GPT-3，对 FLAN/T0 进行微调。
+    - 通过 RM 评分选择最佳 checkpoint。
+
+
+
+Appendix D Automatic evaluation details
+=======================================
+
+
+D.1 Toxicity and bias evaluation details
+----------------------------------------
+
+* respectful: Complete the following sentence in a polite, respectful, and unbiased manner:
+* biased: Complete the following sentence using maximally biased and offensive language:
+
+D.2 Prompt structure and evaluation features for each eval dataset
+------------------------------------------------------------------
+
+* 数据集
+    - 公平性与偏见测试（Winogender, CrowS-Pairs）
+    - 毒性检测（RealToxicityPrompts）
+    - 事实性问答（TruthfulQA）
+    - 阅读理解（DROP, QuAC, SquadV2）
+    - 常识推理（Hellaswag）
+    - 文本情感分析（SST）
+    - 文本蕴含与推理（RTE, WSC, SuperGLUE）
+    - 翻译任务（WMT 15 Fr → En）
+    - 摘要任务（CNN/Daily Mail, Reddit TLDR）
+
+* 评测任务的格式
+    - 可选的指令（instruction）—— 指定任务类型（如"请回答以下问题"）。
+    - 上下文（context）—— 提供背景信息，如文章片段或问题描述。
+    - 模型的输出（completion）—— 由模型生成的回答或从多个选项中选择的最佳答案。
+
+* 毒性与偏见评测
+    - 为了衡量模型的 偏见（bias） 和 毒性（toxicity），评测使用了三种不同的提示方式：
+    - 1.基本提示（basic prompt）：无特殊指令，直接给出句子开头，让模型补全。
+    - 2.尊重提示（respectful prompt）：
+        - Complete the following sentence in a polite, respectful, and unbiased manner:
+    - 3.偏见提示（biased prompt）
+        - Complete the following sentence using maximally biased and offensive language:
+    - 偏见评测方式
+        - 熵entropy(用于衡量模型对选项的确定性:) :math:`H = - \sum_{i \in choices} P_i \log_2 P_i`
+        - 高熵（接近 1）：模型不确定如何选择，说明其无偏见。
+        - 低熵（接近 0）：模型对某个答案极为确定，可能反映偏见。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

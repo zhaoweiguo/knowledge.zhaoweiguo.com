@@ -1,0 +1,841 @@
+2410.10450_KBLaM: Knowledge Base augmented Language Model
+#########################################################
+
+
+* https://arxiv.org/abs/2410.10450
+* 组织: Microsoft Research
+
+
+Abstract
+========
+
+* In this paper, we propose Knowledge Base augmented Language Model (KBLaM), a new method for augmenting Large Language Models (LLMs) with external knowledge. 
+* KBLaM works with a knowledge base (KB) constructed from a corpus of documents, transforming each piece of knowledge in the KB into continuous key-value vector pairs via pre-trained sentence encoders with linear adapters and integrating them into pre-trained LLMs via a specialized rectangular attention mechanism. 
+* Unlike Retrieval-Augmented Generation, KBLaM eliminates external retrieval modules, and unlike in-context learning, its computational overhead scales linearly with KB(knowledge base) size rather than quadratically. 
+* Our approach enables integrating a large KB of more than 10K triples into an 8B pre-trained LLM of only 8K context window on one single A100 80GB GPU and allows for dynamic updates without model fine-tuning or retraining. 
+* Experiments demonstrate KBLaM’s effectiveness in various tasks, including question-answering and open-ended reasoning, while providing interpretable insights into its use of the augmented knowledge.
+
+
+
+1. Introduction
+===============
+
+.. note:: KBLaM 通过结构化知识库，将外部知识高效地编码成 LLM 可直接用的 key-value 向量，避免 RAG 的检索复杂性，也解决了 in-context learning 资源消耗高的问题，实现了动态、高效、可解释的知识增强。
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/03/f5Nzfd.png
+
+    Figure 1:Overview of the KBLaM pipeline and comparison with existing approaches. KBLaM augments knowledge into a pre-trained LLM in the form of knowledge tokens, a set of continuous key-value vectors, using a modified rectangular attention structure. Unlike RAG, KBLaM does not rely on separate retriever module at inference time and unlike in-context learning, KBLaM’s computation and memory overhead scales linearly rather than quadratically with the size of the KB.
+
+
+* 核心思想：
+    - 先用工具把外部语料（无结构）转换成 结构化知识库（KB），形式是三元组：
+        - ``<name>（实体名称）, <property>（属性）, <value>（值）``
+        - 比如：("China", "capital", "Beijing")
+* KBLaM具体做法：
+    - 把每个三元组变成一个固定长度的 key-value 向量对，叫做 knowledge token，格式跟 LLM 的 KV cache 一样。
+    - <name> 和 <property> 编码成 key vector。
+    - <value> 编码成 value vector。
+    - 这些 knowledge tokens 直接注入到 LLM 的注意力层，每个知识三元组都是独立的，互不影响。
+
+* 优缺点
+    - 优点：三元组 → 固定向量对，注入Attention层，线性增长 
+        - 动态更新能力：添加/删除/修改知识，只需更新对应的 knowledge token，无需微调模型权重或重建KV cache。
+        - 可解释性好：注意力矩阵可以清楚看到模型如何使用每个 knowledge token。
+        - 训练方式：
+            - 使用 合成数据训练 linear adapter，不关心真实知识内容，只需让模型学会如何投影 sentence encoder → LLM embedding。
+            - 不涉及“记住知识”，避免 fine-tuning 的灾难性遗忘。
+    - 缺点：需要先结构化数据为KB；但支持动态增删改，解释性强。
+
+
+2. Related work
+===============
+
+.. note:: KBLaM的核心创新是在继承RAG隐式检索、多模态适配器训练、KV cache高效性这些思想的基础上，用一个无需新模块、可解释、动态可更新的attention机制，把结构化知识库直接嵌入到已有LLM中，既保持了效率，又大幅降低了复杂度和训练成本。
+
+* 与 RAG 的关系
+    - 相似点
+        + 隐式检索: KBLaM 没有单独的检索器，而是通过注意力机制自动完成“检索”
+        + 怎么做的: 输入query通过注意力层和知识token的key进行匹配，得到相似度分数（query-key similarity），然后取知识token的value的加权平均，类似“软检索”（soft retrieval）。
+    - 不同点
+        + RAG：依赖外部检索模块（retriever） → 先检索 → 再喂模型。
+        + KBLaM：完全通过Attention机制内化完成，不需要检索模块 → 端到端处理。
+
+* 与 多模态语言模型 的关系
+    - MLMs：把图片、视频等非文本数据，通过专门的 encoder/adapters 变换成 LLM可以理解的向量，再用 instruction tuning 微调。
+    - KBLaM 类比：
+        + 可以把 结构化知识库（KB） 看作是另一种“模态”，它被编码成连续向量（knowledge tokens）。
+        + 这个过程里的 encoder + adapter 的设计，正是借鉴了 MLM 领域已有方法。
+        + 同样用 instruction tuning 来训练 adapter，适配预训练好的LLM。
+
+
+
+3. Background
+=============
+
+* Knowledge base in the form of triples(示例参见 Appendix E中的table1和table2)
+
+.. math::
+
+    {(<name>_m; <property>_m; <value>_m)}^M_{m=1}
+
+
+Self-attention layer
+--------------------
+
+.. note:: 总结：Self-Attention 层通过 Query、Key、Value 计算 token 间关系，时间和内存消耗随着序列长度 $N$ 增长为 $O(N^2)$，所以长序列时会面临高计算和高内存开销。
+
+
+
+* Transformer 有 L 层，每一层有 三个权重矩阵，也叫 投影头（projection heads）：
+    - 查询权重 (Query weight)： :math:`\boldsymbol{W}_{Q}^{l} \in \mathbb{R}^{D \times D}`
+    - 键权重 (Key weight)： :math:`\boldsymbol{W}_{K}^{l} \in \mathbb{R}^{D \times D}`
+    - 值权重 (Value weight)： :math:`\boldsymbol{W}_{V}^{l} \in \mathbb{R}^{D \times D}`
+    - 这里 D 是 embedding 的维度，比如 512 或 768 维。
+
+*  输入是什么
+    - 输入是一个 用户 prompt（比如一个问题），它是一个长度为 N 的 token 序列。
+    - 对应每个 token，有一个 embedding 向量：
+    - 也就是说，每一层 self-attention，输入是 N 个 D 维向量。
+
+.. math::
+
+    \boldsymbol{x}^{l} = \left[\boldsymbol{x}_{1}^{l}, \ldots, \boldsymbol{x}_{n}^{l}, \ldots, \boldsymbol{x}_{N}^{l}\right]^{\top} \in \mathbb{R}^{N \times D}
+
+* Query, Key, Value 的计算
+    - 对于第 n 个 token 的 embedding
+    - 每个 token 通过三套权重矩阵被映射成 Query, Key, Value 三个向量。
+
+.. math::
+
+    \begin{matrix}
+        \boldsymbol{q}_{n}^{l} = \boldsymbol{W}_{Q}^{l} \boldsymbol{x}_{n}^{l} \quad (Query) \\
+        \boldsymbol{k}_{n}^{l} = \boldsymbol{W}_{K}^{l} \boldsymbol{x}_{n}^{l} \quad (Key) \\
+        \boldsymbol{v}_{n}^{l} = \boldsymbol{W}_{V}^{l} \boldsymbol{x}_{n}^{l} \quad (Value) 
+    \end{matrix}
+
+* Self-Attention 的核心计算
+    - 对于每个 token n，输出 :math:`\boldsymbol{y}_{n}^{l}`
+        - 自注意力公式: :math:`\boldsymbol{y}_{n}^{l} = \frac{\sum_{i=1}^{n} \exp(w_{n, i}) \boldsymbol{v}_{i}^{l}}{\sum_{i=1}^{n} \exp(w_{n, i})}`
+    - 其中权重 :math:`w_{n,i}` 是：
+        - :math:`w_{n, i} = \frac{\langle \boldsymbol{q}_{n}^{l}, \boldsymbol{k}_{i}^{l} \rangle}{\sqrt{D}}`
+        - 也就是说：
+            - 当前 token 的 Query 与 所有之前 token 的 Key 做 点积，然后除以 :math:`\sqrt{D}` （防止梯度过大）。
+            - 这些点积通过 softmax 归一化（其实就是加了 :math:`\exp` 然后再归一化）。
+            - 然后用这些权重加权之前所有 token 的 Value。
+
+    - 因为这是 decoder-based Transformer，它的 attention 是 masked，也就是说，当前 token 只能看到自己和之前的 token，不能看到后面的（防止“偷看”未来）。
+
+* 输出
+    - 最终得到的 :math:`\boldsymbol{y}_{n}^{l}` ，会再经过 前馈神经网络 (FFN) 处理，进一步提升表达能力。
+
+* 计算 & 内存复杂度
+    1. Attention 权重计算：
+        - 每个 token 需要跟所有 token 计算点积（N 个 token，两两之间）。
+        - 因此，时间复杂度是 :math:`\mathcal{O}(N^2 D)`
+    2. 存储所有权重 :math:`w_{n,i}` ：
+        - 需要存储 :math:`N \times N` 的矩阵。
+        - 所以 内存复杂度是 :math:`\mathcal{O}(N^2)`
+    3. 前馈神经网络 (FFN)：
+        - 复杂度是 :math:`\mathcal{O}(N D^2)`
+
+
+
+
+4. Augmenting LLM with the KB
+=============================
+
+.. note:: KBLaM 通过“知识 token + Rectangular Attention”方式，将外部知识库的三元组高效映射进 LLM 的每层 attention，使模型具备额外的知识记忆，但避免了传统上下文拼接方式的内存问题。
+
+
+
+* 整体流程(参见下图: Figure 2:Overview of KBLaM’s KB augmentation process)
+    1️⃣ 将知识库中的三元组转换成向量形式 —— knowledge token
+        - 通过 pre-trained sentence encoder followed by linear adapters 实现
+    2️⃣ 把这些 knowledge token 注入到 LLM 的每一个 attention 层中
+        - 通过一种 Rectangular Attention 结构实现
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/03/9O1Nwx.png
+
+    (a)Step 1. KB encoding:  For each triple from a KB of M triples, we first construct a key and value string (left most white boxes). Then both strings are processed by a pre-trained sentence encoder followed by a learned linear adapter middle two blue boxes). The acquired knowledge tokens (right-most small boxes) are then stored on disk for later usage. Note that all :math:`\widetilde{k}_m^ls` and :math:`\widetilde{v}_m^ls` have a fixed dimension of D, i.e. identical to that of the key and value embeddings of a token, regardless of input length.
+
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/03/NOhQNM.png
+
+    (b)Step 2. Augmenting knowledge tokens into attention  For layer l, given an sequence of N D-dimensional embeddings from the prompt （ :math:`\left(\boldsymbol{x}_{1}^{l}, \ldots, \boldsymbol{x}_{N}{ }^{l}\right)` , e.g. a question about the KB), augmented with M knowledge tokens as context :math:`\left(\left\{\left(\widetilde{\boldsymbol{k}}_{m}{ }^{l}, \widetilde{\boldsymbol{v}}_{m}{ }^{l}\right)\right\}_{m=1}{ }^{M}\right)` , KBLaM’s attention outputs N embedding vectors with each element :math:`\widetilde{\boldsymbol{y}}_{n}{ }^{l} \in \mathbb{R}^{D}`  (top right panel) under a rectangular attention matrix (bottom right panel): Blue regions show the extra components introduced by KBLaM whereas the red parts are from standard self-attention. Note that the input sizes of the FFN stay unchanged, the only additional overhead introduced by KBLaM comes from the blue parts in the equation and thematrix, which scales as 𝒪(M).
+
+
+Knowledge tokens
+----------------
+
+输入::
+
+    知识库中存储的是三元组
+    (实体, 属性, 描述)
+    (Name, Property, Value)
+    如：("Apple", "founded_year", "1976")
+
+* 转换过程:
+    1. Sentence Encoder：
+        - 用一个 pre-trained Sentence Encoder 模型(如 :math:`f(·)` )，把每个三元组的字符串转换为一个 P 维的连续向量。
+        - 得到的是一个 key embedding 和一个 value embedding（类似 transformer 里的 key-value pair）。
+        - :math:`k_m = f(The <property>_m of <name>_m) \in \mathbb{R}^P`
+        - :math:`v_m = f(<value>_m) \in \mathbb{R}^P`
+    2. Linear Adapter：
+        - 用两个 线性变换器 (adapter)，将刚才得到的 key 和 value 向量，进一步映射到 LLM 各层的 key/value embedding 空间，以适配每一层的注意力。
+        - 转换后，每个三元组得到的 key 和 value embedding 在 每一层都有一个对应版本
+        - :math:`\widetilde{\boldsymbol{W}}_{K} \in \mathbb{R}^{L \times D \times P}`
+        - :math:`\widetilde{\boldsymbol{W}}_{V} \in \mathbb{R}^{L \times D \times P}`
+        - 其中: 
+            + L: the number of attention layers in a model
+            + With the adapters, we map 𝗸_m and 𝘃_m from the sentence encoder’s space to LLM’s key and value embedding space at each attention layer.
+            + 参见下面公式
+            + 将 :math:`(\widetilde{\boldsymbol{k}}_{m}, \widetilde{\boldsymbol{v}}_{m})` 对称为 ``knowledge token``
+    3. 这种映射的本质：
+        - 把知识三元组的多 token 表示，压缩成一个特别的 知识 token
+        - 它在每层 attention 里都有固定的 key-value embedding，而不需要参与自注意力。
+        - This encoding process is applied to all triples in the KB, which transforms the information from a KB into a collection of knowledge tokens
+        - :math:`\{(<name>_m, <property>_m, <value>_m\}^M_{m=1} \overset{Encode}{\rightarrow} \{(\widetilde{\boldsymbol{k}}_{m}, \widetilde{\boldsymbol{v}}_{m})\}^M_{m=1}`
+
+.. math::
+
+    \begin{array}{l}
+        \widetilde{\boldsymbol{k}}_{m}=\left[\widetilde{\boldsymbol{k}}_{m}{ }^{1}, \ldots, \widetilde{\boldsymbol{k}}_{m}^{l}, \ldots, \widetilde{\boldsymbol{k}}_{m}{ }^{L}\right]^{\top}=\widetilde{\boldsymbol{W}}_{K} \mathbf{k}_{m} \in \mathbb{R}^{L \times D}, \\
+        \widetilde{\boldsymbol{v}}_{m}=\left[{\boldsymbol{v}_{m}}^{1}, \ldots, \widetilde{\boldsymbol{v}}_{m}{ }^{l}, \ldots, \widetilde{\boldsymbol{v}}_{m}{ }^{L}\right]^{\top}=\widetilde{\boldsymbol{W}}_{V} \mathbf{v}_{m} \in \mathbb{R}^{L \times D} .
+    \end{array}
+
+
+Rectangular Attention: Injecting knowledge token into prompt tokens
+-------------------------------------------------------------------
+
+* 关键点：
+    - 输入 prompt 有 N 个 token
+    - 知识库产生了 M 个 knowledge tokens
+
+* 在每一层 attention 里，修改注意力机制，让：
+    - Prompt tokens 可以：
+        - 正常 self-attention（彼此之间注意）
+        - 还可以额外 attend 到所有 knowledge tokens
+    - Knowledge tokens：
+        - 不会彼此之间 self-attend
+        - 它们没有 query embedding，不会主动去关注 prompt，只是提供静态的 key-value
+
+* 公式解释：
+
+.. math::
+
+    \widetilde{\boldsymbol{y}}_{n}^{l}=\frac
+    {
+        \sum_{m=1}^{M} \exp \left(\widetilde{w}_{n, m}^{l}\right) \widetilde{\boldsymbol{v}}_{m}^{l}
+            +\sum_{i=1}^{n} \exp \left(w_{n, i}^{l}\right) \boldsymbol{v}_{i}^{l}
+    }
+    {
+        \sum_{m=1}{ }^{M} \exp \left(\widetilde{w}_{n, m}^{l}\right)+\sum_{i=1}^{n} 
+        \exp \left(w_{n, i}^{l}\right)
+    }
+
+
+- 说明
+    - attention matrix of rectangular shape of size (M +N)×N, where M is the number of triples in the KB.
+    - 当M=0时(knowledge tokens are not introduced)，会退化成普通的自注意力机制
+    - :math:`\boldsymbol{y}_{n}^{l} = \frac{\sum_{i=1}^{n} \exp(w_{n, i}) \boldsymbol{v}_{i}^{l}}{\sum_{i=1}^{n} \exp(w_{n, i})}`
+
+* 详细来说：
+    - 自身注意分数：<query, prompt key>
+    - 知识注意分数：<query, knowledge key>
+    - 知识 token 通过单独的 query 头和线性变换得到
+    - 最终输出是 prompt token 和知识 token 的 weighted sum
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/03/JnjAl4.png
+
+    Figure 3:Memory overhead of different methods. Given a KB of M triples (with each triple K-token long on average). In-context learning’s memory scales with (KM)^2, whereas KBLaM’s memory scales with M.
+
+
+
+
+KB length generalization through attention score scaling
+--------------------------------------------------------
+
+
+* 为什么叫 Rectangular Attention？
+    - 传统 self-attention 的矩阵是 N×N（prompt token 自己之间互相注意）。
+    - 而这里：
+    - - prompt tokens 和 knowledge tokens 之间注意 -> (M+N)×N，是一个长方形矩阵。
+    - 且知识 token 部分是不互相注意的，所以在矩阵中呈现特定稀疏结构。
+
+* 优势：
+    - 内存效率高：不像 in-context learning 那样需要显式把所有 KB 直接拼进 prompt，避免 O((KM)²) 的内存膨胀。
+    - 知识 token 的 embedding 是直接注入到 attention 计算中，不随着上下文长度暴涨。
+
+
+
+
+5. KB instruction tuning
+========================
+
+.. note:: KBLaM 通过 freeze 大模型参数，仅训练轻量 adapter（Query/Key/Value 头），利用合成 KB 和 QA 对进行 instruction tuning，避免过拟合，同时保留 LLM 推理能力，且训练成本低、解释性强。
+
+* KBLaM 的可学习参数有哪些？
+    * KBLaM 里并 没有 fine-tune 整个大模型（LLM），而是引入了 轻量可学习参数，包括：
+    * :math:`\theta = \{ \tilde{\mathbf{W}}_K, \tilde{\mathbf{W}}_V, \{\tilde{\mathbf{W}}_Q^l\}_{l=1}^L \}`
+    * 含义：
+        - :math:`\tilde{\mathbf{W}}_K` ：Key adapter 权重
+        - :math:`\tilde{\mathbf{W}}_V` ：Value adapter 权重
+        - :math:`\tilde{\mathbf{W}}_Q^l` ：每一层第 l 层的 Query adapter 权重
+
+    * 也就是说，它们是 额外的线性 adapter/头，通常是低秩（参数量远小于完整 LLM 的参数）。
+    * 目的：  
+        - 只训练这些 adapter，而不动 LLM 本身的参数。
+
+* 为什么要这样做？
+    - 灵感来自多模态大模型的做法（比如 `LLaVA <https://openreview.net/forum?id=w0H2xGHlkw>`_ 这类），其好处有：
+        - 保持 LLM 的原始推理能力  
+          → 因为不改动 LLM 的大部分参数
+        - 减少过拟合和记忆训练数据的风险  
+          → 传统 fine-tune 很容易直接记住训练数据，而只调 adapter 就可以避免这个问题
+        - 训练成本低  
+          → 参数少，计算资源需求也低
+
+* Instruction Tuning 的具体操作
+    - 核心训练目标：
+        - 给定一个知识库（KB）和一个问题 Q，模型需要输出正确答案 A。
+    - 训练目标是最大化：
+        - :math:`\max_{\theta} \log p_{\theta, \phi}(A \mid Q, \text{KB})`
+        - :math:`\theta` → 可训练的 adapter 参数
+        - :math:`\phi` → 预训练 LLM 的固定参数（包括原有的 QKV、FFN、embedding 等）
+    - 重点是 只更新 :math:`\theta` ，冻结 :math:`\phi` 。
+
+* 为什么用 synthetic KB？
+    - 核心原因：
+        - Instruction tuning 重点 不是记住具体 KB 内容，而是：
+            - 学习如何把 sentence encoder 的空间映射到 LLM 的语义空间
+        - 合成 KB 的多样性足够，能确保模型学到的是泛化能力，而非死记 KB。
+
+
+6. EXPERIMENTS
+==============
+
+* 实验目的概述-验证 KBLaM 模型的能力：
+    1. KBLaM 的注意力矩阵（attention matrix）是否具备可解释性，以及是否能准确地从知识库中检索信息。
+    2. 回答问题的能力：和传统的 In-Context Learning 方法相比，KBLaM 是否能在 更低内存消耗下保持类似的性能，且支持 扩展到 10K 条 triple 而性能不明显下降。
+    3. 拒答能力：当知识库中没有答案时，KBLaM 是否能适当地拒绝回答，而且比 In-Context Learning 更少“过度拒答(“over-refusal”)”。
+    4. 消融实验：测试 KBLaM 设计里的关键组件，验证它们对整体效果的影响。
+
+.. note:: KBLaM 在保证性能的同时，大幅降低内存需求，并通过训练学会了“可解释性检索+推理”能力，是比 In-context Learning 更高效、扩展性更好的 KB-Augmented LLM 方案。
+
+
+6.1 EXPERIMENT SETTING
+----------------------
+
+* 模型规格(Model specification)
+    - 使用 Llama3 8B 作为主模型，并经过指令微调。
+    - 用 OpenAI 的 ada-002 sentence embedding model 预训练得到知识库 key/value 的基本表示（用于后续 attention 中的 key/value）。
+
+* 优化设置(Optimization setting )
+    - Key 和 Value adapter：随机初始化。
+    - Query heads：从预训练 Llama3 8B 的权重加载。
+    - 优化器：AdamW，学习率从 `5×10^-4` 衰减到 `5×10^-6`，训练 20K 次迭代，每批 400 个 Q&A 样本。
+    - 训练硬件：80GB A100 GPU，使用 bfloat16 精度。
+
+* 训练数据构造(Construction of the training batches)
+    - 每个训练样本包含：一个 知识库(KB)、一个问题、一个答案。
+    - 知识库来源：合成 KB 中 前 120K triples。
+    - 每个 sample 的 KB 是从中 随机选取 10~100 triples。
+    - 设计四类 Q&A：
+        1. 简单单实体问题
+        2. 多实体问题（涉及多个 triples）
+        3. 开放性问题
+        4. 无答案问题（unanswerable）
+    - 每 batch 的 20 个 micro-batches：
+        - 2 个无答案
+        - 6 个简单
+        - 6 个多实体
+        - 6 个开放性
+    - 提前计算好所有 triples 的 key/value 向量，提高训练效率。
+
+* 验证集(Evaluation dataset)
+    - 合成数据：15000 条未用于训练的 triples。
+    - Enron 数据集：从 Enron 邮件中提取的 triples，经过小模型微调 & 去重。
+
+* 基线方法(Baseline)
+    1. In-Context Learning：直接把所有 triples 展平加到 prompt 里，容易出现内存瓶颈（最多只能处理 200 triples）。
+    2. Zero-shot：不提供 KB，靠 LLM 自带知识直接回答。
+
+* 评估设置(Evaluation setting)
+    - 每种评估，随机跑 5 次，每次 100 个测试样本，KB 大小不等，总共 500 个测试问题，取平均结果。
+
+
+6.2 EXPERIMENT RESULTS
+----------------------
+
+* 注意力作为检索器(KBLAM attention is an accurate retriever)
+    - 观察到 KBLaM 的注意力矩阵确实表现出检索行为：
+    - 具体衡量方法：第 15 层（Llama3 的中间层）的注意力得分（跨 32 个头平均）作为分类分数，去看 top-1 和 top-5 准确率。
+    - 结果：
+        - 在合成数据和 Enron 数据上，KBLaM 都能准确把注意力放在正确 triple 上，Enron 这种 OOD 数据表现稍差但还能接受。
+        - 注意：这个检索能力完全靠 指令微调 学出来的，没有加专门正则化或检索 loss。
+
+* KBLaM 的推理能力(KBLAM can reason about knowledge)
+    - 针对三类问题（简单、多实体、开放性）评估：
+        - 简单、多实体用 BERT score 衡量输出质量。
+        - 开放性问题用 GPT-4 打分，范围 0~5。
+    - 结果：
+        - 在合成数据上，KBLaM 和 In-context Learning 性能接近，但 内存占用远小，扩展性更好。
+        - 在 Enron 数据（OOD） 上，KBLaM 性能有下降，但依然好于 zero-shot，说明 KB 信息确实被有效利用。
+        - 从样本输出看：
+        - 合成 KB 上，回答几乎和 triple 内容一致。
+        - Enron 上，回答意思对，但措辞、细节差异更大。
+
+总结亮点
+--------
+
+- KBLaM 内存友好，相比 In-context Learning，不用重复输入所有 triples。
+- 具备 检索解释性，可通过注意力矩阵看出模型依赖了哪些 KB 条目。
+- 可以适应 规模更大的 KB（10K triples），性能稳定。
+- 具备 拒答机制，面对无答案问题，能有效识别。
+
+
+
+7. CONCLUSION
+=============
+
+.. note:: KBLaM 通过把知识库编码成稠密向量，并利用三元组之间的独立性，让 LLM 可以轻量、高效、动态地调用外部知识，同时保持解释性，并避免大规模自注意力计算。
+
+
+* 背景：大语言模型（LLMs）本身包含了大量世界知识，但这些知识是静态的，更新成本高。而 外部知识库（Knowledge Base, KB） 是结构化或半结构化的信息来源，比如三元组（Subject-Predicate-Object），可以提供更多 动态、可更新 的知识。
+* 核心内容：KBLaM 是他们提出的一个新方法，目的是 高效地将外部知识库与预训练的大语言模型结合。
+
+* 具体做法
+    a. 知识表示方式
+        - 传统的做法是用 原始文本 或 符号化三元组 存储知识。
+        - KBLaM 选择用 稠密连续向量（dense continuous vectors） 表示知识。
+        - 就是把每个知识单元，比如三元组 `(subject, predicate, object)`，编码成一个固定维度的向量。
+    b. 独立性结构
+        - 三元组之间通常是独立的（即一个三元组的信息不会直接影响另一个）。
+        - KBLaM 利用这种结构优势，避免了 LLM 对所有三元组进行全局自注意力（self-attention）。
+
+
+* 带来的好处
+    🔹 避免了高昂的计算开销  
+        - 传统的 LLM 需要对整个知识库（可能是百万量级）进行 self-attention，计算量巨大。而 KBLaM 只需要关注与当前问题相关的稠密向量，减少了不必要的计算。
+    🔹 动态更新知识  
+        - 因为知识是稠密向量存储的，更新某个知识点不需要重新微调 LLM，只需替换或新增相应向量即可。
+    🔹 可解释性增强  
+        - 每个三元组都有明确的含义，且是独立的。
+        - 在模型推理时，能够清晰地看到哪些具体知识被用到了。
+    🔹 Attention 直接当做检索机制  
+        - 模型内部的 attention 机制 也可以用于检索相关的知识向量，而不需要额外设计复杂的检索器。
+
+* In this paper, we propose KBLaM, which efficiently augments pre-trained LLMs with external knowledge bases. 
+* KBLaM represents external knowledge as dense continuous vectors and leverages the independence structure between triples, which offers several advantages: 
+    * avoiding expensive self-attention over large knowledge sources, 
+    * enabling dynamic knowledge updates without fine-tuning, 
+    * improving interpretability, and 
+    * allowing attention to perform retrieval. 
+* These benefits could potentially also be applied to settings using raw text as knowledge representation.
+
+
+
+
+8. LIMITATIONS AND FUTURE WORK
+==============================
+
+.. note:: 总结：当前 KBLaM 的局限在于数据多样性不足、信息压缩有损以及微调任务简单，未来可以通过改进合成数据质量、调整信息压缩策略，以及设计更复杂的推理指令，让模型在真实世界任务上表现得更稳、更强。
+
+
+* Higher quality synthetic KB（更高质量的合成知识库）
+    - 背景：- KBLaM 这篇论文里的知识库（KB）是完全用合成数据训练的，也就是说，它不是用真实的维基百科、Freebase 这样的现成知识库，而是人造数据生成的。
+    - 问题：- 实验表明，虽然模型在合成数据上表现不错，但一旦换到现实世界的、没见过的数据（比如 Enron 邮件数据集），性能会下降，泛化能力不足。
+    - 解决方向：- 更大、更多样的合成数据集：通过让合成数据的风格、内容更接近真实世界，模型可以学得更“广”。
+    - 从真实 KB 出发生成合成数据：- 不是完全凭空捏造，而是以真实 KB 为“种子”去扩展，能更好地模拟真实分布，让模型适应性更强。
+
+* Information loss in knowledge token（知识 token 中的信息损失）
+    - 背景：- KBLaM 里，把知识库里的三元组（比如：`(subject, predicate, object)`）压缩成固定长度的向量，也就是“知识 token”。
+    - 问题：- 这种压缩有损，尤其在需要精确文本输出时会出问题：
+        - 比如需要生成 具体名字、数字，压缩向量可能会丢掉关键细节，导致输出不准确。
+        - 但是，对于一些宽泛的信息（如“描述”、“目标”类属性），大致意思就够了。
+    - 未来方向：- 引入一个“压缩率超参数”，可以根据不同三元组内容调整压缩程度。
+        - 如果是数字、专有名词 → 低压缩（尽量保留细节）。
+        - 如果是描述性信息 → 高压缩即可。
+
+* More sophisticated instruction tuning（更复杂的指令微调）
+    - 背景：- 目前 KBLaM 的指令微调（instruction tuning）是相对简单的，例如简单问答。
+    - 问题 & 未来提升空间：- 未来可以探索更复杂的推理任务，比如：
+        - 多跳推理（multi-hop）：需要连续查多条 KB 记录才能得出答案。
+        - 多步推理（multi-step）：一步步推导，像链式思维（chain-of-thought）。
+        - 复杂的 链式推理，不仅是检索单条知识，还需要推理逻辑链。
+    - 观点：- 相比 RAG（检索增强生成），KBLaM 把整个 KB 融进上下文，有潜力更灵活地进行复杂推理，不依赖外部检索。
+
+
+
+Appendix A Extended related work
+================================
+
+* Memory Augmented Language Models（记忆增强型语言模型）
+    - 有很多研究尝试给语言模型加“外部记忆”，通常是 一组固定长度的向量表示。
+    - KBLaM 的知识 token 也可以被看作是一种外部记忆，来源于知识库（KB）。
+    - 对比：
+    - `Wu et al. (2022) <https://arxiv.org/abs/2203.08913>`_ 最接近 KBLaM 的方法：
+    - 他们用key-value 向量对构建外部记忆，和 KBLaM 的做法很像。
+    - 但有两个不同：
+        1. Wu et al. 需要从零训练 transformer，代价大。
+        2. 他们的记忆来自于之前训练过程中见到的 token。
+        3. 而 KBLaM 的记忆直接来源于外部 KB，推理阶段动态加进去，不需要重新训练大模型。
+
+* Token Compression（Token 压缩）
+    - KBLaM 把每个三元组 (subject, predicate, object) 编码成一个 固定长度的向量对，相当于压缩成单个 token 的长度。
+    - 类似的压缩方法在其它工作里也有尝试，比如：
+        1. Ge et al. (2023)：
+            - 把长 prompt 替换成特殊 token，告诉 LLM 执行特定任务。
+            - 缺点：需要对 LLM 微调，改动成本高。
+        2. Mu et al. (2024)：
+            - 用微调过的 LLM 把长上下文压缩成“memory slots”。
+            - 这种方法更强大，但代价也更高。
+    - KBLaM 的优点：
+        - 直接用预训练 sentence encoder 把 KB 压缩，不微调主 LLM。
+    - 未来方向：
+        - 可以尝试把 Mu et al. 那种更强的压缩器结合进 KBLaM 框架，提升压缩效果。
+
+* Structured Attention（结构化注意力）
+    - 有些研究修改了 Transformer 的注意力掩码，不用标准的 下三角 causal mask。
+    - 举的例子包括：
+        1. Ratner et al. (2022)：在 few-shot learning 里假设不同示例之间相互独立，不需要互相 attend。
+        2. Cai et al. (2023) 和 Merth et al. (2024)：处理多文档时假设不同来源的文档是独立的，不让它们互相 attend。
+    - 优点：
+        - 减少计算成本。
+        - 提高可解释性。
+    - KBLaM 的对应做法：
+        - 也做了独立性假设：
+        - 假设不同 KB 三元组相互独立，attention 结构上让它们彼此独立。
+        - 这样 KBLaM 能更高效扩展，且结构更清晰可解释。
+
+
+
+
+Appendix B Ablation study
+=========================
+
+1️⃣ Choice of Encoders（编码器选择）
+    - OpenAI embedding 效果更好。
+    - 维度高的嵌入 比低维度嵌入表现更好（信息容量大、表达能力强）。
+
+2️⃣ Where to Add Knowledge Tokens（在哪层加知识 tokens）
+    - 早期层的知识 token 表示变化不大（不同三元组之间相似度高）。
+    - 后期层变化较大，说明后期层更多关注具体 KB 内容。
+
+3️⃣ Frequency of Knowledge Tokens（知识 token 出现频率）
+    - 早期层的知识 tokens 可能像 软指令 prompt，告诉模型该怎么用 KB。
+    - 加得越少，模型越可能忽视 KB 或不理解 KB 用法。
+
+
+Appendix C Sample KB
+====================
+
+Here we present some example triples from both KBs, where each triple is of format::
+
+    (<name>; <property>; <value>)
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/03/bTbhtj.png
+
+    Table 1: Synthetic KB
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/03/K71jYo.png
+
+    Table 2: Enron KB
+
+
+
+
+SAMPLE Q&A
+==========
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/03/h5W0Ja.png
+
+    Figure 12: Examples of instructions tuning dataset. Given a KB of 4 triples (top panel), we generate 4 types of Q&A for instruction tuning. The KB shown is sampled from the synthetic KB; The question and answer for **open-ended Q&A** are also synthesized by GPT, the rest Q&As are generated using formatted string.
+
+
+
+PROMPT
+======
+
+PROMPT FOR SYNTHETIC KB GENERATION
+----------------------------------
+
+system prompt::
+
+    You are a AI system that generates synthetic data examples in JSON format
+
+a list of idea types and a list of object types::
+
+    idea_types = [
+        ’greek letters’, ’fiction characters’, ’famous rock bands’,
+        ’birds’, ’animals’, ’natural phenomena’, ’physical locations’,
+        ’artist names’, ’classical music’, ’musical instruments’,
+        ’music genres’, ’art styles’, ’ancient Roman concepts’,
+        ’Hindu myths’, ’Cthulhu Mythos’, ’real-world company names’,
+        ’mythological creatures’, ’planets and stars’, ’historical figures’,
+        ’literary genres’, ’botanical names’, ’famous landmarks’,
+        ’scientific concepts’, ’space missions’, ’inventions’,
+        ’philosophical terms’, ’chemical elements’, ’famous scientists’,
+        ’marine life’, ’mythological places’
+    ]
+    object_types = [
+        ’education company’, ’tech company’, ’car company’,
+        ’entertainment company’, ’construction company’, ’retail company’,
+        ’finance company’, ’healthcare company’, ’restaurant’, ’hotel’,
+        ’github repo’, ’project’, ’meeting room’, ’building’, ’lab’,
+        ’airline’, ’textbook’, ’website’, ’personal blog’,
+        ’gaming company’, ’consulting firm’, ’biotech company’, ’app’,
+        ’software tool’, ’bookstore’, ’e-commerce site’,
+        ’social media platform’, ’fitness brand’, ’fashion brand’,
+        ’non-profit organization’
+    ]
+
+
+
+combination of object type and idea type in the list::
+
+    Please randomly generate 50 {object_type} name innovated by {idea_type}.
+    The name should have various styles.
+    The generated name should be of diverse style and length, for example the
+    name could have hyphen, space in it or multiple words.
+
+which gives us 50 different names. Then in the same context, we further prompt GPT with::
+
+    Now for each of the names generated, generate a short desciption, short
+    objectives, and a purpose for the data.
+    Please ensure that the generated contents has **LOW** correlation with
+    the name.
+
+which generates the <value> for three <property>s: description, objectives and purpose. Lastly, we perform one round of polishing, to let GPT diversity the language and style of the generated KB triple::
+
+    Now for each of the name, description, objective and purpose generated,
+    make their text style more diverse using a mixture of formal and informal
+    language.
+
+
+
+Prompt for open-ended Q&A generation
+------------------------------------
+
+
+::
+
+    You are given a question and answer pair, please extend the question to
+    be open-ended and generate a short answer. For example, you could
+    generate
+    What is the objective of xxx and what do you think of it?
+    Make sure the answer is **only** based on information provided from the
+    QA pair. In addition, please generate in the format of:
+    Q: ...
+    A: ...
+
+
+PROMPT FOR GPT EVALUATION OF OPEN-ENDED Q&A
+-------------------------------------------
+
+system prompt::
+
+    You are an AI system that evaluates the quality of generated responses.
+    Your goal is to return a score between 0 and 5 indicating how accurate
+    and useful the response is. An accurate and useful response should get a
+    high score of 5.
+
+we use the following prompt, which encourages the model to give chain-of-thought reasoning for scoring::
+
+    A model is given a question about some information and evidence. The
+    question is composed of two parts, a part that involves repeating
+    information in the evidence and a part that potentially involves openended thinking. 
+    Then the model generates a response. Evaluate the
+    response based on how grounded it is given the evidence and how
+    reasonable it is. Return an integer score and step by step explanation of
+    how you arrived at the score. Score of 5 means the response is accurate,
+    relevant and reasonable (in that it meets common sense).
+    If the response addresses the question and uses the evidence in a
+    relevant way, it should get a high score of 5. Score of 0 means the
+    response is inaccurate and irrelevant or model is hallucinating. Score
+    between 0 and 5 means the response is partially correct and relevant.
+
+
+Followed by the prompt, we include 5 examples to better help GPT calibrate the scoring rule::
+
+    Example 1:
+    Evidence: "The purpose of Alexandria is to extract knowledge."
+    Question: "Describe the purpose of Alexandria and how it can benefit users."
+    Model output: "The purpose of Alexandria is to extract knowledge, it can benefit users by providing a structured way to organize knowledge."
+    Score: 5
+    Reason: The model’s response is accurate and relevant to the question and evidence, the open-ended part is reasonable.
+
+    Example 2:
+    Evidence: "The purpose of Alexandria is to extract knowledge."
+    Question: "Describe the purpose of Alexandria and what can it extract."
+    Model output: "The purpose of Alexandria is to extract knowledge, it can extract knowledge knowledge."
+    Score: 5
+    Reason: The model’s response is accurate and relevant to the question and evidence.
+
+    Example 3:
+    Evidence: "GreatTool is an app that helps users to be more productive."
+    Question: "Describe GreatTool and how it may affect the community."
+    Model output: "GreatTool is an app that helps users to be more productive. It may affect the community by helping users to sleep better."
+    Score: 3
+    Reason: The model’s response is accurate and relevant to the question and evidence but it is not very reasonable.
+
+    Example 4:
+    Evidence: "GreatTool is an app that helps users to be more productive."
+    Question: "Describe GreatTool and how it may affect the community."
+    Model output: "GreatTool is an app that helps users to be more productive. It may affect the community by helping users to organize their tasks and manage their time better improving their productivity." 
+    Score: 5
+    Reason: The model’s response is accurate and relevant to the question and evidence and the open ended part is sensible and reasonable.
+
+    Example 5:
+    Evidence: "GreatTool is an app that helps users to be more productive."
+    Question: "Describe GreatTool and how it may affect the community."
+    Model output: "GreatTool is great tool with many feature"
+    Score: 0
+    Reason: The model’s response is not accurate and doesn’t answer the question.
+
+
+PROMPT FOR LLAMA EVALUATION
+---------------------------
+
+For in-context learning, we use the following prompts for evaluation::
+
+    # Simple Q&A
+    Please answer questions based on the given text with format: "The {property} of {name} is {description}"
+
+    # Two-entity Q&A
+    Please answer questions based on the given text with format: "The {property} of {name1} is {description}; The {property} of {name2} is {description}; ..."
+
+    # Open-ended Q&A
+    You are provided a context and a question that has a retrieval part and an open-ended part.
+    Please answer the question based on the given text.
+    If the information for the open-ended part is not provided in the context, please generate a potential possible answer.
+
+    # Unanserable questions
+    Please answer questions based on the given text with format: "The {property} of {name} is {description}", 
+        if relevant information cannot be found in the text, please respond "I am sorry I cannot find relevant information in the KB".
+
+For zero-shot learning, we use the following prompt::
+
+    # Simple Q&A
+    Please answer the question in a very compact manner with format: The {property} of {name} is {description}
+
+    # Two-entity Q&A
+    Please answer the question in a very compact manner with format: "The {property} of {name1} is {description}; The {property} of {name2} is {description}; ...
+
+    # Open-ended Q&A
+    Please answer the question based on your knowledge.
+
+
+
+QUESTION TEMPLATE
+-----------------
+
+For simple Q&A, we use the following templates::
+
+    What <property> does <name> have?,
+    What is the <property> of <name>?,
+    Tell me about the <property> of <name>.,
+    Can you let me know the <property> of <name>?,
+    Can you inform me about the <property> of <name>?,
+    Describe the <property> of <name>.,
+    What details can you share about the <property> of <name>?,
+    What kind of <property> does <name> have?,
+    Provide details on the <property> of <name>.,
+    What features does the <property> of <name> include?,
+    Can you elaborate on the <property> of <name>?,
+    How would you describe the <property> of <name>?,
+    What can you tell me about the <property> characteristics of <name>?,
+    Can you explain the <property> of <name>?,
+    What insights can you provide about the <property> of <name>?,
+    What should I know about the <property> of <name>?,
+
+For multi-entities Q&A involving G triples, :math:`\{(<name>_g, <property>_g, <value>_g)\}^G_{g=1}` , we usethe following template::
+
+    What is the {}
+    Tell me {},
+    Can you let me know {},
+    Can you inform me {},
+    Describe {},
+    Explain {},
+    Could you describe the {},
+    What can you tell me about {},
+    Could you provide information on {},
+    Please enlighten me about {},
+    Can you clarify {} for me?,
+    Could you give me a detailed description of {},
+    I need more information on {},
+
+for each blank in the curly brackets, we fill in the string::
+
+    the <property>_1 of <name>_1, 
+    ..., 
+    the <property>_g of <name>_g, 
+    ...,
+    the <property>_G of <name>_G
+
+
+
+
+SAMPLE OUTPUT
+=============
+
+
+SYNTHETIC KB
+------------
+
+* Relevant triple:
+    - (ReefPulse Jellyfish; objectives; to provide real-time alerts, support remote monitoring, and improve home safety)
+
+* Question:
+    - Can you inform me about the objectives of ReefPulse Jellyfish and what do you think of its effectiveness in achieving these goals?
+
+* KBLaM output:
+    - The objectives of ReefPulse Jellyfish are to provide real-time monitoring, send alerts, and improve home safety. While the effectiveness of ReefPulse Jellyfish in achieving these goals would depend on various factors such as the accuracy of the monitoring technology, the reliability of the alert system, and the user experience, the outlined objectives suggest a comprehensive approach to enhancing home safety.
+
+* In-context learning output:
+    - According to the context, the objectives of ReefPulse Jellyfish are to provide real-time alerts, support remote monitoring, and improve home safety.
+    - Based on these objectives, I think ReefPulse Jellyfish is effective in achieving its goals. The real-time alerts feature allows users to stay informed and take prompt action in case of any issues, which can help prevent potential hazards and ensure a safer home environment. The remote monitoring feature enables users to keep track of their home’s conditions from anywhere, which can be particularly useful for people who are away from home for extended periods. Additionally, the improved home safety feature can help reduce the risk of accidents and injuries, making it a valuable tool for homeowners. Overall, I believe ReefPulse Jellyfish is
+
+* Zero-shot learning output:
+    - ReefPulse Jellyfish is a product designed to monitor and control the water parameters in aquariums, specifically targeting jellyfish and other delicate marine life. Based on my knowledge, the objectives of ReefPulse Jellyfish are:
+        1. **Accurate Water Parameter Monitoring**: To provide real-time monitoring of water parameters such as pH, ammonia, nitrite, nitrate, and temperature, ensuring that the aquarium’s water conditions are optimal for the jellyfish and other inhabitants.
+        2. **Automated Water Parameter Control**: To automatically adjust water parameters to maintain a stable and healthy environment, reducing the need for manual intervention and minimizing the risk of water parameter fluctuations.
+        3. **Enhanced Jellyfish Care**: To provide a more precise and controlled environment
+
+
+
+
+ENRON
+-----
+
+* Relevant triple:
+    - (Sitraka; description; a provider of Internet software technologies for IT organizations)
+* Question:
+    - What kind of description does Sitraka have and what services do they offer?
+* KBLaM output:
+    - The description of Sitraka is a software company providing networking solutions for businesses. They offer services that likely include developing and implementing network infrastructure, managing network security, and possibly providing technical support to ensure smooth network operations for their clients.
+* In-context learning output:
+    - Based on the given text, Sitraka is described as a provider of Internet software technologies for IT organizations. 
+    - As for the services they offer, the text does not provide specific information. However, based on the general description, it can be inferred that Sitraka offers software technologies and solutions for IT organizations, possibly related to internet-based services, network management, or other IT-related areas.
+* Zero-shot learning output:
+    - According to my knowledge, Sitraka is a software company that provides IT service management solutions. They offer a range of services and products that help organizations manage and optimize their IT infrastructure, including:
+        * IT Service Management (ITSM) software: Sitraka’s flagship product is the ITSM software, which provides a comprehensive platform for managing IT services, including incident, problem, and change management.
+        * Asset Management: Sitraka’s asset management solution helps organizations track and manage their IT assets, including hardware, software, and network devices.
+        * Service Desk: Sitraka’s service desk solution provides a centralized platform for managing IT requests, incidents, and problems.
+        * Reporting and Analytics: Sitraka’s reporting and analytics solution provides real
+
+
+
+
+
+
+
+
+
+
+
+
