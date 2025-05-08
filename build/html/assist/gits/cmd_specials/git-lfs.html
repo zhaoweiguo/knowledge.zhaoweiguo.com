@@ -4,12 +4,32 @@
 <!--[if IE 8]><html class="no-js lt-ie9" lang="zh-CN" > <![endif]-->
 <!--[if gt IE 8]><!--> <html class="no-js" lang="zh-CN" > <!--<![endif]-->
 <head>
+
+
+<!-- start added 2025-04-14   增加对markdown中公式的支持 -->
+<script>
+window.MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+    },
+    options: {
+        ignoreHtmlClass: "tex2jax_ignore|mathjax_ignore",
+        processHtmlClass: "tex2jax_process|mathjax_process|math|output_area"
+    }
+};
+</script>
+<script defer="defer" src="https://fastly.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<!-- end added 2025-04-14   增加对markdown中公式的支持 -->
+
+
   <meta charset="utf-8">
   <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>1.2.2. git-lfs &mdash; 新溪-gordon V2025.03 文档</title>
+  <title>1.2.2. git-lfs &mdash; 新溪-gordon V2025.05 文档</title>
   
 
   
@@ -72,7 +92,7 @@
             
             
               <div class="version">
-                V2025.03
+                V2025.05
               </div>
             
           
@@ -146,7 +166,9 @@
 <li class="toctree-l2 current"><a class="reference internal" href="../git_cmd_special.html">1.2. Git其他命令列表</a><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="git_rev-parse.html">1.2.1. 版本表示法 git rev-parse</a></li>
 <li class="toctree-l3 current"><a class="current reference internal" href="#">1.2.2. git-lfs</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#id2">其他</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id2">Git LFS工作原理</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id4">实战</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id6">其他</a></li>
 </ul>
 </li>
 </ul>
@@ -411,7 +433,13 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../sphinxdocs/markdowns/html.html">3.3.2. 常用弥补Markdown的Html标签</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../sphinxdocs/markdowns/LaTeX.html">3.3.3. LaTeX</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sphinxdocs/markdowns/LaTeX.html">3.3.3. Markdown LaTeX</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../sphinxdocs/markdowns/LaTeX.html#id1">行内数学</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../sphinxdocs/markdowns/LaTeX.html#id4">块级数学</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../sphinxdocs/markdowns/LaTeX.html#sphinx">Sphinx 扩展</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../sphinxdocs/markdowns/rst.html">3.3.4. 与rst文件的对应</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../sphinxdocs/LaTeX.html">3.4. LaTeX</a><ul>
@@ -469,6 +497,7 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../sphinxdocs/plugins/automation.html">3.8.3. 一键自动化发布</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sphinxdocs/plugins/MyST-Parser.html">3.8.4. MyST-Parser</a></li>
 </ul>
 </li>
 </ul>
@@ -618,7 +647,16 @@
               <h4 id="local-table-of-contents-title">On This Page</h4>
               <ul>
 <li><a class="reference internal" href="#">1.2.2. git-lfs</a><ul>
-<li><a class="reference internal" href="#id2">其他</a></li>
+<li><a class="reference internal" href="#id2">Git LFS工作原理</a><ul>
+<li><a class="reference internal" href="#id3">Git LFS处理流程</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id4">实战</a><ul>
+<li><a class="reference internal" href="#id5">跟踪大文件</a></li>
+<li><a class="reference internal" href="#lfs">撤销LFS跟踪</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id6">其他</a></li>
 </ul>
 </li>
 </ul>
@@ -655,7 +693,71 @@
 </pre></div>
 </div>
 <section id="id2">
-<h2>其他<a class="headerlink" href="#id2" title="此标题的永久链接">¶</a></h2>
+<h2>Git LFS工作原理<a class="headerlink" href="#id2" title="此标题的永久链接">¶</a></h2>
+<figure class="align-default" id="id8">
+<img alt="https://img.zhaoweiguo.com/uPic/2025/04/5MCvfo.png" src="https://img.zhaoweiguo.com/uPic/2025/04/5MCvfo.png" />
+<figcaption>
+<p><span class="caption-text">【Git LFS】针对jpg格式的图片利用Git LFS的存储功能，在推送过程中将其上传至大文件存储服务。同时，与大文件对应的指针文件将与其他普通代码文件一并推送到远端Git仓库中。</span><a class="headerlink" href="#id8" title="此图像的永久链接">¶</a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id9">
+<img alt="https://img.zhaoweiguo.com/uPic/2025/04/rYCQ2i.png" src="https://img.zhaoweiguo.com/uPic/2025/04/rYCQ2i.png" />
+<figcaption>
+<p><span class="caption-text">【Git】对应的Git工作原理</span><a class="headerlink" href="#id9" title="此图像的永久链接">¶</a></p>
+</figcaption>
+</figure>
+<section id="id3">
+<h3>Git LFS处理流程<a class="headerlink" href="#id3" title="此标题的永久链接">¶</a></h3>
+<figure class="align-default">
+<img alt="https://img.zhaoweiguo.com/uPic/2025/04/1aAEVF.png" src="https://img.zhaoweiguo.com/uPic/2025/04/1aAEVF.png" />
+</figure>
+</section>
+</section>
+<section id="id4">
+<h2>实战<a class="headerlink" href="#id4" title="此标题的永久链接">¶</a></h2>
+<ul class="simple">
+<li><p>让本地新仓库支持Git LFS</p></li>
+</ul>
+<section id="id5">
+<h3>跟踪大文件<a class="headerlink" href="#id5" title="此标题的永久链接">¶</a></h3>
+<p>指定需要被 Git LFS 管理的文件/文件类型:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># 跟踪特定类型的文件（如 .psd 文件）</span>
+<span class="n">git</span> <span class="n">lfs</span> <span class="n">track</span> <span class="s2">&quot;*.psd&quot;</span>
+
+<span class="c1"># 跟踪单个文件</span>
+<span class="n">git</span> <span class="n">lfs</span> <span class="n">track</span> <span class="s2">&quot;large_file.bin&quot;</span>
+</pre></div>
+</div>
+<p>查看当前的跟踪规则:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">lfs</span> <span class="n">track</span>
+</pre></div>
+</div>
+<p>查看跟踪的文件类型:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">lfs</span> <span class="n">ls</span><span class="o">-</span><span class="n">files</span>
+</pre></div>
+</div>
+<p>本地的Git LFS文件是如何存储的:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$tree .git/lfs
+.git/lfs
+├── objects
+│    └── 49
+│         └── bc
+│             └── 49bc20df15e412a64472421e13fe86ff1c5165e18b2afccf160d4dc19fe68a14
+└── tmp
+4 directories, 1 file
+</pre></div>
+</div>
+</section>
+<section id="lfs">
+<h3>撤销LFS跟踪<a class="headerlink" href="#lfs" title="此标题的永久链接">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">lfs</span> <span class="n">untrack</span> <span class="s2">&quot;*.bigfile&quot;</span>
+<span class="n">git</span> <span class="n">rm</span> <span class="o">--</span><span class="n">cached</span> <span class="s2">&quot;*.bigfile&quot;</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id6">
+<h2>其他<a class="headerlink" href="#id6" title="此标题的永久链接">¶</a></h2>
 <ul class="simple">
 <li><p>BFG Repo-Cleaner: <a class="reference external" href="https://rtyley.github.io/bfg-repo-cleaner/">https://rtyley.github.io/bfg-repo-cleaner/</a></p></li>
 <li><p>作用: remove any large files from your history. BFG Repo-Cleaner will keep a local copy of your repository as a backup.</p></li>
@@ -725,7 +827,7 @@
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../',
-            VERSION:'V2025.03',
+            VERSION:'V2025.05',
             LANGUAGE:'zh-CN',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',

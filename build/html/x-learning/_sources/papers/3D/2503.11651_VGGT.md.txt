@@ -1,0 +1,793 @@
+# 2503.11651_VGGT: Visual Geometry Grounded Transformer
+
+* [https://arxiv.org/abs/2503.11651](https://arxiv.org/abs/2503.11651)
+* GitHub: [https://github.com/facebookresearch/vggt](https://github.com/facebookresearch/vggt)
+* 组织: 牛津大学、MetaAI
+
+
+
+![](https://img.zhaoweiguo.com/uPic/2025/04/TsGVAv.png)
+
+Figure 1: VGGT is a large feed-forward transformer with minimal 3D-inductive biases trained on a trove of 3D-annotated data. It accepts up to hundreds of images and predicts cameras, point maps, depth maps, and point tracks for all images at once in less than a second, which often outperforms optimization-based alternatives without further processing.
+
+
+
+
+## Abstract
+
+
+我们提出了 VGGT，这是一种前馈神经网络，它能够从一个、几个或数百个视角直接推断场景的所有关键 3D 属性，包括摄像机参数、点图、深度图和 3D 点轨迹。这种方法是 3D 计算机视觉领域的一大进步，而此前的模型通常局限于单一任务。它简单高效，能够在一秒内重建图像，并且性能仍然优于那些需要使用视觉几何优化技术进行后处理的替代方案。该网络在多项 3D 任务中取得了最佳成果，包括摄像机参数估计、多视角深度估计、密集点云重建和 3D 点追踪。我们还表明，使用预训练的 VGGT 作为特征主干可以显著增强下游任务，例如非刚性点追踪(non-rigid point tracking)和前馈新视角合成(feed-forward novel view synthesis)。代码和模型已公开发布于 https://github.com/facebookresearch/vggt 。
+
+
+
+## 1. Introduction
+
+
+![](https://img.zhaoweiguo.com/uPic/2025/04/SThm0X.png)
+
+Figure 2:Architecture Overview. Our model first patchifies the input images into tokens by DINO, and appends camera tokens for camera prediction. It then alternates between frame-wise and global self attention layers. A camera head makes the final prediction for camera extrinsics and intrinsics, and a DPT head for any dense output.
+
+
+* 背景与传统方法
+    - 要解决的问题是，从一组图像中估计场景的3D属性，比如深度图、相机参数、点云等等。
+    - **传统方法**主要依赖**视觉几何（visual geometry）**，例如束调（Bundle Adjustment，简称 BA），这类方法都是**迭代优化**的，计算量大。
+    - **机器学习**过去通常是辅助作用，比如：
+        - 单目图像深度估计
+        - 图像特征匹配
+    - 但这些还不足以完全取代视觉几何。
+
+---
+
+* 当前的集成方式与问题
+    - 现在最先进的方法，比如 **VGGSfM**，已经把深度学习和几何方法融合在一起，甚至通过**可微分的BA**实现端到端训练。
+    - 但问题是：**视觉几何仍然是核心成分，带来高复杂度和高计算开销**。
+
+---
+
+- 提出新问题
+    - 👉 **有没有可能完全依靠神经网络，绕过后期几何优化，直接完成3D任务？**
+- 一些近期的方法，比如 **DUSt3R、MASt3R** 已经尝试这样做，但：
+    - 只能处理两张图像
+    - 还是需要后处理才能得到完整重建
+
+---
+
+* 我们的方法——VGGT
+    - 它是一个前馈网络，可以处理**一张、几张、甚至上百张图像**，一次性预测出：
+        - 相机参数
+        - 深度图
+        - 点图
+        - 3D点轨迹
+
+    - 只需一次前向计算（单次推理），几秒钟完成，而且效果**往往优于传统优化方法**，甚至**不需要额外后处理**。
+
+---
+
+* 模型设计理念
+
+* **不需要特别为3D设计网络结构**。
+    - VGGT 基于**标准的大型 Transformer**，只做了轻量调整（比如交替使用局部 attention 和全局 attention），
+    - 然后在大量公开3D数据集上训练。
+* 这种做法类似：
+    - GPT（文本任务）
+    - CLIP、DINO、Stable Diffusion（视觉任务）
+
+* 也就是说：**通用 Transformer + 大数据预训练，也可以胜任复杂3D任务！**
+
+---
+
+* 与其它3D大模型对比
+    - DepthAnything（单目深度估计）
+    - MoGe（动态点云）
+    - LRM（视角合成）
+* 但它们**只能做某一个特定任务**，而 VGGT 是**多任务统一预测**，共享 backbone，同时输出所有核心3D属性。
+    - 虽然 point map 有专门的预测头  
+    - 但实际使用时，**根据深度图 + 相机参数反推 point map，反而效果更好**！
+
+---
+
+* 三大贡献
+    1. **提出 VGGT**：可以一次性从任意数量的图像中预测出完整3D属性。
+    2. **预测结果无需后处理就可直接使用**，性能优于主流方法。
+    3. **如果再加一点优化（如 BA 后处理）**，还能在所有任务上达到最优效果。
+
+---
+
+* 总结（一句话）：
+    - 这篇文章提出了 VGGT，一个无需后处理、可以从任意数量视图中快速直接预测完整三维属性的大型 Transformer 模型，不仅性能领先，而且更简单高效，为三维视觉提供了全新范式。
+
+---
+
+
+## 2. Related Work
+
+* 主要梳理了VGGT所在研究方向的三个关键领域背景，并指出了VGGT相比现有工作在哪些方面取得了突破。
+
+---
+
+### 📌 结构光恢复（Structure from Motion, SfM）
+
+* 什么是SfM？
+    - SfM 是传统计算机视觉中用于从多张静态图像中恢复三维场景结构（点云）和相机参数（位姿）的技术。
+    - 常用于旅游场景建模、文物重建、地图制作等。
+
+* 传统方法的流程
+    1. 图像特征提取和匹配；
+    2. 三角化（从图像对应点估算空间点）；
+    3. 捆绑调整（Bundle Adjustment, BA）——通过优化所有相机参数和空间点来最小化重投影误差。
+
+* COLMAP 是目前最流行的SfM工具，基于这个经典流程。
+
+* 深度学习带来的提升
+    - 特征点检测（如SuperPoint、KeyNet）；
+    - 图像匹配（如LoFTR、LightGlue）。
+
+* 向端到端方法演化
+    - 研究者开始尝试将SfM变成可微分的端到端任务，比如 VGGSfM，它结合视觉几何和深度学习，在一些复杂场景下甚至超过传统方法的表现。
+
+---
+
+### 📌 多视图立体（Multi-view Stereo, MVS）
+
+* 什么是MVS？
+    - MVS 的目标是利用多张有重叠区域的图像（通常假设相机参数已知），进行稠密的三维重建。
+    - 相比SfM只输出稀疏点云，MVS追求完整的几何细节。
+
+* 方法分为三类：
+    1. 传统手工设计的（如 PatchMatch）；
+    2. 全局优化方法；
+    3. 基于深度学习的方法。
+
+* DUSt3R 和 MASt3R 的突破
+    - DUSt3R 和 MASt3R 是两个近期代表性工作，它们不依赖相机参数，只使用两张图像进行点云重建。
+    - 这种方式虽灵活但只能做“配对重建”，仍需后处理合并多个结果。
+
+* VGGT 的优势
+    - 一些新方法尝试用神经网络取代DUSt3R的测试阶段优化，但效果只能持平甚至更差。
+    - 而VGGT可以显著超过DUSt3R和MASt3R，而且能处理任意数量图像，是质的飞跃。
+
+---
+
+### 📌 点追踪（Tracking-Any-Point）
+
+* 任务简介：
+    - 这个任务目标是：给定视频中的一些2D关键点，在后续帧中跟踪它们的位置。
+    - 不同于光流等方法，这种追踪关注任意点（非语义目标），尤其适用于动态场景。
+
+* 方法演化：
+    - 最早由Particle Video引入，后来PIPs、TAP-Vid等工作将其带入深度学习时代；
+    - TAPIR 是TAP-Vid的改进版，用transformer增强；
+    - CoTracker、DOT 支持遮挡情况下的鲁棒追踪；
+    - LocoTrack 将点特征扩展为区域，提升鲁棒性。
+
+* VGGT的表现
+    - 这些都是专门为点追踪设计的网络。
+    - 而VGGT并非专用点追踪网络，但其提取的特征配合现有方法可以实现**SOTA性能**。
+    - 这说明VGGT学到的3D感知特征具有高度的通用性和表达力。
+
+---
+
+### ✨ 总结一下
+
+| 方向         | 现有方法特点                                     | VGGT的创新点                                             |
+|--------------|--------------------------------------------------|-----------------------------------------------------------|
+| SfM          | 多阶段流程、需几何优化、部分可微                 | 端到端预测相机参数+结构，秒级输出，免优化                 |
+| MVS          | 需已知相机参数、难以扩展                         | 不依赖相机+支持多视图+效果远超DUSt3R等                    |
+| 点追踪       | 特化网络、专为视频设计、精度依赖专用模块         | 非专用网络也能达到SOTA，说明特征表示非常强               |
+
+
+
+## 3. Method
+
+
+![](https://img.zhaoweiguo.com/uPic/2025/04/KYTtF4.png)
+
+Figure 3:Qualitative comparison of our predicted 3D points to DUSt3R on in-the-wild images. As shown in the top row, our method successfully predicts the geometric structure of an oil painting, while DUSt3R predicts a slightly distorted plane. In the second row, our method correctly recovers a 3D scene from two images with no overlap, while DUSt3R fails. The third row provides a challenging example with repeated textures, while our prediction is still high-quality. We do not include examples with more than 32 frames, as DUSt3R runs out of memory beyond this limit.
+
+在自然图像上，我们预测的 3D 点与 DUSt3R 的定性比较。如上行所示，我们的方法成功预测了油画的几何结构，而 DUSt3R 预测的平面略有扭曲。在第二行中，我们的方法正确地从两幅无重叠的图像中恢复了 3D 场景，而 DUSt3R 则失败了。第三行提供了一个包含重复纹理的具有挑战性的示例，而我们的预测仍然高质量。我们没有包含超过 32 帧的示例，因为超过此限制 DUSt3R 会耗尽内存。
+
+
+
+### 3.1 Problem definition and notation
+
+* 🔍 任务定义
+
+  - **输入**：一组图像序列 \((I_i)_{i=1}^{N}\)，每张图像 \(I_i \in \mathbb{R}^{3 \times H \times W}\)。
+  - **输出**：从这组图像中预测每帧图像对应的 3D 几何信息，包括：
+    - 摄像机参数 \(\mathbf{g}_i \in \mathbb{R}^9\)：内参+外参
+        - 旋转四元数[rotation quaternion] \(\mathbf{q} \in \mathbb{R}^4\)，表示相机朝向
+        - 平移向量[translation vector] \(\mathbf{t} \in \mathbb{R}^3\)，表示相机位置
+        - 视场角[field of view] \(\mathbf{f} \in \mathbb{R}^2\)
+    - 深度图[depth map] \(D_i \in \mathbb{R}^{H \times W}\)；
+    - 点图[point map] \(P_i \in \mathbb{R}^{3 \times H \times W}\)：每个像素对应的 3D 点坐标；
+    - 网格特征图 \(T_i \in \mathbb{R}^{C \times H \times W}\)：用于点追踪的高维特征。
+
+  > 📎 所有预测都共享同一个 transformer 网络进行推理。
+
+---
+
+* 🔢 **数学定义**
+    - 公式 (1)：\[f\left((I_i)_{i=1}^{N}\right) = \left(\mathbf{g}_i, D_i, P_i, T_i\right)_{i=1}^{N}\]
+    - 这是一个从图像序列到多种 3D 几何表示的映射函数。
+
+---
+
+* 📷 **图像几何定义**
+    - **像素域**：图像 \(I_i\) 的像素位置为：\[\mathcal{I}(I_i) = \{1,\dots,H\} \times \{1,\dots,W\}\]
+    - **深度图**：\(D_i(\mathbf{y}) \in \mathbb{R}^{+}\)，每个像素 \(\mathbf{y}\) 对应一个深度。
+    - **点图**：\(P_i(\mathbf{y}) \in \mathbb{R}^{3}\)，每个像素 \(\mathbf{y}\) 对应一个 3D 点。
+    - **视点不变性**：所有点 \(P_i(\mathbf{y})\) 是用第一个摄像机 \(\mathbf{g}_1\) 为坐标系的，这样方便后续三维重建。
+
+---
+
+* 🎯 **特征追踪机制**
+    - 给定一个查询点 \(\mathbf{y}_q\)（在图像 \(I_q\) 上），模型预测它在所有图像中的对应点轨迹：\[\mathcal{T}^{\star}(\mathbf{y}_q) = (\mathbf{y}_i)_{i=1}^{N}, \quad \mathbf{y}_i \in \mathbb{R}^2\]
+    - 该过程借鉴 track-any-point 方法，适用于稠密点追踪任务。
+
+---
+
+* 📌 注意：Transformer 并不直接输出轨迹！
+    - 它只输出了每张图像上的特征图 T_i ∈ ℝ^{C×H×W}
+
+---
+
+* 总结
+    - 步骤: 图像 → 三维场景解析 → 特征生成 → 用于点追踪
+
+
+### 3.2 Feature Backbone
+
+* 🌐 主干架构设计思路：弱 3D 归纳偏置 + Transformer
+    - 其核心思想是：
+        - 不强加显式的几何或结构假设（如体素化、点云结构等），
+        - 而是让模型**通过大规模带 3D 注释的数据自动学习空间结构知识**。
+
+* 🧱 图像表示方式：DINO + Patch Tokens
+    - 每张图像 \( I \) 被划分为 \( K \) 个 patch（token），每个维度为 \( \mathbb{R}^{K \times C} \)，
+    - Patch 特征使用 **DINO** 来提取 —— 它是一个基于自监督的特征学习方法，能生成具有良好语义的 token 表达。
+
+---
+
+* 🔁 Alternating-Attention（AA）机制：交替的局部-全局注意力
+    - Transformer 网络不采用标准的全局 attention，而是**在帧内和跨帧之间交替使用自注意力（Self-Attention）**：
+    - 🟦 帧内自注意力（Frame-wise SA）
+        - 仅在单张图像的 tokens 内部进行 attention；
+        - 有助于提取每一帧的局部空间结构。
+    - 🌐 全局自注意力（Global SA）
+        - 所有帧的 tokens 一起输入；
+        - 有助于多帧之间的信息融合与空间一致性建模。
+
+* 通过交替使用这两种 SA 层（共 \( L = 24 \) 层），模型能兼顾帧内表达与帧间一致性，避免信息干扰和维持归一化效果。
+
+**注意**：该架构中完全没有使用 cross-attention（如 Query-Key 不同源），而是统一采用自注意力形式，这也是一种设计选择，可能是为了结构简单和训练稳定性。
+
+---
+
+* 📝 总结
+
+```text
+Input Images → Patchify → DINO → Tokens {t_i^I} → Transformer f:
+    [Frame-wise SA] → [Global SA] → [Frame-wise SA] → ... (L=24 layers total)
+                                    ↓
+                            Output Feature Embedding
+```
+
+这种架构核心思想是：**利用强大 Transformer 处理能力，在帧内/帧间之间取得平衡，用较少的结构假设从数据中学习 3D 几何。**
+
+---
+
+### 3.3 Prediction heads
+
+* 介绍了 MASt3R 模型中如何从每张输入图像中预测相机参数(camera parameters)、深度图(depth maps)、点云图（point maps）以及点跟踪（point tracks）。
+
+
+---
+
+* **坐标系设置（Coordinate Frame）：**
+    - 所有预测结果（相机参数、点图、深度图）都在 **第一帧的坐标系** 下表达。
+    - 因此：
+      - 第一帧的旋转四元数设置为 \( \mathbf{q}_1 = [0, 0, 0, 1] \)（单位旋转）；
+      - 平移向量设置为 \( \mathbf{t}_1 = [0, 0, 0] \)（原点）。
+      
+    - 这让其他帧的位姿预测是**相对第一帧而言**的，便于三维对齐。
+
+* **相机预测（Camera Predictions）：**
+    - 从 \( \hat{t}_i^{\mathbf{g}} \) 预测出相机参数（内参+外参），具体做法是：
+        - 通过 4 层自注意力 + 一层线性层；
+        - 称之为 **camera head**。
+
+* **密集预测（Dense Predictions）：**
+    - 从每张图像的 refined token \( \hat{t}_i^I \) 出发，预测：
+        - 深度图 \( D_i \)
+        - 点图 \( P_i \)
+        - 以及点轨迹
+
+* 这些构成了模型对场景的三维重建。
+
+---
+
+* 总结一句话：
+    > 通过对每帧图像加上 camera token 和 register tokens，并使用 transformer 编码，
+    > 在输出阶段从这些 token 中分别预测出相机参数、三维点图和深度图
+    > 所有预测统一在第一帧相机的坐标系下，便于多帧对齐和3D重建。
+
+### 3.4 Training
+
+* Training Losses
+    - 🧠 总损失函数定义
+        - 模型的整体损失函数是一个多任务损失（multi-task loss）：
+        - \[\mathcal{L} = \mathcal{L}_{\text{camera}} + \mathcal{L}_{\text{depth}} + \mathcal{L}_{\text{pmap}} + \lambda \mathcal{L}_{\text{track}}\]
+        - **含义：**
+            - 模型同时优化四个目标：
+              - 摄像机参数预测（Camera）
+              - 深度估计（Depth）
+              - 点云图（Point Map）
+              - 特征点追踪（Tracking）
+            - 追踪损失 \(\mathcal{L}_{\text{track}}\) 被一个较小的系数 \(\lambda = 0.05\) 降权，说明它的重要性相对较低。
+* 📷 摄像机损失 \(\mathcal{L}_{\text{camera}}\)
+    - \[\mathcal{L}_{\text{camera}} = \sum_{i=1}^{N} \left\| \hat{\mathbf{g}}_i - \mathbf{g}_i \right\|_{\epsilon}\]
+    - \(\hat{\mathbf{g}}_i\) 是模型预测的摄像机参数，第 \(i\) 帧。
+    - \(\mathbf{g}_i\) 是真实摄像机参数。
+    - 损失函数使用的是 **Huber 损失**（\(\epsilon\)-鲁棒损失），比 L2 更抗离群值。
+
+* 🌊 深度损失 \(\mathcal{L}_{\text{depth}}\)
+    - \[\mathcal{L}_{\text{depth}} = \sum_{i=1}^{N} \|\Sigma_i^D \odot (\hat{D}_i - D_i)\| + \|\Sigma_i^D \odot (\nabla \hat{D}_i - \nabla D_i)\| - \alpha \log \Sigma_i^Dß\]
+    - \(\hat{D}_i\)：预测的深度图，\(D_i\)：真实深度图。
+    - \(\Sigma_i^D\)：预测的不确定性（来自 aleatoric uncertainty loss）。
+    - 使用了两个项：
+        1. 深度误差：带不确定性权重的残差
+        2. 深度梯度误差：增强边缘清晰度
+        3. 最后项是正则化项（\(-\alpha \log \Sigma_i^D\)），防止模型过度依赖不确定性掩盖误差。
+
+* 🗺️ 点图损失 \(\mathcal{L}_{\text{pmap}}\)
+    - 和 \(\mathcal{L}_{\text{depth}}\) 结构一样，只是作用在 **3D 点图（point-map）** 上：
+    - \[\mathcal{L}_{\text{pmap}} = \sum_{i=1}^{N} \|\Sigma_i^P \odot (\hat{P}_i - P_i)\| + \|\Sigma_i^P \odot (\nabla \hat{P}_i - \nabla P_i)\| - \alpha \log \Sigma_i^P\]
+    - \(\hat{P}_i\)：预测点图，\(P_i\)：真实点图
+    - \(\Sigma_i^P\)：不确定性图
+    - 使用相同策略处理点图误差 + 梯度差异 + 正则项
+
+* 🎯 追踪损失 \(\mathcal{L}_{\text{track}}\)
+    - \[\mathcal{L}_{\text{track}} = \sum_{j=1}^{M} \sum_{i=1}^{N} \|\mathbf{y}_{j,i} - \hat{\mathbf{y}}_{j,i}\|\]
+    - \(\mathbf{y}_{j,i}\)：第 \(j\) 个查询点在第 \(i\) 张图像中的 **真实位置**
+    - \(\hat{\mathbf{y}}_{j,i}\)：模型预测的位置
+    - 追踪损失衡量多图之间点的匹配质量，用于监督跨图像的特征一致性
+
+---
+
+* 🧭 Ground Truth Coordinate Normalization（地面真实坐标归一化）
+    - **问题背景**
+        - 在3D重建任务中，**场景的缩放或参考坐标系的改变并不会影响图像本身**。这意味着：  
+        - > 同一个场景可能对应多个“等价”的3D重建结果（尺度/位姿不同但几何一致）。
+        - 为了**去除这种歧义性**，作者选择固定一种归一化方式，即选取一个**规范（canonical）坐标系**。
+    -  **具体做法**
+        1. **选定第一帧相机坐标系作为基准**：
+           - 所有的三维点（PointMap）和相机参数都转换到第一帧相机的坐标系下。
+
+        2. **根据点云平均距离归一化**：
+           - 计算所有3D点到原点的平均欧氏距离。
+           - 用这个“尺度”来归一化：
+             - 相机平移向量 **t**
+             - 三维点云 **P**
+             - 深度图 **D**
+
+        3. **与参考文献 [129] 不同之处**：
+           - VGGT **不对transformer输出的预测结果进行归一化**。
+           - 而是强迫transformer在训练中学会自己适应这种归一化的标准。
+
+* ⚙️ Implementation Details（实现细节）
+    - 模型规模与结构
+        - Transformer堆叠深度：**L = 24 层**
+          - 包含 **全局注意力层** 和 **帧内注意力层**
+        - 总参数量：**约 12 亿**
+    - 优化设置
+        - 优化器：**AdamW**
+        - 训练时长：**160K iterations**
+        - 学习率策略：
+          - **Cosine decay**
+          - 峰值学习率：`0.0002`
+          - 热身阶段：前 `8K` iterations
+    - 数据与预处理
+        - 每批次随机采样：**2–24帧**
+        - 图像最大边长限制：**518 像素**
+        - 随机 aspect ratio：**0.33 – 1.0**
+        - 数据增强：
+          - 颜色抖动（color jitter）
+          - 高斯模糊
+          - 灰度处理
+    - 硬件与训练技巧
+        - 使用 **64 块 A100 GPU**，训练时长为 **9 天**
+        - 技术手段以提升稳定性与效率：
+          - **梯度裁剪**（阈值：1.0）
+          - **bfloat16 混合精度**
+          - **gradient checkpointing**
+
+### ✅ 小结
+
+- VGGT 通过**端到端联合训练多个任务**。
+- 每个子任务的损失设计都考虑了数据的结构与不确定性，尤其是 **不确定性建模** 和 **梯度信息**。
+- 多任务中，tracking 是次要任务，被降低权重。
+
+
+---
+
+## 4. Experiments
+
+![](https://img.zhaoweiguo.com/uPic/2025/04/vgVuzk.png)
+
+Figure 4:Additional Visualizations of Point Map Estimation. Camera frustums illustrate the estimated camera poses. Explore our interactive demo for better visualization quality.
+
+
+![](https://img.zhaoweiguo.com/uPic/2025/04/2OSWVT.png)
+
+Figure 5:Visualization of Rigid and Dynamic Point Tracking. Top: VGGT’s tracking module 
+𝒯 outputs keypoint tracks for an unordered set of input images depicting a static scene. Bottom: We finetune the backbone of VGGT to enhance a dynamic point tracker CoTracker, which processes sequential inputs.
+
+![](https://img.zhaoweiguo.com/uPic/2025/04/sIDjdL.png)
+
+Figure 6:Qualitative Examples of Novel View Synthesis. The top row shows the input images, the middle row displays the ground truth images from target viewpoints, and the bottom row presents our synthesized images.
+
+
+
+
+
+
+## 5. Discussions
+
+### 🔴 局限性（Limitations）
+
+- 虽然模型在真实世界场景中具有良好的泛化能力，但仍存在三个主要限制：
+    1. **不支持鱼眼或全景图像**；
+    2. **输入图像存在极端旋转时，重建效果显著下降**；
+    3. **虽然能处理轻微的非刚性变形，但在遇到大幅非刚性变形时会失败**。
+
+- 不过，作者强调其方法的**适应性强**：通过**少量架构修改**和**在特定数据集上微调**，就可以缓解这些限制。这比起其他方法更灵活，后者通常需要在测试阶段大幅修改结构才能适应特殊场景。
+
+---
+
+### 🔵 运行时间与内存（Runtime and Memory）
+
+
+| Input Frames | 1 | 2 | 4 | 8 | 10 | 20 | 50 | 100 | 200 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Time (s) | 0.04 | 0.05 | 0.07 | 0.11 | 0.14 | 0.31 | 1.04 | 3.12 | 8.75 |
+| Mem. (GB) | 1.88 | 2.07 | 2.45 | 3.23 | 3.63 | 5.58 | 11.41 | 21.15 | 40.63 |
+
+- **表格**展示了不同数量输入帧时，模型前向推理的时间和GPU峰值内存占用情况（在 NVIDIA H100 上测得）。
+  - 越多帧，运行时间和内存消耗越高。
+  - 例如：处理100帧需要 **8.75秒** 和 **40.63GB GPU内存**。
+- **关键设计点**：
+  - “特征主干（feature backbone）”是主要计算模块，处理跨帧信息；
+  - “相机头（camera head）”很轻量，占总资源的 5% 运行时间 和 2% GPU 内存；
+  - 可选的 “DPT head” 每帧约需 0.03秒 和 0.2GB 内存；
+- **资源受限用户的建议**：
+  - 如果GPU资源不够，可以逐帧推理；
+  - 如果资源充足，则推荐多帧同时推理，效率更高；
+- **注意事项**：
+  - 直接使用全局自注意力（global self-attention）处理大量图像 token 会导致高内存消耗；
+  - 可以借鉴 LLM（大模型）中的加速技术，比如 Fast3R 用的张量并行（Tensor Parallelism），支持多GPU加速。
+
+---
+
+### 🟠 Patchifying（图像分块）
+
+- 图像在输入网络前需要变成 token，作者尝试了两种方式：
+    1. 自定义的 14×14 卷积；
+    2. 使用 DINOv2 预训练模型。
+- 实验发现 DINOv2 不仅性能更好，**训练更稳定**，对超参数如学习率、动量的敏感度更低，因此被选为默认方式。
+
+---
+
+### 🟡 可微 Bundle Adjustment（Differentiable BA）
+
+- 作者尝试引入 “可微分 BA”（类似 VGGSfM 使用的）来优化3D重建。
+- 初步实验显示效果不错，但 **训练开销极大** —— 使用 Theseus 框架使每个训练步骤变慢约 **4倍**。
+- 虽然加速 BA 是潜在方向，但不在本文研究范围，因此未纳入最终模型。
+
+---
+
+### 🟢 单视图重建（Single-view Reconstruction）
+
+- 相比 DUSt3R 或 MASt3R 等需要复制图像组成图对的方法，VGGT 支持**直接输入单张图像**。
+- 单图时，自注意力会退化为逐帧注意力（frame-wise attention）。
+- 虽未专门为单图训练，但**表现也很不错**。可参见图3和图7的可视化结果。
+
+---
+
+### 🔵 预测归一化（Normalizing Prediction）
+
+- 模型训练时会将3D点云的GT进行归一化（用平均欧几里得距离）。
+- 但不同于一些方法（如DUSt3R也对预测结果做归一化），作者发现：
+    - 对预测进行归一化 **并不能提升效果**；
+    - 反而会 **增加训练阶段的不稳定性**。
+
+---
+
+
+## 6. Conclusions
+
+* 🟩 方法简介
+    - 提出了 **VGGT（Visual Geometry Grounded Transformer）**，它是一个**前馈神经网络（feed-forward NN）**，能够**直接估计多视角图像中的所有关键3D场景属性**，即便输入视角多达数百张。
+    - 🚀 关键词：“直接估计”、“所有关键3D属性”、“可处理数百视角”，说明这个网络非常强大且适用于大规模、多视角任务。
+* 🟩 多个任务表现优异
+    1. 📷 相机参数估计（camera parameter estimation）  
+    2. 🧠 多视角深度估计（multi-view depth estimation）  
+    3. 🔁 稠密点云重建（dense point cloud reconstruction）  
+    4. 🛰️ 3D点追踪（3D point tracking）
+    - 这说明 VGGT 不只是针对某一个任务做得好，而是**具备通用性**。
+
+* 🟩 方法特点
+    - 方法是 **神经优先（neural-first）** 的方法，区别于传统视觉几何方法（如 SfM、BA），
+    - 后者依赖优化和后处理步骤（如光束法平差、点云融合等）来提升结果精度。
+    - VGGT 则采用**端到端**的神经网络方式，避免了这些手工或耗时的几何处理。
+
+* 🟩 实用性
+    - 因为结构简单、效率高，VGGT 特别适合**实时应用（real-time applications）**
+    - 这是它相较于传统优化方法的一个重要优势。
+
+* ✅ 总结核心优点：
+    - 神经网络端到端训练，不需复杂几何优化；
+    - 通用于多个3D视觉任务；
+    - 性能优异、精度高；
+    - 支持高效多帧输入；
+    - 实时运行潜力强。
+
+```note
+VGGT 是一个高效的端到端 Transformer 系统，能直接从多视角图像中估计各种3D场景属性，在多个任务上达到SOTA，并因其简单高效而适合实时应用。
+```
+
+## Appendix A Formal Definitions
+
+### 相机与3D点之间的几何变换函数
+
+- 🟦 背景说明：
+    - **世界坐标系**：取第一个相机的坐标系为“世界坐标系”。
+    - **相机外参 \(\mathbf{g}\)**：表示从世界坐标到相机坐标的**刚体变换（位姿）**。
+    - **三维点 \(\mathbf{p}\)**：是在世界坐标系中的点。
+* 🔹 函数 1：刚体变换函数 γ
+    - \[\gamma(\mathbf{g}, \mathbf{p}) = \mathbf{p}'\]
+    - **含义**：对点 \(\mathbf{p}\) 应用刚体变换 \(\mathbf{g}\)，把它从**世界坐标系**转换到相机的**本地坐标系**，得到新坐标 \(\mathbf{p}'\)。
+    - **\(\mathbf{g}\)** 典型结构为 \([R \mid t]\)，即旋转矩阵和位移向量。
+    - 如果写成矩阵形式，这个变换大致是：
+        - \[\mathbf{p}' = R\mathbf{p} + t\]
+
+* 🔹 函数 2：投影函数 π
+    - \[\pi(\mathbf{g}, \mathbf{p}) = \mathbf{y}\]
+    - **含义**：将三维点 \(\mathbf{p}\) 投影成二维图像点 \(\mathbf{y}\)，即投影到相机成像平面。
+    - 实际过程是：
+      1. 先用 \(\gamma(\mathbf{g}, \mathbf{p})\) 把点变到相机坐标系。
+      2. 然后使用透视投影（如 pinhole model）得到图像平面上的像素坐标。
+    - 即可表示为：\[\pi(\mathbf{g}, \mathbf{p}) = \text{project}(\gamma(\mathbf{g}, \mathbf{p}))\]
+
+* 🔹 函数 3：深度函数 \(\pi^{\text{D}}\)
+    - \[\pi^{\text{D}}(\mathbf{g}, \mathbf{p}) = d \in \mathbb{R}^+\]
+    - **含义**：表示点 \(\mathbf{p}\) 在相机 \(\mathbf{g}\) 中的**深度值**。
+    - 即：点 \(\mathbf{p}' = \gamma(\mathbf{g}, \mathbf{p})\) 在相机坐标系下的 z 坐标。
+
+* ✅ 总结关系图：
+    ```
+    世界坐标点 p
+        |
+        | γ(g, p)：刚体变换
+        v
+    相机坐标点 p'（p 在相机坐标系下的位置）
+        |
+        | πD(g, p)：取深度 z
+        | π(g, p)：做投影
+        v
+    图像坐标点 y
+    ```
+
+### 从一个图像像素位置反推出其对应的三维点的位置
+
+* 🟩 场景建模（Scene Modeling）
+    - 每一帧图像 \( I_i \) 所对应的三维场景被表示为一个三维空间中**连续光滑曲面（surface）** 的集合 \( S_i \)，是图像帧的函数（因为场景可能会随时间变化）。
+    - 简单理解为：对每帧图像，我们都认为它“观察”到了一些处于 3D 世界中的物体表面。
+* 🟨 深度定义： \( D_i(\mathbf{y}) \)
+    - **The depth at pixel location \( \mathbf{y} \in \mathcal{I}(I_i) \) is defined as:**
+    - \[D_i(\mathbf{y}) = \min\left\{ \pi^D(\mathbf{g}_i, \mathbf{p}) : \mathbf{p} \in S_i \land \pi(\mathbf{g}_i, \mathbf{p}) = \mathbf{y} \right\}\]
+
+    - \( \mathbf{y} \)：图像 \( I_i \) 上的某一个像素。
+    - \( \pi(\mathbf{g}_i, \mathbf{p}) = \mathbf{y} \)：表示三维点 \( \mathbf{p} \) 被相机 \( \mathbf{g}_i \) 拍摄后，投影到像素 \( \mathbf{y} \)。
+    - \( \pi^D(\mathbf{g}_i, \mathbf{p}) \)：表示点 \( \mathbf{p} \) 被相机 \( \mathbf{g}_i \) 观察到的**深度**（z坐标）。
+    - **含义**：在图像像素 \( \mathbf{y} \) 处的深度 \( D_i(\mathbf{y}) \)，是所有在三维场景 \( S_i \) 中，投影到该像素的点的最小深度。
+
+    👉 **换句话说**，这个定义就是我们常见的**Z-buffer算法**背后的原理：多个3D点可能投影到同一个像素，我们取离相机最近的那个点的深度。
+
+* 🟦 像素对应的三维点 \( P_i(\mathbf{y}) \)
+    - **The point at pixel location \( \mathbf{y} \) is then given by:**
+    - \[P_i(\mathbf{y}) = \gamma(\mathbf{g}_i, \mathbf{p})\]
+    - 这里的 \(\gamma(\mathbf{g}_i, \mathbf{p})\) 是将点 \( \mathbf{p} \) 从世界坐标变换到相机坐标的函数。
+    - 所以：这个表达式表示 **图像中像素 \( \mathbf{y} \) 所对应的三维点 \( \mathbf{p} \)**，是投影到该像素位置，且具有最小深度的那个点。
+
+* ✅ 满足以下三个条件的 3D 点 \( \mathbf{p} \)：
+    1. \( \mathbf{p} \in S_i \)：点在该帧图像观察到的三维表面中。
+    2. \( \pi(\mathbf{g}_i, \mathbf{p}) = \mathbf{y} \)：点投影到图像像素 \( \mathbf{y} \)。
+    3. \( \pi^D(\mathbf{g}_i, \mathbf{p}) = D_i(\mathbf{y}) \)：点的深度是所有候选点中最小的。
+
+* 🧠 总结用图：
+    ```
+    3D 场景中的多个点 (p1, p2, ..., pn)
+        ↓               ↓
+    投影到图像中同一个像素 y
+        ↓
+    选择深度最小的 p*
+        ↓
+    该像素 y 对应的 3D 点就是 γ(g, p*)
+    ```
+
+
+### 总结：
+
+> 本节定义了从多视图图像出发，如何形式化地将每个像素点对应到一个3D点，包括相机位姿变换、投影函数、深度函数，以及点云重建公式，是多视图几何和Transformer推理结果中的核心几何基础。
+
+
+
+## Appendix B Implementation Details
+
+
+### Architecture
+
+1. **VGGT模型由24个注意力块组成**：
+   - 每个块都包含：
+     - **一个帧内的自注意力层**（处理单帧图像中token之间的关系）。
+     - **一个全局自注意力层**（连接不同帧之间的信息，增强时序建模能力）。
+2. **采用 ViT-L 模型的配置（来自 DINOv2）**：
+   - 每层特征维度为 **1024**。
+   - 多头注意力的头数为 **16**。
+   - 使用 PyTorch 中的 `torch.nn.MultiheadAttention` 实现注意力机制，并开启了 **Flash Attention**（高效注意力计算方式）。
+3. **为增强训练稳定性，引入了以下两个技术**：
+   - **QKNorm**：对查询（Q）、键（K）进行归一化，有助于控制注意力的数值范围。
+   - **LayerScale**：残差连接中的缩放因子，初始值为 **0.01**，有助于训练早期的稳定性。
+4. **图像token的提取方式**：
+   - 使用 DINOv2 提取 image tokens，并添加了位置编码。
+   - 从第 **4、11、17、23 层的 attention block** 中提取中间token，然后送入 **DPT 模块**（用于做空间分辨率的上采样，比如输出dense prediction结果如深度图）。
+
+### Training
+
+1. **数据选择方式**：
+   - 每个训练batch先随机选择一个训练集（各数据集加权平衡采样）。
+   - 然后从中随机选一个 scene。
+   - 每个scene中随机选取 **2到24帧**，确保整个batch中总帧数为 **48帧**。
+
+2. **数据预处理**：
+   - 所有输入图像、深度图和点图（point maps）都被 **等比例缩放**，最长边设置为 **518像素**。
+   - 之后在图像中心区域裁剪短边到 **168~518像素**之间的随机尺寸，同时保证该尺寸能被 patch 大小（14像素）整除。
+   - **每一帧都单独进行颜色增强**，以提升模型对光照变化的鲁棒性。
+
+3. **构建 Ground Truth Tracks 的方式**（用于训练的匹配监督）：
+      1. 使用深度图反投影得到3D点。
+      2. 把这些点投影到目标帧。
+      3. 如果投影点的深度与目标帧的深度图匹配，就认为是有效的匹配点（correspondence）。
+      - 如果某一帧和 query 帧之间匹配度低，就会在 batch 采样时被剔除。
+      - 如果一个scene中找不到任何有效匹配对，模型在该样本上不计算 tracking loss（跟踪损失）。
+
+---
+
+### 总结：
+
+| 模块 | 关键设计 | 作用 |
+|------|---------|------|
+| **注意力机制** | 帧内+全局自注意力，24个block，ViT-L结构 | 同时建模时序与空间信息 |
+| **训练数据选择** | 随机采样数据集、scene和帧数 | 增强泛化能力 |
+| **图像预处理** | 缩放+裁剪+独立颜色增强 | 提高模型鲁棒性 |
+| **监督构建** | 3D重建+投影对比方式构造GT | 用于训练 tracking 模块 |
+
+
+## Appendix C Additional Experiments
+
+* 相机位姿估计（Camera Pose Estimation）在 IMC（Image Matching Challenge）基准上的额外实验**。
+* 这段内容主要目的是展示他们提出的方法 VGGT（Visual Geometry Grounded Transformer）在真实照片旅游数据上的表现，特别是和经典 SfM 方法、以及最新的深度学习方法（如 VGGSfM、DUSt3R、MASt3R）相比的优劣。
+
+
+---
+
+
+| Method | Test-time Opt. | AUC@3°°\degree° | AUC@5°°\degree° | AUC@10°°\degree° | Runtime |
+| --- | --- | --- | --- | --- | --- |
+| COLMAP(SIFT+NN) | ✓ | 23.58 | 32.66 | 44.79 | >>>10s |
+| PixSfM (SIFT + NN) | ✓ | 25.54 | 34.80 | 46.73 | >>>20s |
+| PixSfM (LoFTR) | ✓ | 44.06 | 56.16 | 69.61 | >>>20s |
+| PixSfM (SP + SG) | ✓ | 45.19 | 57.22 | 70.47 | >>>20s |
+| DFSfM(LoFTR) | ✓ | 46.55 | 58.74 | 72.19 | >>>10s |
+| DUSt3R | ✓ | 13.46 | 21.24 | 35.62 | ∼similar-to\sim∼ 7s |
+| MASt3R | ✓ | 30.25 | 46.79 | 57.42 | ∼similar-to\sim∼ 9s |
+| VGGSfM | ✓ | 45.23 | 58.89 | 73.92 | ∼similar-to\sim∼ 6s |
+| VGGSfMv2 | ✓ | 59.32 | 67.78 | 76.82 | ∼similar-to\sim∼ 10s |
+| VGGT (ours) | ✗ | 39.23 | 52.74 | 71.26 | 0.2s |
+| VGGT + BA (ours) | ✓ | 66.37 | 75.16 | 84.91 | 1.8s |
+
+
+Table 10: Camera Pose Estimation on IMC.
+Our method achieves state-of-the-art performance on the challenging phototropism data, outperforming VGGSfMv2 which ranked first on the latest CVPR’24 IMC Challenge in camera pose (rotation and translation) estimation.
+
+
+
+---
+
+* 📍评估背景：IMC Benchmark
+    - **IMC（Image Matching Challenge）** 是一个用于评估相机位姿估计的基准数据集，专注于现实中拍摄的旅游景点图像（phototourism）。
+    - 这个任务历史上被 **经典的增量式 SfM 方法** 主导（如 COLMAP 等）。
+
+* 🆚 基线方法（Baselines）
+    - ✅ 自己的方法：
+        1. **VGGT**：前馈式 transformer，直接输出相机位姿（pose）。
+        2. **VGGT + BA**：在 VGGT 的基础上使用 BA（Bundle Adjustment）进一步优化。
+    - ✅ 比较对象：
+        - **经典 SfM 方法**：如 COLMAP（增量式三维重建），参考文献 [94]、[66]。
+        - **深度学习方法**：
+          - **VGGSfM**：首个在 phototourism 数据上超越传统 SfM 的端到端方法。
+          - **DUSt3R** 和 **MASt3R**：近期很受关注的匹配-重建方法，它们都在 MegaDepth 上训练。
+
+> 🔎 注意：DUSt3R 和 MASt3R 的训练集与测试集（IMC）存在一定的重叠（如 British Museum 场景），但图像不完全相同。为了公平比较，VGGT 采用了相同的数据划分策略。
+
+
+---
+
+### ✅ 优势总结
+- **速度快**：VGGT 是端到端的 transformer，不需要两两图像匹配，也不需复杂后处理，推理极快。
+- **精度高**：VGGT + BA 在 IMC 上精度显著超越其他方法。
+- **结构简洁**：模型直接预测三维点作为 BA 的初始化，省去了传统方法的三角化和多轮优化。
+
+---
+
+### 🧠 中文总结归纳：
+> 本文提出的 VGGT（Visual Geometry Grounded Transformer）在相机位姿估计任务中表现出色，尤其在 IMC 挑战数据集上，其前馈版本在准确率与推理速度上已能媲美甚至超越 VGGSfM、DUSt3R 和 MASt3R 等近期强大的方法。进一步加入 Bundle Adjustment（VGGT + BA）后，在所有精度指标上均取得领先，且整体流程更高效、更简洁。
+
+
+
+## Appendix D Qualitative Examples
+
+
+![](https://img.zhaoweiguo.com/uPic/2025/04/s2LrHf.png)
+
+Figure 7:Single-view Reconstruction by Point Map Estimation. Unlike DUSt3R, which requires duplicating an image into a pair, our model can predict the point map from a single input image. It demonstrates strong generalization to unseen real-world images.
+
+
+
+## Appendix E Related Work
+
+* 🔍 Vision Transformers 段落解读：
+    1. **发展脉络**：
+       - Transformer最初源自自然语言处理任务（NLP）。
+       - ViT 首次将Transformer应用到视觉任务，引发广泛研究。
+    2. **后续扩展和技术突破**：
+       - **DeiT** ：利用数据增强和知识蒸馏，在ImageNet上实现有效训练。
+       - **DINO** ：展现了ViT在自监督学习中的表示能力。
+       - **CaiT** ：引入layer scaling机制来训练更深层Transformer。
+       - **QKNorm** ：提出对Query-Key范式进行归一化以稳定训练。
+       - **Correlation-aware deep tracking.**：扩展了注意力机制到时序目标跟踪任务中，采用frame-wise与global attention结合。
+
+    * ✅ 总结：本段强调了Transformer从ViT到更高效/更稳健变体的演进路径，为VGGT的Transformer设计打下背景基础。
+
+---
+
+* 📸 Camera Pose Estimation
+    1. **传统方法**：
+       - **SfM (Structure from Motion)** 是经典的相机位姿估计方法，分为增量式和全局式 等。
+    2. **回归方法**：
+       - 新兴方法尝试将相机位姿回归为一个学习问题，例如 。
+       - **Ace-Zero** 和 **FlowMap** 则将中间变量（如场景坐标、深度图）作为辅助表示。
+    3. **端到端深度方法**：
+       - **VGGSfM**  将传统SfM流水线简化为可微框架。
+       - **DUSt3R** 和 **MASt3R** ：通过学习像素对齐的point map，实现更直接的姿态恢复方式。
+       - 这种point map范式是一种“**过参数化表示**”，对3D高斯splatting等下游任务友好。
+
+✅ 总结：本段为VGGT所采用的point-based方法与可微姿态回归提供了文献背景，也强调其相较于传统SfM与中间表示方法的优势。
+
+---
+
+总结：“VGGT构建在近年来视觉Transformer（如ViT, DeiT, DINO）逐渐取代卷积网络的趋势之上，进一步借鉴了SfM领域中DUSt3R与VGGSfM提出的端到端可微姿态估计范式。相比于传统基于几何优化的方法，VGGT直接输出稠密的point map并融合全局注意力机制，展现出更高的速度与精度兼容性，尤其适合phototourism等多视角数据场景。”
+
+
+
+
+
+
+
+
+
+
+
+
+
+

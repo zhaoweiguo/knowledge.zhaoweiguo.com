@@ -4,12 +4,32 @@
 <!--[if IE 8]><html class="no-js lt-ie9" lang="zh-CN" > <![endif]-->
 <!--[if gt IE 8]><!--> <html class="no-js" lang="zh-CN" > <!--<![endif]-->
 <head>
+
+
+<!-- start added 2025-04-14   增加对markdown中公式的支持 -->
+<script>
+window.MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+    },
+    options: {
+        ignoreHtmlClass: "tex2jax_ignore|mathjax_ignore",
+        processHtmlClass: "tex2jax_process|mathjax_process|math|output_area"
+    }
+};
+</script>
+<script defer="defer" src="https://fastly.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<!-- end added 2025-04-14   增加对markdown中公式的支持 -->
+
+
   <meta charset="utf-8">
   <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>实践 &mdash; 新溪-gordon V2025.03 文档</title>
+  <title>实践 &mdash; 新溪-gordon V2025.05 文档</title>
   
 
   
@@ -72,7 +92,7 @@
             
             
               <div class="version">
-                V2025.03
+                V2025.05
               </div>
             
           
@@ -138,6 +158,7 @@
 <li class="toctree-l1 current"><a class="reference internal" href="../ffmpeg.html">FFmpeg</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="normal.html">通用</a></li>
 <li class="toctree-l2"><a class="reference internal" href="ffmpeg.html">FFmpeg</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ffprobe.html">ffprobe</a></li>
 <li class="toctree-l2"><a class="reference internal" href="docker.html">Docker相关</a></li>
 <li class="toctree-l2"><a class="reference internal" href="player.html">播放器</a></li>
 <li class="toctree-l2"><a class="reference internal" href="web.html">网页/软件</a></li>
@@ -151,6 +172,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../vpns/proxy/docker.html">Docker代理加速</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../vpns/proxy/github.html">github加速代理</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../vpns/proxy/pip.html">pip加速代理</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../vpns/proxy/huggingface.html">huggingface</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../vpns/openvpn.html">openvpn</a></li>
@@ -372,6 +394,17 @@ ffmpeg -i <a class="reference external" href="rtsp://localhost/abcv">rtsp://loca
 # 录制时间为60秒
 ffmpeg -i <a class="reference external" href="rtsp://localhost/abcv">rtsp://localhost/abcv</a> -vf “select=not(mod(n,60)),scale=1280:720” -f segment -segment_time 10 -segment_format mp4 -t 60 “output%03d.mp4”
 ffmpeg -i <a class="reference external" href="rtsp://localhost/abcv">rtsp://localhost/abcv</a> -vf “select=not(mod(n,60)),scale=1280:720” -f segment -segment_time 10 -segment_format mp4 -strftime 1 -strftime_mkdir 1 -t 60 “output%Y-%m-%d_%H-%M-%S.mp4”</p>
+<p>从视频中抽样提取照片:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#   1. 读取 input.mp4</span>
+<span class="c1">#   2. 每秒提取 2 帧</span>
+<span class="c1">#   3. 把结果保存为 frames/frame_001.jpg, frames/frame_002.jpg</span>
+<span class="c1"># 命令含义</span>
+<span class="c1">#   1. -i 表示输入文件</span>
+<span class="c1">#   2. -vf 是 video filter 的意思</span>
+<span class="c1">#   3. fps=xxx 表示每秒提取多少帧</span>
+<span class="n">ffmpeg</span> <span class="o">-</span><span class="n">i</span> <span class="nb">input</span><span class="o">.</span><span class="n">mp4</span> <span class="o">-</span><span class="n">vf</span> <span class="n">fps</span><span class="o">=</span><span class="mi">2</span> <span class="n">frames</span><span class="o">/</span><span class="n">frame_</span><span class="o">%</span><span class="mi">03</span><span class="n">d</span><span class="o">.</span><span class="n">jpg</span>
+</pre></div>
+</div>
 <table class="docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
@@ -436,7 +469,7 @@ ffmpeg -i <a class="reference external" href="rtsp://localhost/abcv">rtsp://loca
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'V2025.03',
+            VERSION:'V2025.05',
             LANGUAGE:'zh-CN',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',

@@ -4,12 +4,32 @@
 <!--[if IE 8]><html class="no-js lt-ie9" lang="zh-CN" > <![endif]-->
 <!--[if gt IE 8]><!--> <html class="no-js" lang="zh-CN" > <!--<![endif]-->
 <head>
+
+
+<!-- start added 2025-04-14   增加对markdown中公式的支持 -->
+<script>
+window.MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+    },
+    options: {
+        ignoreHtmlClass: "tex2jax_ignore|mathjax_ignore",
+        processHtmlClass: "tex2jax_process|mathjax_process|math|output_area"
+    }
+};
+</script>
+<script defer="defer" src="https://fastly.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<!-- end added 2025-04-14   增加对markdown中公式的支持 -->
+
+
   <meta charset="utf-8">
   <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>nvidia-smi命令 &mdash; 新溪-gordon V2025.03 文档</title>
+  <title>nvidia-smi命令 &mdash; 新溪-gordon V2025.05 文档</title>
   
 
   
@@ -72,7 +92,7 @@
             
             
               <div class="version">
-                V2025.03
+                V2025.05
               </div>
             
           
@@ -960,7 +980,8 @@
 <li class="toctree-l2 current"><a class="reference internal" href="../command.html">GPU查看</a><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="nvcc.html">nvcc命令</a></li>
 <li class="toctree-l3 current"><a class="current reference internal" href="#">nvidia-smi命令</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#id2">实例</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gpu">GPU 属性</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id4">实例</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="gpustat.html">gpustat</a></li>
@@ -988,6 +1009,14 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../question.html">常见问题</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../question.html#cuda">CUDA版本低</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../%E5%9B%BD%E4%BA%A7%E6%9B%BF%E4%BB%A3.html">国产替代</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../%E5%9B%BD%E4%BA%A7%E6%9B%BF%E4%BB%A3.html#xpu">昆仑芯 XPU</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../%E5%9B%BD%E4%BA%A7%E6%9B%BF%E4%BB%A3.html#dcu">海光 DCU</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../%E5%9B%BD%E4%BA%A7%E6%9B%BF%E4%BB%A3.html#npu">昇腾 NPU</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../%E5%9B%BD%E4%BA%A7%E6%9B%BF%E4%BB%A3.html#mlu">寒武纪 MLU</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../%E5%9B%BD%E4%BA%A7%E6%9B%BF%E4%BB%A3.html#gcu">燧原 GCU</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../tmp.html">临时</a></li>
@@ -1104,7 +1133,12 @@
               <h4 id="local-table-of-contents-title">On This Page</h4>
               <ul>
 <li><a class="reference internal" href="#">nvidia-smi命令</a><ul>
-<li><a class="reference internal" href="#id2">实例</a></li>
+<li><a class="reference internal" href="#gpu">GPU 属性</a><ul>
+<li><a class="reference internal" href="#id2">计算能力的作用</a></li>
+<li><a class="reference internal" href="#id3">查询所有 GPU 属性</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id4">实例</a></li>
 </ul>
 </li>
 </ul>
@@ -1194,8 +1228,49 @@ GPU 状态
         N/A 表示此 GPU 不支持 MIG 功能。
 </pre></div>
 </div>
+<section id="gpu">
+<h2>GPU 属性<a class="headerlink" href="#gpu" title="此标题的永久链接">¶</a></h2>
+<p>查询 NVIDIA GPU 的 计算能力（Compute Capability） 的命令:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ nvidia-smi --query-gpu=compute_cap --format=csv
+compute_cap
+8.9
+</pre></div>
+</div>
 <section id="id2">
-<h2>实例<a class="headerlink" href="#id2" title="此标题的永久链接">¶</a></h2>
+<h3>计算能力的作用<a class="headerlink" href="#id2" title="此标题的永久链接">¶</a></h3>
+<ul>
+<li><p>GPU 的计算能力（Compute Capability）是 NVIDIA 用来标识 GPU 架构和支持的功能的一个重要指标。</p></li>
+<li><p>不同的计算能力对应不同的 GPU 架构和功能支持，例如:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>| 架构代号          | 架构名称           | 代表 GPU 型号            | Compute Capability |
+|------------------|------------------|-------------------------|---------------------|
+| Tesla            | Tesla            | GTX 200 系列             | 1.0 - 1.3           |
+| Fermi            | Fermi            | GTX 400/500 系列         | 2.0 - 2.1           |
+| Kepler           | Kepler           | GTX 600/700             | 3.0 - 3.7           |
+| Maxwell          | Maxwell          | GTX 750, 900 系列        | 5.0 - 5.3           |
+| Pascal           | Pascal           | GTX 10 系列              | 6.0 - 6.2           |
+| Volta            | Volta            | Tesla V100              | 7.0                 |
+| Turing           | Turing           | RTX 20 系列，GTX 16 系列  | 7.5                 |
+| Ampere           | Ampere           | RTX 30 系列，A100, L4     | 8.0 - 8.6           |
+| Hopper           | Hopper           | H100, H20                | 9.0                 |
+| Ada Lovelace     | Ada              | RTX 40 系列(4090), L20    | 8.9                 |
+| Blackwell (新)   | Blackwell        | B100 等                   | 9.0+（待正式发布）    |
+</pre></div>
+</div>
+</li>
+</ul>
+</section>
+<section id="id3">
+<h3>查询所有 GPU 属性<a class="headerlink" href="#id3" title="此标题的永久链接">¶</a></h3>
+<p>查询所有 GPU 属性:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ nvidia-smi --query-gpu=name,compute_cap,memory.total --format=csv
+name, compute_cap, memory.total [MiB]
+NVIDIA L20, 8.9, 46068 MiB
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id4">
+<h2>实例<a class="headerlink" href="#id4" title="此标题的永久链接">¶</a></h2>
 <p>nvidia-smi:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Thu</span> <span class="n">Feb</span> <span class="mi">29</span> <span class="mi">19</span><span class="p">:</span><span class="mi">54</span><span class="p">:</span><span class="mi">59</span> <span class="mi">2024</span>
 <span class="o">+-----------------------------------------------------------------------------+</span>
@@ -1294,7 +1369,7 @@ GPU 状态
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../',
-            VERSION:'V2025.03',
+            VERSION:'V2025.05',
             LANGUAGE:'zh-CN',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',

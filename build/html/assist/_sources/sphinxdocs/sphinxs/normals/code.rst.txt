@@ -84,23 +84,25 @@ multiple code examples::
         print "Hello, World!\n"
 
 
-
-.. example-code::
-
-  .. code-block:: JSON
-
-    {
-      "key": "value"
-    }
-
-  .. code-block:: python
-
-    pygments_style = 'sphinx'
+    🛑说明: 好像不生效了(应该需要插件吧，不常用，不记得和怎么操作了)
 
 
-  .. code-block:: ruby
+.. .. example-code::
 
-    print "Hello, World!\n"
+..   .. code-block:: JSON
+
+..     {
+..       "key": "value"
+..     }
+
+..   .. code-block:: python
+
+..     pygments_style = 'sphinx'
+
+
+..   .. code-block:: ruby
+
+..     print "Hello, World!\n"
 
 
 

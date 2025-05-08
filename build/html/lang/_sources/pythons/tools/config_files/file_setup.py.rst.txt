@@ -42,7 +42,9 @@
         long_description_content_type="text/markdown",
         url="https://github.com/yourusername/my_project",
 
-        # 2. 项目依赖关系
+
+
+        # 2. 项目依赖关系(自动安装的依赖库)
         install_requires=[
             "requests>=2.20.0",
             "numpy>=1.18.0",
@@ -50,10 +52,13 @@
         # install_requires=requirements,
 
 
+
         # 3. 项目打包
         packages=find_packages(),
         # packages=find_packages(exclude=["contrib", "docs", "examples", "tests*"]),
         # packages=find_packages(include=['sample', 'sample.*']),
+        # packages=["asmk",],   # 指定要打包的 Python 包。这里只打包了 asmk 文件夹下的内容。
+
 
         # package_data: 用于指定与代码相关联的额外文件，例如配置文件、模板、静态资源等
         # 这些文件在打包时会被包括在内。它的格式是一个字典，键是包的名称，值是要包含的文件列表
@@ -81,6 +86,30 @@
 
         # 5. 额外依赖
         extras_require=extras_require,
+
+
+        # 声明一个 C 扩展模块，模块名为 asmk.hamming，源码路径是 cython/hamming.c
+        ext_modules=[Extension("asmk.hamming", ["cython/hamming.c"])],  # 编译时会生成 .so 或 .pyd 文件供 Python 调用
+
+
+
+        # 自定义安装类：InstallWrapper
+        #   对默认 install 命令的封装，用于安装前检查是否安装了 faiss
+        #       如果找不到 faiss，就提示错误并终止安装。
+        #       install.run(self): 如果一切正常，继续执行标准的安装流程。
+        class InstallWrapper(install):
+            def run(self):
+                try:
+                    import faiss
+                except ImportError:
+                    sys.stderr.write("\nERROR: faiss package not installed\n\n")
+                    sys.exit(1)
+                install.run(self)
+
+        # 指定 install 命令时使用我们自定义的 InstallWrapper 类，加入安装前检查逻辑
+        cmdclass={"install": InstallWrapper,},   # 
+
+
     )
 
 

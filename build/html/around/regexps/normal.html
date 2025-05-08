@@ -4,12 +4,32 @@
 <!--[if IE 8]><html class="no-js lt-ie9" lang="zh-CN" > <![endif]-->
 <!--[if gt IE 8]><!--> <html class="no-js" lang="zh-CN" > <!--<![endif]-->
 <head>
+
+
+<!-- start added 2025-04-14   增加对markdown中公式的支持 -->
+<script>
+window.MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+    },
+    options: {
+        ignoreHtmlClass: "tex2jax_ignore|mathjax_ignore",
+        processHtmlClass: "tex2jax_process|mathjax_process|math|output_area"
+    }
+};
+</script>
+<script defer="defer" src="https://fastly.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<!-- end added 2025-04-14   增加对markdown中公式的支持 -->
+
+
   <meta charset="utf-8">
   <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>4.1. 正则基本功能 &mdash; 新溪-gordon V2025.03 文档</title>
+  <title>4.1. 正则基本功能 &mdash; 新溪-gordon V2025.05 文档</title>
   
 
   
@@ -72,7 +92,7 @@
             
             
               <div class="version">
-                V2025.03
+                V2025.05
               </div>
             
           
@@ -1085,15 +1105,21 @@ $ 匹配整个字符串的结尾
 <section id="id18">
 <h3>括号的转义<a class="headerlink" href="#id18" title="此标题的永久链接">¶</a></h3>
 <p>方括号 [] 和 花括号 {} 只需转义开括号，但圆括号 () 两个都要转义:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s1">&#39;\(\)\[]\</span><span class="si">{}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;()[]</span><span class="si">{}</span><span class="s1">&#39;</span><span class="p">)</span>
-<span class="go">[&#39;()[]{}&#39;]</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s1">&#39;\(\)$$</span>
 </pre></div>
 </div>
+<dl class="simple">
+<dt>]{}’, ‘()[]{}’)</dt><dd><p>[‘()[]{}’]</p>
+</dd>
+</dl>
 <p>方括号和花括号都转义也可以:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s1">&#39;\(\)\[\]\{\}&#39;</span><span class="p">,</span> <span class="s1">&#39;()[]</span><span class="si">{}</span><span class="s1">&#39;</span><span class="p">)</span>
-<span class="go">[&#39;()[]{}&#39;]</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s1">&#39;\(\)\[</span>
 </pre></div>
 </div>
+<dl class="simple">
+<dt>$${}’, ‘()[]{}’)</dt><dd><p>[‘()[]{}’]</p>
+</dd>
+</dl>
 <div class="admonition note">
 <p class="admonition-title">备注</p>
 <p>在正则中，圆括号通常用于分组，或者将某个部分看成一个整体，如果只转义开括号或闭括号，正则会认为少了另外一半，所以会报错。</p>
@@ -1113,8 +1139,11 @@ $ 匹配整个字符串的结尾
 <span class="gp">&gt;&gt;&gt; </span><span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="s1">&#39;\d&#39;</span><span class="p">),</span> <span class="s1">&#39;\d&#39;</span><span class="p">)</span>
 <span class="go">[&#39;\\d&#39;]</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">re</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="s1">&#39;[+]&#39;</span><span class="p">)</span>  <span class="c1"># 中括号和加号</span>
-<span class="go">&#39;\\[\\+\\]&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="s1">&#39;[+]&#39;</span><span class="p">),</span> <span class="s1">&#39;[+]&#39;</span><span class="p">)</span>
+<span class="go">&#39;\$$</span>
+</pre></div>
+</div>
+<p>\+$$’</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="s1">&#39;[+]&#39;</span><span class="p">),</span> <span class="s1">&#39;[+]&#39;</span><span class="p">)</span>
 <span class="go">[&#39;[+]&#39;]</span>
 </pre></div>
 </div>
@@ -1312,7 +1341,7 @@ www.ncbi.nlm.nih.gov
 
 命令:
 ## BRE
-$ grep &#39;\(f\|ht\)tps\?.*&#39; a.txt
+$ grep &#39;$f\|ht$tps\?.*&#39; a.txt
 
 ## ERE
 $ grep -E &#39;(f|ht)tps?.*&#39; a.txt
@@ -1823,7 +1852,7 @@ LANG=zh_CN.gb2312，使用的是gb2312语系，排列方式为： a,A,b,B,c,C…
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'V2025.03',
+            VERSION:'V2025.05',
             LANGUAGE:'zh-CN',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
