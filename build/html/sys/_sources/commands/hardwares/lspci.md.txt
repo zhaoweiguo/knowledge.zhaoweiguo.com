@@ -1,0 +1,250 @@
+# lspci命令使用
+
+`lspci` 是 Linux 系统下一个用于显示所有 PCI（Peripheral Component Interconnect，外围组件互连）总线及其连接设备信息的命令。它常用于硬件诊断、驱动程序问题排查、系统信息收集等场景。
+
+
+## 基本用法
+
+### 🔧 基本语法
+
+```bash
+lspci [选项]
+```
+
+
+### 📋 常用功能说明
+
+| 命令示例                       | 功能说明                     |
+| -------------------------- | ------------------------ |
+| `lspci`                    | 列出系统中所有的 PCI 设备          |
+| `lspci -v`                 | 显示详细信息（verbose）          |
+| `lspci -vv`                | 显示更详细的信息（very verbose）   |
+| `lspci -k`                 | 显示每个设备使用的内核模块（驱动程序）      |
+| `lspci -nn`                | 显示设备的厂商ID和设备ID（有助于查找驱动）  |
+| `lspci -s <地址>`            | 显示指定地址（如 `00:1f.2`）的设备信息 |
+| `lspci -d <vendor:device>` | 根据厂商和设备 ID 过滤显示          |
+
+
+### 🔍 常见用途
+
+* 查看显卡信息（匹配 `VGA`）
+* 查找无线网卡/网卡型号
+* 判断驱动程序是否已加载（配合 `-k`）
+* 在服务器上进行无图形界面的硬件检查
+
+
+### 📦 注意事项
+
+* 需要 `pciutils` 包支持（大多数 Linux 发行版已默认安装）
+* 某些细节信息需要使用 `sudo` 权限运行
+* 与 `/proc`、`dmesg` 等命令结合使用可获取更完整硬件信息
+
+
+
+### 输出格式
+
+格式:
+
+```
+<总线地址> <设备类型>: <厂商名称> <设备名称> (<可选的版本信息>)
+```
+
+* 总线地址：格式是 域:总线.设备.功能（如 00:00.0），表示设备在 PCI 拓扑中的地址。
+* 设备类型：如 Host bridge、PCI bridge、VGA compatible controller 等。
+* 厂商和设备名称：设备的厂商（如 Intel、Red Hat、NVIDIA）和具体的控制器或芯片型号。
+* rev xx：设备的修订版本（revision），可选字段。
+
+
+
+### 设备类型
+
+* 总结表
+
+| 设备类型                      | 中文解释      | 典型作用            |
+| ------------------------- | --------- | --------------- |
+| Host bridge               | 主桥        | CPU与内存/PCI之间的桥接 |
+| PCI bridge                | PCI 桥     | 拓展更多 PCIe 插槽或设备 |
+| ISA bridge                | ISA 桥     | 控制低速传统设备        |
+| SATA controller           | 硬盘控制器     | 控制SATA硬盘/SSD    |
+| SMBus controller          | 系统管理总线控制器 | 连接电池/传感器等管理设备   |
+| VGA compatible controller | 显卡（兼容VGA） | 显示器输出           |
+| Ethernet controller       | 网卡        | 网络通信            |
+| Audio device              | 声卡        | 音频输入输出          |
+| USB controller            | USB 控制器   | USB设备的连接与控制     |
+| SCSI storage controller   | 存储控制器     | 控制虚拟磁盘或物理磁盘     |
+| 3D controller             | GPU       | 高性能图形处理         |
+| Unclassified device       | 未分类设备     | 虚拟设备/特殊硬件       |
+
+
+
+* 1. **Host bridge（主桥）**
+    * **功能**：连接 CPU 与内存/总线之间的数据通道。
+    * **典型设备**：内存控制器、CPU 与 PCIe 的桥接器。
+    * **示例**：
+
+      ```
+      00:00.0 Host bridge: Intel Corporation 82G33...
+      00:04.0 Host bridge: Red Hat, Inc. QEMU PCIe Expander bridge
+      ```
+* 2. **PCI bridge（PCI 桥）**
+    * **功能**：连接两个 PCI 总线段；也用于实现 PCIe 多层拓扑。
+    * **用途**：用于拓展多个 PCI 设备插槽或连接下游 PCIe 设备。
+    * **示例**：
+
+      ```
+      00:01.0 PCI bridge: Intel Corporation 7500/5520...
+      01:00.0 PCI bridge: Red Hat, Inc. Device 000e
+      ```
+* 3. **ISA bridge（ISA 桥）**
+    * **功能**：传统上连接低速设备（如 BIOS、CMOS、电池控制器等），在现代主板中用于兼容性目的。
+    * **示例**：
+
+      ```
+      00:1f.0 ISA bridge: Intel Corporation 82801IB (ICH9)
+      ```
+
+* 4. **SATA controller（SATA 控制器）**
+
+    * **功能**：控制连接的 SATA 硬盘或 SSD。
+    * **模式**：通常支持 AHCI 模式。
+    * **示例**：
+
+      ```
+      00:1f.2 SATA controller: Intel Corporation 82801IR/IO/IH (ICH9R)
+      ```
+
+* 5. **SMBus controller（系统管理总线控制器）**
+    * **功能**：用于低速系统管理通信，如与电池、传感器、风扇等交互。
+    * **示例**：
+
+      ```
+      00:1f.3 SMBus: Intel Corporation 82801I
+      ```
+
+* 6. **VGA compatible controller（VGA 兼容图形控制器）**
+
+    * **功能**：图形显示控制器，兼容 VGA 标准。
+    * **示例**：
+
+      ```
+      02:01.0 VGA compatible controller: Cirrus Logic GD 5446
+      ```
+
+* 7. **Ethernet controller（以太网控制器）**
+
+    * **功能**：用于网络通信的网卡设备。
+    * **示例**：
+
+      ```
+      02:02.0 Ethernet controller: Red Hat, Inc. Virtio network device
+      ```
+
+* 8. **Audio device（音频设备）**
+
+    * **功能**：处理音频输入输出（通常为 HD Audio 控制器）。
+    * **示例**：
+
+      ```
+      02:03.0 Audio device: Intel Corporation 82801FB...
+      ```
+
+* 9. **USB controller（USB 控制器）**
+    * **功能**：管理 USB 接口，支持 USB 2.0/3.0/3.1/3.2。
+    * **示例**：
+
+      ```
+      02:04.0 USB controller: NEC Corporation uPD720200 USB 3.0 Host Controller
+      ```
+
+* 10. **SCSI storage controller（SCSI 存储控制器）**
+    * **功能**：用于连接 SCSI 或 VirtIO 的块设备，如虚拟硬盘。
+    * **示例**：
+
+      ```
+      02:05.0 SCSI storage controller: Red Hat, Inc. Virtio block device
+      ```
+
+* 11. **3D controller（三维控制器）**
+    * **功能**：独立显卡或专用于 3D 渲染的 GPU 设备。
+    * **与 VGA 不同**：3D 控制器不一定支持传统 VGA 信号（如 BIOS 启动画面）。
+    * **示例**：
+
+      ```
+      23:00.0 3D controller: NVIDIA Corporation Device 26ba
+      ```
+
+* 12. **Unclassified device（未分类设备）**
+    * **功能**：没有明确分类的 PCI 设备，常见于虚拟设备如内存气球。
+    * **设备类代码**通常为 `00ff`。
+    * **示例**：
+
+      ```
+      02:07.0 Unclassified device [00ff]: Red Hat, Inc. Virtio memory balloon
+      ```
+
+
+
+---
+
+## 示例
+
+* sudo lspci
+
+```
+00:00.0 Host bridge: Intel Corporation 82G33/G31/P35/P31 Express DRAM Controller
+00:01.0 PCI bridge: Intel Corporation 7500/5520/5500/X58 I/O Hub PCI Express Root Port 0 (rev 02)
+00:02.0 PCI bridge: Intel Corporation 7500/5520/5500/X58 I/O Hub PCI Express Root Port 0 (rev 02)
+00:03.0 PCI bridge: Intel Corporation 7500/5520/5500/X58 I/O Hub PCI Express Root Port 0 (rev 02)
+00:04.0 Host bridge: Red Hat, Inc. QEMU PCIe Expander bridge
+00:1f.0 ISA bridge: Intel Corporation 82801IB (ICH9) LPC Interface Controller (rev 02)
+00:1f.2 SATA controller: Intel Corporation 82801IR/IO/IH (ICH9R/DO/DH) 6 port SATA Controller [AHCI mode] (rev 02)
+00:1f.3 SMBus: Intel Corporation 82801I (ICH9 Family) SMBus Controller (rev 02)
+01:00.0 PCI bridge: Red Hat, Inc. Device 000e
+02:01.0 VGA compatible controller: Cirrus Logic GD 5446
+02:02.0 Ethernet controller: Red Hat, Inc. Virtio network device
+02:03.0 Audio device: Intel Corporation 82801FB/FBM/FR/FW/FRW (ICH6 Family) High Definition Audio Controller (rev 01)
+02:04.0 USB controller: NEC Corporation uPD720200 USB 3.0 Host Controller (rev 03)
+02:05.0 SCSI storage controller: Red Hat, Inc. Virtio block device
+02:06.0 SCSI storage controller: Red Hat, Inc. Virtio block device
+02:07.0 Unclassified device [00ff]: Red Hat, Inc. Virtio memory balloon
+03:00.0 PCI bridge: Red Hat, Inc. Device 000e
+05:00.0 PCI bridge: Red Hat, Inc. Device 000e
+20:00.0 PCI bridge: Intel Corporation 7500/5520/5500/X58 I/O Hub PCI Express Root Port 0 (rev 02)
+21:00.0 PCI bridge: Texas Instruments XIO3130 PCI Express Switch (Upstream) (rev 02)
+22:00.0 PCI bridge: Texas Instruments XIO3130 PCI Express Switch (Downstream) (rev 01)
+23:00.0 3D controller: NVIDIA Corporation Device 26ba (rev a1)
+```
+
+
+
+
+## 参考
+
+* The PCI Utilities: https://mj.ucw.cz/sw/pciutils/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

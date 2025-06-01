@@ -1,0 +1,186 @@
+# Qwen Technical Report
+
+* [https://arxiv.org/abs/2309.16609](https://arxiv.org/abs/2309.16609)
+* 组织: 阿里
+* GitHub: [https://github.com/QwenLM/Qwen](https://github.com/QwenLM/Qwen)
+
+
+
+## 1. Introduction
+
+### 大语言模型（LLM）的崛起
+
+* 大语言模型（如 GPT 系列、T5、PaLM 等）彻底改变了人工智能领域。它们可以：
+    * 理解和生成自然语言内容
+    * 执行复杂的推理和创造性任务（如写诗、写代码）
+    * 与人类对话，成为强大的助手
+
+* 不仅限于文字任务，LLM 还能：
+    * 执行代码
+    * 使用工具
+    * 处理多模态信息（图像+文本）
+
+### Qwen 模型系列介绍
+
+![](https://img.zhaoweiguo.com/uPic/2025/05/XtrvnZ.jpg)
+
+Figure 1: Model Lineage of the Qwen Series. We have pretrained the language models, namely QWEN, on massive datasets containing trillions of tokens. We then use SFT and RLHF to align QWEN to human preference and thus we have QWEN-CHAT and specifically its improved version QWEN-CHAT-RLHF. Additionally, we also develop specialized models for coding and mathematics, such as CODE-QWEN, CODE-QWEN-CHAT, and MATH-QWEN-CHAT based on QWEN with similar techniques. Note that we previously released the multimodal LLM, QWEN-VL and QWEN-VL-CHAT (Bai et al., 2023), which are also based on our QWEN base models
+
+* preference model pretraining (PMP) and reward model (RM)
+
+### 模型开源情况
+
+* **Qwen 和 Qwen-Chat** 的 **7B 和 14B 参数规模版本**
+* 目标是为开发者和应用提供强大、易用的 LLM
+
+## 2. Pretraining
+
+Qwen 模型的预训练阶段包含多个核心内容，旨在构建具备语言、算术、逻辑推理和编程能力的大模型。
+
+
+### **2.1 数据**
+
+* **数据规模大**，涵盖网页、百科、书籍、代码等多种类型。
+* **多语言**，以英文和中文为主。
+* **质量控制**：
+  * 去重（精确匹配+模糊去重）
+  * 使用规则和模型筛选低质量内容
+  * 引入人工抽检和高质量指令数据
+  * 总训练数据高达 **3万亿个Token**
+
+
+### **2.2 分词（Tokenization）**
+
+* 使用 BPE 分词法，起点为 `cl100k` 词表（来自 GPT）。
+* 增强了中文词汇的支持，并将数字拆分为单个数字。
+* 词表总规模约为 **15.2万个词**。
+* 实验表明：Qwen 分词器在多语言压缩效率优于其他模型。
+
+### **2.3 模型架构**
+
+* **基于 Transformer**，并借鉴 LLaMA 的结构。
+* 主要改进：
+  * 输入/输出嵌入权重不共享
+  * 使用 RoPE 位置编码（精度为 FP32）
+  * 注意力层中 QKV 使用 bias，其他层不加 bias
+  * 使用 Pre-Norm + RMSNorm 提高稳定性
+  * 激活函数为 SwiGLU，比 GeLU 效果更好
+  * FFN 维度从 4x 降为 8/3x，提升效率
+
+![](https://img.zhaoweiguo.com/uPic/2025/05/OUoXRX.jpg)
+
+Table 1: Model sizes, architectures, and optimization hyper-parameters.
+
+
+### **2.4 训练过程**
+
+* 使用标准自回归训练（预测下一个词）
+* 上下文长度为 2048，使用 Flash Attention 提高效率
+* 优化器：AdamW，使用余弦退火学习率调度
+* 全程使用 BFloat16 混合精度训练
+
+### **2.5 上下文长度扩展**
+
+* Transformer 的注意力机制在长上下文下计算成本高。
+* 使用 **NTK-aware 插值** 等方法，在**不额外训练的情况下**扩展上下文。
+* 引入两种机制提升长文本处理能力：
+  * **LogN 缩放**：使注意力值更稳定
+  * **窗口注意力**：限制关注范围
+* 不同层使用不同窗口大小，低层窗口小，高层窗口大
+
+
+
+### **2.6 实验结果**
+
+* Qwen 在多个基准测试中表现优异，特别是 Qwen-14B 在某些任务中超越了 LLaMA2-70B。
+* Qwen-7B 超过了 LLaMA2-13B，接近 Baichuan2-13B。
+* Qwen-1.8B 虽然体量小，但在一些任务中仍优于更大的模型。
+* 在长文本任务中，结合多种上下文扩展技术后，Qwen 保持了优秀性能。
+
+![](https://img.zhaoweiguo.com/uPic/2025/06/NraykM.jpg)
+
+Table 2: Overall performance on widely-used benchmarks compared to open-source base models.
+
+## 3. Alignment
+
+* 这段内容介绍了 **Qwen 模型是如何通过对齐技术（Alignment）来更好地理解和响应人类语言的**
+
+### 🌟 **整体概述**
+
+* 大语言模型（LLM）虽然预训练后具备强大能力，但**不够“贴近人类意图”**，不能直接用于 AI 助手。
+* 因此，研究者使用 **SFT（监督微调）+ RLHF（人类反馈强化学习）** 来“对齐”模型，使其更像人类。
+
+### 🧠 **3.1 监督微调 SFT**
+
+* **目的**：让模型学会更自然、更有帮助的对话方式。
+* **做法**：用大量“人类风格”的对话（问题+回答）训练模型。
+* **技术细节**：
+
+  * 使用 ChatML 格式标明对话角色（如 user / assistant）。
+  * 模型预测下一个词（next-token prediction）。
+  * 设置学习率、批大小等常规训练参数。
+
+### 🎯 **3.2 人类反馈强化学习 RLHF**
+
+* **目的**：解决 SFT 模型“死板”、“泛化弱”的问题，让模型更有创造力、更符合人类偏好。
+
+* **步骤**：
+
+  1. **构建奖励模型**：用人类评分的数据训练奖励模型（判断哪个回答更好）。
+  2. **策略优化**（PPO）：在奖励模型的指导下改进回答策略。
+
+* **技巧**：
+
+  * 使用多种模型生成回答来增加多样性。
+  * 设置合适的学习率、正则化参数等。
+  * 使用“预训练梯度”减轻所谓的“对齐税”（alignment tax）。
+
+
+### 📊 **3.3 自动评估与人工评估**
+
+* **自动评估**：用标准测试集（如 MMLU、HumanEval）对模型能力打分。
+* **人工评估**：300条中文指令，比较 SFT 和 RLHF 版本 Qwen 的表现，并与 GPT-3.5 / GPT-4 对比。
+
+  * **结论**：RLHF 显著优于 SFT，但仍略弱于 GPT-4。
+  * **亮点**：Qwen 在代码生成（HumanEval）上的表现超越其他开源模型。
+
+
+### 🤖 **3.4 工具调用、代码解释器与 Agent 能力**
+
+* Qwen 模型具备作为 Agent（助理/自动化助手）的潜力：
+
+  * 能用 ReAct 技术调用工具/API。
+  * 会用 Python 执行代码做推理/分析。
+  * 能访问 Hugging Face 多模态模型。
+* 使用自举式“自我指令生成（Self-Instruct）”来进一步增强这方面能力。
+
+
+### ✅ **总结**
+
+Qwen 模型通过**监督微调+人类反馈强化学习**，配合高质量数据和评估体系，提升了它：
+
+* 更自然地对话、
+* 更符合人类喜好、
+* 更会调用工具执行任务，
+  从而成为一个更强的 AI 助手。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

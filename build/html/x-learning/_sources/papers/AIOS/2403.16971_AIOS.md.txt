@@ -1,0 +1,194 @@
+# 2403.16971_AIOS: LLM Agent Operating System
+
+* [https://arxiv.org/abs/2403.16971](https://arxiv.org/abs/2403.16971)
+* GitHub: [https://github.com/agiresearch/AIOS](https://github.com/agiresearch/AIOS)
+
+
+
+## Abstract
+
+* 它引入了一种新的架构，通过将资源和特定于 LLM 的服务从代理应用程序隔离到 AIOS 内核中，为基于 LLM 的代理提供服务。这个 AIOS 内核为运行时代理提供基本服务（例如，调度、上下文管理、内存管理、存储管理、访问控制）和高效的资源管理（例如，LLM 和外部工具）。为了提高可用性，AIOS 还包括一个 AIOS-Agent SDK，这是一套全面的 API，旨在利用 AIOS 内核提供的功能。
+
+
+## 1. Introduction
+
+
+![](https://img.zhaoweiguo.com/uPic/2025/05/3rcCHR.png)
+
+Figure 1:A motivating example of how an agent (i.e., travel agent) requires both LLM-related and Non-LLM-related (i.e., OS) services to complete a task, where color in red represents services related to LLM and color in blue represents services not related to LLM.
+
+
+
+* 背景与研究动机
+   * 智能体研究的目标是构建能够 **感知环境、理解指令、做决策、执行动作和从反馈中学习** 的系统。
+   * 随着 LLMs 的出现，智能体开发的能力得到了显著提升。
+   * 当前的 LLM 已展示出：
+     * 理解指令（instruction following）
+     * 推理与解决问题（reasoning/problem solving）
+     * 与人和外部环境的互动能力
+   * 基于 LLM 的新型智能体（如 ReAct、Reflexion、Mind2Web 等）已经可以完成各种任务，从虚拟助手到复杂的创造性任务。
+* 当前问题
+   1. **资源管理不合理**：
+      * LLM 和工具被直接暴露给 Agent 使用，没有合理的权限管理或调度机制。
+      * 导致一些智能体可能滥用资源，比如疯狂发 prompt，占用 LLM 资源。
+   2. **并发效率低下**：
+      * 当前的智能体框架（如 AutoGen、Langchain）在并发场景下采用“试错法”：
+        * 发 prompt → 转换为张量 → 载入 GPU → OOM → 抛出异常 → 重试
+      * 结果是系统吞吐量下降、响应时间变长。
+* AIOS 的贡献
+1. **新的架构设计：AIOS**
+   * 将智能体应用划分为两个层次：应用层（agent app）和内核层（AIOS kernel）。
+   * 类似于操作系统的设计：内核统一调度资源，提高系统效率和安全性。
+2. **AIOS 内核设计与实现**
+   * 支持“Agent Primitives”（最小执行单元）的并发调度。
+   * 实现了调度器、内存/存储/工具管理器，以及支持中断与恢复的上下文管理器。
+   * 接入控制机制可防止非法访问资源。
+3. **AIOS-Agent SDK**
+   * 为开发者提供高层 API，隐藏内核细节，方便构建智能体应用。
+4. **实验结果**
+   * 在多个主流 agent 框架中进行了测试，AIOS 提高了 agent 性能与执行效率。
+   * 在多 agent 并发调用外部工具的基准测试中，AIOS 提高了最多 2.1 倍的执行速度。
+
+
+
+## 2. The Architecture of AIOS
+
+![](https://img.zhaoweiguo.com/uPic/2025/05/Pacsw0.png)
+
+Figure 2:An overview of the AIOS architecture where responsibilities are isolated across different layers. Application layer facilitates the design and development of agent applications. Kernel layer manages core functionalities and resources to serve agent applications. Hardware layer controls and manages physical computing resources and devices to support kernel layer functionalities.
+
+
+* 将其划分为三大层次：应用层（Application Layer）、内核层（Kernel Layer） 和 硬件层（Hardware Layer）。目的是实现模块化、职责清晰、便于管理的系统结构。
+* 1. Application Layer（应用层）：开发者只需专注于 Agent 的业务逻辑（如任务拆解、推理流程等），无需关心底层资源的调度、调用和冲突处理。
+* 2. Kernel Layer（内核层）：像“微内核操作系统”一样，为 Agent 提供系统调用支持，处理资源并发、上下文切换、权限校验等系统级任务，是整个系统高效可靠运行的保障。
+* 3. Hardware Layer（硬件层）：这一层包括物理设备资源：CPU、GPU、内存、硬盘、外设等。
+
+
+## 3. AIOS Kernel
+
+![](https://img.zhaoweiguo.com/uPic/2025/05/o5SCtw.png)
+
+Figure 3:How agent queries are decomposed into AIOS system calls and how AIOS system calls are dispatched and scheduled. We omit the access manager module here as the access-related system calls will not be dispatched by the scheduler.
+
+
+### 3.1 Relationship and Connection between Modules
+
+
+* Agent 的 query 会被分解为多个 AIOS 系统调用（如调用 LLM 推理、读取记忆、运行工具等）。
+* 调度器统一管理每种类型的调用队列（LLM/内存/存储/工具），模块监听自己的队列，处理任务。
+* 特殊机制：
+  * **Context Manager**：用于处理中断长时间的 LLM 调用，防止资源占用过久。
+  * **Memory ↔ Storage 交换机制**：因为内存有限，Memory Manager 会和 Storage Manager 协作进行数据淘汰和转存。
+
+### 3.2 LLM Core(s) 
+
+* 将每一个 LLM 实例抽象为“一个 core”，类似 CPU core，便于管理和扩展。
+* 每个 LLM core 都通过统一的 wrapper 接口封装，无论部署在云端（GPT、Claude）还是本地（Ollama、vLLM）都能统一调用。
+* 实现了系统调用接口 `llm_generate` 来统一推理请求。
+
+
+### 3.3 Scheduler
+
+* 所有模块的任务队列由调度器统一管理，而不是让模块自己维护。
+* 支持两种调度算法：
+    * FIFO（先进先出）适合简单情况；
+    * RR（时间片轮转）适合高负载下公平调度；
+* 为了让 LLM 推理支持中断，调度器引入了 context interrupt，需要 Context Manager 支持“中断-恢复”机制。
+
+### 3.4 Context Manager
+
+* LLM 推理可能很慢，Context Manager 负责中断和恢复 LLM 任务的状态。
+* **两种恢复机制**：
+  1. **Text-based**：适用于闭源模型，只保存输出文本，恢复时接着生成；
+  2. **Logits-based**：适用于开源模型，可以保存 beam search 的 logits 树，精确恢复生成过程。
+* 举例：生成“UA057是否会下雨”时中断，可以恢复后继续生成“Search weather in Paris”。
+
+### 3.5 Memory Manager
+
+* 管理的是 Agent 的 **运行时记忆**（对话记录、调用历史），存储在 RAM 中。
+* **压缩机制**：用 Trie（前缀树）压缩多个记忆条目（因为通常有公共前缀）。
+* **内存淘汰策略**：
+  * RAM 使用超出 80% 会触发淘汰；
+  * 使用 K-LRU（K最近最少使用）策略决定哪些记忆被转移到磁盘。
+
+### 3.6 Storage Manager
+
+* 管理持久化存储（如 Agent 依赖的文件、知识库、被淘汰的记忆）。
+* 使用和 Memory Manager 相同的 Trie 压缩机制。
+* 同时响应两种调用：
+  * 从 Memory Manager 接收被淘汰的记忆；
+  * 处理 Agent 直接发出的存储请求（通过系统调用转换后由调度器分发）。
+
+### 3.7 Tool Manager
+
+![](https://img.zhaoweiguo.com/uPic/2025/05/UtzD9V.png)
+
+Figure 6:Illustration of how agent applications leverage the AIOS-Agent SDK to send queries to the AIOS Kernel. For simplicity, queries sent directly to the OS kernel are omitted.
+
+
+* 负责管理并执行各种 API 工具（插件）。
+* 每个工具在被调用时动态加载，根据注册信息初始化。
+* 在执行前先校验参数，防止崩溃。
+* **并发冲突处理机制**：
+  * 用 hashmap 记录各工具正在被使用的实例数；
+  * 如果工具已达到并发上限，调度器会跳过该请求处理其他任务。
+
+### 3.8 Access Manager
+
+* **权限控制**：根据 Agent 的权限组（privilege group）决定是否允许访问其他 Agent 的数据。
+* **用户介入机制**：对于删除/覆盖等操作提供提示，防止误操作。
+
+### 3.9 AIOS-Agent SDK
+
+* 提供给 Agent 开发者的 SDK，用于将高层调用转化为系统调用，并发送给内核模块。
+
+
+
+## 4 Evaluation
+
+* 总体目标-通过实验验证以下三个研究问题（Research Questions）：
+    1. **RQ1（任务性能）**：AIOS 在同时运行多个智能体（agent）时，能否维持甚至提升它们在标准任务集上的表现？
+    2. **RQ2（系统效率）**：AIOS 在处理大量异构 agent 框架构建的智能体时，是否能优化系统吞吐量、降低响应延迟？
+    3. **RQ3（系统可扩展性）**：当同时运行的 agent 数量增加时，AIOS 的性能是否具备良好的扩展性？
+
+### 🔧 4.1 实验设置（Setup）
+
+* 模型使用：
+    * **封闭模型**：GPT-4o-mini（通过 API 调用）
+    * **开源模型**：Llama-3.1-8b 和 Mistral-7b（都是 instruction-tuned，float16 精度）
+* agent 框架：
+    - 当前流行的五种框架：ReAct、Reflexion、Autogen、Open-Interpreter、MetaGPT，分别代表不同的代理系统架构。
+* 并发设置与任务：
+    * 所有 agent 并发地调用一个单模型（模拟资源有限的现实场景）
+    * 最多支持 250 个线程同时运行
+    * 默认采用 AIOS 的 **RR（Round Robin）调度策略**
+
+### ✅ 4.2 任务性能评估（RQ1）
+
+* 四个任务基准：
+    1. **HumanEval**（代码生成）
+    2. **MINT（Code 子集）**（代码生成）
+    3. **GAIA**（工具调用任务）
+    4. **SWE-Bench-Lite**（软件工程 bug 修复）
+
+
+## Appendix E Discussion
+
+### E.2Future Directions
+
+* Semantic Scheduling Algorithms
+    - 未来的研究可能侧重于在代理请求之间执行依赖关系分析的算法，从而优化计算资源的分配。
+* Efficiency of Context Management
+* Optimization of Memory and Storage Architecture
+* Safety and Privacy Enhancements
+
+
+
+
+
+
+
+
+
+
+

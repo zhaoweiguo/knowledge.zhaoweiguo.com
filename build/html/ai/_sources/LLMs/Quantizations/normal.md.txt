@@ -1,0 +1,75 @@
+# 常用
+
+
+## 量化类型
+
+| 类型              | 描述                               | 精度   | 推理速度 | 通用性 |
+| --------------- | -------------------------------- | ---- | ---- | --- |
+| **动态量化**        | 推理时动态将权重量化（通常是 INT8），激活保持为 FP32。 | ⭐⭐   | ⭐⭐   | ⭐⭐⭐ |
+| **静态量化**        | 提前量化权重和激活（都为 INT8），需校准数据集。       | ⭐⭐⭐  | ⭐⭐⭐⭐ | ⭐⭐  |
+| **量化感知训练（QAT）** | 在训练时模拟量化过程，兼顾精度和效率。需重新训练模型。      | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐   |
+
+
+## PyTorch支持
+
+* ✅ 动态量化
+
+```python
+import torch
+from torch.quantization import quantize_dynamic
+
+model_fp32 = ...  # 加载模型
+model_int8 = quantize_dynamic(model_fp32, {torch.nn.Linear}, dtype=torch.qint8)
+```
+
+* ✅ 静态量化（需校准数据）
+
+```python
+import torch.quantization as tq
+
+model = ...  # 加载模型
+model.qconfig = tq.get_default_qconfig('fbgemm')  # 适用于 x86 CPU
+tq.prepare(model, inplace=True)
+# 运行少量校准数据
+tq.convert(model, inplace=True)
+```
+
+* ✅ 量化感知训练（QAT）
+
+```python
+model.train()
+model.qconfig = tq.get_default_qat_qconfig('fbgemm')
+tq.prepare_qat(model, inplace=True)
+# 接着微调训练几轮
+tq.convert(model.eval(), inplace=True)
+```
+
+
+
+## ONNX Runtime Quantization
+
+```shell
+# 安装工具包
+pip install onnxruntime onnxruntime-tools
+
+# 使用命令行工具
+python -m onnxruntime.quantization.quantize \
+  --model_input original_model.onnx \
+  --model_output quant_model.onnx \
+  --quant_format QOperator \
+  --quant_type QInt8 \
+  --per_channel
+```
+
+
+
+
+
+
+
+
+
+
+
+
+

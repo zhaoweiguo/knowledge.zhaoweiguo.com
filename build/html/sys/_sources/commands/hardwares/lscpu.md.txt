@@ -1,0 +1,105 @@
+# lscpu命令
+
+
+
+
+## 示例
+
+
+* lscpu
+```shell
+Architecture:             x86_64
+  CPU op-mode(s):         32-bit, 64-bit
+  Address sizes:          52 bits physical, 48 bits virtual
+  Byte Order:             Little Endian
+CPU(s):                   32
+  On-line CPU(s) list:    0-31
+Vendor ID:                AuthenticAMD
+  Model name:             AMD EPYC 9K84 96-Core Processor
+    CPU family:           25
+    Model:                17
+    Thread(s) per core:   2
+    Core(s) per socket:   16
+    Socket(s):            1
+    Stepping:             0
+    BogoMIPS:             5200.10
+    Flags:                fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl nonstop_tsc cpuid extd_apicid a
+                          md_dcm tsc_known_freq pni pclmulqdq monitor ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm cmp_legacy cr8_legacy abm sse4a misalignss
+                          e 3dnowprefetch osvw topoext perfctr_core invpcid_single ibpb vmmcall fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx51
+                          2bw avx512vl xsaveopt xsavec xgetbv1 avx512_bf16 clzero xsaveerptr wbnoinvd arat avx512vbmi umip avx512_vbmi2 vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq rdpid fsrm
+Virtualization features:
+  Hypervisor vendor:      KVM
+  Virtualization type:    full
+Caches (sum of all):
+  L1d:                    512 KiB (16 instances)
+  L1i:                    512 KiB (16 instances)
+  L2:                     16 MiB (16 instances)
+  L3:                     64 MiB (2 instances)
+NUMA:
+  NUMA node(s):           1
+  NUMA node0 CPU(s):      0-31
+Vulnerabilities:
+  Gather data sampling:   Not affected
+  Itlb multihit:          Not affected
+  L1tf:                   Not affected
+  Mds:                    Not affected
+  Meltdown:               Not affected
+  Mmio stale data:        Not affected
+  Reg file data sampling: Not affected
+  Retbleed:               Not affected
+  Spec rstack overflow:   Mitigation; safe RET, no microcode
+  Spec store bypass:      Vulnerable
+  Spectre v1:             Mitigation; usercopy/swapgs barriers and __user pointer sanitization
+  Spectre v2:             Mitigation; Retpolines; IBPB conditional; STIBP disabled; RSB filling; PBRSB-eIBRS Not affected; BHI Not affected
+  Srbds:                  Not affected
+  Tsx async abort:        Not affected
+```
+
+* 分析
+    * CPU 概况（虚拟化中的 AMD EPYC）
+        | 项目               | 值                                          |
+        | ---------------- | ------------------------------------------ |
+        | **架构**           | `x86_64`（64 位）                             |
+        | **型号名称**         | AMD EPYC 9K84 96-Core Processor            |
+        | **总线程数（CPU(s)）** | 32                                         |
+        | **核心数（Core(s)）** | 16（每个核心 2 线程）                              |
+        | **插槽数（Socket）**  | 1                                          |
+        | **线程/核**         | 2（支持 SMT）                                  |
+        | **L3 缓存**        | 64 MiB（2 个实例）                              |
+        | **运行频率**         | `BogoMIPS: 5200.10`，主频标称为 `2GHz`（见 `lshw`） |
+
+    * 虚拟化环境信息
+        | 项目        | 值                       |
+        | --------- | ----------------------- |
+        | **虚拟化类型** | KVM（完全虚拟化）              |
+        | **BIOS**  | SeaBIOS v1.9.1（2014 年）  |
+        | **硬件厂商**  | Red Hat（显示为内存 DIMM 供应商） |
+
+    * 支持的指令集特性
+        | 类别   | 特性                                                                 |
+        | ---- | ------------------------------------------------------------------ |
+        | SIMD | `SSE`, `SSE2`, `SSE4.1`, `SSE4.2`, `AVX`, `AVX2`, `AVX-512` 系列完整支持 |
+        | 加密   | `AES`, `SHA_NI`, `VAES`, `VPCLMULQDQ`, `RDRAND`, `RDSEED`          |
+        | 虚拟化  | `VMMCALL`, `IBPB`, `INVPCID`, `UMIP`, `FS/GS BASE`                 |
+        | 安全补丁 | 多数硬件漏洞已“Not affected”或已“Mitigation”处理                              |
+        | 特殊   | `AVX512_VNNI`, `AVX512_BF16` → 适用于 AI 模型加速（低精度推理）                  |
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

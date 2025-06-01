@@ -1,0 +1,161 @@
+# nvcc命令
+
+* `nvcc`（NVIDIA CUDA Compiler）是 NVIDIA 提供的 **CUDA 程序编译器**，用于将包含 CUDA C/C++ 扩展的代码编译成可在 GPU 上运行的二进制文件。
+* 它是开发 CUDA 程序的核心工具之一，支持将 `.cu` 文件编译为支持 GPU 并行计算的程序。
+
+
+## 基本使用
+
+### 🎯 核心作用
+
+* 编译 `.cu` CUDA 源代码
+* 生成 CPU 和 GPU 混合执行代码
+* 调用底层的 `gcc/g++` 和 NVIDIA 的 PTX 编译器
+* 支持设备（GPU）代码与主机（CPU）代码的无缝集成
+
+
+### 安装
+
+通常随 CUDA Toolkit 安装路径提供，例如：
+
+```bash
+/usr/local/cuda/bin/nvcc
+```
+
+
+安装:
+
+```bash
+sudo apt install nvidia-cuda-toolkit
+
+export PATH=/usr/local/cuda/bin:$PATH
+```
+
+可通过命令查看版本：
+
+```bash
+nvcc --version
+```
+
+
+
+### 📋 常用参数
+
+| 命令示例                              | 功能说明             |
+| --------------------------------- | ---------------- |
+| `nvcc -o a.out main.cu`           | 编译 CUDA 程序       |
+| `nvcc -arch=sm_86 -o out main.cu` | 指定目标架构（如 Ampere） |
+| `nvcc -c main.cu`                 | 仅编译为目标文件 `.o`    |
+| `nvcc -ptx main.cu`               | 生成 PTX 汇编代码      |
+| `nvcc -Xcompiler -fPIC`           | 传递参数给 host 端编译器  |
+| `nvcc --help`                     | 查看所有选项           |
+
+
+### 🧠 编译流程（简化）
+
+1. 预处理 `.cu` 文件
+2. 将 CPU 代码交给 `gcc` 处理
+3. 将 GPU 代码交给 NVIDIA 编译器生成 PTX 或 SASS
+4. 链接生成最终可执行文件
+
+### ✅ 使用场景
+
+* GPU 并行计算加速
+* 开发深度学习底层 CUDA 核函数
+* 性能优化场景，如图像处理、物理仿真等
+
+
+### ⚠️ 注意事项
+
+* `nvcc` 编译的是 CUDA 源码，不适合编译纯 C++ 程序
+* 需搭配 NVIDIA GPU 驱动 + CUDA Toolkit 环境
+* 与 CMake 配合时需配置 `FindCUDA` 或 `CMakeLists.txt`
+
+
+### 📎 相关命令/工具
+
+| 工具               | 功能               |
+| ---------------- | ---------------- |
+| `nvidia-smi`     | 查看 GPU 状态、驱动是否安装 |
+| `cuda-gdb`       | GPU 代码调试工具       |
+| `cuda-memcheck`  | 检查 GPU 内存泄漏/访问越界 |
+| `nvprof`, `nsys` | CUDA 代码性能分析      |
+
+
+
+## 🧪 示例代码
+
+
+### Hello CUDA
+
+```cpp
+// hello.cu
+#include <iostream>
+
+__global__ void hello_from_gpu() {
+    printf("Hello from GPU!\n");
+}
+
+int main() {
+    hello_from_gpu<<<1, 1>>>();
+    cudaDeviceSynchronize();
+    return 0;
+}
+```
+
+* 🔧 编译
+
+```bash
+nvcc hello.cu -o hello
+./hello
+```
+
+
+
+
+
+### 示例:
+
+
+```shell
+nvcc: NVIDIA (R) Cuda compiler driver
+Copyright (c) 2005-2019 NVIDIA Corporation
+Built on Sun_Jul_28_19:07:16_PDT_2019
+Cuda compilation tools, release 10.1, V10.1.243
+
+分析:
+
+nvcc: NVIDIA (R) Cuda compiler driver
+    这表明 nvcc 是 NVIDIA 提供的 CUDA 编译器驱动。
+    nvcc（NVIDIA CUDA Compiler）是用于编译 CUDA 代码的工具，能够将 CUDA C/C++ 代码编译成适用于 GPU 的代码。
+Cuda compilation tools, release 10.1, V10.1.243
+    CUDA 编译工具的版本信息。
+    release 10.1 表示 CUDA 工具包的发行版本是 10.1，
+    V10.1.243 表示具体的版本号是 10.1.243。
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
