@@ -1,0 +1,625 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="zh-CN" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="zh-CN" > <!--<![endif]-->
+<head>
+
+
+<!-- start added 2025-04-14   增加对markdown中公式的支持 -->
+<script>
+window.MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+    },
+    options: {
+        ignoreHtmlClass: "tex2jax_ignore|mathjax_ignore",
+        processHtmlClass: "tex2jax_process|mathjax_process|math|output_area"
+    }
+};
+</script>
+<script defer="defer" src="https://fastly.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<!-- end added 2025-04-14   增加对markdown中公式的支持 -->
+
+
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>rsa加解密 &mdash; 新溪-gordon V2025.06 文档</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+    <link rel="index" title="索引" href="../../genindex.html" />
+    <link rel="search" title="搜索" href="../../search.html" />
+    <link rel="next" title="DH" href="DH.html" />
+    <link rel="prev" title="SM2-国密" href="SM2.html" /> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+  <script src="../../_static/js/jquery.min.js"></script>
+
+
+<!-- 评论插件 gittalk start -->
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script> -->
+<!-- 评论插件 gittalk end -->
+
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> 新溪-gordon
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                V2025.06
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">安全相关</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../normal.html">常用</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/normal.html">常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/mfa.html">多因素认证</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/hacker.html">黑客相关</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/DNS.html">DNS相关安全</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/resource.html">资源</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/tmp.html">临时</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../vulnerability.html">漏洞相关</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../vulnerabilities/injection.html">injection 注入攻击</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../vulnerabilities/injections/injection_xPath.html">XPath injection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vulnerabilities/injections/injection_sql.html">sql injection</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../vulnerabilities/XSS.html">XSS跨站脚本攻击</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../vulnerabilities/CSRF.html">CSRF</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../vulnerabilities/SSRF.html">SSRF</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../vulnerabilities/Control_Missing.html">越权(控制缺失)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../vulnerabilities/Clickjacking.html">Clickjacking</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../cryptography.html">加密</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../normal.html">常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../symmetric-key.html">对称加密(Symmetric-key Cryptography)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../symmetric-keys/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../symmetric-keys/SM4.html">SM4-国密</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../symmetric-keys/AES.html">AES加解密</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../symmetric-keys/other.html">其他</a></li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="reference internal" href="../public-key.html">公钥加密(Public-key Cryptography)</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="SM2.html">SM2-国密</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">rsa加解密</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DH.html">DH</a></li>
+<li class="toctree-l3"><a class="reference internal" href="EC.html">EC</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PKCS.html">PKCS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="file.html">文件</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../digest-algorithm.html">摘要算法(digest-algorithm)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../digest-algorithms/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../digest-algorithms/SM3.html">SM3-国密</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../digest-algorithms/sha2.html">SHA-2</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../digest-algorithms/sha3.html">SHA-3</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../digest-algorithms/bcrypt.html">bcrypt算法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../digest-algorithms/md5.html">md5摘要算法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../digest-algorithms/other.html">其他</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../message-authentication-code.html">消息认证码(MAC, Message Authentication Code)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../macs/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../macs/HMAC-SHA256.html">HMAC-SHA256</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../signature-algorithm.html">数字签名</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../signature-algorithms/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../signature-algorithms/RSA.html">RSA签名算法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../signature-algorithms/DSA.html">DSA</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../signature-algorithms/ECDSA.html">ECDSA</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../signature-algorithms/other.html">其他</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../key.html">密钥——秘密的精华</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../keys/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../keys/KDF.html">密码衍生函数(key derivation function)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../keys/kdfs/normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../keys/kdfs/PAKE.html">PAKE</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../keys/kdfs/PBKDF.html">PBKDF(Password-Based Key Derivation Function)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../keys/kdfs/PBKDF2.html">PBKDF2</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../keys/kdfs/bcrypt.html">bcrypt</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../keys/kdfs/scrypt.html">scrypt</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../rand-generator.html">伪随机数生成器(Pseudo Random Number Generator, PRNG)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../rand-generators/normal.html">常用</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../0knowledge-proof.html">零知识证明(zero-knowledge proof)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../0knowledge-proofs/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../0knowledge-proofs/Proof%20of%20knowledge.html">Proof of knowledge</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../0knowledge-proofs/Interactive%20proof%20system.html">Interactive proof system</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../0knowledge-proofs/Zero-knowledge%20proof.html">Zero-knowledge proof</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../0knowledge-proofs/Sigma.html">Sigma</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../cert.html">证书相关</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../certs/normal.html">基本</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../certs/cert_normal.html">数字证书简介</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../certs/cert_ca.html">ca证书相关</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../certs/letsencrypt.html">Let’s Encrypt</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../certs/hpkp.html">证书固定(钉扎)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../certs/subjectAlternativeName.html">subjectAlternativeName</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../certs/question.html">常见问题</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../authn.html">认证授权——认证</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../authns/normal.html">常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../authns/basic.html">四种基本的认证方式</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../authns/oauth.html">oauth协议</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../authns/oauths/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../authns/oauths/oauth1.html">OAuth1.0协议</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../authns/oauths/oauth2.html">OAuth2.0协议</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../authns/oauths/oauth2_4patterns.html">四种授权模式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../authns/oauths/example.html">示例</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../authns/jwt.html">JWT</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../authns/AK-SK.html">AK/SK</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../authz.html">认证授权——授权</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../authzs/access-control.html">授权&gt;权限模型-Access Control</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../trust_network.html">信任网络</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../trust_networks/normal.html">常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trust_networks/PKI.html">PKI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trust_networks/PGP.html">pgp/gpg相关</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trust_networks/PGP.html#id3">参考</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../tool.html">加密工具</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../tools/encrypt_openssl.html">Openssl命令相关</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/openssls/normal.html">openssl基本</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/openssls/openssl_rsa.html">openssl rsa命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/openssls/openssl_ciphers.html">openssl ciphers命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/openssls/openssl_pkcs12.html">openssl pkcs12命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/openssls/openssl_rand.html">openssl rand命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/openssls/openssl_ecparam.html">openssl ecparam命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/openssls/openssl_enc.html">openssl enc命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/openssls/openssl_sha.html">openssl sha命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/openssls/openssl_s_client.html">openssl s_client命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/openssls/openssl_dgst.html">openssl dgst命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/openssls/openssl_x509.html">openssl x509命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/openssls/openssl_verify.html">openssl verify命令</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../tools/encrypt_base64.html">baseXX命令使用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tools/encrypt_easy-rsa.html">easy-rsa命令</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tools/encrypt_cfssl.html">cfssl命令</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tools/web.html">web</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tools/practice.html">实战</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/practices/encrypt_mac_p12.html">mac的p12导出私钥</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/practices/encrypt_makecert.html">微软makecert导出私钥</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/practices/gen-cert.html">证书生成</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../tools/practices/gen-certs/normal.html">说明</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../tools/practices/gen-certs/gen_normal.html">证书创建-基本</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../tools/practices/gen-certs/gen_conf.html">证书创建-配置文件</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../tools/practices/gen-certs/tmp.html">临时</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../tools/practices/gen-certs/tmp.html#ca">生成ca证书并签名子证书</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/practices/ssl_to_ssh.html">OpenSSL转OpenSSH密钥</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/practices/disable_tls1.0.html">网站如何禁止tls1.0漏洞</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/practices/self_signed_cert.html">新增可信CA证书库</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/practices/cert_match.html">验证是否与秘钥匹配</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../tools/encrypt_mbedtls.html">mbedtls-主流的SSL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tools/kerberos.html">Kerberos</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tools/question.html">常见问题</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../practice.html">实践</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../practices/normal.html">临时</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../practices/example.html">示例</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../%E5%8F%AF%E4%BF%A1%E7%A1%AC%E4%BB%B6.html">可信硬件</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">新溪-gordon</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../cryptography.html">加密</a> &raquo;</li>
+        
+          <li><a href="../public-key.html">公钥加密(Public-key Cryptography)</a> &raquo;</li>
+        
+      <li>rsa加解密</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/cryptographys/public-keys/RSA.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            <nav id="local-table-of-contents" role="navigation" aria-labelledby="local-table-of-contents-title">
+              <h4 id="local-table-of-contents-title">On This Page</h4>
+              <ul>
+<li><a class="reference internal" href="#">rsa加解密</a><ul>
+<li><a class="reference internal" href="#pkcs">PKCS 补位算法</a></li>
+<li><a class="reference internal" href="#id2">其他变种</a></li>
+<li><a class="reference internal" href="#id3">RSA算法流程</a><ul>
+<li><a class="reference internal" href="#id4">算法原理</a></li>
+<li><a class="reference internal" href="#id5">公钥和私钥的生成&amp;使用</a></li>
+<li><a class="reference internal" href="#id6">示例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            </nav>
+  <table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="../../genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../search.html"><span class="std std-ref">搜索页面</span></a></p></td>
+</tr>
+</tbody>
+</table>
+<section id="rsa">
+<h1>rsa加解密<a class="headerlink" href="#rsa" title="此标题的永久链接">¶</a></h1>
+<p><a class="reference internal" href="../../tools/openssls/openssl_rsa.html#openssl-rsa"><span class="std std-ref">openssl rsa</span></a></p>
+<p>RSA:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>简介:
+ 1977 年
+ 作者:
+  * 麻省理工学院三位数学家Rivest、Shamir 和 Adleman
+  * 罗纳德・李维斯特（Ron Rivest）
+  * 阿迪・萨莫尔（Adi Shamir）
+  * 伦纳德・阿德曼（Leonard Adleman）
+
+算法:
+ 加密: 密文=明文^E mod N
+ 公钥: E 和 N 的组合
+ 解密: 明文=密文^D mod N
+ 私钥: D 和 N 的组合
+
+说明:
+ 对极大整数做因数分解的难度决定了RSA算法的可靠性
+ 第一个能同时用于加密和数字签名的算法
+ 速度是对应同样安全级别的对称密码算法的1/1000左右
+
+缺点:
+ 前向不安全
+  * 私钥参与了密钥交换
+  * 安全性取决于私钥是否安全保存
+</pre></div>
+</div>
+<p>历史:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1977年，三位数学家Rivest、Shamir 和 Adleman
+设计了一种算法，可以实现非对称加密。这种算法用他们三个人的名字命名
+对极大整数做因数分解的难度决定了RSA算法的可靠性
+换言之，对一极大整数做因数分解愈困难，RSA算法愈可靠
+RSA算法是第一个能同时用于加密和数字签名的算法，也易于理解和操作
+
+由于进行的都是大数计算，使得RSA最快的情况也比DES慢上好几倍，无论是软件还是硬件实现
+速度一直是RSA的缺陷。一般来说只用于少量数据加密
+RSA的速度是对应同样安全级别的对称密码算法的1/1000左右
+</pre></div>
+</div>
+<p>已公开的或已知的攻击方法:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1999年，RSA-155 (512 bits)被成功分解，
+花了五个月时间（约8000 MIPS年）和224 CPU hours在一台有3.2G中央内存的Cray C916计算机上完成
+2009年12月12日，编号为RSA-768（768 bits, 232 digits）数也被成功分解
+这一事件威胁了现通行的1024-bit密钥的安全性，普遍认为用户应尽快升级到2048-bit或以上
+</pre></div>
+</div>
+<figure class="align-default">
+<a class="reference internal image-reference" href="https://img.zhaoweiguo.com/knowledge/images/encrypts/rsa_course.gif"><img alt="https://img.zhaoweiguo.com/knowledge/images/encrypts/rsa_course.gif" src="https://img.zhaoweiguo.com/knowledge/images/encrypts/rsa_course.gif" style="width: 70%;" /></a>
+</figure>
+<section id="pkcs">
+<h2>PKCS 补位算法<a class="headerlink" href="#pkcs" title="此标题的永久链接">¶</a></h2>
+<ul class="simple">
+<li><p>PKCS 补位算法是一种用于数据加密的填充方法，被广泛应用于公钥加密和数字签名技术中。该算法采用基于二进制补位的填充方式，以确保待加密的数据长度符合加密算法的要求。</p></li>
+<li><p>在 PKCS 补位算法中，如果待加密的数据长度正好是块大小的整数倍，则需要增加一个完整的数据块，其中所有字节都是补位的字节数。如果待加密的数据长度不是块大小的整数倍，则需要添加补位字节，使得数据长度达到下一个块的整数倍。补位字节的值通常等于需要填充的字节数。</p></li>
+<li><p>PKCS 补位算法是对称加密算法中常用的一种填充方式，而非对称加密算法则常用 PKCS#1_v1.5 和 OAEP（PKCS#1_v2）等填充算法。</p></li>
+</ul>
+</section>
+<section id="id2">
+<h2>其他变种<a class="headerlink" href="#id2" title="此标题的永久链接">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. EIGamal 方式:
+    与 RSA 不同的点在使用『离散对数』
+    密文长度是明文的2倍
+    由 Taher ElGamal 设计，利用了模运算下求离散对数困难的特性。被应用在 PGP 等安全工具中。
+2. Rabin方式
+ 与 RSA 不同的点在使用『平方根』
+
+3. ECC(椭圆曲线密码, Elliptic Curve Cryptography):
+1985 年由 Neal Koblitz 和 Victor Miller 分别独立提出
+ECC 系列算法一般被认为具备较高的安全性，但加解密计算过程往往比较费时。
+</pre></div>
+</div>
+</section>
+<section id="id3">
+<h2>RSA算法流程<a class="headerlink" href="#id3" title="此标题的永久链接">¶</a></h2>
+<section id="id4">
+<h3>算法原理<a class="headerlink" href="#id4" title="此标题的永久链接">¶</a></h3>
+<p>算法本身基于一个简单的数论知识：给出两个素数，很容易算出乘积，然而通过乘积，计算出这两个素数就非常困难，尤其是素数为几百位的整数的情况下。</p>
+</section>
+<section id="id5">
+<h3>公钥和私钥的生成&amp;使用<a class="headerlink" href="#id5" title="此标题的永久链接">¶</a></h3>
+<p>公钥和私钥的生成:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>准备两个非常大的素数 p 和 q；
+计算 p 和 q 的乘积 n = p * q；
+计算 （p-1）* (q-1) 的乘积 m =（p-1）* (q-1)；
+找到一个数 e (1&lt; e &lt; m)，并满足 e 和 m 最大公约数为 1（即互为素数）；
+找到一个数 d 使得 (e * d) % m = 1
+即可得到 (n，e) 为公钥，(n，d) 为私钥
+</pre></div>
+</div>
+<p>RSA 加密:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>对于明文 x，使用公钥（n，e）通过幂运算然后取模，加密过程为：y = x ^ e % n；y 即为密文。
+</pre></div>
+</div>
+<p>RSA 解密:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>对于密文 y，使用私钥（n，d）解密过程和加密过程类似，为：x = y ^ d % n。
+</pre></div>
+</div>
+</section>
+<section id="id6">
+<h3>示例<a class="headerlink" href="#id6" title="此标题的永久链接">¶</a></h3>
+<p>密钥生成:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>取两个素数 p=11，q=13；计算 n = p * q =143；
+计算 m =（p-1）* (q-1) = 10 * 12 = 120；
+取一个数 e (1&lt; e &lt; m)，并满足 e 和 m 互为素数，取 e=7;
+取一个数 d 使得 (e * d) % m = 1，由于（7 * 103）% 120 = 721 % 120 = 1，取 d = 103；
+那么公钥 =（n，e）=（143，7）私钥 =（n，d） =（143， 103）；
+</pre></div>
+</div>
+<p>加密运算:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>明文 x = 75， 密文 y = (x ^ e % n) = (75 ^ 7 % 143) = 13,348,388,671,875 % 143 = 114
+</pre></div>
+</div>
+<p>解密运算:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>密文 y = 114，明文 x = (y ^ d % n) = (114 ^ 103 % 143) = 7.2643989613883693165853565422956e+211 % 143 = 75
+</pre></div>
+</div>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="../../genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../search.html"><span class="std std-ref">搜索页面</span></a></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="DH.html" class="btn btn-neutral float-right" title="DH" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="SM2.html" class="btn btn-neutral" title="SM2-国密" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+  
+  <div id="gitalk-container"></div>
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2010-2025, 新溪-gordon.
+
+    </p>
+  </div>
+  <div>备案号 <a href="http://www.beian.miit.gov.cn">京ICP备16018553号</a></div><div>Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a></div>. 
+
+
+</footer>
+
+<script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?042289284b8eb33866001347a3e0b129";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>     
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'V2025.06',
+            LANGUAGE:'zh-CN',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../_static/sphinx_highlight.js"></script>
+      <script type="text/javascript" src="../../_static/clipboard.min.js"></script>
+      <script type="text/javascript" src="../../_static/copybutton.js"></script>
+      <script type="text/javascript" src="../../_static/translations.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+
+  
+
+  <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+
+
+      // var gitalk = new Gitalk({
+      //         clientID: '565177626b5d46427009',
+      //         clientSecret: 'b2a36e67e1d2a73e43667f46d571c2624f8e1026',
+      //         repo: 'knowledge',
+      //         owner: 'zhaoweiguo',
+      //         admin: ['zhaoweiguo'],
+      //         id: location.pathname,      // Ensure uniqueness and length less than 50
+      //         distractionFreeMode: false  // Facebook-like distraction free mode
+      //       })
+      // gitalk.render('gitalk-container')
+
+  </script>
+
+
+<script type="text/javascript" src="../../_static/js/table-of-contents-sidebar.js"></script>
+<!-- <script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script> -->
+<script type="text/javascript">
+    window.onload = function(e){
+        TableOfContents.init({
+            basePath: "https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/",
+            querySelector: "body" // or other css querySelector
+        });
+    }
+</script> 
+
+</body>
+</html>

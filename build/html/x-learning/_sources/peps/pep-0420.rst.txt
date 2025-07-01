@@ -1,0 +1,239 @@
+PEP 420 – Implicit Namespace Packages
+#####################################
+
+
+* https://peps.python.org/pep-0420/
+* Created: 19-Apr-2012
+* Python-Version: 3.3
+
+
+.. note:: 允许 Python 包不需要在文件系统上有 ``__init__.py`` 文件即可被识别为包。
+
+
+核心要点
+========
+
+* 命名空间包的定义：命名空间包是一种特殊的 Python 包，它可以跨多个目录存在，不需要 ``__init__.py`` 文件。允许多个物理位置上的子目录共享相同的包名称（即多个路径上的相同包名）。
+* 没有 __init__.py 文件：传统 Python 包的识别方式是文件夹中必须包含一个 ``__init__.py`` 文件。PEP 420 修改了这一行为，使得 Python 能自动识别命名空间包，即使目录中没有 __init__.py 文件。
+* 多路径支持：Python 的 sys.path 可以包含多个目录，而这些目录可以各自包含命名空间包的不同部分。这种机制允许开发者将包的不同部分分布在不同的物理路径中，而在导入时它们表现为一个逻辑上的统一包。
+* 导入机制：当 Python 遇到命名空间包时，它会通过搜索 sys.path 上的多个目录来找到并组合这些包。这避免了对单一物理位置的依赖。
+* 向后兼容性：PEP 420 提出的机制与现有的导入系统完全兼容，传统的包（带有 ``__init__.py`` 文件）依旧可以正常使用。
+
+
+主要优势
+========
+
+* 提高了包的灵活性，允许更易于分布式和模块化的开发。
+* 简化了包管理，减少了依赖管理的复杂性，特别适用于插件系统或大型项目。
+
+
+
+当前现有方案
+============
+
+
+pkgutil-style namespace packages
+--------------------------------
+
+* pkgutil.extend_path
+* Python 在实现本提案前(Python 2.3 引入了 pkgutil 模块和 pkgutil.extend_path（） 函数)，提供了 ``pkgutil.extend_path`` 将包表示为命名空间包。
+* 推荐的使用方式是::
+
+    from pkgutil import extend_path
+    __path__ = extend_path(__path__, __name__)
+
+
+
+
+
+
+
+pkg_resources-style namespace packages
+--------------------------------------
+
+* setuptools 提供了和上面一个类似的函数
+* 该函数在 pkg_resources.declare_namespace 表单中使用::
+
+    import pkg_resources
+    pkg_resources.declare_namespace(__name__)
+
+
+* 在该部分的 __init__.py中，不需要分配 __path__，因为 declare_namespace 通过 sys.modules 修改了__path__包
+* setuptools 允许在发行版的 setup.py 中声明命名空间包，因此发行版开发人员无需将神奇的 __path__ 修改放入 __init__.py 。
+
+
+.. warning:: 本机命名空间包(当前PEP420方案)和 pkgutil 样式的名称空间包在很大程度上兼容，但 pkg_resources 样式命名空间包与其他方法不兼容。pkg_resources 已被弃用。
+
+
+
+两方案的不足
+------------
+
+* 当前对命名空间包的命令式方法导致了提供命名空间包的多种略微不兼容的机制。例如， ``pkgutil`` 支持 ``*.pkg`` 文件;``setuptools`` ``则没有。同样，setuptools`` 支持检查 zip 文件，并支持向其 ``_namespace_packages`` 变量添加部分，而 ``pkgutil`` 则不支持。
+* Namespace 包旨在支持跨多个目录拆分（因此通过多个 sys.path 条目找到）。在此配置中，多个部分是否都提供 ``__init__.py`` 文件并不重要，只要每个部分都正确初始化命名空间包即可。但是，Linux 分发供应商（以及其他供应商）更喜欢将单独的部分合并并将它们全部安装到同一个文件系统目录中。这会产生潜在的冲突，因为这些部分现在试图在目标系统上提供相同的文件 - 这是许多包管理器不允许的。允许隐式命名空间包意味着可以完全放弃提供 ``__init__.py`` 文件的要求，并且受影响的部分可以安装到公共目录中，或者根据发行版的需要将其拆分到多个目录中。
+
+
+
+Specification 规范
+==================
+
+步骤::
+
+    1. If `<directory>/foo/__init__.py` is found, a regular package is imported and returned.
+    2. If not, but `<directory>/foo.{py,pyc,so,pyd}` is found, a module is imported and returned.
+    3. If not, but `<directory>/foo` is found and is a directory, 
+        it is recorded and the scan continues with the next directory in the parent path.
+    4. Otherwise the scan continues with the next directory in the parent path.
+
+    如果扫描完成而不返回模块或包，并且至少记录了一个目录，则会创建一个命名空间包(即执行了步骤3)
+
+
+
+说明
+----
+
+* 如果开发人员知道她的包永远不会成为命名空间包的一部分，那么它是常规包（带有 __init__.py）具有性能优势。
+* 当常规包位于路径上时，可以立即创建和加载常规包。对于命名空间包，必须先扫描路径中的所有条目，然后才能创建包。
+* 请注意，对于缺少 __init__.py 文件的目录，将不再引发 ImportWarning。这样的目录现在将作为命名空间包导入，而在以前的 Python 版本中，将引发 ImportWarning。
+
+
+
+
+
+命名空间包和常规包之间的区别
+----------------------------
+
+.. note:: 命名空间包与常规包没有根本区别。它只是创建包的一种不同方式。创建命名空间包后，它与常规包之间没有功能差异。
+
+
+* 命名空间包的某些部分不必全部来自相同的目录结构，甚至不需要来自相同的加载器。常规包是自包含的：所有部分都位于同一目录层次结构中。
+* Namespace 包没有 __file__ 属性。
+* Namespace 包的 __path__ 属性是字符串的只读可迭代对象，当父路径被修改时，该属性会自动更新。
+* Namespace 包没有 __init__.py 模块。
+* Namespace 包的 __loader__ 属性都有不同类型的对象。
+
+
+
+
+
+Examples
+========
+
+Nested namespace packages
+-------------------------
+
+示例::
+
+    Lib/test/namespace_pkgs
+        project1
+            parent
+                child
+                    one.py
+        project2
+            parent
+                child
+                    two.py
+
+
+* 父包和子包都是命名空间包：它们的一部分存在于不同的目录中，并且它们没有__init__.py文件
+* 分析::
+
+    >>> import sys
+    >>> sys.path += ['Lib/test/namespace_pkgs/project1', 'Lib/test/namespace_pkgs/project2']
+    >>> import parent.child.one
+    >>> parent.__path__
+    _NamespacePath(['Lib/test/namespace_pkgs/project1/parent', 'Lib/test/namespace_pkgs/project2/parent'])
+    >>> parent.child.__path__
+    _NamespacePath(['Lib/test/namespace_pkgs/project1/parent/child', 'Lib/test/namespace_pkgs/project2/parent/child'])
+    >>> import parent.child.two
+
+
+Dynamic path computation
+------------------------
+
+示例::
+
+    Lib/test/namespace_pkgs
+        project1
+            parent
+                child
+                    one.py
+        project2
+            parent
+                child
+                    two.py
+        project3
+            parent
+                child
+                    three.py
+
+
+* 将 project1 和 project2 添加到 sys.path，然后导入 parent.child.one 和 parent.child.two
+* 然后我们将 project3 添加到 sys.path，当导入 parent.child.three 时，project3/parent 会自动添加到 parent.__path__
+
+
+::
+
+    # add the first two parent paths to sys.path
+    >>> import sys
+    >>> sys.path += ['Lib/test/namespace_pkgs/project1', 'Lib/test/namespace_pkgs/project2']
+
+    # parent.child.one can be imported, because project1 was added to sys.path:
+    >>> import parent.child.one
+    >>> parent.__path__
+    _NamespacePath(['Lib/test/namespace_pkgs/project1/parent', 'Lib/test/namespace_pkgs/project2/parent'])
+
+    # parent.child.__path__ contains project1/parent/child and project2/parent/child, but not project3/parent/child:
+    >>> parent.child.__path__
+    _NamespacePath(['Lib/test/namespace_pkgs/project1/parent/child', 'Lib/test/namespace_pkgs/project2/parent/child'])
+
+    # parent.child.two can be imported, because project2 was added to sys.path:
+    >>> import parent.child.two
+
+    # we cannot import parent.child.three, because project3 is not in the path:
+    >>> import parent.child.three
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+      File "<frozen importlib._bootstrap>", line 1286, in _find_and_load
+      File "<frozen importlib._bootstrap>", line 1250, in _find_and_load_unlocked
+    ImportError: No module named 'parent.child.three'
+
+    # now add project3 to sys.path:
+    >>> sys.path.append('Lib/test/namespace_pkgs/project3')
+
+    # and now parent.child.three can be imported:
+    >>> import parent.child.three
+
+    # project3/parent has been added to parent.__path__:
+    >>> parent.__path__
+    _NamespacePath(['Lib/test/namespace_pkgs/project1/parent', 'Lib/test/namespace_pkgs/project2/parent', 'Lib/test/namespace_pkgs/project3/parent'])
+
+    # and project3/parent/child has been added to parent.child.__path__
+    >>> parent.child.__path__
+    _NamespacePath(['Lib/test/namespace_pkgs/project1/parent/child', 'Lib/test/namespace_pkgs/project2/parent/child', 'Lib/test/namespace_pkgs/project3/parent/child'])
+    >>>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

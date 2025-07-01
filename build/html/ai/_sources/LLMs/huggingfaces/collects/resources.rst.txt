@@ -1,0 +1,109 @@
+resources
+#########
+
+
+
+* `Transformers Examples <https://github.com/huggingface/transformers/tree/main/examples>`_ includes scripts to train common NLP tasks in PyTorch and TensorFlow.
+* `Transformers Notebooks <https://huggingface.co/docs/transformers/notebooks>`_ contains various notebooks on how to fine-tune a model for specific tasks in PyTorch and TensorFlow.
+
+
+huggingface
+===========
+
+huggingface/label-files
+-----------------------
+
+huggingface/label-files这个repo提供了一系列常用数据集的标签文件,可以方便地用于构建数据集。
+其中包含了如下数据集的标签::
+
+	- GLUE数据集: CoLA、SST-2、MRPC、STSB、QQP、MNLI、QNLI、RTE、WNLI等
+	- SuperGLUE数据集: BoolQ、CB、COPA、MultiRC、ReCoRD、RTE、WiC、WSC等
+	- SQuAD问答数据集
+	- XNLI跨语言文本分类数据集
+	- CONLL NER命名实体识别数据集
+	- WMT机器翻译数据集
+	以及其他一些常见语音和视觉数据集。
+
+每个数据集会提供一个json文件,包含id到标签的映射,例如::
+
+	{"0": "entailment", "1": "not_entailment"}
+
+我们可以直接使用这些文件中的id到标签的映射,快速构建分类等任务的数据集,不需要手动制作标签文件。
+这个repo极大地方便了基于huggingface数据集构建下游任务的流程。我们可以借助已有的标签文件快速组装数据集。
+
+
+
+GLUE数据集中的GLUE是General Language Understanding Evaluation的缩写,意为“通用语言理解评估”。
+GLUE是一个由九个语言理解任务构成的基准测试,用于评估自然语言理解系统的性能。其包含以下九个子任务::
+
+	- CoLA: 句法一致性判断
+	- SST-2: 情感分析(二分类) 
+	- MRPC: 语义等价判断
+	- STS-B: 句子相似度评估
+	- QQP: 问句对判断
+	- MNLI: 自然语言推理
+	- QNLI: 问答自然语言推理
+	- RTE: 文本蕴含
+	- WNLI: Winograd模式挑战
+
+这些任务涵盖了句法、语义、推理等不同方面的语言理解能力评估。整个GLUE基准要求参与系统在所有九项任务上进行多任务学习,最终得到在GLUE上的加权平均表现分数。GLUE的提出推动了预训练语言模型在通用语言理解任务上的应用研究,是NLP领域很重要的基准之一。 
+
+
+示例::
+
+	import json
+	from huggingface_hub import cached_download, hf_hub_url
+
+	repo_id = "huggingface/label-files"
+	filename = "ade20k-id2label.json"
+	id2label = json.load(open(cached_download(hf_hub_url(repo_id, filename, repo_type="dataset")), "r"))
+	id2label = {int(k): v for k, v in id2label.items()}
+	label2id = {v: k for k, v in id2label.items()}
+	num_labels = len(id2label)
+
+
+	>>> id2label
+	{
+	 0: 'wall',
+	 1: 'building',
+	 2: 'sky',
+	 ...
+	}
+	>>> num_labels
+	150
+
+
+
+
+
+
+
+数据集
+======
+
+
+智能家居数据集
+--------------
+
+* Continuous In-the-wild Smartwatch Activity Data: https://github.com/WSU-CASAS/smartwatch-data
+* https://casas.wsu.edu/datasets/
+
+
+
+
+开放数据集平台
+--------------
+
+* https://data.mendeley.com/
+* Mendeley Data是一个性价比很高的开放数据集平台,研究者可以免费访问海量数据,也可以在这里发布和维护自己的数据集,推动科研发展。
+* Mendeley Data是Elsevier出品的一个研究数据集存储和共享平台
+
+
+
+
+
+
+
+
+
+

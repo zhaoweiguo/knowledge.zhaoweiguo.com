@@ -1,0 +1,446 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="zh-CN" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="zh-CN" > <!--<![endif]-->
+<head>
+
+
+<!-- start added 2025-04-14   增加对markdown中公式的支持 -->
+<script>
+window.MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+    },
+    options: {
+        ignoreHtmlClass: "tex2jax_ignore|mathjax_ignore",
+        processHtmlClass: "tex2jax_process|mathjax_process|math|output_area"
+    }
+};
+</script>
+<script defer="defer" src="https://fastly.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<!-- end added 2025-04-14   增加对markdown中公式的支持 -->
+
+
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>CPU&amp;内存使用情况查看 &mdash; 新溪-gordon V2025.06 文档</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="prev" title="性能观察" href="../observe.html" /> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+  <script src="../_static/js/jquery.min.js"></script>
+
+
+<!-- 评论插件 gittalk start -->
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script> -->
+<!-- 评论插件 gittalk end -->
+
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> 新溪-gordon
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                V2025.06
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">性能&amp;调优</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../normal.html">常用</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../normals/indicator.html">常见指标</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../normals/normal.html">常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../normals/GPU.html">GPU</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../normals/GPUs/normal.html">通用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../normals/GPUs/calc_param.html">模型参数计算</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../normals/GPUs/calc_TOPS.html">TOPS计算</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../normals/GPUs/calc_VRAM.html">GPU显存计算</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../normals/HTTP.html">HTTP</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../sla.html">SLA</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../stress_testing.html">压力测试</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../stress_testings/normal.html">常用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../stress_testings/normals/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stress_testings/normals/concept.html">压测定义</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stress_testings/normals/qps.html">QPS</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../system.html">系统级别优化相关</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../systems/tune_file.html">性能相关</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../systems/tune_tool.html">优化工具</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../systems/tools/SystemTap.html">SystemTap</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../systems/tune_tmp.html">优化相关临时</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../tool.html">工具</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tools/simple.html">简单工具</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../tools/simples/webbench.html">webbench的使用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tools/simples/ab.html">Apache Bench(ab)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tools/simples/http_load.html">http_load命令使用方法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tools/simples/siege.html">siege命令的使用方法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tools/simples/locust.html">Locust</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tools/simples/wrk.html">wrk命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tools/simples/hey.html">hey 命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tools/simples/ali.html">ali</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tools/simples/ali.html#vegeta">vegeta</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../tools/tsung.html">Tsung使用文档</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../tools/tsungs/tsung_introduce.html">简单介绍</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tools/tsungs/tsung_usage.html">简单用法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tools/tsungs/tsung_advance.html">高级配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tools/tsungs/tsung_config.html">tsung参考文档说明</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tools/tsungs/tsung_report.html">tsung参考文档——报告图表含义说明</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tools/tsungs/tsung_practice.html">Tsung压测实践</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tools/tsungs/tsung-1.0-dtd.html">tsung-1.0.dtd</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tools/tsungs/tsung_question.html">常见问题</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tools/tsungs/tsung_other.html">其他压测工具</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../tools/jmeter.html">Apache JMeter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tools/loadRunner.html">LoadRunner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tools/TCPBurn.html">TCPBurn</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tools/cloudPlatform.html">云平台</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tools/other.html">其他</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../tools/others/k6.html">k6</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../observe.html">性能观察</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">CPU&amp;内存使用情况查看</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">新溪-gordon</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../observe.html">性能观察</a> &raquo;</li>
+        
+      <li>CPU&amp;内存使用情况查看</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/observes/cpu.md.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            <nav id="local-table-of-contents" role="navigation" aria-labelledby="local-table-of-contents-title">
+              <h4 id="local-table-of-contents-title">On This Page</h4>
+              <ul>
+<li><a class="reference internal" href="#">CPU&amp;内存使用情况查看</a><ul>
+<li><a class="reference internal" href="#top-pid">✅ 方法一：<code class="docutils literal notranslate"><span class="pre">top</span></code> + 过滤进程名或 PID</a></li>
+<li><a class="reference internal" href="#ps">✅ 方法二：<code class="docutils literal notranslate"><span class="pre">ps</span></code> 命令</a></li>
+<li><a class="reference internal" href="#htop-top">✅ 方法三：用 <code class="docutils literal notranslate"><span class="pre">htop</span></code>（比 <code class="docutils literal notranslate"><span class="pre">top</span></code> 更友好）</a></li>
+<li><a class="reference internal" href="#pidstat">✅ 方法四：<code class="docutils literal notranslate"><span class="pre">pidstat</span></code>（进阶分析工具）</a></li>
+<li><a class="reference internal" href="#python">✅ 方法五：Python 脚本（如果你要做程序监控）</a></li>
+</ul>
+</li>
+</ul>
+
+            </nav>
+  <section class="tex2jax_ignore mathjax_ignore" id="cpu">
+<h1>CPU&amp;内存使用情况查看<a class="headerlink" href="#cpu" title="此标题的永久链接">¶</a></h1>
+<section id="top-pid">
+<h2>✅ 方法一：<code class="docutils literal notranslate"><span class="pre">top</span></code> + 过滤进程名或 PID<a class="headerlink" href="#top-pid" title="此标题的永久链接">¶</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>top<span class="w"> </span>-p<span class="w"> </span>&lt;PID&gt;
+</pre></div>
+</div>
+<blockquote>
+<div><p>示例：<code class="docutils literal notranslate"><span class="pre">top</span> <span class="pre">-p</span> <span class="pre">12345</span></code><br />
+实时查看 PID 为 12345 的进程资源占用。</p>
+</div></blockquote>
+<p>你也可以直接用 <code class="docutils literal notranslate"><span class="pre">top</span></code>，然后在界面中按：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">M</span></code>：按内存使用排序</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">P</span></code>：按 CPU 使用排序</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">/关键词</span></code>：搜索某个进程名</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="ps">
+<h2>✅ 方法二：<code class="docutils literal notranslate"><span class="pre">ps</span></code> 命令<a class="headerlink" href="#ps" title="此标题的永久链接">¶</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ps<span class="w"> </span>-p<span class="w"> </span>&lt;PID&gt;<span class="w"> </span>-o<span class="w"> </span>pid,ppid,cmd,%mem,%cpu
+</pre></div>
+</div>
+<blockquote>
+<div><p>示例：<code class="docutils literal notranslate"><span class="pre">ps</span> <span class="pre">-p</span> <span class="pre">12345</span> <span class="pre">-o</span> <span class="pre">pid,ppid,cmd,%mem,%cpu</span></code></p>
+</div></blockquote>
+<p>输出会显示：</p>
+<ul class="simple">
+<li><p>进程号（PID）</p></li>
+<li><p>父进程号（PPID）</p></li>
+<li><p>命令（CMD）</p></li>
+<li><p>内存使用率（%MEM）</p></li>
+<li><p>CPU 使用率（%CPU）</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="htop-top">
+<h2>✅ 方法三：用 <code class="docutils literal notranslate"><span class="pre">htop</span></code>（比 <code class="docutils literal notranslate"><span class="pre">top</span></code> 更友好）<a class="headerlink" href="#htop-top" title="此标题的永久链接">¶</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>htop
+</pre></div>
+</div>
+<p>然后：</p>
+<ul class="simple">
+<li><p>用 <strong>F3</strong> 搜索进程名</p></li>
+<li><p>或 <strong>F6</strong> 更改排序列（如 CPU 或 MEM）</p></li>
+</ul>
+<blockquote>
+<div><p>如果没有安装：<code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">apt</span> <span class="pre">install</span> <span class="pre">htop</span></code> 或 <code class="docutils literal notranslate"><span class="pre">brew</span> <span class="pre">install</span> <span class="pre">htop</span></code></p>
+</div></blockquote>
+</section>
+<hr class="docutils" />
+<section id="pidstat">
+<h2>✅ 方法四：<code class="docutils literal notranslate"><span class="pre">pidstat</span></code>（进阶分析工具）<a class="headerlink" href="#pidstat" title="此标题的永久链接">¶</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pidstat<span class="w"> </span>-p<span class="w"> </span>&lt;PID&gt;<span class="w"> </span><span class="m">1</span>
+</pre></div>
+</div>
+<p>每 1 秒输出一次该进程的 CPU 使用率（包括用户态、系统态分布）等。</p>
+</section>
+<hr class="docutils" />
+<section id="python">
+<h2>✅ 方法五：Python 脚本（如果你要做程序监控）<a class="headerlink" href="#python" title="此标题的永久链接">¶</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">psutil</span>
+
+<span class="n">pid</span> <span class="o">=</span> <span class="mi">12345</span>  <span class="c1"># 替换成你的进程 ID</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">Process</span><span class="p">(</span><span class="n">pid</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;CPU使用率: </span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">cpu_percent</span><span class="p">(</span><span class="n">interval</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;内存占用: </span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">memory_info</span><span class="p">()</span><span class="o">.</span><span class="n">rss</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1024</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1024</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> MB&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="../observe.html" class="btn btn-neutral" title="性能观察" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+  
+  <div id="gitalk-container"></div>
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2010-2025, 新溪-gordon.
+
+    </p>
+  </div>
+  <div>备案号 <a href="http://www.beian.miit.gov.cn">京ICP备16018553号</a></div><div>Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a></div>. 
+
+
+</footer>
+
+<script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?042289284b8eb33866001347a3e0b129";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>     
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'V2025.06',
+            LANGUAGE:'zh-CN',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="../_static/sphinx_highlight.js"></script>
+      <script type="text/javascript" src="../_static/clipboard.min.js"></script>
+      <script type="text/javascript" src="../_static/copybutton.js"></script>
+      <script type="text/javascript" src="../_static/translations.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+
+  
+
+  <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+
+
+      // var gitalk = new Gitalk({
+      //         clientID: '565177626b5d46427009',
+      //         clientSecret: 'b2a36e67e1d2a73e43667f46d571c2624f8e1026',
+      //         repo: 'knowledge',
+      //         owner: 'zhaoweiguo',
+      //         admin: ['zhaoweiguo'],
+      //         id: location.pathname,      // Ensure uniqueness and length less than 50
+      //         distractionFreeMode: false  // Facebook-like distraction free mode
+      //       })
+      // gitalk.render('gitalk-container')
+
+  </script>
+
+
+<script type="text/javascript" src="../_static/js/table-of-contents-sidebar.js"></script>
+<!-- <script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script> -->
+<script type="text/javascript">
+    window.onload = function(e){
+        TableOfContents.init({
+            basePath: "https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/",
+            querySelector: "body" // or other css querySelector
+        });
+    }
+</script> 
+
+</body>
+</html>

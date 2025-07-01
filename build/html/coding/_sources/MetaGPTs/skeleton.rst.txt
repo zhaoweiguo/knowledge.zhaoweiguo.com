@@ -1,0 +1,438 @@
+
+入口
+====
+
+
+ctx = Context(config=config)
+team = Team(context=ctx)
+team.hire([Role1(), Role2()]
+company.invest(investment)
+company.run_project(idea)
+asyncio.run(company.run(n_round=n_round))
+
+
+
+Team()
+==========
+
+class Team(BaseModel):
+    self.env = Environment(context=ctx)
+
+
+Rolex()示例
+================
+
+class ProductManager(Role):
+    name: str = "Alice"
+    profile: str = "Product Manager"
+    goal: str = "efficiently create a successful product that meets market demands and user expectations"
+    constraints: str = "utilize the same language as the user requirements for seamless communication"
+
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self.set_actions([PrepareDocuments, WritePRD])
+        self._watch([UserRequirement, PrepareDocuments])
+        self.todo_action = any_to_name(PrepareDocuments)
+
+class ProjectManager(Role):
+    name: str = "Eve"
+    profile: str = "Project Manager"
+    goal: str = (
+        "break down tasks according to PRD/technical design, generate a task list, and analyze task "
+        "dependencies to start with the prerequisite modules"
+    )
+    constraints: str = "use same language as user requirement"
+
+    def __init__(self, **kwargs) -> None:
+        self.set_actions([WriteTasks])
+        self._watch([WriteDesign])
+
+
+Role::set_actions
+-----------------
+
+class Role(SerializationMixin, ContextMixin, BaseModel):
+    def set_actions(self, actions: list[Union[Action, Type[Action]]]):  🟣
+        for action in actions:
+            i = action()
+            self._init_action(i)
+            self.actions.append(i)
+            self.states.append(f"{len(self.actions) - 1}. {action}")
+
+
+
+Actionx()示例
+"""""""""""""
+
+class WriteTasks(Action):
+    self.name = cls.__name__
+
+
+Role::_init_action
+""""""""""""""""""
+
+class Role(SerializationMixin, ContextMixin, BaseModel):
+    def _init_action(self, action: Action):
+        action.set_llm(self.llm, override=False)
+        action.set_prefix(self._get_prefix())
+
+
+
+Role::_get_prefix
++++++++++++++++++
+
+class Role(SerializationMixin, ContextMixin, BaseModel):
+    def _get_prefix(self):  🟣
+        if self.desc:
+            return self.desc
+        prefix = PREFIX_TEMPLATE.format(**{"profile": self.profile, "name": self.name, "goal": self.goal})
+        ...
+        return prefix
+
+Action::set_prefix
+++++++++++++++++++
+
+class Action(SerializationMixin, ContextMixin, BaseModel):
+    def set_prefix(self, prefix):
+        self.prefix = prefix
+        self.llm.system_prompt = prefix
+        if self.node:
+            self.node.llm = self.llm
+        return self
+
+
+
+
+Role::_watch
+------------
+
+self._watch([WriteDesign])
+
+
+
+Actionx()示例
+"""""""""""""
+
+class WriteDesign(Action):
+    self.name = cls.__name__
+
+
+
+Role::_watch
+""""""""""""
+
+class Role(SerializationMixin, ContextMixin, BaseModel):
+    def _watch(self, actions: Iterable[Type[Action]] | Iterable[Action]):
+        self.rc.watch = {any_to_str(t) for t in actions}
+
+
+
+
+Team.hire(Rolex...)
+==========================
+
+class Team(BaseModel):
+    def hire(self, roles: list[Role]):
+        self.env.add_roles(roles)
+
+
+Environment.add_roles
+---------------------
+
+class Environment(ExtEnv):
+    def add_roles(self, roles: Iterable["Role"]):
+        for role in roles:
+            self.roles[role.profile] = role
+
+            role.context = self.context
+            role.set_env(self)
+
+Role::set_env
+"""""""""""""
+
+class Role(SerializationMixin, ContextMixin, BaseModel):
+    def set_env(self, env: "Environment"):
+        self.rc.env = env
+        if env:
+            env.set_addresses(self, self.addresses)
+            self.llm.system_prompt = self._get_prefix()  ⬆️
+            self.llm.cost_manager = self.context.cost_manager  
+            self.set_actions(self.actions)  ⬆️    # reset actions to update llm and prefix
+
+
+Environment.set_addresses
++++++++++++++++++++++++++
+
+class Environment(ExtEnv):
+    def set_addresses(self, obj, addresses):
+        self.member_addrs[obj] = addresses
+
+
+
+
+team.invest(investment)
+=======================
+
+class Team(BaseModel):
+    def invest(self, investment: float):
+        self.investment = investment
+        self.cost_manager.max_budget = investment
+
+
+team.run_project(idea)
+======================
+
+class Team(BaseModel):
+    def run_project(self, idea, send_to: str = ""):
+        self.idea = idea
+
+        self.env.publish_message(
+            Message(role="Human", content=idea, cause_by=UserRequirement, send_to=send_to or MESSAGE_ROUTE_TO_ALL),
+            peekable=False,
+        )
+
+
+Environment::publish_message
+----------------------------
+
+
+class Environment(ExtEnv):
+    def publish_message(self, message: Message, peekable: bool = True) -> bool:  🟣
+        for role, addrs in self.member_addrs.items():
+            if is_send_to(message, addrs):
+                role.put_message(message)
+        self.history += f"\n{message}"  # For debug
+        return True
+
+
+Util::is_send_to
+""""""""""""""""
+
+def is_send_to(message: "Message", addresses: set):
+    if MESSAGE_ROUTE_TO_ALL in message.send_to:
+        return True
+    for i in addresses:
+        if i in message.send_to:
+            return True
+    return False
+
+Role::put_message
+"""""""""""""""""
+
+class Role(SerializationMixin, ContextMixin, BaseModel):
+    def put_message(self, message):
+        self.rc.msg_buffer.push(message)
+
+
+
+team.run()
+==========
+
+
+class Team(BaseModel):
+    async def run(self, n_round=3, idea="", send_to="", auto_archive=True):
+        while n_round > 0:
+            n_round -= 1
+            self._check_balance()
+            await self.env.run()
+        self.env.archive(auto_archive)
+        return self.env.history
+
+Team::_check_balance
+--------------------
+
+class Team(BaseModel):
+    def _check_balance(self):
+        if self.cost_manager.total_cost >= self.cost_manager.max_budget:
+            raise NoMoneyException(self.cost_manager.total_cost, f"Insufficient funds: {self.cost_manager.max_budget}")
+
+
+Environment::run()
+------------------
+
+class Environment(ExtEnv):
+    async def run(self, k=1):
+        for _ in range(k):
+            futures = []
+            for role in self.roles.values():
+                future = role.run()
+                futures.append(future)
+
+            await asyncio.gather(*futures)
+
+Role::run()
+-----------
+
+class Role(SerializationMixin, ContextMixin, BaseModel):
+    async def run(self) -> Message | None:
+        self._observe()
+        rsp = await self.react()
+        self.set_todo(None)
+        self.publish_message(rsp)  ⬆️
+        return rsp
+
+
+Role::_observe()
+""""""""""""""""
+
+class Role(SerializationMixin, ContextMixin, BaseModel):
+    async def _observe(self, ignore_memory=False) -> int:
+        news = []
+        if self.recovered:
+            news = [self.latest_observed_msg] if self.latest_observed_msg else []
+        if not news:
+            news = self.rc.msg_buffer.pop_all()
+
+        old_messages = [] if ignore_memory else self.rc.memory.get()
+        self.rc.memory.add_batch(news)
+
+        self.rc.news = [
+            n for n in news if (n.cause_by in self.rc.watch or self.name in n.send_to) and n not in old_messages
+        ]
+        self.latest_observed_msg = self.rc.news[-1] if self.rc.news else None  # record the latest observed msg
+
+        return len(self.rc.news)
+
+
+Memory::add_batch
++++++++++++++++++
+
+class Memory(BaseModel):
+    def add_batch(self, messages: Iterable[Message]):
+        for message in messages:
+            self.add(message)
+
+    def add(self, message: Message):  🟣
+        if message in self.storage:
+            return
+        self.storage.append(message)
+        if message.cause_by:
+            self.index[message.cause_by].append(message)
+
+
+
+
+Role::react()
+"""""""""""""
+
+class Role(SerializationMixin, ContextMixin, BaseModel):
+    async def react(self) -> Message:
+        await self._think()
+        rsp = await self._act()
+        actions_taken += 1
+        self._set_state(state=-1)  # current reaction is complete, reset state to -1 and todo back to None
+        return rsp
+
+Role::_think()
+++++++++++++++
+
+class Role(SerializationMixin, ContextMixin, BaseModel):
+    async def _think(self):
+        self.rc.state = i
+        action = self.actions[i]
+        action.context = self.context
+        self.rc.todo = action
+
+Role::_act()
+++++++++++++++
+
+class Role(SerializationMixin, ContextMixin, BaseModel):
+    async def _act(self) -> Message:
+        response = await self.rc.todo.run(self.rc.history)
+
+        if isinstance(response, (ActionOutput, ActionNode)):
+            msg = Message(
+                content=response.content,
+                instruct_content=response.instruct_content,
+                role=self._setting,
+                cause_by=self.rc.todo,   # 执行的Action
+                sent_from=self,
+            )
+        elif isinstance(response, Message):
+            msg = response
+        else:
+            msg = Message(content=response or "", role=self.profile, cause_by=self.rc.todo, sent_from=self)
+        self.rc.memory.add(msg)  ⬆️
+
+        return msg
+
+
+RoleContext::history()
+^^^^^^^^^^^^^^^^^^^^^^
+
+class RoleContext(BaseModel):
+    @property
+    def history(self) -> list[Message]:
+        return self.memory.get()
+
+
+Action::run示例
+^^^^^^^^^^^^^^^
+
+class ConductResearch(Action):
+    async def run(self, topic: str, content: str, system_text: str = RESEARCH_BASE_SYSTEM)
+        prompt = CONDUCT_RESEARCH_PROMPT.format(topic=topic, content=content)
+        self.llm.auto_max_tokens = True
+        return await self._aask(prompt, [system_text])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

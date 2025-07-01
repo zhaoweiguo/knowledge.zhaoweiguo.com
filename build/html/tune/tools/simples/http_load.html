@@ -1,0 +1,494 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="zh-CN" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="zh-CN" > <!--<![endif]-->
+<head>
+
+
+<!-- start added 2025-04-14   增加对markdown中公式的支持 -->
+<script>
+window.MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+    },
+    options: {
+        ignoreHtmlClass: "tex2jax_ignore|mathjax_ignore",
+        processHtmlClass: "tex2jax_process|mathjax_process|math|output_area"
+    }
+};
+</script>
+<script defer="defer" src="https://fastly.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<!-- end added 2025-04-14   增加对markdown中公式的支持 -->
+
+
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>http_load命令使用方法 &mdash; 新溪-gordon V2025.06 文档</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+    <link rel="index" title="索引" href="../../genindex.html" />
+    <link rel="search" title="搜索" href="../../search.html" />
+    <link rel="next" title="siege命令的使用方法" href="siege.html" />
+    <link rel="prev" title="Apache Bench(ab)" href="ab.html" /> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+  <script src="../../_static/js/jquery.min.js"></script>
+
+
+<!-- 评论插件 gittalk start -->
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script> -->
+<!-- 评论插件 gittalk end -->
+
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> 新溪-gordon
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                V2025.06
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">性能&amp;调优</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../normal.html">常用</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/indicator.html">常见指标</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/normal.html">常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/GPU.html">GPU</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../normals/GPUs/normal.html">通用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../normals/GPUs/calc_param.html">模型参数计算</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../normals/GPUs/calc_TOPS.html">TOPS计算</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../normals/GPUs/calc_VRAM.html">GPU显存计算</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/HTTP.html">HTTP</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../sla.html">SLA</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../stress_testing.html">压力测试</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../stress_testings/normal.html">常用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../stress_testings/normals/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../stress_testings/normals/concept.html">压测定义</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../stress_testings/normals/qps.html">QPS</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../system.html">系统级别优化相关</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../systems/tune_file.html">性能相关</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../systems/tune_tool.html">优化工具</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../systems/tools/SystemTap.html">SystemTap</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../systems/tune_tmp.html">优化相关临时</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../tool.html">工具</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../simple.html">简单工具</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="webbench.html">webbench的使用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ab.html">Apache Bench(ab)</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">http_load命令使用方法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="siege.html">siege命令的使用方法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="locust.html">Locust</a></li>
+<li class="toctree-l3"><a class="reference internal" href="wrk.html">wrk命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hey.html">hey 命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ali.html">ali</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ali.html#vegeta">vegeta</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../tsung.html">Tsung使用文档</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../tsungs/tsung_introduce.html">简单介绍</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tsungs/tsung_usage.html">简单用法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tsungs/tsung_advance.html">高级配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tsungs/tsung_config.html">tsung参考文档说明</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tsungs/tsung_report.html">tsung参考文档——报告图表含义说明</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tsungs/tsung_practice.html">Tsung压测实践</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tsungs/tsung-1.0-dtd.html">tsung-1.0.dtd</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tsungs/tsung_question.html">常见问题</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tsungs/tsung_other.html">其他压测工具</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../jmeter.html">Apache JMeter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../loadRunner.html">LoadRunner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../TCPBurn.html">TCPBurn</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cloudPlatform.html">云平台</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../other.html">其他</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../others/k6.html">k6</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../observe.html">性能观察</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../observes/cpu.html">CPU&amp;内存使用情况查看</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">新溪-gordon</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../tool.html">工具</a> &raquo;</li>
+        
+          <li><a href="../simple.html">简单工具</a> &raquo;</li>
+        
+      <li>http_load命令使用方法</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/tools/simples/http_load.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            <nav id="local-table-of-contents" role="navigation" aria-labelledby="local-table-of-contents-title">
+              <h4 id="local-table-of-contents-title">On This Page</h4>
+              <ul>
+<li><a class="reference internal" href="#">http_load命令使用方法</a><ul>
+<li><a class="reference internal" href="#id3">实例</a></li>
+<li><a class="reference internal" href="#id4">常见错误</a></li>
+</ul>
+</li>
+</ul>
+
+            </nav>
+  <table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="../../genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../search.html"><span class="std std-ref">搜索页面</span></a></p></td>
+</tr>
+</tbody>
+</table>
+<section id="http-load">
+<span id="id2"></span><h1>http_load命令使用方法<a class="headerlink" href="#http-load" title="此标题的永久链接">¶</a></h1>
+<p>简介:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>程序非常小，解压后也不到100K
+http_load以并行复用的方式运行，用以测试web服务器的吞吐量与负载。
+但是它不同于大多数压力测试工具，它可以以一个单一的进程运行，一般不会把客户机搞死。
+还可以测试HTTPS类的网站请求。
+</pre></div>
+</div>
+<p>安装:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>//下载安装，安装地址:
+http://www.acme.com/software/http_load/
+</pre></div>
+</div>
+<p>命令格式:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">http_load</span> <span class="o">-</span><span class="n">p</span> <span class="n">并发访问进程数</span> <span class="o">-</span><span class="n">s</span> <span class="n">访问时间</span> <span class="n">需要访问的URL文件</span>
+</pre></div>
+</div>
+<p>参数说明:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">parallel</span> <span class="p">(</span><span class="o">-</span><span class="n">p</span><span class="p">):</span> <span class="n">并发的用户进程数</span>
+<span class="o">-</span><span class="n">fetches</span> <span class="p">(</span><span class="o">-</span><span class="n">f</span><span class="p">):</span> <span class="n">总计的访问次数</span>
+<span class="o">-</span><span class="n">rate</span> <span class="p">(</span><span class="o">-</span><span class="n">r</span><span class="p">):</span> <span class="n">每秒的访问频率</span>
+<span class="o">-</span><span class="n">seconds</span> <span class="p">(</span><span class="o">-</span><span class="n">s</span><span class="p">):</span> <span class="n">总计的访问时间</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>URL最好超过50－100个测试效果比较好</p>
+</div>
+<section id="id3">
+<h2>实例<a class="headerlink" href="#id3" title="此标题的永久链接">¶</a></h2>
+<p>实例:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">./</span><span class="n">http_load</span> <span class="o">-</span><span class="n">rate</span> <span class="mi">5</span> <span class="o">-</span><span class="n">seconds</span> <span class="mi">10</span> <span class="n">urllist</span><span class="o">.</span><span class="n">txt</span>
+</pre></div>
+</div>
+<p>实例说明:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>执行一个持续时间为10秒的测试，每秒频率为5
+urllist.txt中内容为:
+
+http://bbs.programfan.info/abc/test1.html
+http://bbs.programfan.info/abc/test2.html
+http://bbs.programfan.info/abc/test3.html
+</pre></div>
+</div>
+<p>結果:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>49 fetches, 2 max parallel, 289884 bytes, in 10.0148 seconds
+5916 mean bytes/connection,
+4.89274 fetches/sec, 28945.5 bytes/sec
+msecs/connect: 28.8932 mean, 44.243 max, 24.488 min
+msecs/first-response: 63.5362 mean, 81.624 max, 57.803 min
+HTTP response codes: code 200 — 49
+</pre></div>
+</div>
+<p>結果说明:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 49 fetches, 2 max parallel, 289884 bytes, in 10.0148 seconds
+    说明在上面的测试中运行了49个请求，最大的并发进程数是2，总计传输的数据是289884bytes，运行的时间是10.0148 秒
+2. 5916 mean bytes/connection
+    说明每一连接平均传输的数据量289884/49=5916
+3. 4.89274 fetches/sec, 28945.5 bytes/sec
+    说明每秒的响应请求为4.89274，每秒传递的数据为28945.5 bytes/sec
+4. msecs/connect: 28.8932 mean, 44.243 max, 24.488 min
+    说明每连接的平均响应时间是28.8932 msecs，最大的响应时间44.243 msecs，最小的响应时间24.488 msecs
+5. msecs/first-response: 63.5362 mean, 81.624 max, 57.803 min
+6. HTTP response codes: code 200 — 49
+    说明打开响应页面的类型，如果403的类型过多，那可能
+</pre></div>
+</div>
+<p>特殊说明:</p>
+<blockquote>
+<div><p>测试结果中主要的指标是 fetches/sec、msecs/connect 这个选项，即服务器每秒能够响应的查询次数！</p>
+</div></blockquote>
+</section>
+<section id="id4">
+<h2>常见错误<a class="headerlink" href="#id4" title="此标题的永久链接">¶</a></h2>
+<p>常见错误-byte count wrong:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>http_load在处理时会去关注每次访问同一个URL返回结果（即字节数）是否一致
+若不一致就会抛出byte count wrong所以动态页面可以忽略这个错误信息
+或者可以对代码做修改http_load.c
+</pre></div>
+</div>
+<p>常见错误-too many open files:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>系统限制的open files太小，ulimit -n 修改open files值即可
+</pre></div>
+</div>
+<p>常见错误-无法发送大请求 （请求长度&gt;600个字符）:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">默认接受请求的buf大小</span> <span class="n">http_load</span><span class="o">.</span><span class="n">c</span>
+</pre></div>
+</div>
+<p>常见错误-Cannot assign requested address:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>客户端频繁的连服务器，由于每次连接都在很短的时间内结束，导致很多的TIME_WAIT
+以至于用光了可用的端口号，所以新的连接没办法绑定端口，所以要改客户端机器的配置
+
+在sysctl.conf里加：
+net.ipv4.tcp_tw_reuse = 1 表示开启重用。允许将TIME-WAIT sockets重新用于新的TCP连接，默认为0，表示关闭；
+net.ipv4.tcp_timestamps=1 开启对于TCP时间戳的支持,若该项设置为0，则下面一项设置不起作用
+net.ipv4.tcp_tw_recycle=1 表示开启TCP连接中TIME-WAIT sockets的快速回收
+</pre></div>
+</div>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="../../genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../search.html"><span class="std std-ref">搜索页面</span></a></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="siege.html" class="btn btn-neutral float-right" title="siege命令的使用方法" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="ab.html" class="btn btn-neutral" title="Apache Bench(ab)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+  
+  <div id="gitalk-container"></div>
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2010-2025, 新溪-gordon.
+
+    </p>
+  </div>
+  <div>备案号 <a href="http://www.beian.miit.gov.cn">京ICP备16018553号</a></div><div>Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a></div>. 
+
+
+</footer>
+
+<script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?042289284b8eb33866001347a3e0b129";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>     
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'V2025.06',
+            LANGUAGE:'zh-CN',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../_static/sphinx_highlight.js"></script>
+      <script type="text/javascript" src="../../_static/clipboard.min.js"></script>
+      <script type="text/javascript" src="../../_static/copybutton.js"></script>
+      <script type="text/javascript" src="../../_static/translations.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+
+  
+
+  <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+
+
+      // var gitalk = new Gitalk({
+      //         clientID: '565177626b5d46427009',
+      //         clientSecret: 'b2a36e67e1d2a73e43667f46d571c2624f8e1026',
+      //         repo: 'knowledge',
+      //         owner: 'zhaoweiguo',
+      //         admin: ['zhaoweiguo'],
+      //         id: location.pathname,      // Ensure uniqueness and length less than 50
+      //         distractionFreeMode: false  // Facebook-like distraction free mode
+      //       })
+      // gitalk.render('gitalk-container')
+
+  </script>
+
+
+<script type="text/javascript" src="../../_static/js/table-of-contents-sidebar.js"></script>
+<!-- <script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script> -->
+<script type="text/javascript">
+    window.onload = function(e){
+        TableOfContents.init({
+            basePath: "https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/",
+            querySelector: "body" // or other css querySelector
+        });
+    }
+</script> 
+
+</body>
+</html>

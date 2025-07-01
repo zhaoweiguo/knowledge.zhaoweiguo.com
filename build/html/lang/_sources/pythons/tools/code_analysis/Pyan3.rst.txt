@@ -1,0 +1,107 @@
+Pyan3-Offline call graph generator
+##################################
+
+* GitHub: https://github.com/davidfraser/pyan
+* pyan is a Python module that performs static analysis of Python code to determine a call dependency graph between functions and methods.
+* This is different from running the code and seeing which functions are called and how often; there are various tools that will generate a call graph in that way, usually using debugger or profiling trace hooks, such as ``Python Call Graph``.
+* In Pyan3, the analyzer was ported from compiler (good riddance) to a combination of ast and symtable, and slightly extended.
+
+
+
+
+安装::
+
+    pip install pyan3
+
+    # 上面安装如何报错的话，可以使用这个命令
+    pip install --user git+https://github.com/kuuurt/pyan.git
+
+
+Usage
+=====
+
+命令行::
+
+    # 先生成dot
+    pyan *.py --uses --no-defines --colored --grouped --annotated --dot > myuses.dot
+    dot -Tsvg myuses.dot > myuses.svg
+
+
+    # directly export as svg
+    pyan *.py --uses --no-defines --colored --grouped --annotated --svg > myuses.svg
+
+
+    // export as an interactive HTML
+    pyan *.py --uses --no-defines --colored --grouped --annotated --html > myuses.html
+
+
+在代码里使用api::
+
+    import pyan
+    from IPython.display import HTML
+    HTML(pyan.create_callgraph(filenames="**/*.py", format="html"))
+
+
+选项::
+
+    --colored: 带有彩色标记的调用图
+
+
+优化使用
+========
+
+指定特定的模块或函数::
+
+    pyan my_script.py module1 module2 --dot > output.dot
+
+限制分析的深度::
+
+    pyan my_script.py --depth=2 --dot > output.dot
+
+排除第三方库或系统库::
+
+    pyan my_script.py --no-thirdparty --dot > output.dot
+
+
+
+
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/06/0QUc2a.png
+
+
+
+
+
+
+实战
+====
+
+
+metaGPT::
+
+    pyan3 ${PWD}/software_company.py --uses --no-defines --colored --grouped --annotated --svg --root ${PWD} > myuses.svg
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

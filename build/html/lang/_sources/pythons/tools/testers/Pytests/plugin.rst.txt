@@ -1,0 +1,208 @@
+插件
+####
+
+插件加载顺序(Plugin discovery order at tool startup)::
+
+    1. by scanning the command line for the `-p no:name` option
+    2. by loading all builtin plugins.
+    3. by scanning the command line for the `-p name` option
+    4. by loading all plugins registered through installed third-party package `entry points`
+    5. by loading all plugins specified through the `PYTEST_PLUGINS` environment variable
+    6. by loading all “initial “conftest.py files
+        a. determine the test paths
+            a.1 specified on the command line(ex: pytest <path1> <path2>)
+            a.2 `testpaths` if defined in conftest.py and running from the rootdir
+                [pytest]
+                testpaths = <path1> <path2>
+            a.3 current dir
+        b. for each test path
+            b.1 load conftest.py and test*/conftest.py relative to the directory part of the test path
+            b.2 Before a conftest.py file is loaded, load conftest.py files in all of its parent directories.
+            b.3 After a conftest.py file is loaded, recursively load all plugins specified in its pytest_plugins variable if present
+
+
+
+    1. 内置插件：从pytest的内部_pytest目录加载
+    2. 外部插件：通过 setuptools入口点发现的模块
+    3. conftest.py plugins：在测试目录中自动发现的模块
+        pytest_plugins = ("myapp.testsupport.myplugin",)
+
+
+
+8 Popular Pytest Plugins::
+
+    1. pytest-cov
+    2. pytest-mock
+    3. pytest-xdist
+    4. pytest-timeout
+    5. pytest-asyncio
+    6. pytest-sugar
+    7. pytest-html
+    8. pytest-profiling
+
+
+安装::
+
+    %pip install pytest
+
+    # 通过插件 pytest-html 可以生成 HTML 格式的测试报告：
+    %pip install pytest-html
+
+    # 为 Python 项目提供代码覆盖率报告
+    # 可以轻松集成到持续集成（CI）管道中
+    %pip install pytest-cov
+
+    # 提供简单但强大的模拟功能
+    # 用模拟对象替换部分代码，从而允许在受控环境中隔离和测试各个组件
+    %pip install pytest-mock
+
+    # 对 Python 项目进行并行测试
+    # 可以在多个 CPU 甚至多台机器上运行测试套件，从而大大减少运行大型测试套件所需的时间
+    %pip install pytest-xdist
+
+    # 为测试函数设置超时的简单方法
+    # 为每个测试指定最大时间限制，之后测试将终止并标记为失败
+    %pip install pytest-timeout
+
+    # 允许您轻松测试异步代码
+    # 它包括一个事件循环固定装置，允许您在测试中运行异步任务和协程
+    %pip install pytest-asyncio
+
+    # Pytest 插件，它通过提供更详细、更具视觉吸引力的测试结果表示来增强 Pytest 测试执行进度的输出
+    # 用丰富多彩且信息丰富的输出格式替换了 Pytest 的默认输出格式，具有进度条、详细错误消息以及测试运行结束时的测试结果摘要等功能
+    %pip install pytest-sugar
+
+    # 在测试执行期间轻松分析代码
+    # 在测试运行时收集分析数据，并生成一份报告，显示哪些函数或代码行执行时间最长
+    %pip install pytest-profiling
+
+
+
+
+
+插件-pytest-mock
+================
+
+* 一个用于集成 pytest 和 unittest.mock 的插件，它使得在 pytest 测试中进行 mock 操作变得更加方便和直观。
+* 提供 mocker fixture：使得在测试中可以轻松地使用 unittest.mock 模块的功能::
+
+    # 可以直接使用 mocker 这个 fixture
+    def test_fetch_data_success(mocker):
+        ...
+
+* 安装::
+
+    pip install pytest pytest-mock
+
+常用功能(pytest-mock)::
+
+    1. patch
+        mocker.patch 是最常用的功能，用于替换某个对象或函数。
+        可以使用 return_value 参数指定替换后的返回值，或使用 side_effect 指定一个函数来动态返回值。
+        示例：
+        def test_patch_example(mocker):
+            # 替换函数，并指定返回值
+            mocker.patch('path.to.module.function_name', return_value=42)
+            assert module.function_name() == 42
+
+            # 使用 side_effect 动态返回值
+            def side_effect(arg):
+                return arg * 2
+
+            mocker.patch('path.to.module.function_name', side_effect=side_effect)
+            assert module.function_name(21) == 42
+
+    2. spy
+        mocker.spy 用于监视某个函数的调用情况，比如调用次数、传递的参数等，但不改变其原有行为
+        示例：
+        def test_spy_example(mocker):
+            spy = mocker.spy(module, 'function_name')
+            result = module.function_name(5)
+            spy.assert_called_once_with(5)
+            assert result == 10  # 假设函数行为为返回参数的2倍
+
+    3. stub
+        mocker.stub 用于创建一个简单的 mock 对象，它没有任何行为，除非你显式地设置
+        def test_stub_example(mocker):
+            stub = mocker.stub(name='example_stub')
+            stub.return_value = 'stubbed value'
+            
+            assert stub() == 'stubbed value'
+            stub.assert_called_once()
+
+
+
+
+示例::
+
+    import requests
+
+    def fetch_data(url):
+        response = requests.get(url)
+        if response.status_code == 200:
+            return response.json()
+        return None
+
+    def test_fetch_data_success(mocker):
+        mock_response = mocker.Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {'key': 'value'}
+
+        mocker.patch('requests.get', return_value=mock_response)
+
+        url = 'http://example.com/api/data'
+        result = fetch_data(url)
+        assert result == {'key': 'value'}
+
+
+
+
+
+
+
+插件-pytest-asyncio
+===================
+
+* 一个用于异步代码测试的 pytest 插件，允许在测试函数中使用 async/await 语法。
+* 这个插件特别适合测试需要异步处理的代码，例如基于 asyncio 的异步函数和协程。
+
+基本使用::
+
+    # 使用 @pytest.mark.asyncio 装饰器来标记异步测试函数
+    import asyncio
+    import pytest
+
+    @pytest.mark.asyncio
+    async def test_example():
+        await asyncio.sleep(1)
+        assert 1 == 1
+
+使用异步夹具::
+
+    import pytest
+
+    @pytest.fixture
+    async def async_fixture():
+        await asyncio.sleep(1)
+        return "async result"
+
+    @pytest.mark.asyncio
+    async def test_with_async_fixture(async_fixture):
+        assert async_fixture == "async result"
+
+
+
+
+参考
+====
+
+* How to install and use plugins: https://docs.pytest.org/en/latest/how-to/plugins.html
+* Writing plugins: https://docs.pytest.org/en/latest/how-to/writing_plugins.html
+
+
+
+
+
+
+
+

@@ -1,0 +1,86 @@
+Docker代理加速
+##################
+
+镜像proxy::
+
+    ⛔️阿里云: https://bpsifqa9.mirror.aliyuncs.com
+    ⛔️Docker 官方提供的中国 mirror: https://registry.docker-cn.com
+    ⛔️七牛云加速器 https://reg-mirror.qiniu.com/
+
+.. warning:: ⚠️2020 年 11 月后，Docker Hub 新增了 访问速率限制，这可能导致在校内使用 Docker Hub 镜像缓存时出现间歇性的问题。⚠️ 自 2024-06-06 开始，国内的 Docker Hub 镜像加速器相继停止服务，可选择为 Docker daemon 配置代理或自建镜像加速服务。⚠️ 阿里镜像在2024-06-25号变更使用范围：仅限阿里云用户通过支持公网访问的阿里云产品上使用该镜像加速能力。🛑基本上都不能用了，后面可以不考虑这个方案了。
+
+* 参考: https://gist.github.com/y0ngb1n/7e8f16af3242c7815e7ca2f0833d3ea6
+
+* 2024-10-10更新：找到一个可用用的 ``dockerpull.com`` 和 ``dockerproxy.cn``
+
+
+使用方法::
+
+    1. 方法一
+    假如拉取原始镜像命令如下
+    docker pull whyour/qinglong:latest
+    仅需在原命令前缀加入加速镜像地址 例如：
+    docker pull dockerproxy.cn/whyour/qinglong:latest
+
+    2. 方法二
+    修改文件 /etc/docker/daemon.json
+    {"registry-mirrors": ["https://dockerproxy.cn"]}
+
+Linux
+=====
+
+
+配置镜像加速器 [1]_
+::
+
+    // Linux版
+    sudo mkdir -p /etc/docker
+    sudo tee /etc/docker/daemon.json <<-'EOF'
+    {
+      "registry-mirrors": ["https://bpsifqa9.mirror.aliyuncs.com"]
+    }
+    EOF
+    sudo systemctl daemon-reload
+    sudo systemctl restart docker
+
+.. warning:: 注意, systemctl restart docker会重启docker服务
+    k8s集群上执行,所有docker服务都会重启
+
+
+配置 DNS::
+
+    # 每次启动的容器 DNS 自动配置为 114.114.114.114 和 8.8.8.8
+    $ cat /etc/docker/daemon.json
+    {
+      "dns" : [
+        "114.114.114.114",
+        "8.8.8.8"
+      ]
+    }
+
+如果希望永久绑定到某个固定的 IP 地址::
+
+    $ cat /etc/docker/daemon.json
+    {
+      "ip": "0.0.0.0"
+    }
+
+
+
+Mac版专用
+=========
+
+* 打开 Docker Desktop。
+* 点击右上角的 齿轮图标 进入 Preferences（偏好设置）。
+* 在左侧菜单中选择 Docker Engine。
+* 修改内容与 Linux 版的 daemon.json 文件相同
+
+
+
+
+
+
+
+
+
+.. [1] https://cr.console.aliyun.com/cn-hangzhou/instances/mirrors

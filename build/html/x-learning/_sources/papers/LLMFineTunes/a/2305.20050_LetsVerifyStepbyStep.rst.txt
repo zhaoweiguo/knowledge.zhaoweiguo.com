@@ -1,0 +1,94 @@
+2305.20050_Let’s Verify Step by Step
+####################################
+
+
+* 论文: https://arxiv.org/abs/2305.20050
+* 探讨了两种训练语言模型以提高推理可靠性的监督方法：结果监督（Outcome Supervision）和过程监督（Process Supervision）。
+* 近年来，大语言模型在执行复杂多步推理方面取得了显著进展。然而，即使是最先进的模型仍然经常出现逻辑错误。为了训练出更可靠的模型，我们可以选择结果监督（outcome supervision），即仅对最终结果提供反馈，或者选择过程监督（process supervision），即对每个中间推理步骤提供反馈。鉴于训练可靠模型的重要性以及人工反馈的高成本，仔细比较这两种方法至关重要。
+* 尽管近期已有研究开始对此进行比较，但仍有许多问题尚未解决。在我们的研究中，我们发现过程监督在训练模型解决具有挑战性的 MATH 数据集问题时，显著优于结果监督。我们的过程监督模型在 MATH 测试集的代表性子集中，解决了 78% 的问题。
+* 此外，我们还表明，主动学习（active learning） 能够显著提高过程监督的效果。为了支持相关研究，我们发布了 PRM800K，这是一个包含 80 万条逐步人工反馈标注的完整数据集，用于训练我们效果最佳的奖励模型。
+
+
+
+
+
+1. 研究背景
+===========
+
+* **大语言模型（LLMs）** 已能处理复杂的多步推理任务，但仍常出现逻辑错误，尤其是在推理链的某个环节出错时，可能导致整个答案错误。
+* **幻觉（Hallucination）** 问题突出，模型在不确定时容易捏造事实，这对需要精确推理的场景尤其有害。
+
+2. 监督方法对比
+===============
+
+* 结果监督（ORM）：只关注最终答案的正确性。这种方法适用于可以自动验证答案的数据集，如MATH数据集。
+    * 从生成器中对每个问题统一采样固定数量的解，并训练 ORM 来预测每个解是正确的还是不正确的。在实践中，我们通常通过自动检查最终答案来确定正确性
+* 过程监督（PRM）：对模型推理链中的每个步骤提供反馈，能精确指出错误发生的位置，更易于人类解释和模型对齐。
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/02/yjE02X.png
+
+    Figure 1:A screenshot of the interface used to collect feedback for each step in a solution.
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/03/taQETt.png
+
+    Figure 2:Two solutions to the same problem, graded by the PRM. The solution on the left is correct while the solution on the right is incorrect. A green background indicates a high PRM score, and a red background indicates a low score. The PRM correctly identifies the mistake in the incorrect solution.
+
+
+
+3. 核心发现
+===========
+
+* PRM显著优于ORM：在MATH数据集上，PRM模型解决了78.2%的问题，明显优于ORM的72.4%。
+* 主动学习（Active Learning）提升数据效率：使用主动学习策略，可以将过程监督的数据效率提高2.6倍，即在更少的数据下达到更好的效果。
+* PRM800K数据集发布：包含80万条逐步反馈标签的数据集，支持相关研究。
+
+
+总结
+====
+
+* 核心观点： 过程监督能够更精细地捕捉模型推理过程中的错误，从而提高模型在多步推理任务中的准确性和可靠性。
+* 研究意义： 该论文不仅为 AI 推理能力的提升提供了新的方向，也为模型的可解释性和可控性打下了基础。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,500 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="zh-CN" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="zh-CN" > <!--<![endif]-->
+<head>
+
+
+<!-- start added 2025-04-14   增加对markdown中公式的支持 -->
+<script>
+window.MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+    },
+    options: {
+        ignoreHtmlClass: "tex2jax_ignore|mathjax_ignore",
+        processHtmlClass: "tex2jax_process|mathjax_process|math|output_area"
+    }
+};
+</script>
+<script defer="defer" src="https://fastly.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<!-- end added 2025-04-14   增加对markdown中公式的支持 -->
+
+
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>siege命令的使用方法 &mdash; 新溪-gordon V2025.06 文档</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+    <link rel="index" title="索引" href="../../genindex.html" />
+    <link rel="search" title="搜索" href="../../search.html" />
+    <link rel="next" title="Locust" href="locust.html" />
+    <link rel="prev" title="http_load命令使用方法" href="http_load.html" /> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+  <script src="../../_static/js/jquery.min.js"></script>
+
+
+<!-- 评论插件 gittalk start -->
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script> -->
+<!-- 评论插件 gittalk end -->
+
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> 新溪-gordon
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                V2025.06
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">性能&amp;调优</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../normal.html">常用</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/indicator.html">常见指标</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/normal.html">常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/GPU.html">GPU</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../normals/GPUs/normal.html">通用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../normals/GPUs/calc_param.html">模型参数计算</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../normals/GPUs/calc_TOPS.html">TOPS计算</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../normals/GPUs/calc_VRAM.html">GPU显存计算</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/HTTP.html">HTTP</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../sla.html">SLA</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../stress_testing.html">压力测试</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../stress_testings/normal.html">常用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../stress_testings/normals/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../stress_testings/normals/concept.html">压测定义</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../stress_testings/normals/qps.html">QPS</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../system.html">系统级别优化相关</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../systems/tune_file.html">性能相关</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../systems/tune_tool.html">优化工具</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../systems/tools/SystemTap.html">SystemTap</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../systems/tune_tmp.html">优化相关临时</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../tool.html">工具</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../simple.html">简单工具</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="webbench.html">webbench的使用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ab.html">Apache Bench(ab)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="http_load.html">http_load命令使用方法</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">siege命令的使用方法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="locust.html">Locust</a></li>
+<li class="toctree-l3"><a class="reference internal" href="wrk.html">wrk命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hey.html">hey 命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ali.html">ali</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ali.html#vegeta">vegeta</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../tsung.html">Tsung使用文档</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../tsungs/tsung_introduce.html">简单介绍</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tsungs/tsung_usage.html">简单用法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tsungs/tsung_advance.html">高级配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tsungs/tsung_config.html">tsung参考文档说明</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tsungs/tsung_report.html">tsung参考文档——报告图表含义说明</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tsungs/tsung_practice.html">Tsung压测实践</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tsungs/tsung-1.0-dtd.html">tsung-1.0.dtd</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tsungs/tsung_question.html">常见问题</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tsungs/tsung_other.html">其他压测工具</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../jmeter.html">Apache JMeter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../loadRunner.html">LoadRunner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../TCPBurn.html">TCPBurn</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cloudPlatform.html">云平台</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../other.html">其他</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../others/k6.html">k6</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../observe.html">性能观察</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../observes/cpu.html">CPU&amp;内存使用情况查看</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">新溪-gordon</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../tool.html">工具</a> &raquo;</li>
+        
+          <li><a href="../simple.html">简单工具</a> &raquo;</li>
+        
+      <li>siege命令的使用方法</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/tools/simples/siege.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            <nav id="local-table-of-contents" role="navigation" aria-labelledby="local-table-of-contents-title">
+              <h4 id="local-table-of-contents-title">On This Page</h4>
+              <ul>
+<li><a class="reference internal" href="#">siege命令的使用方法</a><ul>
+<li><a class="reference internal" href="#id4">实例</a></li>
+</ul>
+</li>
+</ul>
+
+            </nav>
+  <table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="../../genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../search.html"><span class="std std-ref">搜索页面</span></a></p></td>
+</tr>
+</tbody>
+</table>
+<section id="siege">
+<span id="id2"></span><h1>siege命令的使用方法<a class="headerlink" href="#siege" title="此标题的永久链接">¶</a></h1>
+<ul>
+<li><p>官网:</p>
+<blockquote>
+<div><p><a class="reference external" href="http://www.joedog.org">siege官网</a></p>
+</div></blockquote>
+</li>
+<li><p>下载:</p>
+<blockquote>
+<div><p>源码安装</p>
+</div></blockquote>
+</li>
+<li><p>使用:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">siege</span> <span class="o">-</span><span class="n">c</span> <span class="mi">200</span> <span class="o">-</span><span class="n">r</span> <span class="mi">10</span> <span class="o">-</span><span class="n">f</span> <span class="n">example</span><span class="o">.</span><span class="n">url</span>
+</pre></div>
+</div>
+</li>
+<li><p>参数说明:</p>
+<blockquote>
+<div><ul>
+<li><p>-c: 并发量</p></li>
+<li><p>-r: 重复次数</p></li>
+<li><p>-f: 指定文件</p></li>
+<li><p>example.url文件内容:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">bbs</span><span class="o">.</span><span class="n">programfan</span><span class="o">.</span><span class="n">info</span>
+<span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">blog</span><span class="o">.</span><span class="n">programfan</span><span class="o">.</span><span class="n">info</span>
+<span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">www</span><span class="o">.</span><span class="n">programfan</span><span class="o">.</span><span class="n">info</span>
+</pre></div>
+</div>
+</li>
+<li><p>每行都是一个url，它会从中随机选一个访问</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>結果说明:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Lifting the server siege… done.
+Transactions: 3419263 hits //完成419263次处理
+Availability: 100.00 % //100.00 % 成功率
+Elapsed time: 5999.69 secs //总共用时
+Data transferred: 84273.91 MB //共数据传输84273.91 MB
+Response time: 0.37 secs //相应用时1.65秒：显示网络连接的速度
+Transaction rate: 569.91 trans/sec //均每秒完成 569.91 次处理：表示服务器后
+Throughput: 14.05 MB/sec //平均每秒传送数据
+Concurrency: 213.42 //实际最高并发数
+Successful transactions: 2564081 //成功处理次数
+Failed transactions: 11 //失败处理次数
+Longest transaction: 29.04 //每次传输所花最长时间
+Shortest transaction: 0.00 //每次传输所花最短时间
+</pre></div>
+</div>
+</li>
+</ul>
+<section id="id4">
+<h2>实例<a class="headerlink" href="#id4" title="此标题的永久链接">¶</a></h2>
+<p>非常类似于curl的-iL，只是这里Siege也会输出请求header:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ siege -g www.google.com:
+GET / HTTP/1.1
+Host: www.google.com
+User-Agent: JoeDog/1.00 [en] (X11; I; Siege 2.70)
+Connection: close
+
+HTTP/1.1 302 Found
+Location: http://www.google.co.uk/
+Content-Type: text/html; charset=UTF-8
+Server: gws
+Content-Length: 221
+Connection: close
+
+GET / HTTP/1.1
+Host: www.google.co.uk
+User-Agent: JoeDog/1.00 [en] (X11; I; Siege 2.70)
+Connection: close
+
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=ISO-8859-1
+X-XSS-Protection: 1; mode=block
+Connection: close
+</pre></div>
+</div>
+<p>真正在行的是服务器的负载测试。就像ab:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>在30秒内向Google发起20个并发连接，最后会得到一个漂亮的测试报告
+$ siege -c20 www.google.co.uk -b -t30s
+...
+Lifting the server siege... done.
+Transactions: 1400 hits
+Availability: 100.00 %
+Elapsed time: 29.22 secs
+Data transferred: 13.32 MB
+Response time: 0.41 secs
+Transaction rate: 47.91 trans/sec
+Throughput: 0.46 MB/sec
+Concurrency: 19.53
+Successful transactions: 1400
+Failed transactions: 0
+Longest transaction: 4.08
+Shortest transaction: 0.08
+</pre></div>
+</div>
+<p>Siege最有用的一个特性是它可以把一个记录URL的文件作为输入:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>// 重现Apache对另一台服务器的日志记录，以做负载测试
+$ cut -d &#39; &#39; -f7 /var/log/apache2/access.log &gt; urls.txt
+$ siege -c&lt;concurrency rate&gt; -b -f urls.txt
+</pre></div>
+</div>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="../../genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../search.html"><span class="std std-ref">搜索页面</span></a></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="locust.html" class="btn btn-neutral float-right" title="Locust" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="http_load.html" class="btn btn-neutral" title="http_load命令使用方法" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+  
+  <div id="gitalk-container"></div>
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2010-2025, 新溪-gordon.
+
+    </p>
+  </div>
+  <div>备案号 <a href="http://www.beian.miit.gov.cn">京ICP备16018553号</a></div><div>Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a></div>. 
+
+
+</footer>
+
+<script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?042289284b8eb33866001347a3e0b129";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>     
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'V2025.06',
+            LANGUAGE:'zh-CN',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../_static/sphinx_highlight.js"></script>
+      <script type="text/javascript" src="../../_static/clipboard.min.js"></script>
+      <script type="text/javascript" src="../../_static/copybutton.js"></script>
+      <script type="text/javascript" src="../../_static/translations.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+
+  
+
+  <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+
+
+      // var gitalk = new Gitalk({
+      //         clientID: '565177626b5d46427009',
+      //         clientSecret: 'b2a36e67e1d2a73e43667f46d571c2624f8e1026',
+      //         repo: 'knowledge',
+      //         owner: 'zhaoweiguo',
+      //         admin: ['zhaoweiguo'],
+      //         id: location.pathname,      // Ensure uniqueness and length less than 50
+      //         distractionFreeMode: false  // Facebook-like distraction free mode
+      //       })
+      // gitalk.render('gitalk-container')
+
+  </script>
+
+
+<script type="text/javascript" src="../../_static/js/table-of-contents-sidebar.js"></script>
+<!-- <script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script> -->
+<script type="text/javascript">
+    window.onload = function(e){
+        TableOfContents.init({
+            basePath: "https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/",
+            querySelector: "body" // or other css querySelector
+        });
+    }
+</script> 
+
+</body>
+</html>

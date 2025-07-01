@@ -1,0 +1,830 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="zh-CN" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="zh-CN" > <!--<![endif]-->
+<head>
+
+
+<!-- start added 2025-04-14   增加对markdown中公式的支持 -->
+<script>
+window.MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+    },
+    options: {
+        ignoreHtmlClass: "tex2jax_ignore|mathjax_ignore",
+        processHtmlClass: "tex2jax_process|mathjax_process|math|output_area"
+    }
+};
+</script>
+<script defer="defer" src="https://fastly.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<!-- end added 2025-04-14   增加对markdown中公式的支持 -->
+
+
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>分库分表 &mdash; 新溪-gordon V2025.06 文档</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+    <link rel="index" title="索引" href="../../../genindex.html" />
+    <link rel="search" title="搜索" href="../../../search.html" />
+    <link rel="next" title="高性能 NoSQL" href="3NoSQL.html" />
+    <link rel="prev" title="读写分离" href="1read-write-seperate.html" /> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+  <script src="../../../_static/js/jquery.min.js"></script>
+
+
+<!-- 评论插件 gittalk start -->
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script> -->
+<!-- 评论插件 gittalk end -->
+
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> 新溪-gordon
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                V2025.06
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">关键知识</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../../010architecture.html">010架构设计</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../normal.html">常用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../normals/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../normals/%E4%BA%92%E8%81%94%E7%BD%91%E4%B8%9A%E5%8A%A1.html">互联网业务</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../normals/tmp.html">临时</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../normals/other.html">其他架构设计</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../normals/others/cqrs.html">CQRS </a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../normals/others/crud.html">CRUD</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../normals/others/ddd.html">领域驱动设计</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../normals/others/api.html">api设计</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../normals/others/SSO.html">单点登录</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../normals/others/event_driver.html">事件驱动架构</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../normals/others/network_agent.html">网络代理</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../normals/others/message_bus.html">消息总线</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../normals/others/mvc_mvp_mvvm.html">MVC MVP MVVM</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../normals/others/other.html">其他</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../history.html">架构的历史</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../historys/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../historys/01origin_distributed_sys.html">原始分布式时代</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../historys/02monolithic_sys.html">单体系统时代</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../historys/03soa_sys.html">SOA架构</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../historys/04microService.html">微服务架构</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../historys/04microServices/normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../historys/04microServices/9feature.html">微服务的九个核心的业务与技术特征</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../historys/04microServices/ServiceMesh.html">ServiceMesh</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../historys/04microServices/collect.html">微服务架构</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../historys/05cloudnative.html">云原生时代——后微服务时代</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../historys/05cloudnatives/collect1.html">云原生</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../historys/05cloudnatives/collect2.html">收集2</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../historys/05cloudnatives/12Factor.html">云原生应用的12要素</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../historys/05cloudnatives/distribute_architecture.html">从分布式架构到云原生架构</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../historys/06serverless.html">无服务时代</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../historys/06serverless/collect1.html">Serverless</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../architecture_design.html">软件架构设计</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../architecture_designs/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../architecture_designs/history_design.html">架构设计的历史</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../architecture_designs/purpose.html">架构设计目的</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../architecture_designs/purposes/1performance.html">复杂度来源-高性能</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../architecture_designs/purposes/2availability.html">复杂度来源-高可用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../architecture_designs/purposes/3expandability.html">复杂度来源-可扩展性</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../architecture_designs/purposes/4lowcost.html">复杂度来源-低成本</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../architecture_designs/purposes/5security.html">复杂度来源-安全</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../architecture_designs/purposes/6scalability.html">复杂度来源-规模</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../architecture_designs/purposes/7other.html">其他</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../architecture_designs/principle.html">架构设计原则</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../architecture_designs/process.html">架构设计流程</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../architecture_designs/process/1recognize.html">识别复杂度</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../architecture_designs/process/2alternative.html">设计备选方案</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../architecture_designs/process/3assess.html">评估&amp;选择备选方案</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../architecture_designs/process/4detailed.html">详细方案设计</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../architecture_pattern.html">架构模式</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../normal.html">常用</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="../performance.html">高性能架构模式</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="1read-write-seperate.html">读写分离</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">分库分表</a></li>
+<li class="toctree-l4"><a class="reference internal" href="3NoSQL.html">高性能 NoSQL</a></li>
+<li class="toctree-l4"><a class="reference internal" href="4cache.html">高性能缓存架构</a></li>
+<li class="toctree-l4"><a class="reference internal" href="5PPC-TPC.html">单服务器高性能模式: PPC&amp;TPC</a></li>
+<li class="toctree-l4"><a class="reference internal" href="6Reactor-Proactor.html">单服务器高性能模式: Reactor&amp;Proactor</a></li>
+<li class="toctree-l4"><a class="reference internal" href="7slb.html">高性能负载均衡: 分类&amp;架构&amp;算法</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../availability.html">高可用架构模式</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../availabilitys/normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../availabilitys/1CAP.html">CAP理论</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../availabilitys/2FMEA.html">FMEA</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../availabilitys/3storage.html">存储高可用架构</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../availabilitys/4computing.html">计算高可用架构</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../availabilitys/5different-live.html">异地多活</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../availabilitys/6api-failure.html">接口级故障&amp;应对</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../expandability.html">可扩展架构模式</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../expandabilitys/normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../expandabilitys/1basic-ideas-and-pattern.html">可扩展架构的基本思想和模式</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../expandabilitys/2hierarchical.html">传统可扩展架构-分层架构</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../expandabilitys/3soa.html">传统可扩展架构-SOA</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../expandabilitys/4microservice.html">微服务架构</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../expandabilitys/5microkernel.html">微内核架构</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../communication_pattern.html">通信模式communication patterns</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../communication_patterns/normal.html">通用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../communication_patterns/SAP.html">SAP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../communication_patterns/theory.html">理论</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../evolution.html">架构演进/重构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../evolutions/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../evolutions/be-microservice.html">对现有系统做微服务化改造</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../evolutions/evolution-graph.html">演进架构图</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../graph.html">架构图</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../graphs/normal.html">常用</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../graphs/normals/normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../graphs/normals/color.html">颜色</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../graphs/normals/other.html">其他</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../graphs/business.html">业务架构图</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../graphs/c4-model.html">软件架构——C4模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../graphs/%E6%9E%B6%E6%9E%84%E5%9B%BE%E6%8A%80%E5%B7%A7.html">架构图技巧</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../EA.html">EA企业级架构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../EAs/TOGAF.html">TOGAF</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../EAs/Zachman.html">Zachman扎克曼框架</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../011distributed.html">011分布式系统</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../011distributeds/normal.html">常用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/normals/normal.html">分布式系统</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/normals/concept.html">并发</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/normals/tmp.html">临时</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../011distributeds/theory.html">并发相关理论</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/theorys/CAP.html">并发相关-CAP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/theorys/PACELC.html">PACELC</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/theorys/FLP.html">并发相关-FLP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/theorys/DLS.html">DLS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/theorys/CSP.html">并发模型-CSP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/theorys/CAS.html">CAS 机制</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/theorys/Actor.html">并发模型-Actor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/theorys/Gossip.html">Gossip协议</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/theorys/BASE.html">BASE</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/theorys/ACID.html">ACID原则</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/theorys/UUID.html">UUID</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/theorys/consistent_hash.html">一致性hash</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../011distributeds/transaction.html">事务</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/transactions/normal.html">通用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/transactions/local.html">本地事务</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/transactions/global.html">全局事务(Global Transactions)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/transactions/share.html">共享事务(Share Transactions)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/transactions/distribute.html">分布式事务</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../011distributeds/transactions/distributes/reliable_event_queue.html">可靠事件队列</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../011distributeds/transactions/distributes/SAGA.html">SAGA 事务</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../011distributeds/transactions/distributes/TCC.html">TCC 事务</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../011distributeds/consensus.html">分布式共识</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/consensus/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/consensus/Paxos.html">Paxos算法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/consensus/zab.html">zab协议</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/consensus/Raft.html">The Raft Consensus Algorithm </a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../012SoftEngineering.html">012软件工程</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../012SoftEngineerings/normal.html">常用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../012SoftEngineerings/normals/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../012SoftEngineerings/normals/methodology.html">编程方法论</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../012SoftEngineerings/normals/code-quality.html">代码质量</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../012SoftEngineerings/normals/complexity.html">复杂度</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../012SoftEngineerings/Programming-Spec.html">编程规范</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../012SoftEngineerings/Refactor.html">重构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../012SoftEngineerings/Refactors/normal.html">通用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../012SoftEngineerings/Refactors/5W2H.html">5W2H 分析法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../012SoftEngineerings/Refactors/approach-unit.html">重构手段-单元测试</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../012SoftEngineerings/Refactors/approach-unit.html#id3">定义</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../012SoftEngineerings/Refactors/approach-unit.html#id4">作用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../012SoftEngineerings/Refactors/approach-unit.html#id5">如何编写单元测试</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../012SoftEngineerings/Refactors/approach-unit.html#id6">为何难落地执行</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../012SoftEngineerings/Refactors/approach-unit.html#anti-patterns">影响可测试性的 Anti-Patterns</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../012SoftEngineerings/Refactors/approach-decoupling.html">重构手段-解耦</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../012SoftEngineerings/Refactors/code-standard.html">改善代码质量的编程规范</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../012SoftEngineerings/document.html">设计文档</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../021microservice.html">021微服务架构</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../021microservices/normal.html">常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../021microservices/discovery.html">服务注册&amp;发现</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../021microservices/api_gateway.html">API网关</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../021microservices/contract.html">对比</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../021microservices/tmp.html">临时</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../022middle-platform.html">022中台</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../031dataanalysis.html">031数据分析</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../031dataanalysis/normal.html">常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../031dataanalysis/data.html">数据</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../031dataanalysis/tmp.html">临时</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../041governance.html">041服务治理</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../041governances/normal.html">常用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../041governances/normals/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../041governances/normals/technical-debt.html">技术债</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../041governances/normals/anti-fragile.html">反脆弱</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../041governances/normals/code-review.html">Code Review</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../041governances/service_protection.html">服务保护</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../051compiler.html">051编译原理</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../051compilers/normal.html">常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../051compilers/tool.html">工具</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../051compilers/%E6%B1%87%E7%BC%96%E8%AF%AD%E8%A8%80.html">汇编语言</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../051compilers/%E8%AF%8D%E6%B3%95%E5%88%86%E6%9E%90.html">词法分析</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../051compilers/%E8%AF%AD%E6%B3%95%E5%88%86%E6%9E%90.html">词法分析, 语法分析</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../051compilers/%E8%AF%AD%E4%B9%89%E5%88%86%E6%9E%90.html">语义分析</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../051compilers/LLVM.html">LLVM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../051compilers/IR.html">编译期后端技术</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../051compilers/other.html">其他</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../052composition-principle.html">052 计算机组成原理</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../052composition-principles/CPU%20%E5%8E%82%E5%95%86.html">CPU 厂商</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../052composition-principles/CPU%20Arch.html">CPU 架构</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../052composition-principles/Arm.html">Arm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../052composition-principles/X86.html">X86</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../052composition-principles/API.html">API</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../053os.html">053操作系统</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../053os/normal.html">常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../053os/signal.html">signal信号</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../053os/other.html">其他</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../054algorithm.html">054算法</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../054algorithms/normal.html">常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../054algorithms/algorithm.html">经典算法</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../054algorithms/algorithms/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../054algorithms/algorithms/nlp.html">NLP相关算法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../054algorithms/algorithms/encrypt.html">加密相关算法</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../054algorithms/tree.html">树结构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../054algorithms/trees/b-tree.html">b-树</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../054algorithms/trees/b%2Btree.html">b+树</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../054algorithms/trees/lsm_tree.html">LSM树</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../054algorithms/trees/balanced_binary_tree.html">平衡二叉树</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../054algorithms/trees/red_black_tree.html">红黑树</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../054algorithms/trees/trie-tree.html">Trie 树</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../054algorithms/trees/merkle-tree.html">Merkle 树</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../054algorithms/example.html">实例</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../054algorithms/website.html">网站</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../054algorithms/iq.html">智力题</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../054algorithms/graph_theory.html">图论</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../054algorithms/other.html">其他算法</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">新溪-gordon</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../010architecture.html">010架构设计</a> &raquo;</li>
+        
+          <li><a href="../../architecture_pattern.html">架构模式</a> &raquo;</li>
+        
+          <li><a href="../performance.html">高性能架构模式</a> &raquo;</li>
+        
+      <li>分库分表</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../../_sources/010architectures/architecture_patterns/performances/2split-db-table.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            <nav id="local-table-of-contents" role="navigation" aria-labelledby="local-table-of-contents-title">
+              <h4 id="local-table-of-contents-title">On This Page</h4>
+              <ul>
+<li><a class="reference internal" href="#">分库分表</a><ul>
+<li><a class="reference internal" href="#id3">业务分库</a></li>
+<li><a class="reference internal" href="#id4">分表</a><ul>
+<li><a class="reference internal" href="#id5">1. 垂直分表</a></li>
+<li><a class="reference internal" href="#id6">2. 水平分表</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id7">实现方法</a></li>
+<li><a class="reference internal" href="#id8">思考</a></li>
+</ul>
+</li>
+</ul>
+
+            </nav>
+  <table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="../../../genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../../py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../../search.html"><span class="std std-ref">搜索页面</span></a></p></td>
+</tr>
+</tbody>
+</table>
+<section id="id2">
+<h1>分库分表<a class="headerlink" href="#id2" title="此标题的永久链接">¶</a></h1>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>读写分离分散了数据库读写操作的压力，但没有分散存储压力，当数据量达到千万甚至上亿条的时候，单台数据库服务器的存储能力会成为系统的瓶颈。</p>
+</div>
+<p>主要体现在这几个方面:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 数据量太大，读写的性能会下降，即使有索引，索引也会变得很大，性能同样会下降。
+2. 数据文件会变得很大，数据库备份和恢复需要耗费很长时间。
+3. 数据文件越大，极端情况下丢失数据的风险越高（例如，机房火灾导致数据库主备机都发生故障）
+</pre></div>
+</div>
+<section id="id3">
+<h2>业务分库<a class="headerlink" href="#id3" title="此标题的永久链接">¶</a></h2>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>业务分库指的是按照业务模块将数据分散到不同的数据库服务器</p>
+</div>
+<img alt="https://img.zhaoweiguo.com/knowledge/images/architectures/performances/split-db-table1.png" src="https://img.zhaoweiguo.com/knowledge/images/architectures/performances/split-db-table1.png" />
+<p>业务分库能够分散存储和访问压力，但同时也带来了新的问题:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mf">1.</span> <span class="n">join</span> <span class="n">操作问题</span>
+<span class="mf">2.</span> <span class="n">事务问题</span>
+<span class="mf">3.</span> <span class="n">成本问题</span>
+</pre></div>
+</div>
+<p>初创业务，并不建议一开始就这样拆分，主要有几个原因:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 初创业务存在很大的不确定性，业务不一定能发展起来
+    业务开始的时候并没有真正的存储和访问压力，业务分库并不能为业务带来价值。
+2. 业务分库后，表之间的 join 查询、数据库事务无法简单实现了。
+3. 业务分库后，因为不同的数据要读写不同的数据库，代码中需要增加根据数据类型映射到不同数据库的逻辑，增加了工作量。
+    而业务初创期间最重要的是快速实现、快速验证，业务分库会拖慢业务节奏。
+</pre></div>
+</div>
+</section>
+<section id="id4">
+<h2>分表<a class="headerlink" href="#id4" title="此标题的永久链接">¶</a></h2>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>将不同业务数据分散存储到不同的数据库服务器，能够支撑百万甚至千万用户规模的业务，但如果业务继续发展，同一业务的单表数据也会达到单台数据库服务器的处理瓶颈。</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>单表数据拆分有两种方式：<strong>垂直分表</strong> 和 <strong>水平分表</strong></p>
+</div>
+<figure class="align-default" id="id10">
+<img alt="https://img.zhaoweiguo.com/knowledge/images/architectures/performances/split-db-table2.png" src="https://img.zhaoweiguo.com/knowledge/images/architectures/performances/split-db-table2.png" />
+<figcaption>
+<p><span class="caption-text">垂直切分：会把表切分为两个表，一个表包含 ID、name、age、sex 列，另外一个表包含 ID、nickname、description 列。 水平切分：一个表包含的是 ID 从 1 到 999999 的行数据，另一个表包含的是 ID 从 1000000 到 9999999 的行数据</span><a class="headerlink" href="#id10" title="此图像的永久链接">¶</a></p>
+</figcaption>
+</figure>
+<section id="id5">
+<h3>1. 垂直分表<a class="headerlink" href="#id5" title="此标题的永久链接">¶</a></h3>
+<p>垂直分表引入的复杂性主要体现在表操作的数量要增加。例如:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>原来只要一次查询就可以获取 name、age、sex、nickname、description
+现在需要两次查询:
+  一次查询获取 name、age、sex
+  另外一次查询获取 nickname、description。
+</pre></div>
+</div>
+</section>
+<section id="id6">
+<h3>2. 水平分表<a class="headerlink" href="#id6" title="此标题的永久链接">¶</a></h3>
+<div class="admonition important">
+<p class="admonition-title">重要</p>
+<p>水平分表适合表行数特别大的表</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>单表行数超过 5000 万就要进行分表，这个数字可以作为参考，但并不是绝对标准，关键还是要看表的访问性能。对于一些比较复杂的表，可能超过 1000 万就要分表了；而对于一些简单的表，即使存储数据超过 1 亿行，也可以不分表。但不管怎样，当看到表的数据量达到千万级别时，作为架构师就要警觉起来，因为这很可能是架构的性能瓶颈或者隐患。</p>
+</div>
+<p>水平分表相比垂直分表，会引入更多的复杂性，主要表现在下面几个方面:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 路由
+    水平分表后，某条数据具体属于哪个切分后的子表，需要增加``路由算法``进行计算，这个算法会引入一定的复杂性。
+2. join 操作
+    水平分表后，数据分散在多个表中，如果需要与其他表进行 join 查询，
+    需要在业务代码或者数据库中间件中进行多次 join 查询，然后将结果合并。
+3. count () 操作
+    水平分表后，虽然物理上数据分散到多个表中，但某些业务逻辑上还是会将这些表当作一个表来处理。
+    例如，获取记录总数用于分页或者展示，水平分表前用一个 count () 就能完成的操作，在分表后就没那么简单了
+4. order by 操作
+    水平分表后，数据分散到多个子表中，排序操作无法在数据库中完成，
+    只能由业务代码或者数据库中间件分别查询每个子表中的数据，然后汇总进行排序。
+</pre></div>
+</div>
+<p>常见的路由算法有:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 范围路由:
+    选取有序的数据列（例如，整形、时间戳等）作为路由的条件，不同分段分散到不同的数据库表中。
+    以最常见的用户 ID 为例，路由算法可以按照 1000000 的范围大小进行分段:
+        1 ~ 999999 放到数据库 1 的表中，
+        1000000 ~ 1999999 放到数据库 2 的表中
+        以此类推。
+
+    范围路由设计的复杂点主要体现在『分段大小的选取』上:
+        分段太小会导致切分后子表数量过多，增加维护复杂度；
+        分段太大可能会导致单表依然存在性能问题，
+        一般建议分段大小在 100 万至 2000 万之间，具体需要根据业务选取合适的分段大小。
+
+    范围路由的优点是:
+        可以随着数据的增加平滑地扩充新的表。
+        例如，现在的用户是 100 万，如果增加到 1000 万，只需要增加新的表就可以了，原有的数据不需要动。
+
+    范围路由的一个比较隐含的缺点是:
+        分布不均匀，假如按照 1000 万来进行分表，
+        有可能某个分段实际存储的数据量只有 1000 条，
+        而另外一个分段实际存储的数据量有 900 万条。
+
+2. Hash 路由
+    选取某个列（或者某几个列组合也可以）的值进行 Hash 运算，然后根据 Hash 结果分散到不同的数据库表中。
+    同样以用户 ID 为例，假如我们一开始就规划了 10 个数据库表，
+    路由算法可以简单地用 user_id % 10 的值来表示数据所属的数据库表编号，
+    ID 为 985 的用户放到编号为 5 的子表中，
+    ID 为 10086 的用户放到编号为 6 的字表中。
+
+    Hash 路由设计的复杂点主要体现在『初始表数量的选取』上，
+      表数量太多维护比较麻烦，表数量太少又可能导致单表性能存在问题。
+      而用了 Hash 路由后，增加子表数量是非常麻烦的，所有数据都要重分布。
+
+    Hash 路由的优缺点和范围路由基本相反:
+        Hash 路由的优点是表分布比较均匀，
+        缺点是扩充新的表很麻烦，所有数据都要重分布。
+
+
+3. 配置路由
+    配置路由就是路由表，用一张独立的表来记录路由信息。
+    同样以用户 ID 为例，我们新增一张 user_router 表，
+    这个表包含 user_id 和 table_id 两列，根据 user_id 就可以查询对应的 table_id。
+
+    配置路由的优点是:
+        设计简单，使用起来非常灵活，尤其是在扩充表的时候，只需要迁移指定的数据，然后修改路由表就可以了。
+    配置路由的缺点是:
+        必须多查询一次，会影响整体性能；
+        而且路由表本身如果太大（例如，几亿条数据），性能同样可能成为瓶颈，
+        如果我们再次将路由表分库分表，则又面临一个死循环式的路由算法选择问题。
+
+        因为路由表的访问量非常大，每次数据操作都要访问路由表，必须缓存，最好缓存到内存
+        但建议把数据库的热点表一样会放在内存中，访问很快，因此不是很有必要引入 mc 或者 redis 来提升性能
+</pre></div>
+</div>
+<p>常见的处理方式有下面两种:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. count () 相加：
+    具体做法是在业务代码或者数据库中间件中对每个表进行 count () 操作，然后将结果相加。
+    这种方式实现简单，缺点就是性能比较低。
+    例如，水平分表后切分为 20 张表，则要进行 20 次 count (*) 操作，如果串行的话，可能需要几秒钟才能得到结果。
+
+2. 记录数表：
+    具体做法是新建一张表，假如表名为 “记录数表”，
+    包含 table_name、row_count 两个字段，
+    每次插入或者删除子表数据成功后，都更新 “记录数表”。
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id7">
+<h2>实现方法<a class="headerlink" href="#id7" title="此标题的永久链接">¶</a></h2>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>和数据库读写分离类似，分库分表具体的实现方式也是 “程序代码封装” 和 “中间件封装”，但实现会更复杂。</p>
+</div>
+<p>读写分离实现时只要识别 SQL 操作是读操作还是写操作，通过简单的判断 SELECT、UPDATE、INSERT、DELETE 几个关键字就可以做到，而分库分表的实现除了要判断操作类型外，还要判断 SQL 中具体需要操作的表、操作函数（例如 count 函数)、order by、group by 操作等，然后再根据不同的操作进行不同的处理。例如 order by 操作，需要先从多个库查询到各个库的数据，然后再重新 order by 才能得到最终的结果。</p>
+</section>
+<section id="id8">
+<h2>思考<a class="headerlink" href="#id8" title="此标题的永久链接">¶</a></h2>
+<p>如果使用 hash 进行分表的话，为什么大多方案推荐用 2 的 n 次方作为表的总数，除了收缩容易还有什么好处吗:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>这个是 hash 函数实现的一个技巧，当计算 hash 值的时候，普通做法是取余操作，
+例如 h% len，但如果 len 是 2 的 N 次方，通过位操作性能更高，计算方式为 h &amp; (len-1)
+</pre></div>
+</div>
+<p>针对 mysql，发现如果字段有 blob 的字段，select 不写这个字段，和写这个字段，效率差异很大啊，这个是什么原因:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>blob 的字段是和行数据分开存储的，而且磁盘上并不是连续的，因此 select blob 字段会让磁盘进入随机 IO 模式
+</pre></div>
+</div>
+<p>当线上已经进行了分库分表的系统，需要进一步水平扩容时，有什么好的设计方案:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>没有太好的方案，要么一开始的分表方案就是按照 id 范围来设计的，要么就需要数据迁移
+</pre></div>
+</div>
+<p>以电商平台交易系统为例，订单数据量非常大的时候也可以考虑水平分库分表:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>针对消费者端订单表按用户 ID 哈希规则分表，这样所有对用户订单的查询条件全都带上用户 ID，达到了数据分片的效果。
+但这时商家端需要对订单做管理，可以将订单数据做同步到另一个数据源，
+    表结构一致只是按照商家 ID 进行哈希规则分表，所有商家端查询走此数据源，条件全部带上商家 ID，也可以做到数据分片的效果。
+    接下来问题又来了，系统还有一个平台的视角，这时貌似不好沿着这个思路继续了，恳请老师提点提点。
+
+『淘宝的单元化改造』就面临你说的问题，最后他们选择了买家纬度拆分，卖家纬度不拆分
+</pre></div>
+</div>
+<p>最近看到这样一个思路，用雪花算法生成一个 ID:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>创建商家 ID 的时候，生成类似这样的 ID （时间戳 + 公共码 + 机器码 + 计数码） , 然后用户下订单时，肯定能以取到商品信息中的商家 ID, 也生成类似的订单 ID，（时间戳 + 机器码 + 计数码 + 公共码） ，
+然后订单按照 公共码 去 hash 分表，这样处理后，当你用商家 ID 查询时，
+直接截取出商家 ID 的公共码做 hash，那么所有这个商家 的订单，就可以路由到相应的分库或分表中了
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>冗余两份数据，做三维度拆分 买家维度，卖家维度 订单 id 纬度或者时间维度。
+
+分表以后的的 count order by 等一些页面查询的东西 我觉得可以走 ES，这些东西不需要实时性，
+
+加表操作和加库操作最好在业务低峰期做，我们都是这样的
+</pre></div>
+</div>
+<p>你认为什么时候引入分库分表是合适的:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>单表数据量超过千万后优化 SQL 语句和代码逻辑不能提高性能后就要引入分表，
+单库中表中数据太多达到磁盘 I/O 瓶颈时引入分库
+
+单机分表比较难提升性能
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>关系型数据库存储是行存储，内存中是分页读写，
+单表太大的时候，如果缓存放不下，需要频繁的内存和磁盘换页操作，导致性能急剧下降。
+推荐看《MySQL 技术内幕：InnoDB 存储引擎》
+如果想快速熟悉，查找一下 mysql 的 innodb buffer pool 相关知识和配置。
+</pre></div>
+</div>
+<p>对于 count 的情况通常是有各种 where 条件的，计数作用不大，这种有什么更好的方案吗:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>定期更新，但要牺牲用户体验
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>架构师的前景: 对于业务架构来说，简单来说就是 “云”+“人工智能”</p>
+</div>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="../../../genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../../py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../../search.html"><span class="std std-ref">搜索页面</span></a></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="3NoSQL.html" class="btn btn-neutral float-right" title="高性能 NoSQL" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="1read-write-seperate.html" class="btn btn-neutral" title="读写分离" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+  
+  <div id="gitalk-container"></div>
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2010-2025, 新溪-gordon.
+
+    </p>
+  </div>
+  <div>备案号 <a href="http://www.beian.miit.gov.cn">京ICP备16018553号</a></div><div>Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a></div>. 
+
+
+</footer>
+
+<script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?042289284b8eb33866001347a3e0b129";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>     
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'V2025.06',
+            LANGUAGE:'zh-CN',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../../_static/sphinx_highlight.js"></script>
+      <script type="text/javascript" src="../../../_static/clipboard.min.js"></script>
+      <script type="text/javascript" src="../../../_static/copybutton.js"></script>
+      <script type="text/javascript" src="../../../_static/translations.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+
+  
+
+  <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+
+
+      // var gitalk = new Gitalk({
+      //         clientID: '565177626b5d46427009',
+      //         clientSecret: 'b2a36e67e1d2a73e43667f46d571c2624f8e1026',
+      //         repo: 'knowledge',
+      //         owner: 'zhaoweiguo',
+      //         admin: ['zhaoweiguo'],
+      //         id: location.pathname,      // Ensure uniqueness and length less than 50
+      //         distractionFreeMode: false  // Facebook-like distraction free mode
+      //       })
+      // gitalk.render('gitalk-container')
+
+  </script>
+
+
+<script type="text/javascript" src="../../../_static/js/table-of-contents-sidebar.js"></script>
+<!-- <script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script> -->
+<script type="text/javascript">
+    window.onload = function(e){
+        TableOfContents.init({
+            basePath: "https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/",
+            querySelector: "body" // or other css querySelector
+        });
+    }
+</script> 
+
+</body>
+</html>

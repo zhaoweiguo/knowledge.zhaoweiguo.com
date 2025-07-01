@@ -1,0 +1,81 @@
+.. _FastText:
+
+FastText
+########
+
+* FastText 是由 Facebook AI Research (FAIR) 团队开发的一种高效的文本表示和分类工具。
+* FastText 模型特别擅长处理大规模的文本数据，并能快速生成词向量。它的主要特点包括高效性、灵活性和易于使用。
+
+基本概念
+========
+
+* 词向量表示：FastText 是一种词向量表示方法，类似于 Word2Vec，但有一些改进和增强。Word2Vec 使用连续词袋（CBOW）或 Skip-gram 方法来训练词向量，而 FastText 则进一步将每个词分解为字符 n-grams。
+* 子词信息：FastText 的一个显著特点是利用了词的子词（subword）信息。具体来说，每个词可以被看作是其字符 n-grams 的集合。例如，"where" 可以分解为 ["<wh", "whe", "her", "ere", "re>"]。这种方法使得 FastText 能够更好地处理词形变化和未登录词（out-of-vocabulary, OOV）的问题。
+* 处理未登录词：由于利用了子词信息，FastText 在处理未登录词（OOV）时表现出色。即使是训练集中未出现的词，FastText 也能通过其子词信息生成合理的词向量。
+
+
+
+
+局限性
+======
+
+* 上下文信息有限：与 BERT 等上下文嵌入模型相比，FastText 无法捕捉上下文信息，因此在处理需要考虑上下文依赖的任务时表现不如后者。
+* 模型简单：尽管 FastText 在处理大规模数据时非常高效，但它相对简单的结构在某些复杂任务中可能不如更复杂的神经网络模型表现优异。
+
+
+
+
+与Word2Vec对比
+==============
+
+* 1. 词形处理
+
+    * The main principle behind fastText is that the morphological structure of a word carries important information about the meaning of the word.
+    * 传统的词嵌入（如 Word2Vec）并不考虑这种结构，因为传统的词嵌入会为每个单词训练唯一的词嵌入。
+    * 对于词形丰富的语言（德语、土耳其语）来说，一个单词可能有大量的词形，而每一种词形都可能很少出现，因此很难训练出好的词嵌入。
+    * fastText 试图通过将每个单词视为其子单词的聚合来解决这个问题。
+
+
+* 2. fastText 在句法任务上的表现明显更好，尤其是当训练语料库规模较小时。不过，Word2Vec 在语义任务上稍微优于 fastText。随着训练语料库规模的增加，差异变得更小。
+
+
+Training models
+===============
+
+FastText supports the following parameters from the original word2vec::
+
+    1. model:           Training architecture. Allowed values: cbow, skipgram (Default cbow)
+    2. vector_size:     Dimensionality of vector embeddings to be learnt (Default 100)
+    3. alpha:           Initial learning rate (Default 0.025)
+    4. window:          Context window size (Default 5)
+    5. min_count:       Ignore words with number of occurrences below this (Default 5)
+    6. loss:            Training objective. Allowed values: ns, hs, softmax (Default ns)
+    7. sample:          Threshold for downsampling higher-frequency words (Default 0.001)
+    8. negative:        Number of negative words to sample, for ns (Default 5)
+    9. epochs:          Number of epochs (Default 5)
+    10. sorted_vocab:   Sort vocab by descending frequency (Default 1)
+    11. threads:        Number of threads to use (Default 12)
+
+In addition, fastText has three additional parameters::
+
+    1. min_n: min length of char ngrams (Default 3)
+    2. max_n: max length of char ngrams (Default 6)
+    3. bucket: number of buckets used for hashing ngrams (Default 2000000)
+
+
+
+
+
+参考
+====
+
+* 官网: https://fasttext.cc/
+* 原始论文: https://arxiv.org/abs/1607.04606
+
+
+
+
+
+
+
+

@@ -1,0 +1,73 @@
+实践
+####
+
+
+# 录制5s
+ffmpeg -rtsp_transport tcp -i rtsp://admin:admin123@192.168.124.27:554/live/ch0 -t 5 -c:v libx264 -c:a aac output.mp4
+
+
+
+# 录制1分钟,每10秒生成一个视频文件
+ffmpeg -i rtsp://localhost/abcv -c:v libx264 -c:a aac -f segment -segment_time 10 -segment_format mp4 -t 60 "output%03d.mp4"
+ffmpeg -i rtsp://localhost/abcv -c:v libx264 -c:a aac -f segment -segment_time 10 -segment_format mp4 -t 60 -strftime 1 "output%Y-%m-%d_%H-%M-%S.mp4"
+
+# 一直录制,每10秒生成一个视频文件
+ffmpeg -i rtsp://localhost/abcv -c:v libx264 -c:a aac -f segment -segment_time 10 -segment_format mp4 "output%03d.mp4"
+
+
+
+
+# 每60帧选取一帧,即每10秒选一帧(60帧/s * 10秒)
+# 使用segmenter生成10秒一个视频片段
+# 录制时间为60秒
+ffmpeg -i rtsp://localhost/abcv -vf "select=not(mod(n\,60)),scale=1280:720" -f segment -segment_time 10 -segment_format mp4 -t 60 "output%03d.mp4" 
+ffmpeg -i rtsp://localhost/abcv -vf "select=not(mod(n\,60)),scale=1280:720" -f segment -segment_time 10 -segment_format mp4 -strftime 1 -strftime_mkdir 1 -t 60 "output%Y-%m-%d_%H-%M-%S.mp4" 
+
+
+
+
+
+
+从视频中抽样提取照片::
+
+    #   1. 读取 input.mp4
+    #   2. 每秒提取 2 帧
+    #   3. 把结果保存为 frames/frame_001.jpg, frames/frame_002.jpg
+    # 命令含义
+    #   1. -i 表示输入文件
+    #   2. -vf 是 video filter 的意思
+    #   3. fps=xxx 表示每秒提取多少帧
+    ffmpeg -i input.mp4 -vf fps=2 frames/frame_%03d.jpg
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

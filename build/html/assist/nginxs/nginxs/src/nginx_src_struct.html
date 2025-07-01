@@ -1,0 +1,1287 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="zh-CN" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="zh-CN" > <!--<![endif]-->
+<head>
+
+
+<!-- start added 2025-04-14   增加对markdown中公式的支持 -->
+<script>
+window.MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+    },
+    options: {
+        ignoreHtmlClass: "tex2jax_ignore|mathjax_ignore",
+        processHtmlClass: "tex2jax_process|mathjax_process|math|output_area"
+    }
+};
+</script>
+<script defer="defer" src="https://fastly.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<!-- end added 2025-04-14   增加对markdown中公式的支持 -->
+
+
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Nginx数据结构 &mdash; 新溪-gordon V2025.06 文档</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+    <link rel="index" title="索引" href="../../../genindex.html" />
+    <link rel="search" title="搜索" href="../../../search.html" />
+    <link rel="next" title="Nginx源码分析流程" href="nginx_src_flow.html" />
+    <link rel="prev" title="Nginx源码简介" href="nginx_src_summary.html" /> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+  <script src="../../../_static/js/jquery.min.js"></script>
+
+
+<!-- 评论插件 gittalk start -->
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script> -->
+<!-- 评论插件 gittalk end -->
+
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> 新溪-gordon
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                V2025.06
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../git.html">1. GIT 文档首页</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../gits/git_cmd_common.html">1.1. Git命令列表</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../gits/cmd_commons/git_blame.html">1.1.1. git blame</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../gits/cmd_commons/git_branch.html">1.1.2. git branch命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../gits/cmd_commons/git_clone.html">1.1.3. git clone命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../gits/cmd_commons/git_checkout.html">1.1.4. git checkout</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../gits/cmd_commons/git_cherrypick.html">1.1.5. git_cherrypick</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../gits/cmd_commons/git_config.html">1.1.6. git config命令</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../gits/cmd_commons/git_config.html#gitconfig">gitconfig文件</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../gits/cmd_commons/git_config.html#conditional-includes">Conditional includes</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../gits/cmd_commons/git_describe.html">1.1.7. git describe命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../gits/cmd_commons/git_diff.html">1.1.8. git diff命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../gits/cmd_commons/git_fetch.html">1.1.9. git fetch命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../gits/cmd_commons/git_format-patch.html">1.1.10. git format-patch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../gits/cmd_commons/git_hook.html">1.1.11. git hook命令</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../gits/cmd_commons/git_hook.html#id3">实例</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../gits/cmd_commons/git_log.html">1.1.12. git log浏览日志</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../gits/cmd_commons/git_log.html#id3">实例</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../gits/cmd_commons/git_mv.html">1.1.13. git mv命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../gits/cmd_commons/git_pull.html">1.1.14. git pull命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../gits/cmd_commons/git_push.html">1.1.15. git push命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../gits/cmd_commons/git_rebase.html">1.1.16. git rebase命令</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../gits/cmd_commons/git_rebase.html#id2">把一个分支的修改合并到当前分支</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../gits/cmd_commons/git_rebase.html#commit">修改commit的内容</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../gits/cmd_commons/git_rebase.html#commituseremail">修改commit的user和email</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../gits/cmd_commons/git_rebase.html#id5">说明</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../gits/cmd_commons/git_remote.html">1.1.17. git remote命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../gits/cmd_commons/git_reset.html">1.1.18. git reset命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../gits/cmd_commons/git_rm.html">1.1.19. git rm</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../gits/cmd_commons/git_stage.html">1.1.20. git stage命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../gits/cmd_commons/git_stash.html">1.1.21. git stash</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../gits/cmd_commons/git_submodule.html">1.1.22. git submodule命令</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../gits/cmd_commons/git_submodule.html#remove-a-submodule-within-git-1">Remove a Submodule within git </a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../gits/cmd_commons/git_switch.html">1.1.23. git switch命令</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../gits/cmd_commons/git_switch.html#id2">1. 基本用途</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../gits/cmd_commons/git_switch.html#git-checkout">2. 与 <cite>git checkout</cite> 的区别</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../gits/cmd_commons/git_switch.html#id3">常用示例</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../gits/cmd_commons/git_tag.html">1.1.24. git tag命令</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../gits/git_cmd_special.html">1.2. Git其他命令列表</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../gits/cmd_specials/git_rev-parse.html">1.2.1. 版本表示法 git rev-parse</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../gits/cmd_specials/git-lfs.html">1.2.2. git-lfs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../gits/cmd_specials/git-lfs.html#id2">Git LFS工作原理</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../gits/cmd_specials/git-lfs.html#id4">实战</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../gits/cmd_specials/git-lfs.html#id6">其他</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../gits/git_example.html">1.3. git实例</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../gits/examples/pre-commit_sensitive_info.html">1.3.1. git实例-敏感信息过滤 </a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../gits/examples/post-commit_reminder.html">1.3.2. post-commit实例: 自动提醒</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../gits/normal.html">1.4. 常用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../gits/normals/introduce.html">1.4.1. 基本介绍  </a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../gits/normals/install.html">1.4.2. 安装</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../gits/normals/ignore.html">1.4.3. git ignore文件</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../gits/normals/question.html">1.4.4. git常见问题</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../gits/normals/question.html#git-old-mode-100755-new-mode-100644">git old mode 100755 new mode 100644</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../gits/normals/question.html#error-invalid-path">error: invalid path</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../gits/normals/question.html#fatal-the-remote-end-hung-up-unexpectedly">fatal: the remote end hung up unexpectedly</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../gits/normals/question.html#crlf">CRLF换行符问题</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../gits/normals/question.html#id2">参考</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../gits/normals/format_type.html">1.4.5. git中format的格式列表</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../gits/normals/attributes.html">1.4.6. git gitattributes</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../gits/web_github.html">1.5. github相关</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../gits/web_github.html#id3">1.5.1. 从仓库中删除敏感数据 </a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../gits/web_gerrit.html">1.6. gerrit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../gits/web_gitea.html">1.7. gitea</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../gits/web_gogs.html">1.8. gogs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../gits/svn.html">1.9. svn简单使用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../gits/hg.html">1.10. hg简单使用</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../emacs.html">2. Emacs文档</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../emacs/emacs.html">2.1. emacs使用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/emacs/emacs_usage.html">2.1.1. emacs使用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/emacs/emacs_file.html">2.1.2. 文件管理</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/emacs/emacs_command.html">2.1.3. emacs命令列表</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/emacs/commands/emacs_command_region.html">区块编辑</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/emacs/commands/emacs_command_window.html">窗格和缓冲区管理</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/emacs/commands/emacs_command_other.html">数字参数</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/emacs/commands/emacs_command_other.html#id3">其它</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/emacs/commands/emacs_command_bookmark.html">书签管理</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/emacs/commands/emacs_command_outline.html">大纲模式</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/emacs/emacs_elpa.html">2.1.4. 使用ELPA, MELPA安装</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/emacs/emacs_config.html">2.1.5. emacs配置文件</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/emacs/emacs_caidan.html">2.1.6. emacs彩蛋</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/emacs/emacs_mode.html">2.1.7. emacs架构</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../emacs/vim.html">2.2. vim简单使用操作</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/vim.html#id3">2.2.1. 屏幕翻滚类命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/vim.html#id4">2.2.2. 删除</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/vim.html#id5">2.2.3. 复制</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/vim.html#id6">2.2.4. 粘贴</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/vim.html#id7">2.2.5. 文件</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/vim.html#id8">2.2.6. 在多个文件之间切换</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/vim.html#id9">2.2.7. 在当前文件和另外一个文件间切换</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/vim.html#id10">2.2.8. 查找</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/vim.html#id11">2.2.9. 选项设置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/vim.html#id12">2.2.10. 替换命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/vim.html#id13">2.2.11. 已熟悉</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../emacs/phpstorm.html">2.3. phpstorm使用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../emacs/sublime.html">2.4. sublime使用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/sublimes/normal.html">2.4.1. 通用</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/sublimes/normals/normal.html">sublime的使用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/sublimes/normals/example.html">示例</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/sublimes/plugin.html">2.4.2. sublime插件相关</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/sublimes/plugins/normal.html">常用插件</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/sublimes/plugins/plugin_git.html">git/github集成工具插件</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/sublimes/plugins/plugin_html.html">HTML/css/js插件</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/sublimes/plugins/plugin_plantuml.html">plantUML插件</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/sublimes/plugins/plugin_rst.html">reStructureText插件 </a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/sublimes/plugins/plugin_increment_selection.html">插入多行递增数字</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/sublimes/plugins/plugin_sublimeCodeIntel.html">SublimeCodeIntel插件</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/sublimes/plugin.html#id2">安装</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/sublimes/plugin.html#id3">编译环境</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/sublimes/practice.html">2.4.3. 实战</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/sublimes/question.html">2.4.4. 常见问题</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/sublimes/question.html#mac-1">Mac安装插件报错 </a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/sublimes/tmp.html">2.4.5. sublime临时相关</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/sublimes/tmp.html#package-control">安装 Package Control</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/sublimes/tmp.html#id3">安装插件</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../emacs/atom.html">2.5. atom</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../emacs/idea.html">2.6. IDEA相关</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/ideas/idea_normal.html">2.6.1. 常用</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/ideas/idea_normal.html#id3">完整显示所有打开的标签页</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/ideas/idea_lang.html">2.6.2. 语言相关</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/ideas/idea_lang.html#erlang">erlang项目</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/ideas/idea_lang.html#golang">golang相关</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/ideas/idea_toolbar.html">2.6.3. 工具栏</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/ideas/idea_shortcut.html">2.6.4. 快捷键</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/ideas/idea_folding.html">2.6.5. 折叠相关</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/ideas/idea_folding.html#import">import折叠</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/ideas/idea_run.html">2.6.6. 运行相关</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/ideas/idea_run.html#id3">运行时加参数</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/ideas/idea_pycharm.html">2.6.7. PyCharm</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/ideas/plantuml.html">2.6.8. plantuml插件</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/ideas/question.html">2.6.9. 常见问题</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/ideas/question.html#terminalesc">使用Terminal时按ESC键切换至编辑窗口的问题</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../emacs/vsCode.html">2.7. vsCode</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/vscodes/normal.html">2.7.1. 基本功能</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/vscodes/normal.html#id3">快捷键</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/vscodes/normal.html#zen-mode">Zen Mode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/vscodes/normal.html#git-1">Git相关 </a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/vscodes/normal.html#id5">代码编辑</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/vscodes/normal.html#id6">代码格式</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/vscodes/normal.html#id7">小技巧</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/vscodes/normal.html#id8">多光标特性</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/vscodes/normal.html#id9">快速跳转(文件、行、符号)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/vscodes/normal.html#id10">代码重构</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/vscodes/normal.html#id11">参考</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/vscodes/golang.html">2.7.2. golang相关 </a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/vscodes/golang.html#id3">插件安装</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/vscodes/python.html">2.7.3. python</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/vscodes/plugin.html">2.7.4. 插件安装</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/vscodes/plugin.html#minimap">minimap</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/vscodes/plugin.html#outline-map">Outline Map</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/vscodes/plugin.html#explorer-autoreveal">explorer.autoReveal</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/vscodes/plugin.html#remote-ssh">Remote - SSH</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/vscodes/plugin.html#python">Python</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/vscodes/debug.html">2.7.5. 调试功能</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/vscodes/debug.html#launch-json">launch.json</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/vscodes/debug.html#vscode">VSCode 的命令面板</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/vscodes/keyboard_shortcut.html">2.7.6. 快捷键</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../emacs/iterm2.html">2.8. iterm2相关</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/iterm2.html#id3">2.8.1. 技巧1:有跳板机的服务器上「上传」「下载」文件</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/iterm2.html#tmux">2.8.2. 技巧2:与tmux配合,把上传复制的文件转到「剪切板」上</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/iterm2.html#id4">2.8.3. 技巧3:高亮当前行</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/iterm2.html#alt-key">2.8.4. 技巧:Alt Key快捷键(以单词为基准跳)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/iterm2.html#terminal">Terminal</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/iterm2.html#id5">iTerm2</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/iterm2.html#idea">idea</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/iterm2.html#vscode">vscode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/iterm2.html#hyper">hyper</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/iterm2.html#id6">2.8.5. 其他</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../emacs/alfred.html">2.9. alfred工具</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../emacs/zsh.html">2.10. zsh 相关</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/zsh.html#id2">2.10.1. zsh</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../emacs/zsh.html#ohmyzsh">ohmyzsh</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../emacs/zsh.html#fish">2.10.2. fish</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sphinxdoc.html">3. Sphinx Document文档</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../sphinxdocs/sphinx.html">3.1. Sphinx文档</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../sphinxdocs/sphinxs/normal.html">3.1.1. 基本格式</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/normals/basic.html">基本</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/normals/sidebar.html">sidebar侧边栏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/normals/link.html">引用,链接,图片</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/normals/image.html">图片</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/normals/video.html">video视频</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/normals/include.html">文件包含</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/normals/code.html">代码</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/normals/color.html">颜色</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/normals/notice.html">通知</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/normals/tree.html">树显示</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/normals/table.html">表格相关</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/normals/replace.html">替换</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/normals/other.html">其他</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../sphinxdocs/sphinxs/advance.html">3.1.2. 高级格式</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/advances/meta.html">meta</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/advances/domain.html">Domains</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/advances/role.html">role</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/advances/raw.html">raw标签</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/advances/math.html">数学相关</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/advances/github.html">github&amp;gist</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/advances/symbol.html">符号</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../sphinxdocs/sphinxs/conf.py.html">3.1.3. conf.py配置文件</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../sphinxdocs/sphinxs/code_file.html">3.1.4. [主]文件使用实例 </a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/code_file.html#various-domain-specific-languages">various domain-specific languages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/code_file.html#id5">语言</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/code_file.html#configuration-file-formats">配置文件configuration file formats</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/code_file.html#css">CSS相关</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../sphinxdocs/sphinxs/theme.html">3.1.5. sphinx主题</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/themes/normal.html">通用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/themes/sphinx_rtd_theme.html">sphinx_rtd_theme主题</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../sphinxdocs/sphinxs/extensions.html">3.1.6. sphinx扩展</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/extensions/math.html">数学符号</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/extensions/plantuml.html">PlantUML插件</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/extensions/graphviz.html">graphviz 插件</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/extensions/recommonmark.html">recommonmark </a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/extensions/rli.html">Extends literalinclude to include URLs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/extensions/sphinx-git.html">sphinx-git</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/extensions/nbsphinx.html">nbsphinx-适用于.ipynb文件</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/extensions/sphinx-copybutton.html">sphinx-copybutton</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/extensions/sphinx-gallery.html">Sphinx-Gallery</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/extensions/other.html">other</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../sphinxdocs/sphinxs/pygments_language.html">3.1.7. 支持高亮的语言列表</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../sphinxdocs/sphinxs/sphinxdoc_install.html">3.1.8. sphinx安装与使用核心命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../sphinxdocs/sphinxs/sphinxdoc_search.html">3.1.9. 搜索</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/sphinxdoc_search.html#id4">中文搜索 </a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../sphinxdocs/sphinxs/question.html">3.1.10. 常见问题</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/question.html#cannot-import-name-environmentfilter-from-jinja2">cannot import name ‘environmentfilter’ from ‘jinja2’</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/sphinxs/question.html#importerror-cannot-import-name-soft-unicode-from-markupsafe">ImportError: cannot import name ‘soft_unicode’ from ‘markupsafe’</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../sphinxdocs/rst2pdf.html">3.2. rst2pdf的使用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../sphinxdocs/markdown.html">3.3. md文件</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../sphinxdocs/markdowns/normal.html">3.3.1. 通用</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/markdowns/normal.html#md">好的md文档示例</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../sphinxdocs/markdowns/html.html">3.3.2. 常用弥补Markdown的Html标签</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../sphinxdocs/markdowns/LaTeX.html">3.3.3. Markdown LaTeX</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/markdowns/LaTeX.html#id1">行内数学</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/markdowns/LaTeX.html#id4">块级数学</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/markdowns/LaTeX.html#sphinx">Sphinx 扩展</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../sphinxdocs/markdowns/rst.html">3.3.4. 与rst文件的对应</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../sphinxdocs/LaTeX.html">3.4. LaTeX</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../sphinxdocs/LaTeXs/normal.html">3.4.1. 通用</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/LaTeXs/normal.html#id3">数组</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/LaTeXs/normal.html#id4">矩阵</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/LaTeXs/normal.html#id5">多行公式</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/LaTeXs/normal.html#id6">分组</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/LaTeXs/normal.html#id7">综合使用</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../sphinxdocs/LaTeXs/font.html">3.4.2. 字体</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../sphinxdocs/LaTeXs/practice.html">3.4.3. 实例</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../sphinxdocs/AsciiDoc.html">3.5. AsciiDoc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../sphinxdocs/apidoc.html">3.6. API文档生成器</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../sphinxdocs/apidocs/apidoc.html">3.6.1. API文档生成器</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../sphinxdocs/apidocs/doxygen.html">3.6.2. doxygen文档生成工具</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../sphinxdocs/apidocs/swagger.html">3.6.3. Swagger</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/apidocs/swagger.html#swaggo">swaggo✅</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/apidocs/swagger.html#go-swagger">go-swagger</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/apidocs/swagger.html#swagger-ui">Swagger UI</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../sphinxdocs/tool.html">3.7. 建站工具</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../sphinxdocs/tools/hexo.html">3.7.1. hexo博客工具</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/tools/hexos/hexo_normal.html">hexo常见应用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/tools/hexos/hexo_command.html">hexo命令</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/tools/hexos/hexo_theme.html">hexo主题</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/tools/hexos/hexo_question.html">hexo常见问题</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../sphinxdocs/tools/ablog.html">3.7.2. ablog相关文档</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../sphinxdocs/tools/gulp.html">3.7.3. gulpjs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../sphinxdocs/tools/jekyll.html">3.7.4. jekyll</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../sphinxdocs/tools/hugo.html">3.7.5. Hugo</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/tools/hugo.html#id2">使用</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../sphinxdocs/tools/gitbook.html">3.7.6. gitbook工具</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../sphinxdocs/plugin.html">3.8. 插件</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../sphinxdocs/plugins/comment.html">3.8.1. 评论相关</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/plugins/comment.html#gitment">Gitment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/plugins/comment.html#disqus">disqus</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/plugins/comment.html#gitalk">gitalk</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../sphinxdocs/plugins/search.html">3.8.2. 关键字查询相关</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../sphinxdocs/plugins/search.html#algolia">algolia</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../sphinxdocs/plugins/automation.html">3.8.3. 一键自动化发布</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../sphinxdocs/plugins/MyST-Parser.html">3.8.4. MyST-Parser</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../../nginx.html">4. Nginx使用文档</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../normal.html">4.1. 常用</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../nginx.html">4.2. Nginx相关</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../normal.html">4.2.1. 常用</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../normals/normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../normals/install.html">安装</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../normals/introduce.html">nginx简介</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../config.html">4.2.2. 配置文件</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../configs/basic.html">基本</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../configs/agent.html">Agent类型</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../configs/log.html">日志相关</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../configs/monitor.html">监控</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../configs/redirect.html">跳转与代理的区别</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../configs/safe.html">安全相关</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../configs/upstream.html">upstream</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../configs/option.html">配置选项</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../configs/example.html">实例</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../docker.html">4.2.3. Docker相关</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../advance.html">4.2.4. 高级</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../advances/framework.html">Nginx框架(图)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../advances/ssl.html">nginx ssl相关</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../plugin.html">4.2.5. 插件</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../plugins/addon.html">Nginx插件用法</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../plugins/ngx_http_mirror_module.html">ngx_http_mirror_module模块 </a></li>
+</ul>
+</li>
+<li class="toctree-l3 current"><a class="reference internal" href="../source.html">4.2.6. Nginx源码分析</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="nginx_src_framework_status.html">Nginx源码架构(图)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="nginx_book_module_dev.html">深入理解Nginx模块开发与架构解析</a></li>
+<li class="toctree-l4"><a class="reference internal" href="nginx_src_summary.html">Nginx源码简介</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">Nginx数据结构</a></li>
+<li class="toctree-l4"><a class="reference internal" href="nginx_src_flow.html">Nginx源码分析流程</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../question.html">4.2.7. NginX问题汇总</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../question.html#id2">安装问题</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../question.html#nginx-502-bad-gateway">nginx 502 bad gateway</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../question.html#upstream-sent-too-big-header-while-reading-response-header-from-upstream">upstream sent too big header while reading response header from upstream</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../question.html#client-intended-to-send-too-large-body-12750515-bytes">client intended to send too large body: 12750515 bytes</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../apache.html">4.3. apache的简单使用方法</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../apache.html#id2">4.3.1. 文件大小写不敏感</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../apache.html#id3">4.3.2. 配置</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../lvs.html">4.4. lvs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../HAproxy.html">4.5. HAproxy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../openresty.html">4.6. openresty</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../IIS.html">4.7. IIS</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../office.html">5. Office</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../offices/LibreOffice.html">5.1. LibreOffice</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../offices/LibreOffices/normal.html">5.1.1. 常用</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../offices/microsoft.html">5.2. microsoft</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../offices/microsofts/ppt.html">5.2.1. PPT</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../offices/microsofts/ppt.html#id2">PPT素材网站</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">新溪-gordon</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../nginx.html"><span class="section-number">4. </span>Nginx使用文档</a> &raquo;</li>
+        
+          <li><a href="../../nginx.html"><span class="section-number">4.2. </span>Nginx相关</a> &raquo;</li>
+        
+          <li><a href="../source.html"><span class="section-number">4.2.6. </span>Nginx源码分析</a> &raquo;</li>
+        
+      <li>Nginx数据结构</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../../_sources/nginxs/nginxs/src/nginx_src_struct.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            <nav id="local-table-of-contents" role="navigation" aria-labelledby="local-table-of-contents-title">
+              <h4 id="local-table-of-contents-title">On This Page</h4>
+              <ul>
+<li><a class="reference internal" href="#">Nginx数据结构</a><ul>
+<li><a class="reference internal" href="#id2">高级模块说明</a></li>
+</ul>
+</li>
+</ul>
+
+            </nav>
+  <table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="../../../genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../../py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../../search.html"><span class="std std-ref">搜索页面</span></a></p></td>
+</tr>
+</tbody>
+</table>
+<section id="nginx">
+<h1>Nginx数据结构<a class="headerlink" href="#nginx" title="此标题的永久链接">¶</a></h1>
+<dl class="field-list simple">
+<dt class="field-odd">作者<span class="colon">:</span></dt>
+<dd class="field-odd"><p>新溪-gordon &lt;programfan.info#gmail.com&gt;</p>
+</dd>
+<dt class="field-even">时间<span class="colon">:</span></dt>
+<dd class="field-even"><p>2014-07-29</p>
+</dd>
+</dl>
+<section id="id2">
+<h2>高级模块说明<a class="headerlink" href="#id2" title="此标题的永久链接">¶</a></h2>
+<p>ngx_command_t:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span>
+<span class="linenos"> 2</span><span class="c1">//</span>
+<span class="linenos"> 3</span><span class="k">struct</span><span class="w"> </span><span class="nc">ngx_command_s</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos"> 4</span><span class="w">  </span><span class="n">ngx_str_t</span><span class="w">   </span><span class="n">name</span><span class="p">;</span><span class="w">   </span><span class="c1">// 配置项名, 无空格</span>
+<span class="linenos"> 5</span><span class="w">  </span><span class="n">ngx_uint_t</span><span class="w">  </span><span class="n">type</span><span class="p">;</span><span class="w">   </span><span class="c1">// 配置项type</span>
+<span class="linenos"> 6</span>
+<span class="linenos"> 7</span><span class="w">  </span><span class="c1">// 出现了name中制定的配置项后，将会调用set方法处理配置项参数。</span>
+<span class="linenos"> 8</span><span class="w">  </span><span class="c1">// 这个可以使用nginx预设的14个解析配置方法，也可以使用自定义的。</span>
+<span class="linenos"> 9</span><span class="w">  </span><span class="kt">char</span><span class="w">        </span><span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="n">set</span><span class="p">)(</span><span class="n">ngx_conf_t</span><span class="w"> </span><span class="o">*</span><span class="n">cf</span><span class="p">,</span><span class="w"> </span><span class="n">ngx_command_t</span><span class="w"> </span><span class="o">*</span><span class="n">cmd</span><span class="p">,</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">conf</span><span class="p">);</span><span class="w">   </span><span class="c1">// 指令操作</span>
+<span class="linenos">10</span>
+<span class="linenos">11</span><span class="w">  </span><span class="c1">// 因为有可能模块同时会有main，srv，loc三种配置结构体，指定这个配置项解析完后要放在哪个结构体内</span>
+<span class="linenos">12</span><span class="w">  </span><span class="n">ngx_uint_t</span><span class="w">  </span><span class="n">conf</span><span class="p">;</span>
+<span class="linenos">13</span>
+<span class="linenos">14</span><span class="w">  </span><span class="c1">// 表示当前配置项在整个存储配置项的结构体中的偏移位置，可以使用offsetof(test_stru, b)来获取</span>
+<span class="linenos">15</span><span class="w">  </span><span class="n">ngx_uint_t</span><span class="w">  </span><span class="n">offset</span><span class="p">;</span>
+<span class="linenos">16</span>
+<span class="linenos">17</span><span class="w">  </span><span class="c1">// 命令处理完后的回调指针，对于set的14种预设的解析配置方法</span>
+<span class="linenos">18</span><span class="w">  </span><span class="kt">void</span><span class="w">        </span><span class="o">*</span><span class="n">post</span><span class="p">;</span>
+<span class="linenos">19</span><span class="p">}</span>
+<span class="linenos">20</span>
+<span class="linenos">21</span><span class="c1">// 说明</span>
+<span class="linenos">22</span><span class="cm">/*</span>
+<span class="linenos">23</span><span class="cm">  type:</span>
+<span class="linenos">24</span><span class="cm">      NGX_HTTP_MAIN_CONF</span>
+<span class="linenos">25</span><span class="cm">      NGX_HTTP_SRV_CONF</span>
+<span class="linenos">26</span><span class="cm">      NGX_HTTP_LOC_CONF</span>
+<span class="linenos">27</span><span class="cm">      NGX_HTTP_UP_CONF</span>
+<span class="linenos">28</span>
+<span class="linenos">29</span><span class="cm">      NGX_CONF_NOARGS</span>
+<span class="linenos">30</span><span class="cm">      NGX_CONF_TAKE1</span>
+<span class="linenos">31</span><span class="cm">      NGX_CONF_TAKE2</span>
+<span class="linenos">32</span>
+<span class="linenos">33</span><span class="cm">      NGX_CONF_FLAG</span>
+<span class="linenos">34</span><span class="cm">      NGX_CONF_1MORE</span>
+<span class="linenos">35</span>
+<span class="linenos">36</span><span class="cm">  set:</span>
+<span class="linenos">37</span><span class="cm">     参数cf: 包含传给指令的参数</span>
+<span class="linenos">38</span><span class="cm">     参数cmd: 指向当前的ngx_command_t结构</span>
+<span class="linenos">39</span><span class="cm">     参数conf: 指向custom configuration struct</span>
+<span class="linenos">40</span>
+<span class="linenos">41</span><span class="cm">      // setting particular types of values in the custom configuration sturct</span>
+<span class="linenos">42</span><span class="cm">      ngx_conf_set_flag_slot</span>
+<span class="linenos">43</span><span class="cm">      ngx_conf_set_str_slot</span>
+<span class="linenos">44</span><span class="cm">      ngx_conf_set_num_slot</span>
+<span class="linenos">45</span><span class="cm">      ngx_conf_set_size_slot</span>
+<span class="linenos">46</span>
+<span class="linenos">47</span><span class="cm">   conf:</span>
+<span class="linenos">48</span><span class="cm">      NGX_HTTP_MAIN_CONF_OFFSET</span>
+<span class="linenos">49</span><span class="cm">      NGX_HTTP_SRV_CONF_OFFSET</span>
+<span class="linenos">50</span><span class="cm">      NGX_HTTP_LOC_CONF_OFFSET</span>
+<span class="linenos">51</span>
+<span class="linenos">52</span><span class="cm">   post:</span>
+<span class="linenos">53</span><span class="cm">      ngx_conf_post_t</span>
+<span class="linenos">54</span><span class="cm">      ngx_conf_enum_t</span>
+<span class="linenos">55</span><span class="cm">      ngx_conf_bitmask_t</span>
+<span class="linenos">56</span><span class="cm">      null</span>
+<span class="linenos">57</span>
+<span class="linenos">58</span><span class="cm"> */</span>
+</pre></div>
+</div>
+<p>ngx_http_module_t:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span>
+<span class="linenos"> 2</span><span class="c1">//HTTP框架在读取,重载配置文件时定义了由ngx_http_module_t接口描述的8个阶段</span>
+<span class="linenos"> 3</span><span class="c1">//这8个阶段的调用顺序应该是：</span>
+<span class="linenos"> 4</span><span class="cm">/*</span>
+<span class="linenos"> 5</span><span class="cm">create_main_conf</span>
+<span class="linenos"> 6</span><span class="cm">create_srv_conf</span>
+<span class="linenos"> 7</span><span class="cm">create_loc_conf</span>
+<span class="linenos"> 8</span><span class="cm">preconfiguration</span>
+<span class="linenos"> 9</span><span class="cm">init_main_conf</span>
+<span class="linenos">10</span><span class="cm">merge_srv_conf</span>
+<span class="linenos">11</span><span class="cm">merge_loc_conf</span>
+<span class="linenos">12</span><span class="cm">postconfiguration</span>
+<span class="linenos">13</span><span class="cm">*/</span>
+<span class="linenos">14</span><span class="k">typedef</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">15</span><span class="w">  </span><span class="n">ngx_int_t</span><span class="w">   </span><span class="p">(</span><span class="o">*</span><span class="n">preconfiguration</span><span class="p">)(</span><span class="n">ngx_conf_t</span><span class="w"> </span><span class="o">*</span><span class="n">cf</span><span class="p">);</span><span class="w">  </span><span class="c1">//解析配置文件前调用</span>
+<span class="linenos">16</span><span class="w">  </span><span class="n">ngx_int_t</span><span class="w">   </span><span class="p">(</span><span class="o">*</span><span class="n">postconfiguration</span><span class="p">)(</span><span class="n">ngx_conf_t</span><span class="w"> </span><span class="o">*</span><span class="n">cf</span><span class="p">);</span><span class="w"> </span><span class="c1">//完成配置文件解析后调用</span>
+<span class="linenos">17</span>
+<span class="linenos">18</span><span class="w">  </span><span class="kt">void</span><span class="w">       </span><span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="n">create_main_conf</span><span class="p">)(</span><span class="n">ngx_conf_t</span><span class="w"> </span><span class="o">*</span><span class="n">cf</span><span class="p">);</span><span class="w">  </span><span class="c1">//当需要创建数据结构用户存储main级别的全局配置项时候调用</span>
+<span class="linenos">19</span><span class="w">  </span><span class="kt">char</span><span class="w">       </span><span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="n">init_main_conf</span><span class="p">)(</span><span class="n">ngx_conf_t</span><span class="w"> </span><span class="o">*</span><span class="n">cf</span><span class="p">,</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">conf</span><span class="p">);</span><span class="w"> </span><span class="c1">//初始化main级别配置项</span>
+<span class="linenos">20</span>
+<span class="linenos">21</span><span class="w">  </span><span class="kt">void</span><span class="w">       </span><span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="n">create_srv_conf</span><span class="p">)(</span><span class="n">ngx_conf_t</span><span class="w"> </span><span class="o">*</span><span class="n">cf</span><span class="p">);</span><span class="w"> </span><span class="c1">//当需要创建数据结构用户存储srv级别的全局配置项时候调用</span>
+<span class="linenos">22</span><span class="w">  </span><span class="kt">char</span><span class="w">       </span><span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="n">merge_srv_conf</span><span class="p">)(</span><span class="n">ngx_conf_t</span><span class="w"> </span><span class="o">*</span><span class="n">cf</span><span class="p">,</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">prev</span><span class="p">,</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">conf</span><span class="p">);</span><span class="w"> </span><span class="c1">//srv覆盖策略</span>
+<span class="linenos">23</span>
+<span class="linenos">24</span><span class="w">  </span><span class="kt">void</span><span class="w">       </span><span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="n">create_loc_conf</span><span class="p">)(</span><span class="n">ngx_conf_t</span><span class="w"> </span><span class="o">*</span><span class="n">cf</span><span class="p">);</span><span class="w"> </span><span class="c1">//当需要创建数据结构用户存储loc级别的全局配置项时候调用</span>
+<span class="linenos">25</span><span class="w">  </span><span class="kt">char</span><span class="w">       </span><span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="n">merge_loc_conf</span><span class="p">)(</span><span class="n">ngx_conf_t</span><span class="w"> </span><span class="o">*</span><span class="n">cf</span><span class="p">,</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">prev</span><span class="p">,</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">conf</span><span class="p">);</span><span class="w"> </span><span class="c1">//loc覆盖策略</span>
+<span class="linenos">26</span><span class="p">}</span><span class="w"> </span><span class="n">ngx_http_module_t</span><span class="p">;</span>
+<span class="linenos">27</span>
+<span class="linenos">28</span>
+</pre></div>
+</div>
+<p>ngx_module_t:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span>
+<span class="linenos"> 4</span><span class="c1">//参考：</span>
+<span class="linenos"> 5</span><span class="c1">//http://blog.csdn.net/livelylittlefish/article/details/6571497</span>
+<span class="linenos"> 6</span><span class="cp">#define NGX_MODULE_V1          0, 0, 0, 0, 0, 0, 1      </span><span class="c1">//该宏用来初始化前7个字段  </span>
+<span class="linenos"> 7</span><span class="cp">#define NGX_MODULE_V1_PADDING  0, 0, 0, 0, 0, 0, 0, 0   </span><span class="c1">//该宏用来初始化最后8个字段</span>
+<span class="linenos"> 8</span>
+<span class="linenos"> 9</span>
+<span class="linenos">10</span><span class="c1">//ngx_module_s是模块的定义</span>
+<span class="linenos">11</span><span class="k">struct</span><span class="w"> </span><span class="nc">ngx_module_s</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">12</span><span class="w">  </span><span class="c1">//对于一类模块（由下面的type成员决定类别）而言，ctx_index标示当前模块在这类模块中的序号。</span>
+<span class="linenos">13</span><span class="w">  </span><span class="c1">//这个成员常常是由管理这类模块的一个nginx核心模块设置的，对于所有的HTTP模块而言，ctx_index</span>
+<span class="linenos">14</span><span class="w">  </span><span class="c1">//是由核心模块ngx_http_module设置的。</span>
+<span class="linenos">15</span><span class="w">  </span><span class="n">ngx_uint_t</span><span class="w">            </span><span class="n">ctx_index</span><span class="p">;</span>
+<span class="linenos">16</span>
+<span class="linenos">17</span><span class="w">  </span><span class="c1">//index表示当前模块在ngx_modules数组中的序号。Nginx启动的时候会根据ngx_modules数组设置各个模块的index值</span>
+<span class="linenos">18</span><span class="w">  </span><span class="n">ngx_uint_t</span><span class="w">            </span><span class="n">index</span><span class="p">;</span><span class="w"> </span>
+<span class="linenos">19</span>
+<span class="linenos">20</span><span class="w">  </span><span class="c1">//spare系列的保留变量，暂未使用</span>
+<span class="linenos">21</span><span class="w">  </span><span class="n">ngx_uint_t</span><span class="w">            </span><span class="n">spare0</span><span class="p">;</span>
+<span class="linenos">22</span><span class="w">  </span><span class="n">ngx_uint_t</span><span class="w">            </span><span class="n">spare1</span><span class="p">;</span>
+<span class="linenos">23</span><span class="w">  </span><span class="n">ngx_uint_t</span><span class="w">            </span><span class="n">spare2</span><span class="p">;</span>
+<span class="linenos">24</span><span class="w">  </span><span class="n">ngx_uint_t</span><span class="w">            </span><span class="n">spare3</span><span class="p">;</span>
+<span class="linenos">25</span>
+<span class="linenos">26</span><span class="w">  </span><span class="c1">//nginx模块版本，目前只有一种，暂定为1</span>
+<span class="linenos">27</span><span class="w">  </span><span class="c1">//前面这7个参数使用NGX_MODULE_V1赋值</span>
+<span class="linenos">28</span><span class="w">  </span><span class="n">ngx_uint_t</span><span class="w">            </span><span class="n">version</span><span class="p">;</span>
+<span class="linenos">29</span>
+<span class="linenos">30</span>
+<span class="linenos">31</span><span class="w">  </span><span class="c1">//模块上下文，每个模块有不同模块上下文,每个模块都有自己的特性，而ctx会指向特定类型模块的公共接口。</span>
+<span class="linenos">32</span><span class="w">  </span><span class="c1">//比如，在HTTP模块中，ctx需要指向ngx_http_module_t结构体。</span>
+<span class="linenos">33</span><span class="w">  </span><span class="kt">void</span><span class="w">                 </span><span class="o">*</span><span class="n">ctx</span><span class="p">;</span>
+<span class="linenos">34</span>
+<span class="linenos">35</span><span class="w">  </span><span class="c1">//模块命令集，将处理nginx.conf中的配置项</span>
+<span class="linenos">36</span><span class="w">  </span><span class="c1">// 如，在http模块中，指向ngx_command_t结构体</span>
+<span class="linenos">37</span><span class="w">  </span><span class="n">ngx_command_t</span><span class="w">        </span><span class="o">*</span><span class="n">commands</span><span class="p">;</span>
+<span class="linenos">38</span>
+<span class="linenos">39</span>
+<span class="linenos">40</span><span class="w">  </span><span class="c1">//标示该模块的类型，和ctx是紧密相关的。它的取值范围是以下几种:</span>
+<span class="linenos">41</span><span class="w">  </span><span class="c1">//NGX_HTTP_MODULE,NGX_CORE_MODULE,NGX_CONF_MODULE,</span>
+<span class="linenos">42</span><span class="w">  </span><span class="c1">//NGX_EVENT_MODULE,NGX_MAIL_MODULE</span>
+<span class="linenos">43</span><span class="w">  </span><span class="n">ngx_uint_t</span><span class="w">            </span><span class="n">type</span><span class="p">;</span>
+<span class="linenos">44</span>
+<span class="linenos">45</span>
+<span class="linenos">46</span><span class="w">  </span><span class="c1">//下面7个函数是nginx在启动，停止过程中的7个执行点</span>
+<span class="linenos">47</span><span class="w">  </span><span class="n">ngx_int_t</span><span class="w">           </span><span class="p">(</span><span class="o">*</span><span class="n">init_master</span><span class="p">)(</span><span class="n">ngx_log_t</span><span class="w"> </span><span class="o">*</span><span class="n">log</span><span class="p">);</span><span class="w">         </span><span class="c1">//初始化master</span>
+<span class="linenos">48</span><span class="w">  </span><span class="n">ngx_int_t</span><span class="w">           </span><span class="p">(</span><span class="o">*</span><span class="n">init_module</span><span class="p">)(</span><span class="n">ngx_cycle_t</span><span class="w"> </span><span class="o">*</span><span class="n">cycle</span><span class="p">);</span><span class="w">     </span><span class="c1">//初始化模块</span>
+<span class="linenos">49</span><span class="w">  </span><span class="n">ngx_int_t</span><span class="w">           </span><span class="p">(</span><span class="o">*</span><span class="n">init_process</span><span class="p">)(</span><span class="n">ngx_cycle_t</span><span class="w"> </span><span class="o">*</span><span class="n">cycle</span><span class="p">);</span><span class="w">    </span><span class="c1">//初始化进程</span>
+<span class="linenos">50</span><span class="w">  </span><span class="n">ngx_int_t</span><span class="w">           </span><span class="p">(</span><span class="o">*</span><span class="n">init_thread</span><span class="p">)(</span><span class="n">ngx_cycle_t</span><span class="w"> </span><span class="o">*</span><span class="n">cycle</span><span class="p">);</span><span class="w">     </span><span class="c1">//初始化线程</span>
+<span class="linenos">51</span><span class="w">  </span><span class="kt">void</span><span class="w">                </span><span class="p">(</span><span class="o">*</span><span class="n">exit_thread</span><span class="p">)(</span><span class="n">ngx_cycle_t</span><span class="w"> </span><span class="o">*</span><span class="n">cycle</span><span class="p">);</span><span class="w">     </span><span class="c1">//退出线程</span>
+<span class="linenos">52</span><span class="w">  </span><span class="kt">void</span><span class="w">                </span><span class="p">(</span><span class="o">*</span><span class="n">exit_process</span><span class="p">)(</span><span class="n">ngx_cycle_t</span><span class="w"> </span><span class="o">*</span><span class="n">cycle</span><span class="p">);</span><span class="w">    </span><span class="c1">//退出进程</span>
+<span class="linenos">53</span><span class="w">  </span><span class="kt">void</span><span class="w">                </span><span class="p">(</span><span class="o">*</span><span class="n">exit_master</span><span class="p">)(</span><span class="n">ngx_cycle_t</span><span class="w"> </span><span class="o">*</span><span class="n">cycle</span><span class="p">);</span><span class="w">     </span><span class="c1">//退出master</span>
+<span class="linenos">54</span>
+<span class="linenos">55</span>
+<span class="linenos">56</span><span class="w">  </span><span class="c1">//保留字段，无用，可以使用NGX_MODULE_V1_PADDING来替换</span>
+<span class="linenos">57</span><span class="w">  </span><span class="kt">uintptr_t</span><span class="w">             </span><span class="n">spare_hook0</span><span class="p">;</span>
+<span class="linenos">58</span><span class="w">  </span><span class="kt">uintptr_t</span><span class="w">             </span><span class="n">spare_hook1</span><span class="p">;</span>
+<span class="linenos">59</span><span class="w">  </span><span class="kt">uintptr_t</span><span class="w">             </span><span class="n">spare_hook2</span><span class="p">;</span>
+<span class="linenos">60</span><span class="w">  </span><span class="kt">uintptr_t</span><span class="w">             </span><span class="n">spare_hook3</span><span class="p">;</span>
+<span class="linenos">61</span><span class="w">  </span><span class="kt">uintptr_t</span><span class="w">             </span><span class="n">spare_hook4</span><span class="p">;</span>
+<span class="linenos">62</span><span class="w">  </span><span class="kt">uintptr_t</span><span class="w">             </span><span class="n">spare_hook5</span><span class="p">;</span>
+<span class="linenos">63</span><span class="w">  </span><span class="kt">uintptr_t</span><span class="w">             </span><span class="n">spare_hook6</span><span class="p">;</span>
+<span class="linenos">64</span><span class="w">  </span><span class="kt">uintptr_t</span><span class="w">             </span><span class="n">spare_hook7</span><span class="p">;</span>
+<span class="linenos">65</span>
+<span class="linenos">66</span>
+<span class="linenos">67</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>ngx_http_request_t:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="linenos">  1</span>
+<span class="linenos">  2</span><span class="c1">//这个结构定义了一个HTTP请求。</span>
+<span class="linenos">  3</span><span class="k">struct</span><span class="w"> </span><span class="nc">ngx_http_request_s</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">  4</span><span class="w">  </span><span class="kt">uint32_t</span><span class="w">                          </span><span class="n">signature</span><span class="p">;</span><span class="w">         </span><span class="cm">/* &quot;HTTP&quot; */</span>
+<span class="linenos">  5</span>
+<span class="linenos">  6</span><span class="w">  </span><span class="c1">// 这个请求对应的客户端连接</span>
+<span class="linenos">  7</span><span class="w">  </span><span class="n">ngx_connection_t</span><span class="w">                 </span><span class="o">*</span><span class="n">connection</span><span class="p">;</span><span class="w">  </span><span class="c1">//当前request的连接</span>
+<span class="linenos">  8</span>
+<span class="linenos">  9</span><span class="w">  </span><span class="c1">// 指向存放所有HTTP模块的上下文结构体的指针数组</span>
+<span class="linenos"> 10</span><span class="w">  </span><span class="kt">void</span><span class="w">                            </span><span class="o">**</span><span class="n">ctx</span><span class="p">;</span><span class="w">  </span><span class="c1">//上下文</span>
+<span class="linenos"> 11</span>
+<span class="linenos"> 12</span><span class="w">  </span><span class="c1">// 指向请求对应的存放main级别配置结构体的指针数组</span>
+<span class="linenos"> 13</span><span class="w">  </span><span class="kt">void</span><span class="w">                            </span><span class="o">**</span><span class="n">main_conf</span><span class="p">;</span><span class="w"> </span><span class="c1">//main配置</span>
+<span class="linenos"> 14</span>
+<span class="linenos"> 15</span><span class="w">  </span><span class="c1">// 指向请求对应的存放srv级别配置结构体的指针数组</span>
+<span class="linenos"> 16</span><span class="w">  </span><span class="kt">void</span><span class="w">                            </span><span class="o">**</span><span class="n">srv_conf</span><span class="p">;</span><span class="w">  </span><span class="c1">//srv配置</span>
+<span class="linenos"> 17</span>
+<span class="linenos"> 18</span><span class="w">  </span><span class="c1">// 指向请求对应的存放loc级别配置结构体的指针数组</span>
+<span class="linenos"> 19</span><span class="w">  </span><span class="kt">void</span><span class="w">                            </span><span class="o">**</span><span class="n">loc_conf</span><span class="p">;</span><span class="w">  </span><span class="c1">//loc配置</span>
+<span class="linenos"> 20</span>
+<span class="linenos"> 21</span><span class="w">  </span><span class="cm">/*</span>
+<span class="linenos"> 22</span><span class="cm">    在接收完HTTP头部，第一次在业务上处理HTTP请求时，HTTP框架提供的处理方法是ngx_http_process_request。</span>
+<span class="linenos"> 23</span><span class="cm">    但如果该方法无法一次处理完该请求的全部业务，在归还控制权到epoll事件模块后，该请求再次被回调时，将通过ngx_http_request_handler方法来处理，</span>
+<span class="linenos"> 24</span><span class="cm">    而这个方法中对于可读事件的处理就是调用read_event_handler处理请求。也就是说，HTTP模块希望在底层处理请求的读事件，重新实现read_evet_handler方法。</span>
+<span class="linenos"> 25</span><span class="cm">  */</span>
+<span class="linenos"> 26</span><span class="w">  </span><span class="n">ngx_http_event_handler_pt</span><span class="w">         </span><span class="n">read_event_handler</span><span class="p">;</span>
+<span class="linenos"> 27</span>
+<span class="linenos"> 28</span><span class="w">  </span><span class="cm">/*</span>
+<span class="linenos"> 29</span><span class="cm">    与read_event_handler回调方法类似，如果ngx_http_request_handler方法判断当前事件是可写事件，则调用write_event_handler处理请求。</span>
+<span class="linenos"> 30</span><span class="cm">  */</span>
+<span class="linenos"> 31</span><span class="w">  </span><span class="n">ngx_http_event_handler_pt</span><span class="w">         </span><span class="n">write_event_handler</span><span class="p">;</span>
+<span class="linenos"> 32</span>
+<span class="linenos"> 33</span><span class="cp">#if (NGX_HTTP_CACHE)</span>
+<span class="linenos"> 34</span><span class="w">  </span><span class="n">ngx_http_cache_t</span><span class="w">                 </span><span class="o">*</span><span class="n">cache</span><span class="p">;</span>
+<span class="linenos"> 35</span><span class="cp">#endif</span>
+<span class="linenos"> 36</span>
+<span class="linenos"> 37</span><span class="w">  </span><span class="c1">// upstream机制用到的结构体</span>
+<span class="linenos"> 38</span><span class="w">  </span><span class="n">ngx_http_upstream_t</span><span class="w">              </span><span class="o">*</span><span class="n">upstream</span><span class="p">;</span><span class="w">  </span><span class="c1">//load-balance，如果模块是load-balance的话设置这个</span>
+<span class="linenos"> 39</span><span class="w">  </span><span class="n">ngx_array_t</span><span class="w">                      </span><span class="o">*</span><span class="n">upstream_states</span><span class="p">;</span>
+<span class="linenos"> 40</span><span class="w">  </span><span class="cm">/* of ngx_http_upstream_state_t */</span>
+<span class="linenos"> 41</span>
+<span class="linenos"> 42</span><span class="w">  </span><span class="cm">/*</span>
+<span class="linenos"> 43</span><span class="cm">    表示这个请求的内存池，在ngx_http_free_request 方法中销毁。它与ngx_connection_t中的内存池意义不同，当请求释放时，</span>
+<span class="linenos"> 44</span><span class="cm">    TCP连接可能并没有关闭，这时请求的内存池会销毁，但ngx_connection_t的内存池不会销毁</span>
+<span class="linenos"> 45</span><span class="cm">  */</span>
+<span class="linenos"> 46</span><span class="w">  </span><span class="n">ngx_pool_t</span><span class="w">                       </span><span class="o">*</span><span class="n">pool</span><span class="p">;</span><span class="w">     </span><span class="c1">//连接池</span>
+<span class="linenos"> 47</span>
+<span class="linenos"> 48</span><span class="w">  </span><span class="c1">// 用于接收HTTP请求内容的缓冲区，主要用于接收HTTP头部</span>
+<span class="linenos"> 49</span><span class="w">  </span><span class="n">ngx_buf_t</span><span class="w">                        </span><span class="o">*</span><span class="n">header_in</span><span class="p">;</span>
+<span class="linenos"> 50</span>
+<span class="linenos"> 51</span><span class="w">  </span><span class="cm">/*</span>
+<span class="linenos"> 52</span><span class="cm">    ngx_http_prcess_request_headers 方法在接收，解析完HTTP请求的头部后，会把解析完的每个HTTP头部加入到headers_in的headers连表中，</span>
+<span class="linenos"> 53</span><span class="cm">    同时会构造headers_in中的其他成员</span>
+<span class="linenos"> 54</span><span class="cm">  */</span>
+<span class="linenos"> 55</span><span class="w">  </span><span class="n">ngx_http_headers_in_t</span><span class="w">             </span><span class="n">headers_in</span><span class="p">;</span><span class="w"> </span><span class="c1">//request的header</span>
+<span class="linenos"> 56</span><span class="w">  </span><span class="cm">/*</span>
+<span class="linenos"> 57</span><span class="cm">    HTTP模块会把想要发送到HTTP相应信息放到headers_out中，期望HTTP框架将headers_out中的成员序列化为HTTP相应包发送给用户</span>
+<span class="linenos"> 58</span><span class="cm">  */</span>
+<span class="linenos"> 59</span><span class="w">  </span><span class="n">ngx_http_headers_out_t</span><span class="w">            </span><span class="n">headers_out</span><span class="p">;</span><span class="w"> </span><span class="c1">//response的header，使用ngx_http_send_header发送</span>
+<span class="linenos"> 60</span>
+<span class="linenos"> 61</span><span class="w">  </span><span class="c1">// 接收HTTP请求中包体的数据结构</span>
+<span class="linenos"> 62</span><span class="w">  </span><span class="n">ngx_http_request_body_t</span><span class="w">          </span><span class="o">*</span><span class="n">request_body</span><span class="p">;</span><span class="w"> </span><span class="c1">//response的body</span>
+<span class="linenos"> 63</span>
+<span class="linenos"> 64</span><span class="w">  </span><span class="c1">// 延迟关闭连接的时间</span>
+<span class="linenos"> 65</span><span class="w">  </span><span class="kt">time_t</span><span class="w">                            </span><span class="n">lingering_time</span><span class="p">;</span>
+<span class="linenos"> 66</span>
+<span class="linenos"> 67</span><span class="w">  </span><span class="cm">/*</span>
+<span class="linenos"> 68</span><span class="cm">    当前请求初始化时的时间。如果这个请求是子请求，则该时间是自请求的生成时间；如果这个请求是用户发来的请求，则是建立起TCP连接后，第一次接收到可读事件时的时间</span>
+<span class="linenos"> 69</span><span class="cm">  */</span>
+<span class="linenos"> 70</span><span class="w">  </span><span class="kt">time_t</span><span class="w">                            </span><span class="n">start_sec</span><span class="p">;</span>
+<span class="linenos"> 71</span>
+<span class="linenos"> 72</span><span class="w">  </span><span class="c1">// 与start_sec配合使用，表示相对于start_sec秒的毫秒偏移量</span>
+<span class="linenos"> 73</span><span class="w">  </span><span class="n">ngx_msec_t</span><span class="w">                        </span><span class="n">start_msec</span><span class="p">;</span>
+<span class="linenos"> 74</span>
+<span class="linenos"> 75</span><span class="w">  </span><span class="n">ngx_uint_t</span><span class="w">                        </span><span class="n">method</span><span class="p">;</span>
+<span class="linenos"> 76</span><span class="w">  </span><span class="n">ngx_uint_t</span><span class="w">                        </span><span class="n">http_version</span><span class="p">;</span><span class="w"> </span><span class="c1">//http的版本</span>
+<span class="linenos"> 77</span>
+<span class="linenos"> 78</span><span class="w">  </span><span class="n">ngx_str_t</span><span class="w">                         </span><span class="n">request_line</span><span class="p">;</span>
+<span class="linenos"> 79</span><span class="w">  </span><span class="n">ngx_str_t</span><span class="w">                         </span><span class="n">uri</span><span class="p">;</span><span class="w">  </span><span class="c1">//请求的路径 eg &#39;/query.php&#39;</span>
+<span class="linenos"> 80</span><span class="w">  </span><span class="n">ngx_str_t</span><span class="w">                         </span><span class="n">args</span><span class="p">;</span><span class="w"> </span><span class="c1">//请求的参数 eg &#39;name=john&#39;</span>
+<span class="linenos"> 81</span><span class="w">  </span><span class="n">ngx_str_t</span><span class="w">                         </span><span class="n">exten</span><span class="p">;</span><span class="w"> </span>
+<span class="linenos"> 82</span><span class="w">  </span><span class="n">ngx_str_t</span><span class="w">                         </span><span class="n">unparsed_uri</span><span class="p">;</span>
+<span class="linenos"> 83</span>
+<span class="linenos"> 84</span><span class="w">  </span><span class="n">ngx_str_t</span><span class="w">                         </span><span class="n">method_name</span><span class="p">;</span>
+<span class="linenos"> 85</span><span class="w">  </span><span class="n">ngx_str_t</span><span class="w">                         </span><span class="n">http_protocol</span><span class="p">;</span>
+<span class="linenos"> 86</span>
+<span class="linenos"> 87</span><span class="w">  </span><span class="cm">/*</span>
+<span class="linenos"> 88</span><span class="cm">    表示需要发送给客户端的HTTP相应。out中保存着由headers_out中序列化后的表示HTTP头部的TCP流。在调用ngx_http_output_filter方法后，</span>
+<span class="linenos"> 89</span><span class="cm">    out中还会保存待发送的HTTP包体，它是实现异步发送的HTTP相应的关键</span>
+<span class="linenos"> 90</span><span class="cm">  */</span>
+<span class="linenos"> 91</span><span class="w">  </span><span class="n">ngx_chain_t</span><span class="w">                      </span><span class="o">*</span><span class="n">out</span><span class="p">;</span><span class="w"> </span><span class="c1">//输出的chain</span>
+<span class="linenos"> 92</span>
+<span class="linenos"> 93</span><span class="w">  </span><span class="cm">/*</span>
+<span class="linenos"> 94</span><span class="cm">    当前请求既可能是用户发来的请求，也可能是派生出的子请求，而main则标识一系列相关的派生子请求的原始请求，</span>
+<span class="linenos"> 95</span><span class="cm">    我们一般可以通过main和当前请求的地址是否相等来判断当前请求是否为用户发来的原始请求。</span>
+<span class="linenos"> 96</span><span class="cm">  */</span>
+<span class="linenos"> 97</span><span class="w">  </span><span class="n">ngx_http_request_t</span><span class="w">               </span><span class="o">*</span><span class="n">main</span><span class="p">;</span>
+<span class="linenos"> 98</span>
+<span class="linenos"> 99</span><span class="w">  </span><span class="c1">// 当前请求的父请求。注意，父请求未必是原始请求</span>
+<span class="linenos">100</span><span class="w">  </span><span class="n">ngx_http_request_t</span><span class="w">               </span><span class="o">*</span><span class="n">parent</span><span class="p">;</span>
+<span class="linenos">101</span>
+<span class="linenos">102</span><span class="w">  </span><span class="c1">// 与subrequest子请求相关的功能。</span>
+<span class="linenos">103</span><span class="w">  </span><span class="n">ngx_http_postponed_request_t</span><span class="w">     </span><span class="o">*</span><span class="n">postponed</span><span class="p">;</span>
+<span class="linenos">104</span><span class="w">  </span><span class="n">ngx_http_post_subrequest_t</span><span class="w">       </span><span class="o">*</span><span class="n">post_subrequest</span><span class="p">;</span>
+<span class="linenos">105</span>
+<span class="linenos">106</span><span class="w">  </span><span class="cm">/*</span>
+<span class="linenos">107</span><span class="cm">    所有自请求都是通过posted_requests这个单链表来链接起来的，执行post子请求时调用的ngx_http_run_posted_requests</span>
+<span class="linenos">108</span><span class="cm">    方法就是通过遍历该单链表来执行子请求的。</span>
+<span class="linenos">109</span><span class="cm">  */</span>
+<span class="linenos">110</span><span class="w">  </span><span class="n">ngx_http_posted_request_t</span><span class="w">        </span><span class="o">*</span><span class="n">posted_requests</span><span class="p">;</span>
+<span class="linenos">111</span>
+<span class="linenos">112</span><span class="w">  </span><span class="n">ngx_http_virtual_names_t</span><span class="w">         </span><span class="o">*</span><span class="n">virtual_names</span><span class="p">;</span>
+<span class="linenos">113</span>
+<span class="linenos">114</span><span class="w">  </span><span class="cm">/*</span>
+<span class="linenos">115</span><span class="cm">    全局的ngx_http_phase_engine_t结构体中定义了一个ngx_http_phase_handler_t 回调方法组成的数组，</span>
+<span class="linenos">116</span><span class="cm">    而phase_handler成员则与该数组配合使用，表示请求下次应当执行以phase_handler作为序号指定的数组中的回调方法。</span>
+<span class="linenos">117</span><span class="cm">    HTTP框架正是以这种方式把各个HTTP模块集成起来处理请求的。</span>
+<span class="linenos">118</span><span class="cm">  */</span>
+<span class="linenos">119</span><span class="w">  </span><span class="n">ngx_int_t</span><span class="w">                         </span><span class="n">phase_handler</span><span class="p">;</span>
+<span class="linenos">120</span>
+<span class="linenos">121</span><span class="w">  </span><span class="cm">/*</span>
+<span class="linenos">122</span><span class="cm">    表示NGX_HTTP_CONTENT_PHASE阶段提供给HTTP模块处理请求的一种方式，content_handler指向HTTP模块实现的请求处理方法。</span>
+<span class="linenos">123</span><span class="cm">  */</span>
+<span class="linenos">124</span><span class="w">  </span><span class="n">ngx_http_handler_pt</span><span class="w">               </span><span class="n">content_handler</span><span class="p">;</span>
+<span class="linenos">125</span>
+<span class="linenos">126</span><span class="w">  </span><span class="cm">/*</span>
+<span class="linenos">127</span><span class="cm">    在NGX_HTTP_ACCESS_PHASE阶段需要判断请求是否具有访问权限时，通过access_code来传递HTTP模块的handler回调方法的返回值，</span>
+<span class="linenos">128</span><span class="cm">    如果access_code为0，则表示请求具备访问权限，反之则说明请求不具备访问权限</span>
+<span class="linenos">129</span><span class="cm">  */</span><span class="w"> </span>
+<span class="linenos">130</span><span class="w">  </span><span class="n">ngx_uint_t</span><span class="w">                        </span><span class="n">access_code</span><span class="p">;</span>
+<span class="linenos">131</span>
+<span class="linenos">132</span><span class="w">  </span><span class="n">ngx_http_variable_value_t</span><span class="w">        </span><span class="o">*</span><span class="n">variables</span><span class="p">;</span>
+<span class="linenos">133</span>
+<span class="linenos">134</span><span class="cp">#if (NGX_PCRE)</span>
+<span class="linenos">135</span><span class="w">  </span><span class="n">ngx_uint_t</span><span class="w">                        </span><span class="n">ncaptures</span><span class="p">;</span>
+<span class="linenos">136</span><span class="w">  </span><span class="kt">int</span><span class="w">                              </span><span class="o">*</span><span class="n">captures</span><span class="p">;</span>
+<span class="linenos">137</span><span class="w">  </span><span class="n">u_char</span><span class="w">                           </span><span class="o">*</span><span class="n">captures_data</span><span class="p">;</span>
+<span class="linenos">138</span><span class="cp">#endif</span>
+<span class="linenos">139</span>
+<span class="linenos">140</span><span class="w">  </span><span class="kt">size_t</span><span class="w">                            </span><span class="n">limit_rate</span><span class="p">;</span>
+<span class="linenos">141</span>
+<span class="linenos">142</span><span class="w">  </span><span class="cm">/* used to learn the Apache compatible response length without a header */</span>
+<span class="linenos">143</span><span class="w">  </span><span class="kt">size_t</span><span class="w">                            </span><span class="n">header_size</span><span class="p">;</span>
+<span class="linenos">144</span>
+<span class="linenos">145</span><span class="w">  </span><span class="c1">// HTTP请求的全部长度，包括HTTP包体</span>
+<span class="linenos">146</span><span class="w">  </span><span class="kt">off_t</span><span class="w">                             </span><span class="n">request_length</span><span class="p">;</span>
+<span class="linenos">147</span>
+<span class="linenos">148</span><span class="w">  </span><span class="n">ngx_uint_t</span><span class="w">                        </span><span class="n">err_status</span><span class="p">;</span>
+<span class="linenos">149</span>
+<span class="linenos">150</span><span class="w">  </span><span class="n">ngx_http_connection_t</span><span class="w">            </span><span class="o">*</span><span class="n">http_connection</span><span class="p">;</span>
+<span class="linenos">151</span>
+<span class="linenos">152</span><span class="w">  </span><span class="n">ngx_http_log_handler_pt</span><span class="w">           </span><span class="n">log_handler</span><span class="p">;</span>
+<span class="linenos">153</span>
+<span class="linenos">154</span><span class="w">  </span><span class="c1">// 在这个请求中，如果打开了某些资源，并需要在请求结束时释放，那么都需要在把定义的释放资源方法添加到cleanup成员中。</span>
+<span class="linenos">155</span><span class="w">  </span><span class="n">ngx_http_cleanup_t</span><span class="w">               </span><span class="o">*</span><span class="n">cleanup</span><span class="p">;</span>
+<span class="linenos">156</span>
+<span class="linenos">157</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">subrequests</span><span class="o">:</span><span class="mi">8</span><span class="p">;</span>
+<span class="linenos">158</span>
+<span class="linenos">159</span><span class="w">  </span><span class="cm">/*</span>
+<span class="linenos">160</span><span class="cm">    表示当前请求的引用次数。例如，在使用subrequest功能时，依附在这个请求上的自请求数目会返回到count上，每增加一个子请求，</span>
+<span class="linenos">161</span><span class="cm">    count数就要加1。其中任何一个自请求派生出新的子请求时，对应的原始请求（main指针指向的请求）的count值都要加1.又如，</span>
+<span class="linenos">162</span><span class="cm">    当我们接收HTTP包体的时候，由于这也是一个异步调用，所以count上也需要加1，这样在结束请求时，就不会在count引用计数未清零时销毁请求。</span>
+<span class="linenos">163</span><span class="cm">  */</span>
+<span class="linenos">164</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">count</span><span class="o">:</span><span class="mi">8</span><span class="p">;</span>
+<span class="linenos">165</span>
+<span class="linenos">166</span><span class="w">  </span><span class="c1">// 标志位，目前仅由aio使用</span>
+<span class="linenos">167</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">blocked</span><span class="o">:</span><span class="mi">8</span><span class="p">;</span>
+<span class="linenos">168</span>
+<span class="linenos">169</span><span class="w">  </span><span class="c1">// 标志位，为1表示当前请求正在使用异步文件IO</span>
+<span class="linenos">170</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">aio</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">171</span>
+<span class="linenos">172</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">http_state</span><span class="o">:</span><span class="mi">4</span><span class="p">;</span>
+<span class="linenos">173</span>
+<span class="linenos">174</span><span class="w">  </span><span class="cm">/* URI with &quot;/.&quot; and on Win32 with &quot;//&quot; */</span>
+<span class="linenos">175</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">complex_uri</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">176</span>
+<span class="linenos">177</span><span class="w">  </span><span class="cm">/* URI with &quot;%&quot; */</span>
+<span class="linenos">178</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">quoted_uri</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">179</span>
+<span class="linenos">180</span><span class="w">  </span><span class="cm">/* URI with &quot;+&quot; */</span>
+<span class="linenos">181</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">plus_in_uri</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">182</span>
+<span class="linenos">183</span><span class="w">  </span><span class="cm">/* URI with &quot; &quot; */</span>
+<span class="linenos">184</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">space_in_uri</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">185</span>
+<span class="linenos">186</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">invalid_header</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">187</span>
+<span class="linenos">188</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">add_uri_to_alias</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">189</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">valid_location</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">190</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">valid_unparsed_uri</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">191</span>
+<span class="linenos">192</span><span class="w">  </span><span class="c1">// 标志位，为1表示URL发生过rewrite重写</span>
+<span class="linenos">193</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">uri_changed</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">194</span>
+<span class="linenos">195</span><span class="w">  </span><span class="cm">/*</span>
+<span class="linenos">196</span><span class="cm">    表示使用rewrite重写URL的次数。因为目前最多可以更改10次，所以uri_changes初始化为11，而每重写URL一次就把uri_changes减1，</span>
+<span class="linenos">197</span><span class="cm">    一旦uri_changes等于0，则向用户返回失败</span>
+<span class="linenos">198</span><span class="cm">  */</span>
+<span class="linenos">199</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">uri_changes</span><span class="o">:</span><span class="mi">4</span><span class="p">;</span>
+<span class="linenos">200</span>
+<span class="linenos">201</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">request_body_in_single_buf</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">202</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">request_body_in_file_only</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">203</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">request_body_in_persistent_file</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">204</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">request_body_in_clean_file</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">205</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">request_body_file_group_access</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">206</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">request_body_file_log_level</span><span class="o">:</span><span class="mi">3</span><span class="p">;</span>
+<span class="linenos">207</span>
+<span class="linenos">208</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">subrequest_in_memory</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">209</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">waited</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">210</span>
+<span class="linenos">211</span><span class="cp">#if (NGX_HTTP_CACHE)</span>
+<span class="linenos">212</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">cached</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">213</span><span class="cp">#endif</span>
+<span class="linenos">214</span>
+<span class="linenos">215</span><span class="cp">#if (NGX_HTTP_GZIP)</span>
+<span class="linenos">216</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">gzip_tested</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">217</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">gzip_ok</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">218</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">gzip_vary</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">219</span><span class="cp">#endif</span>
+<span class="linenos">220</span>
+<span class="linenos">221</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">proxy</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">222</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">bypass_cache</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">223</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">no_cache</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">224</span>
+<span class="linenos">225</span><span class="w">  </span><span class="cm">/*</span>
+<span class="linenos">226</span><span class="cm">   * instead of using the request context data in</span>
+<span class="linenos">227</span><span class="cm">   * ngx_http_limit_zone_module and ngx_http_limit_req_module</span>
+<span class="linenos">228</span><span class="cm">   * we use the single bits in the request structure</span>
+<span class="linenos">229</span><span class="cm">   */</span>
+<span class="linenos">230</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">limit_zone_set</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">231</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">limit_req_set</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">232</span>
+<span class="linenos">233</span><span class="cp">#if 0</span>
+<span class="linenos">234</span><span class="c">  unsigned                          cacheable:1;</span>
+<span class="linenos">235</span><span class="cp">#endif</span>
+<span class="linenos">236</span>
+<span class="linenos">237</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">pipeline</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">238</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">plain_http</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">239</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">chunked</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">240</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">header_only</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">241</span>
+<span class="linenos">242</span><span class="w">  </span><span class="c1">// 标志位，为1表示当前请求是keepalive请求</span>
+<span class="linenos">243</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">keepalive</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">244</span>
+<span class="linenos">245</span><span class="w">  </span><span class="c1">// 延迟关闭标志位，为1表示需要延迟关闭。例如在接收完HTTP头部时如果发现包体存在，该标志位会设置1，而放弃接收包体会设为0</span>
+<span class="linenos">246</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">lingering_close</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">247</span>
+<span class="linenos">248</span><span class="w">  </span><span class="c1">// 标志位，为1表示正在丢弃HTTP请求中的包体</span>
+<span class="linenos">249</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">discard_body</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">250</span>
+<span class="linenos">251</span><span class="w">  </span><span class="c1">// 标志位，为1表示请求的当前状态是在做内部跳转</span>
+<span class="linenos">252</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">internal</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">253</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">error_page</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">254</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">ignore_content_encoding</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">255</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">filter_finalize</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">256</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">post_action</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">257</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">request_complete</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">258</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">request_output</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">259</span>
+<span class="linenos">260</span><span class="w">  </span><span class="c1">// 标志位，为1表示发送给客户端的HTTP相应头部已经发送。在调用ngx_http_send_header方法后，若已经成功地启动相应头部发送流程，</span>
+<span class="linenos">261</span><span class="w">  </span><span class="c1">// 该标志位就会置1，用来防止反复地发送头部。</span>
+<span class="linenos">262</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">header_sent</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">263</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">expect_tested</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">264</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">root_tested</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">265</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">done</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">266</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">logged</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">267</span>
+<span class="linenos">268</span><span class="w">  </span><span class="c1">// 表示缓冲中是否有待发送内容的标志位</span>
+<span class="linenos">269</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">buffered</span><span class="o">:</span><span class="mi">4</span><span class="p">;</span>
+<span class="linenos">270</span>
+<span class="linenos">271</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">main_filter_need_in_memory</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">272</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">filter_need_in_memory</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">273</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">filter_need_temporary</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">274</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">allow_ranges</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">275</span>
+<span class="linenos">276</span><span class="cp">#if (NGX_STAT_STUB)</span>
+<span class="linenos">277</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">stat_reading</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">278</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">stat_writing</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">279</span><span class="cp">#endif</span>
+<span class="linenos">280</span>
+<span class="linenos">281</span><span class="w">  </span><span class="cm">/* used to parse HTTP headers */</span>
+<span class="linenos">282</span>
+<span class="linenos">283</span><span class="w">  </span><span class="c1">// 状态机解析HTTP时使用stats来表示当前的解析状态。</span>
+<span class="linenos">284</span><span class="w">  </span><span class="n">ngx_uint_t</span><span class="w">                        </span><span class="n">state</span><span class="p">;</span>
+<span class="linenos">285</span>
+<span class="linenos">286</span><span class="w">  </span><span class="n">ngx_uint_t</span><span class="w">                        </span><span class="n">header_hash</span><span class="p">;</span>
+<span class="linenos">287</span><span class="w">  </span><span class="n">ngx_uint_t</span><span class="w">                        </span><span class="n">lowcase_index</span><span class="p">;</span>
+<span class="linenos">288</span><span class="w">  </span><span class="n">u_char</span><span class="w">                            </span><span class="n">lowcase_header</span><span class="p">[</span><span class="n">NGX_HTTP_LC_HEADER_LEN</span><span class="p">];</span>
+<span class="linenos">289</span>
+<span class="linenos">290</span><span class="w">  </span><span class="n">u_char</span><span class="w">                           </span><span class="o">*</span><span class="n">header_name_start</span><span class="p">;</span>
+<span class="linenos">291</span><span class="w">  </span><span class="n">u_char</span><span class="w">                           </span><span class="o">*</span><span class="n">header_name_end</span><span class="p">;</span>
+<span class="linenos">292</span><span class="w">  </span><span class="n">u_char</span><span class="w">                           </span><span class="o">*</span><span class="n">header_start</span><span class="p">;</span>
+<span class="linenos">293</span><span class="w">  </span><span class="n">u_char</span><span class="w">                           </span><span class="o">*</span><span class="n">header_end</span><span class="p">;</span>
+<span class="linenos">294</span>
+<span class="linenos">295</span><span class="w">  </span><span class="cm">/*</span>
+<span class="linenos">296</span><span class="cm">   * a memory that can be reused after parsing a request line</span>
+<span class="linenos">297</span><span class="cm">   * via ngx_http_ephemeral_t</span>
+<span class="linenos">298</span><span class="cm">   */</span>
+<span class="linenos">299</span>
+<span class="linenos">300</span><span class="w">  </span><span class="n">u_char</span><span class="w">                           </span><span class="o">*</span><span class="n">uri_start</span><span class="p">;</span>
+<span class="linenos">301</span><span class="w">  </span><span class="n">u_char</span><span class="w">                           </span><span class="o">*</span><span class="n">uri_end</span><span class="p">;</span>
+<span class="linenos">302</span><span class="w">  </span><span class="n">u_char</span><span class="w">                           </span><span class="o">*</span><span class="n">uri_ext</span><span class="p">;</span>
+<span class="linenos">303</span><span class="w">  </span><span class="n">u_char</span><span class="w">                           </span><span class="o">*</span><span class="n">args_start</span><span class="p">;</span>
+<span class="linenos">304</span><span class="w">  </span><span class="n">u_char</span><span class="w">                           </span><span class="o">*</span><span class="n">request_start</span><span class="p">;</span>
+<span class="linenos">305</span><span class="w">  </span><span class="n">u_char</span><span class="w">                           </span><span class="o">*</span><span class="n">request_end</span><span class="p">;</span>
+<span class="linenos">306</span><span class="w">  </span><span class="n">u_char</span><span class="w">                           </span><span class="o">*</span><span class="n">method_end</span><span class="p">;</span>
+<span class="linenos">307</span><span class="w">  </span><span class="n">u_char</span><span class="w">                           </span><span class="o">*</span><span class="n">schema_start</span><span class="p">;</span>
+<span class="linenos">308</span><span class="w">  </span><span class="n">u_char</span><span class="w">                           </span><span class="o">*</span><span class="n">schema_end</span><span class="p">;</span>
+<span class="linenos">309</span><span class="w">  </span><span class="n">u_char</span><span class="w">                           </span><span class="o">*</span><span class="n">host_start</span><span class="p">;</span>
+<span class="linenos">310</span><span class="w">  </span><span class="n">u_char</span><span class="w">                           </span><span class="o">*</span><span class="n">host_end</span><span class="p">;</span>
+<span class="linenos">311</span><span class="w">  </span><span class="n">u_char</span><span class="w">                           </span><span class="o">*</span><span class="n">port_start</span><span class="p">;</span>
+<span class="linenos">312</span><span class="w">  </span><span class="n">u_char</span><span class="w">                           </span><span class="o">*</span><span class="n">port_end</span><span class="p">;</span>
+<span class="linenos">313</span>
+<span class="linenos">314</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">http_minor</span><span class="o">:</span><span class="mi">16</span><span class="p">;</span>
+<span class="linenos">315</span><span class="w">  </span><span class="kt">unsigned</span><span class="w">                          </span><span class="n">http_major</span><span class="o">:</span><span class="mi">16</span><span class="p">;</span>
+<span class="linenos">316</span>
+<span class="linenos">317</span><span class="p">}</span>
+<span class="linenos">318</span>
+<span class="linenos">319</span>
+<span class="linenos">320</span>
+</pre></div>
+</div>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="../../../genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../../py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../../search.html"><span class="std std-ref">搜索页面</span></a></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="nginx_src_flow.html" class="btn btn-neutral float-right" title="Nginx源码分析流程" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="nginx_src_summary.html" class="btn btn-neutral" title="Nginx源码简介" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+  
+  <div id="gitalk-container"></div>
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2010-2025, 新溪-gordon.
+
+    </p>
+  </div>
+  <div>备案号 <a href="http://www.beian.miit.gov.cn">京ICP备16018553号</a></div><div>Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a></div>. 
+
+
+</footer>
+
+<script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?042289284b8eb33866001347a3e0b129";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>     
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'V2025.06',
+            LANGUAGE:'zh-CN',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../../_static/sphinx_highlight.js"></script>
+      <script type="text/javascript" src="../../../_static/clipboard.min.js"></script>
+      <script type="text/javascript" src="../../../_static/copybutton.js"></script>
+      <script type="text/javascript" src="../../../_static/translations.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+
+  
+
+  <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+
+
+      // var gitalk = new Gitalk({
+      //         clientID: '565177626b5d46427009',
+      //         clientSecret: 'b2a36e67e1d2a73e43667f46d571c2624f8e1026',
+      //         repo: 'knowledge',
+      //         owner: 'zhaoweiguo',
+      //         admin: ['zhaoweiguo'],
+      //         id: location.pathname,      // Ensure uniqueness and length less than 50
+      //         distractionFreeMode: false  // Facebook-like distraction free mode
+      //       })
+      // gitalk.render('gitalk-container')
+
+  </script>
+
+
+<script type="text/javascript" src="../../../_static/js/table-of-contents-sidebar.js"></script>
+<!-- <script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script> -->
+<script type="text/javascript">
+    window.onload = function(e){
+        TableOfContents.init({
+            basePath: "https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/",
+            querySelector: "body" // or other css querySelector
+        });
+    }
+</script> 
+
+</body>
+</html>

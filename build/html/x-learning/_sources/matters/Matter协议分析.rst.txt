@@ -1,0 +1,631 @@
+Matter协议分析
+##############
+
+简介
+====
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/E1DCC62F-4BAE-46B7-B20F-5C554E734FCB.png
+
+   Matter设备Node结构：双孔插座
+
+::
+
+    Node：对应一个物理设备
+    Endpoint：对应一个逻辑设备
+    Cluster：对应一个功能集
+    Attribute：功能集指示状态的属性
+    Command：功能集指示交互的命令
+
+    Endpoint0：适用于整个Node，用于描述设备特性
+    EndpointX：具体的逻辑设备
+
+算法
+====
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/4oC6lX.png
+
+   算法：私钥签名、公钥验签
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/U1HVIR.png
+
+   PKI证书验证、通信加密过程
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/NeiPwK.png
+
+   DH Key Exchange
+
+DH是离散对数应用于密码学的算法::
+
+    1. Alice产生一个私钥a，算出公钥A=g^a mod p，并发送给Bob
+    2. Bob产生私钥 b，算出公钥B=g^b mod p，并发送给Alice
+    3. Alice把收到的公钥算出密钥K=B^a mod p=>g^ab mod p
+    4. Bob算出密钥K=A^b mod p=> g^ab mod p
+
+    DF在安全性上不能阻止中间人攻击、identity misbinding和Replay攻击，
+    Sigma通过签名和消息认证的方式解决这个弱点
+    
+    SIGMA: SIGs and MAc
+    Sigma协议是PFS（Perfect Forward Secrecy）的
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/EG6cTP.png
+
+   PASE参数交换
+
+::
+
+    1. 两边首先交换密码派生函数（PBKDF）的参数
+    2. 基于简单的初始密码如20202021通过SPAKE2+交互产生安全强度大的ShareKey
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/luZYAU.png
+
+   SPAKE2+
+
+::
+
+    1. 双方基于已知密码派生出w0,w1
+    2. 双方分别产生随机数x,y，并计算出公钥X,Y并交换
+    3. Alice和Bob分别用从对方那儿收到的公钥和自己的随机数计算Z，V
+    4. 两边把X,Y,Z,V,w0等双方共有信息计算出哈希值并派生出共享密钥Ke和确认密钥Kcp和Kcv
+    5. 用Kcv,Kcp对X,Y进行MAC运算并交换结果
+    6. 双方验证确认消息无误后可以通过基于Ke派生出多个密钥用于随后的数据通讯加解密
+
+椭圆曲线密码学 (ECC) 原理
+=========================
+
+椭圆曲线是个2元3次方程::
+
+    y^2 = x^3 + ax + b
+    系数a,b决定了椭圆的形状
+    如:
+      比特币中采用的椭圆曲线是: `secp256k1` => a=0, b=7
+      Matter中彩的是: `secp256r1`
+
+定义::
+
+    1. 在有限域上的椭圆曲线取一个基点G(x,y)
+    2. 将其和整数k做点的相乘得到曲线上另外一个点P(x,y)
+    3. 即: P=k*G, 其中k是私钥, 而P是公钥
+    4. 计算P=k*G非常快，而计算k=P/G则非常慢
+
+椭圆曲线上的``点的加法``::
+
+    1. 曲线上有A(x1,y1)、B(x2,y2)两点
+    2. 过A、B做直线和EC相交于C'(斜率为k)
+    3. 过C'做Y轴的平行线交于C(x3,y3)点
+    那么我们定义: C=A+B
+    加法适用于交换律和结合律
+
+    x3=k^2-x1-x2
+    y3=k(x1-x3)-y1
+
+    伽罗瓦域(Galois Field)
+
+
+
+Bridge
+======
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/CE4A04DB-5F93-42F4-B049-31D6C92F58F2.png
+
+   Bridge：非Matter设备加入Matter网络
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/885F0B8D-2B0C-4220-B205-801EB175B36C.png
+
+   Bridge设备Node结构
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/F330F4B7-6CC3-4966-A956-C481A829CB60.png
+
+   Bridge设备Node结构
+
+
+
+
+
+
+
+Factory Data
+============
+
+最终产品要烧录的信息::
+
+    DAC
+    privateKey for DAC
+    PAI
+    PAKE Verifier
+    CD
+
+::
+
+    1. 两边首先交换密码派生函数（PBKDF）的参数
+    2. 基于简单的初始密码如20202021通过SPAKE2+交互产生安全强度大的ShareKey
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/EHTG9V.png
+
+   灯泡产品的证书链以及其他要写入设备的Factory Data，二维码里面有：VID, PID, Password
+
+::
+
+    1. 将PAA根证书提交给CSA，批准后可以放到DCL上
+    2. PAI使用不同的VID表示不同的供应商
+    3. DAC使用VID和PID表示不同的产品
+
+    AKID: Authority Key Identifier
+    在Device Attestation阶段通过比对AKID来从Trust Store里找到对应的PAA证书
+    CD文件是要把设备送到认证机构，通过matter认证才能拿到
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/6362B0CC-D1C3-46A4-B28F-1946780D8712.png
+
+
+
+
+安全
+====
+
+安全与隐私保护原则::
+
+    安全与隐私保护是基本信条
+    保证设备和信息安全与保护隐私是标准的设计原则，同时力求使用简便
+
+    1. 全面
+        分层叠加的安全机制
+    2. 强健
+        经过验证的标准加密算法
+    3. 易用
+        提升易用性
+    4. 韧性
+        保护安全，发现问题，恢复纠正
+    5. 敏捷
+        注重加密的灵活敏捷性，适应新技术和新威胁
+
+攻击目标&方式::
+
+    目标：
+        设备、网络、网关、服务、数据、人群、协议、算法
+
+威胁分析::
+
+    严重程序： 可能性&影响程度
+
+    可能性：
+        接入：物理、近距离、远距离
+        困难程度：困难、一般或容易
+    影响程度：
+        范围：单个设备、家庭网络、整批产品
+        数据&控制：低第三数据、敏感度有限数据、极其敏感数据
+
+
+
+
+Matter提升物联网安全与隐私保护的准绳::
+
+    1. 简单、安全、灵活的设备配网
+    2. 验证每个设备都是真实且经过认证的
+    3. 不断更新的DCL(Distributed Compliance Ledger, 分布式合规数据库)
+    4. 强大的设备身份标识，仅允许指定的设备加入
+    5. 保护机密性的安全通信方式
+    6. 甚至群组通信也受到保护
+    7. 多管理员和控制端，给用户更多选择
+    8. 访问控制需经过验证以防止未经授权的操作
+    9. 安全且标准化的软件更新程序
+    0. 校验软件的完整性
+
+
+
+
+
+PASE
+====
+
+* Passcode authenticated Session Establishment
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/4Ip86t.png
+
+   Send PBKDF Request and Response
+
+::
+
+    1. Alice产生随机数a,SessionID, PasscodeID和布尔值false组成PBKDFParamRequest包发送给Bob
+    2. Bob将Alice发过来的随机数和自己产生的随机数b，SessionID，迭代次数，盐值组成PBKDFParamResponse包发送给Alice
+    3. 双方将”CHIP PAKE V1 Commissioning”加request和response消息包产生一个Hash运算结果Context以备后用
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/6bcxWh.png
+
+   生成随机数w0,w1
+
+::
+
+    1. 双方将基本密码、迭代次数、盐值，调用`PBKDF-SHA256`产生w0和w1
+    2. Bob还要计算L=P*w1
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/A6uDVT.png
+
+   Send Pake1
+
+::
+
+    1. Alice首先产生一个随机数x,并通过公式算出公钥`X=x*P+w0*M`发送给Bob
+    2. Bob产生一个随机数y,并通过公式算出公钥`Y=y*P+w0*N`
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/uEn81j.png
+
+   Send Pake2
+
+::
+
+    1. Bob通过公式算出Z和V
+    2. 再连接之前算出的Context，X,Y,w0,M,N用哈希运算产生K_main
+    3. 再用基于MAC的派生函数HKDF派生出共享密钥Ke和一组确认密钥Kcv和Kcp
+    4. Bob作为Verifier角色用Kcv做为密钥对Alice发送过来的公钥X进行基于Hash的MAC运算产生确认消息cB
+    5. 确认消息cB加上之前生成的公钥Y形成Spake2发送给Alice
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/x3JAmj.png
+
+   Send Pake3
+
+::
+
+    1. Alice通过公式算出Z和V
+    2. 然后用和Pake2同样的参数算出K_main
+    3. 再派生出共享密钥Ke和一组确认密钥Kcp和Kcv
+    4. 首先用Kcv对X进行HMac运算，并比对Bob发送过来的cB是否吻合
+    5. 然后Alice作为`Prover`的角色，用Kcp对公钥Y进行HMAC运算产生确认消息cA
+    6. 形成Spake3包发送给Bob
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/EP9tyq.png
+
+   Generate Session Keys
+
+
+::
+
+    完成Session  Establishment之后，再用SessionKeys作为输入，调用HKDF从密钥Ke派生出I2RKey和R2IKey
+
+
+
+
+配网过程
+========
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/m4wMqS.png
+
+   Device Commissioning
+
+::
+
+    1. Commissioner通过BLE、WiFi或IP网络发现可以添加的设备，并通过二维码、NFC、手工输入获取简易密码
+    2. Commissioner和设备通过PASE协议用简易密码派生出复杂密钥用于随后的加密通讯
+    3. Commissioner向设备要求提供DAC&PAI，通过PAA验证是否厂家授权设备
+    4. 认证合规设备发起CSR请求，Commissioner向设备发送RCAC、ICAC、NOC用于以后CASE通讯
+    5. Commissioner向设备发送网络的SSID和密码要求设备加入网络
+    6. 双方通过CASE协议产生通讯密钥
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/RaScc3.png
+
+   设备验证合法性过程1(Device Attestation Procedure)
+
+::
+
+    1. Commissioner要求设备提供DAC和PAI
+    2. Commissioner产生随机数Nonce并通过Attestion Request请求命令发送给设备
+    3. 设备将CD、Nonce和时间戳组成Element
+    4. 设备将Element和在PASE时生成的`Attestion Challange Key`使用DAC密钥生成签名Signature
+    5. 设备将Element和Signature通过`Attestion Response`请求发送给Commissioner
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/DPhvLS.png
+
+   设备验证合法性过程2(Attestation Information Validation)
+
+::
+
+    1. 设备出厂时带着DAC和PAI
+    2. Commissioner则在其`Trusted Root Store`保持根证书PAA，PAA也存放在网络服务器DCL中
+    3. 首先Commissioner检查DAC和PAI里的VID是否相符合
+    4. Commissioner将Element和在PASE时生成的`Attestion Challange Key`使用DAC公钥对Signature进行验签
+    5. Commissioner从PAI中拿出`AKI(Authority Key Identifier)`作为索引
+        从`Trusted Root Store`提取PAA，并用PAA验证PAI和DAC证书链的有效性
+    6. 最后从Element中提取出随机数Nonce和本地存储的随机数做比较
+    7. 如果所有这些都验证通过，则把设备加入到网络中
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/lyCqGx.png
+
+   设备验证合法性后生成NOC1(Node Operational CSR)
+
+设备验证完成后，需要产生一个新的证书链用于以后的CASE通讯::
+
+    1. 首先Commissioner产生一个随机数随`CSR Request`命令发送到设备
+    2. 设备端产生新的密钥对，并创建证书签名请求(CSR)，里面包含新产生的公钥并用新产生的私钥进行签名
+    3. 设备将CSR和收到的随机数Nonce拼接成Element
+    4. 设备将Element和`Attestation Challange Key`用DAC的私钥产生数字签名Signature
+    5. 设备将Element和Signature通过`CSR Response`请求发送给Commissioner
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/o5eJNB.png
+
+   设备验证合法性后生成NOC2(CSR Information Validation)
+
+::
+
+    1. Commissioner首先用DAC公钥对收到的Signature和Element进行签名验签
+    2. Commissioner确认Element的完整性后，提取出Nonce和CSR
+    3. 将Nonce和本地存储的随机数对比
+    4. 再用CSR中的节点公钥来进行签名验证CSR信息完整性
+    5. 验证通过后，将CSR中的公钥作为为输入，生成NOC、ICAC、RCAC形成完整的证书链
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/A5k1Sd.png
+
+   Add Certification and Join Network
+
+::
+
+    1. Commissioner首先将RCAC发送给设备
+    2. 然后发送NOC和ICAC，再发送WiFi的SSID和密码并要求设备加入网络
+
+    之后就可以用共有的证书通过CASE建立安全通讯
+
+
+
+
+
+
+CASE
+====
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/vDwXjA.png
+
+   Sigma Key Exchange
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/52QkKJ.png
+
+   Send and Validate Sigma1
+
+::
+
+    1. Alice首先产生DH密钥对、一组随机数，SessionID
+    2. 将随机数、Root公钥、FabricID和目标设备NodeID作为输入，
+        用IPK（Identity Protection Key）作为密钥通过HMac算法生成一个认证码Identifier
+    3. Alice将随机数、SessionID、认证码、即时公钥打包成Sigma1发送给Bob
+    4. 双方将消息产生的Hash(msg1)保存起来
+    5. Bob收到消息后，遍历内部记录的每一个Fabric的信息，提取根公钥、FabricID、NodeID加上Alice发送过来的随机数，HMAC算法生成TargetID
+    6. 对每一个TargetID和Sigma1中的验证码Identifier对比，直到找到相等结果，记录此时的Fabric信息
+
+    随机数保证了HMAC算法的新鲜度
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/evM4dI.png
+
+   Send Sigma2
+
+::
+
+    1. Bob首先产生DH密钥对。一组随机数、SessionID
+    2. 将收到Alice的即时公钥和Bob的即时密钥通过ECDH，计算出共有密钥ShareKey
+    3. 再将调用HKDF以随机数，即时公钥和Hash(msg1)为输入，从ShareKey派生出Sigma2 key用于以后的对称加密
+    4. Bob将NOC证书、ICA证书再加上Bob和Alice的即时公钥作为输入，用Noc私钥调用ECDSA，产生数字签名TBS2Sig
+    5. 数字签名的解签需要对应的NOC的公钥，所以NOC证书一定要发送给Alice
+    6. Bob将数字签名TBS2Sig、加上NOC，ICA和ResumptionID作为输入，
+        用Sigma2 Key作为密钥调用AES-CCM生成加密数据Encrypted2
+    7. 最后Bob将随机数、SessionID，即时公钥，加密数据Encrypted2打包成Sigma2发送给Alice
+
+    双方将消息产生的Hash(msg1-2)保存起来
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/2OW7zJ.png
+
+   Validate Sigma2
+
+::
+
+    1. Alice收到Sigma2后，用Alice即时密钥和Bob即时公钥通过ECDH计算出共有密钥ShareKey
+    2. 再调用HKDF从SharedKey派生出Sigma2 Key用于随后解密
+    3. 将Encrypted2作为输入，Sigma2 Key作为密钥调用ACS-CCM解密得到NOC，ICA证书和ResumptionID及数字签名TBS2Sig
+    4. Alice首先验证证书的有效性，然后用NOC公钥对TBS2Sig进行签名验证
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/2v7a68.png
+
+   Send Sigma3
+
+::
+
+    1. Alice用HKDF以IPK和Hash(msg1-2)为输入，从ShareKey派生出Sigma3 Key用于随后对称加密
+    2. Alice用NOC和ICA证书再加上Bob和Alice的即时公钥作为输入，用NOC私钥调用ECDSA产生数字签名TBS3Sig
+    3. Alice将数字签名TBS3Sig加上NOC和ICA证书作为输入，用Sigma3 Key作为密钥调用AES-CCM生成加密数据Encrypted3
+    4. Alice将其打包成Sigma3发送给Bob
+
+    双方将产生的Hash(msg1-3)保存起来
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/R8cgxa.png
+
+   Validate Sigma3
+
+::
+
+    1. Bob收到Sigma3后，调用HKDF从SharedKey派生出Sigma3 Key
+    2. 对Encrypted3进行解决得到NOC、ICA证书和数据签名TBS3Sig
+    3. Bob首先验证证书的有效性
+    4. 然后用NOC公钥对TBS3Sig进行签名验证
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/LE4dQY.png
+
+   Generate Session Keys
+
+在完成Session Establishment后，再用IPK和Hash(msg1-3)作为输入，调用HKDF从SharedKey派生出I2RKey和R2IKey。
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/E96E8872-2127-4625-8D7D-DBEB1A6A8763.png
+
+
+Group
+=====
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/uqHx4G.png
+
+   caption
+
+::
+
+    1. 首先在设备ACL中使能指定Group ID的访问
+    2. 向设备写入 `Epoch Key` 并派生出 `Operational Group Key` 用于对称加密
+    3. 再用组密钥派生出 `GroupSessionID` 和 `GroupPrivacyKey`
+    4. 再将 `密钥ID` 和 `GroupID` 绑定
+    5. 最后通过 `AddGroup` 命令添加设备到group里
+
+
+
+
+cluster
+=======
+
+* Node代表加入Fabric的设备
+* Endpoint代表不同功能的虚拟子设备
+
+    * 其中Endpoint 0用来提供适用于整个Node的服务
+
+
+* Cluster可以看作提供服务的一个组合
+
+    * 指示状态的Attribute
+    * 交互操作的Command列表
+    * Cluster提供服务的是Server
+    * Cluster请示服务的是Client
+
+* Descriptor Cluster
+
+    * 每个Endpoint都包含一个
+    * 用来描述Endpoint的信息
+
+* 每个Descriptor Cluster包含有下面4个attribute没有command::
+
+    1. Device Type list：表明Endpoint是什么类型的设备
+      每种Device Type都会指定必须包含的Cluster
+      例：DeviceType=Dimmable Light的设备要求必须有如下Cluster Server：
+        Identity
+        Groups
+        On/Off
+        Level Control
+
+    2. Cluster Server List
+    3. Cluster Client List
+    4. Parts(Endpoints) List
+        Endpoint 0的Parts List要列出这个Node所包含的其他所有Endpoint Number
+
+On/Off Cluster Server包含::
+
+    Attribute: OnOff
+    Command: On,Off,Toggle 
+
+Level Control Cluster Server::
+
+    Attributes: 
+        0: CurrentLevel
+        1: MinLevel
+        2: Max Level
+    Command: 
+        0: MoveToLevel
+        1: Move
+        2: Step
+        3: Stop
+        4: MoveToLevelWithOnOff
+        5: MoveWithOnOff
+        6: StepWithOnOff
+        7: StopWithOnOff
+
+Access Control Cluster::
+
+    Attributes:
+        0: AccessControlList(ACL)赋予指定的Node以指定的权限来访问指定的资源
+            1. Priviledge
+              1.View、2.Proxy View、3.Operate、4.Manage、5.Adminuster
+            2. AuthMode
+              1.PAKE、2.CASE、3.Group
+            3. Subject：授权给谁(PasscodeID; Node ID; Group ID)
+            4. Targets：指定开放哪个Cluster、Endpoint、DeviceType
+        1: Extension
+        2: SubjectsPerEntry
+        3: TargetsPerEntry
+        4: EntitiesPerFabric
+
+Binding Cluster::
+
+    Attributes:
+        TargetList:
+            1. NodeID 2. GroupID 3. Endpoint 4. Cluster
+
+
+
+OTA
+===
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/OPsUOe.png
+
+::
+
+    1. OTA Provider 向外广播自己的存在
+    2. OTA Requestor向Provider查询新的OTA Image
+    3. Provider通过手机App提示用户授权OTA升级
+    4. 得到批准后Provider从服务器下载OTA Image到本地
+    5. 在收到下次的查询命令后，通过BDX协议传送Image给Requestor
+    6. 传送完成后，Requestor通知Provider并请求升级
+    7. 得到批准后，Requestor完成软件升级并知会Provider
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/CUQDnh.png
+
+   Announce OTA Provider: 向外广播自己的存在，包括自己的Node ID, VID
+
+广播的3个原因Reason::
+
+    1. 简单宣告自己的存在
+    2. 有可更新的OTA Image
+    3. 有需要紧急更新的OTA Image。
+
+EndPoint项是告知::
+
+    在哪个endpoint可以找到Provider的cluster server和device type
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/VmB4Nu.png
+
+   Query Image Command(Requestor)
+
+
+Protocol项表示Requestor支持哪种OTA通讯协议::
+
+    0. BDXSynchronous
+    1. BDXASynchronous
+    2. HTTPs
+    3. VendorSpecific
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/6bEswK.png
+
+   Query Image Response(Provider)
+
+
+Status::
+
+    表征Provider的状态
+    0. UpdateAvailable
+    1. Busy
+    2. NotAvailable
+    3. ProtocolNotSupported
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/12/kvMO0e.png
+
+   Apply Update Request(Requestor), Apply Update Response(Provider), Notify Update Applied(Requestor)
+
+
+
+
+
+
+参考
+====
+
+* [TorchIoTBootCamp]matter 协议介绍: https://space.bilibili.com/605447248/channel/collectiondetail?sid=284745
+  
+

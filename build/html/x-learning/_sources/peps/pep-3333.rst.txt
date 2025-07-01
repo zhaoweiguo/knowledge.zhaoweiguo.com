@@ -1,0 +1,108 @@
+pep-3333
+########
+
+
+* PEP 3333 – Python Web Server Gateway Interface v1.0.1
+* https://peps.python.org/pep-3333/
+* Created: 26-Sep-2010
+* Post-History: 26-Sep-2010, 04-Oct-2010
+* Replaces: `333 <https://peps.python.org/pep-0333>`_
+
+
+背景与动机
+==========
+
+* 在 PEP 333 提出之前，Python 有多种 web 应用框架，如 Zope、Quixote、Webware 等，但这些框架与 web 服务器的兼容性各不相同。这导致开发者在选择框架时受到限制，因为某个框架可能只能与特定的 web 服务器一起使用
+* WSGI 的目标是提供一个简单而通用的接口，使任何符合 WSGI 规范的 web 应用程序可以在任何符合 WSGI 规范的 web 服务器上运行，从而实现框架和服务器的解耦。
+
+
+pep-3333主要变化
+================
+
+
+* PEP 3333 的主要变化是为了适应 Python 3 中的字符串和字节类型的严格区分。Python 3 引入了 str 和 bytes 类型的严格分离，这对 WSGI 的实现提出了新的要求
+* 在 Python 2 中，字符串可以包含字节数据，而在 Python 3 中，字符串和字节是完全不同的类型。WSGI 需要处理 HTTP 请求和响应，这些通常是字节数据，但在应用程序中处理时通常需要转换为字符串。
+* PEP 3333 规定::
+
+    WSGI 环境变量（如 REQUEST_METHOD、PATH_INFO 等）必须是 str 类型
+    请求体和响应体必须是 bytes 类型
+
+
+
+规范概述
+========
+
+* WSGI 接口分为两部分：“服务器”或“网关”端和“应用程序”或“框架”端。
+* 服务器端调用由 ``应用程序端`` 提供的可调用对象。
+* 具体的调用方式由 ``服务器或网关`` 决定。
+
+应用程序端
+----------
+
+
+应用程序端必须提供一个可调用对象（通常是一个函数），该对象接受两个参数::
+
+    1. environ：一个包含 CGI 风格环境变量的字典
+    2. start_response：一个可调用对象，用于启动 HTTP 响应
+
+示例代码::
+
+    def application(environ, start_response):
+        status = '200 OK'
+        response_headers = [('Content-type', 'text/plain')]
+        start_response(status, response_headers)
+        return [b'Hello World!']
+
+服务器端
+--------
+
+* 服务器端需要实现一个简单的 HTTP 服务器，并调用 WSGI 应用程序。
+* 以下是一个简单的 WSGI 服务器示例::
+
+    from wsgiref.simple_server import make_server
+
+    def application(environ, start_response):
+        status = '200 OK'
+        response_headers = [('Content-type', 'text/plain')]
+        start_response(status, response_headers)
+        return [b'Hello World!']
+
+    with make_server('', 8000, application) as httpd:
+        print("Serving on port 8000...")
+        httpd.serve_forever()
+
+
+中间件
+------
+
+* 这些组件既可以作为服务器端，也可以作为应用程序端。
+* 中间件可以用于处理请求和响应的预处理和后处理，从而实现日志记录、认证等功能
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

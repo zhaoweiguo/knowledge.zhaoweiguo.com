@@ -1,0 +1,867 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="zh-CN" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="zh-CN" > <!--<![endif]-->
+<head>
+
+
+<!-- start added 2025-04-14   增加对markdown中公式的支持 -->
+<script>
+window.MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+    },
+    options: {
+        ignoreHtmlClass: "tex2jax_ignore|mathjax_ignore",
+        processHtmlClass: "tex2jax_process|mathjax_process|math|output_area"
+    }
+};
+</script>
+<script defer="defer" src="https://fastly.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<!-- end added 2025-04-14   增加对markdown中公式的支持 -->
+
+
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>02对最简单的 api gateway 项目并进行源码分析 &mdash; 新溪-gordon V2025.06 文档</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="搜索" href="search.html" />
+    <link rel="next" title="05快速学习了解 OpenTelemetry" href="05otel-intro.html" />
+    <link rel="prev" title="01整体源码分析" href="01overview.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+  <script src="_static/js/jquery.min.js"></script>
+
+
+<!-- 评论插件 gittalk start -->
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script> -->
+<!-- 评论插件 gittalk end -->
+
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> 新溪-gordon
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                V2025.06
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="01overview.html">01整体源码分析</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="01overview.html#id4">整体分析</a></li>
+<li class="toctree-l2"><a class="reference internal" href="01overview.html#id5">目录结构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="01overview.html#id6">一级目录</a></li>
+<li class="toctree-l3"><a class="reference internal" href="01overview.html#core">core 目录</a></li>
+<li class="toctree-l3"><a class="reference internal" href="01overview.html#rest">rest 目录</a></li>
+<li class="toctree-l3"><a class="reference internal" href="01overview.html#zrpc">zrpc 目录</a></li>
+<li class="toctree-l3"><a class="reference internal" href="01overview.html#tools">tools 目录</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="01overview.html#id7">相关链接</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">02对最简单的 api gateway 项目并进行源码分析</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id3">生成 api gateway 项目</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">入口文件分析</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#rest-server">1. 生成 rest.Server 结构体</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id7">2. 注册路由</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#server">3. server 启动</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#httpx-router">3.1 生成httpx.Router接口</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#http">3.2 启动 http 服务</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#internal-starthttp">internal.StartHttp</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#s-bindroutes-router">s.bindRoutes(router)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id10">实际 http 请求</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="05otel-intro.html">05快速学习了解 OpenTelemetry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tmp.html">临时</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">新溪-gordon</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>02对最简单的 api gateway 项目并进行源码分析</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/02api-gateway.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            <nav id="local-table-of-contents" role="navigation" aria-labelledby="local-table-of-contents-title">
+              <h4 id="local-table-of-contents-title">On This Page</h4>
+              <ul>
+<li><a class="reference internal" href="#">02对最简单的 api gateway 项目并进行源码分析</a><ul>
+<li><a class="reference internal" href="#id3">生成 api gateway 项目</a></li>
+<li><a class="reference internal" href="#id4">入口文件分析</a></li>
+<li><a class="reference internal" href="#rest-server">1. 生成 rest.Server 结构体</a></li>
+<li><a class="reference internal" href="#id7">2. 注册路由</a></li>
+<li><a class="reference internal" href="#server">3. server 启动</a><ul>
+<li><a class="reference internal" href="#httpx-router">3.1 生成httpx.Router接口</a></li>
+<li><a class="reference internal" href="#http">3.2 启动 http 服务</a><ul>
+<li><a class="reference internal" href="#internal-starthttp">internal.StartHttp</a></li>
+<li><a class="reference internal" href="#s-bindroutes-router">s.bindRoutes(router)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id10">实际 http 请求</a></li>
+</ul>
+</li>
+</ul>
+
+            </nav>
+  <table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="search.html"><span class="std std-ref">搜索页面</span></a></p></td>
+</tr>
+</tbody>
+</table>
+<section id="api-gateway">
+<h1><a class="toc-backref" href="#id14" role="doc-backlink">02对最简单的 api gateway 项目并进行源码分析</a><a class="headerlink" href="#api-gateway" title="此标题的永久链接">¶</a></h1>
+<details>
+<summary>目录</summary><aside class="sidebar">
+<p class="sidebar-title">目录</p>
+<nav class="contents" id="id2">
+<p class="topic-title">目录</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#api-gateway" id="id14">02对最简单的 api gateway 项目并进行源码分析</a></p>
+<ul>
+<li><p><a class="reference internal" href="#id3" id="id15">生成 api gateway 项目</a></p></li>
+<li><p><a class="reference internal" href="#id4" id="id16">入口文件分析</a></p></li>
+<li><p><a class="reference internal" href="#rest-server" id="id17">1. 生成 rest.Server 结构体</a></p></li>
+<li><p><a class="reference internal" href="#id7" id="id18">2. 注册路由</a></p></li>
+<li><p><a class="reference internal" href="#server" id="id19">3. server 启动</a></p>
+<ul>
+<li><p><a class="reference internal" href="#httpx-router" id="id20">3.1 生成httpx.Router接口</a></p></li>
+<li><p><a class="reference internal" href="#http" id="id21">3.2 启动 http 服务</a></p>
+<ul>
+<li><p><a class="reference internal" href="#internal-starthttp" id="id22">internal.StartHttp</a></p></li>
+<li><p><a class="reference internal" href="#s-bindroutes-router" id="id23">s.bindRoutes(router)</a></p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#id10" id="id24">实际 http 请求</a></p></li>
+</ul>
+</li>
+</ul>
+</nav>
+</aside>
+</details><div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>go-zero 是一个集成了各种工程实践的 web 和 rpc 框架。本文讲解 web 框架的源码分析，下一节讲解 rpc 框架的源码分析。示例是使用最简单的一个功能：传过来一个 url 地址，转化为一个短网址。</p>
+</div>
+<section id="id3">
+<h2><a class="toc-backref" href="#id15" role="doc-backlink">生成 api gateway 项目</a><a class="headerlink" href="#id3" title="此标题的永久链接">¶</a></h2>
+<p>编写 <a class="reference external" href="https://github.com/demo-examples/demo-go-zero/blob/master/02api-gateway/gateway.api">gateway.api</a>  文件:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>type (
+  shortenReq {
+    Url string `form:&quot;url&quot;`
+  }
+
+  shortenResp {
+    Shorten string `json:&quot;shorten&quot;`
+  }
+)
+
+service shorturl-api {
+  @server(
+    handler: ShortenHandler
+  )
+  get /shorten(shortenReq) returns(shortenResp)
+
+}
+</pre></div>
+</div>
+<p>使用 goctl 命令生成项目:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ goctl api go -api gateway.api -dir api
+Done.
+$ tree
+├── etc
+│    └── shorturl-api.yaml
+├── go.mod
+├── go.sum
+├── internal
+│    ├── config
+│    │    └── config.go
+│    ├── handler
+│    │    ├── routes.go
+│    │    └── shortenhandler.go
+│    ├── logic
+│    │    └── shortenlogic.go
+│    ├── svc
+│    │    └── servicecontext.go
+│    └── types
+│         └── types.go
+├── main.api
+└── shorturl.go
+
+7 directories, 11 files
+</pre></div>
+</div>
+</section>
+<section id="id4">
+<h2><a class="toc-backref" href="#id16" role="doc-backlink">入口文件分析</a><a class="headerlink" href="#id4" title="此标题的永久链接">¶</a></h2>
+<p><a class="reference external" href="https://github.com/demo-examples/demo-go-zero/blob/master/02api-gateway/api/shorturl.go">入口文件</a> 分析:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">var</span> <span class="n">configFile</span> <span class="o">=</span> <span class="n">flag</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="s2">&quot;f&quot;</span><span class="p">,</span> <span class="s2">&quot;etc/shorturl-api.yaml&quot;</span><span class="p">,</span> <span class="s2">&quot;the config file&quot;</span><span class="p">)</span>
+
+<span class="n">func</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">flag</span><span class="o">.</span><span class="n">Parse</span><span class="p">()</span>
+
+  <span class="n">var</span> <span class="n">c</span> <span class="n">config</span><span class="o">.</span><span class="n">Config</span>
+  <span class="o">//</span> <span class="n">把配置文件载入到</span> <span class="n">config</span><span class="o">.</span><span class="n">Config</span> <span class="n">结构体中</span>
+  <span class="n">conf</span><span class="o">.</span><span class="n">MustLoad</span><span class="p">(</span><span class="o">*</span><span class="n">configFile</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">c</span><span class="p">)</span>
+
+  <span class="o">//</span> <span class="n">把c封装到</span> <span class="n">svc</span><span class="o">.</span><span class="n">ServiceContext</span> <span class="n">结构体中</span>
+  <span class="o">//</span> <span class="n">ctx</span> <span class="n">用作上下文通信载体</span>
+  <span class="n">ctx</span> <span class="o">:=</span> <span class="n">svc</span><span class="o">.</span><span class="n">NewServiceContext</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+
+  <span class="o">//</span> <span class="n">封装出一个</span> <span class="o">*</span><span class="n">rest</span><span class="o">.</span><span class="n">Server</span> <span class="n">结构体</span> <span class="p">[</span><span class="n">注1</span><span class="p">]</span>
+  <span class="n">server</span> <span class="o">:=</span> <span class="n">rest</span><span class="o">.</span><span class="n">MustNewServer</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">RestConf</span><span class="p">)</span>
+  <span class="n">defer</span> <span class="n">server</span><span class="o">.</span><span class="n">Stop</span><span class="p">()</span>
+
+  <span class="o">//</span> <span class="n">根据</span> <span class="o">.</span><span class="n">api</span> <span class="n">文件自动生成</span>
+  <span class="o">//</span> <span class="n">往</span> <span class="n">server</span> <span class="n">中增加路由</span> <span class="p">[</span><span class="n">注2</span><span class="p">]</span>
+  <span class="n">handler</span><span class="o">.</span><span class="n">RegisterHandlers</span><span class="p">(</span><span class="n">server</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+
+  <span class="n">fmt</span><span class="o">.</span><span class="n">Printf</span><span class="p">(</span><span class="s2">&quot;Starting server at </span><span class="si">%s</span><span class="s2">:</span><span class="si">%d</span><span class="s2">...</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">Host</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">Port</span><span class="p">)</span>
+
+  <span class="o">//</span> <span class="n">启动</span> <span class="n">http</span> <span class="n">server</span> <span class="p">[</span><span class="n">注3</span><span class="p">]</span>
+  <span class="n">server</span><span class="o">.</span><span class="n">Start</span><span class="p">()</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<figure class="align-default" id="id12">
+<img alt="https://img.zhaoweiguo.com/knowledge/images/opensources/go-zero/api-gateway1.png" src="https://img.zhaoweiguo.com/knowledge/images/opensources/go-zero/api-gateway1.png" />
+<figcaption>
+<p><span class="caption-text">核心数据结构关系</span><a class="headerlink" href="#id12" title="此图像的永久链接">¶</a></p>
+</figcaption>
+</figure>
+<p>小结:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 由配置文件生成配置结构体: config.Config
+2. 生成上下文: svc.ServiceContext
+3. 生成 *rest.Server结构体、注册路由并启动服务
+
+前两步很简单，下面详细说下第3步
+主要包括:
+1. server := rest.MustNewServer(c.RestConf)
+2. handler.RegisterHandlers(server, ctx)
+3. server.Start()
+</pre></div>
+</div>
+</section>
+<section id="rest-server">
+<h2><a class="toc-backref" href="#id17" role="doc-backlink">1. 生成 rest.Server 结构体</a><a class="headerlink" href="#rest-server" title="此标题的永久链接">¶</a></h2>
+<p>相关结构体:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">type</span> <span class="n">Server</span> <span class="n">struct</span> <span class="p">{</span>
+  <span class="n">ngin</span> <span class="o">*</span><span class="n">engine</span>
+  <span class="n">opts</span> <span class="n">runOptions</span>
+<span class="p">}</span>
+
+<span class="nb">type</span> <span class="n">engine</span> <span class="n">struct</span> <span class="p">{</span>
+  <span class="n">conf</span>                 <span class="n">RestConf</span>
+  <span class="n">routes</span>               <span class="p">[]</span><span class="n">featuredRoutes</span>
+  <span class="n">unauthorizedCallback</span> <span class="n">handler</span><span class="o">.</span><span class="n">UnauthorizedCallback</span>
+  <span class="n">unsignedCallback</span>     <span class="n">handler</span><span class="o">.</span><span class="n">UnsignedCallback</span>
+  <span class="n">middlewares</span>          <span class="p">[]</span><span class="n">Middleware</span>
+  <span class="n">shedder</span>              <span class="n">load</span><span class="o">.</span><span class="n">Shedder</span>
+  <span class="n">priorityShedder</span>      <span class="n">load</span><span class="o">.</span><span class="n">Shedder</span>
+<span class="p">}</span>
+
+<span class="nb">type</span> <span class="n">RunOption</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">Server</span><span class="p">)</span>
+<span class="nb">type</span> <span class="n">runOptions</span> <span class="n">struct</span> <span class="p">{</span>
+  <span class="n">start</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">engine</span><span class="p">)</span> <span class="n">error</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><a class="reference external" href="https://github.com/tal-tech/go-zero/blob/5c6a3132ebe96afee256b8ee07c0bf8b8c6e0a39/rest/server.go#L28-L61">rest.Server</a> 初使化-整体:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>func NewServer(c RestConf, opts ...RunOption) (*Server, error) {
+  // c.SetUp()做一些启动前的准备工作[注: 这部分可暂忽略，以后专门再看]
+  // 现在主要知道它是做:
+  //    1. logx初使化
+  //    2. prometheus 初使化
+  //    3. 开发模式等设置
+  if err := c.SetUp(); err != nil {
+    return nil, err
+  }
+
+  // Server初使化 [注: 待细化]
+  server := &amp;Server{
+    ngin: newEngine(c),
+    opts: runOptions{
+      start: func(srv *engine) error {
+        return srv.Start()
+      },
+    },
+  }
+
+  // 选项模式: 扩展相关功能[注: 这部分可暂忽略，以后专门再看]
+  for _, opt := range opts {
+    opt(server)
+  }
+
+  return server, nil
+}
+</pre></div>
+</div>
+<p><a class="reference external" href="https://github.com/tal-tech/go-zero/blob/5c6a3132ebe96afee256b8ee07c0bf8b8c6e0a39/rest/engine.go#L35-L46">rest.engine</a> 初使化-细化:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>func newEngine(c RestConf) *engine {
+  // 把 RestConf 类型数据封装到 engine 类型中
+  // 本质: 初使化 engine 的&quot;conf&quot;字段
+  srv := &amp;engine{
+    conf: c,
+  }
+  // 这块主要是&quot;负荷&quot;相关设置 [注: 这部分可暂忽略，以后专门再看]
+  // 本质: 初使化 engine 的&quot;shedder&quot;和&quot;priorityShedder&quot;字段
+  if c.CpuThreshold &gt; 0 {
+    srv.shedder = load.NewAdaptiveShedder(load.WithCpuThreshold(c.CpuThreshold))
+    srv.priorityShedder = load.NewAdaptiveShedder(load.WithCpuThreshold(
+      (c.CpuThreshold + topCpuUsage) &gt;&gt; 1))
+  }
+  return srv
+}
+</pre></div>
+</div>
+<p>小结:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>本质是: 生成 *rest.Server 类型变量
+我们忽略了:
+  1. 启动前的准备工作
+  2. 选项模式: 扩展相关功能
+  3. load 模块中有关限流、容错相关内容
+这些后面文章再细说，现在不是重点
+</pre></div>
+</div>
+</section>
+<section id="id7">
+<h2><a class="toc-backref" href="#id18" role="doc-backlink">2. 注册路由</a><a class="headerlink" href="#id7" title="此标题的永久链接">¶</a></h2>
+<p>调用 <a class="reference external" href="https://github.com/demo-examples/demo-go-zero/blob/master/02api-gateway/api/internal/handler/routes.go">server.AddRoutes</a>  函数注册路由:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>handler.RegisterHandlers(server, ctx)
+=&gt;
+func RegisterHandlers(engine *rest.Server, serverCtx *svc.ServiceContext) {
+  engine.AddRoutes(
+    []rest.Route{
+      {
+        Method:  http.MethodGet,
+        Path:    &quot;/shorten&quot;,
+        Handler: ShortenHandler(serverCtx),
+      },
+    },
+  )
+}
+
+说明:
+  此部分代码是 goctl 命令自动生成的
+  在 .api 文件中配置成什么样，这儿就会自动生成相关代码
+  本质: 调用 engine.AddRoutes 命令增加路由
+</pre></div>
+</div>
+<p>调用 rest.Server 方法 <a class="reference external" href="https://github.com/tal-tech/go-zero/blob/5c6a3132ebe96afee256b8ee07c0bf8b8c6e0a39/rest/server.go#L63-L72">AddRoutes</a></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>func (e *Server) AddRoutes(rs []Route, opts ...RouteOption) {
+  // 真实的路由存储结构
+  r := featuredRoutes{
+    routes: rs,
+  }
+  // 选项模式 [注: 这部分可暂忽略，以后专门再看]
+  for _, opt := range opts {
+    opt(&amp;r)
+  }
+  // 本质是调用 Server 下 ngin 字段的 AddRoutes 方法[待细化]
+  e.ngin.AddRoutes(r)
+}
+</pre></div>
+</div>
+<p>e.ngin.AddRoutes 细化:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">//</span>  <span class="n">本质</span><span class="p">:</span> <span class="n">初使化</span><span class="o">&amp;</span><span class="n">更新</span> <span class="n">engine</span> <span class="n">的</span> <span class="s2">&quot;routes&quot;</span> <span class="n">字段</span>
+<span class="n">func</span> <span class="p">(</span><span class="n">s</span> <span class="o">*</span><span class="n">engine</span><span class="p">)</span> <span class="n">AddRoutes</span><span class="p">(</span><span class="n">r</span> <span class="n">featuredRoutes</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">s</span><span class="o">.</span><span class="n">routes</span> <span class="o">=</span> <span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">routes</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>现在再看 engine 结构:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>type engine struct {
+  conf                 RestConf
+  routes               []featuredRoutes
+  unauthorizedCallback handler.UnauthorizedCallback
+  unsignedCallback     handler.UnsignedCallback
+  middlewares          []Middleware
+  shedder              load.Shedder
+  priorityShedder      load.Shedder
+}
+
+字段分析:
+conf: 配置信息(host, port, cert...)
+routes: 路由信息列表
+shedder, priorityShedder: &quot;负荷&quot;相关暂忽略
+现在只剩下3个字段没有初使化了: [注: 这部分可暂忽略，以后专门再看]
+unauthorizedCallback
+unsignedCallback
+middlewares
+</pre></div>
+</div>
+<p>小结:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>路由注册之后得到 *rest.Server 结构体, 现在关注的字段主要是 conf 和 routes
+conf 信息简单，routes 结构如下图所示
+</pre></div>
+</div>
+</section>
+<section id="server">
+<h2><a class="toc-backref" href="#id19" role="doc-backlink">3. server 启动</a><a class="headerlink" href="#server" title="此标题的永久链接">¶</a></h2>
+<p>server 启动:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>server.Start()
+=&gt;
+func (s *Server) Start() {
+  handleError(s.opts.start(s.ngin))
+}
+
+说明:
+  handleError 函数使 server 优雅关闭 [注: 这部分可暂忽略，以后专门再看]
+本质:
+  server.Start()
+  =&gt;
+  s.opts.start(s.ngin)
+  =&gt;
+  server.ngin.Start()
+  =&gt;
+  server.ngin.StartWithRouter(router.NewRouter())
+</pre></div>
+</div>
+<p>分为2部分:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mf">1.</span> <span class="n">router</span><span class="o">.</span><span class="n">NewRouter</span><span class="p">():</span> <span class="n">生成</span> <span class="n">httpx</span><span class="o">.</span><span class="n">Router</span> <span class="n">接口</span>
+<span class="mf">2.</span> <span class="n">s</span><span class="o">.</span><span class="n">StartWithRouter</span><span class="p">:</span> <span class="n">启动</span> <span class="n">http</span> <span class="n">服务</span>
+</pre></div>
+</div>
+<figure class="align-default" id="id13">
+<img alt="https://img.zhaoweiguo.com/knowledge/images/opensources/go-zero/api-gateway2.png" src="https://img.zhaoweiguo.com/knowledge/images/opensources/go-zero/api-gateway2.png" />
+<figcaption>
+<p><span class="caption-text">路由存储相关结构关系</span><a class="headerlink" href="#id13" title="此图像的永久链接">¶</a></p>
+</figcaption>
+</figure>
+<section id="httpx-router">
+<h3><a class="toc-backref" href="#id20" role="doc-backlink">3.1 生成httpx.Router接口</a><a class="headerlink" href="#httpx-router" title="此标题的永久链接">¶</a></h3>
+<p>生成的 <a class="reference external" href="https://github.com/tal-tech/go-zero/blob/5c6a3132ebe96afee256b8ee07c0bf8b8c6e0a39/rest/router/patrouter.go#L26-L37">httpx.Router</a> 接口分析:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">type</span> <span class="n">Router</span> <span class="n">interface</span> <span class="p">{</span>
+  <span class="n">http</span><span class="o">.</span><span class="n">Handler</span>
+  <span class="n">Handle</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">path</span> <span class="n">string</span><span class="p">,</span> <span class="n">handler</span> <span class="n">http</span><span class="o">.</span><span class="n">Handler</span><span class="p">)</span> <span class="n">error</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>分析:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mf">1.</span> <span class="n">首先有</span> <span class="n">http</span><span class="o">.</span><span class="n">Handler</span> <span class="n">接口</span><span class="p">,</span> <span class="n">用于启动</span> <span class="n">http</span> <span class="n">server</span>
+<span class="mf">2.</span> <span class="n">其次是增加了</span> <span class="n">Handle</span> <span class="n">方法</span>
+</pre></div>
+</div>
+<p>真实初使化:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">func</span> <span class="n">NewRouter</span><span class="p">()</span> <span class="n">httpx</span><span class="o">.</span><span class="n">Router</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="o">&amp;</span><span class="n">patRouter</span><span class="p">{</span>
+    <span class="n">trees</span><span class="p">:</span> <span class="n">make</span><span class="p">(</span><span class="nb">map</span><span class="p">[</span><span class="n">string</span><span class="p">]</span><span class="o">*</span><span class="n">search</span><span class="o">.</span><span class="n">Tree</span><span class="p">),</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+<span class="nb">type</span> <span class="n">patRouter</span> <span class="n">struct</span> <span class="p">{</span>
+  <span class="n">trees</span>      <span class="nb">map</span><span class="p">[</span><span class="n">string</span><span class="p">]</span><span class="o">*</span><span class="n">search</span><span class="o">.</span><span class="n">Tree</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>分析:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mf">1.</span> <span class="n">用hashmap树结构做路由</span><span class="p">,</span> <span class="n">应该是把路由信息最后存储在这儿</span><span class="p">,</span> <span class="n">方便快速查询</span>
+<span class="mf">2.</span> <span class="n">前面</span> <span class="n">httpx</span><span class="o">.</span><span class="n">Router</span> <span class="n">接口的</span> <span class="n">Handle</span> <span class="n">方法可能是用于赋值patRouter</span>
+<span class="mf">3.</span> <span class="n">关于</span> <span class="n">search</span><span class="o">.</span><span class="n">Tree</span> <span class="n">相关代码暂不深入</span>
+</pre></div>
+</div>
+</section>
+<section id="http">
+<h3><a class="toc-backref" href="#id21" role="doc-backlink">3.2 启动 http 服务</a><a class="headerlink" href="#http" title="此标题的永久链接">¶</a></h3>
+<p><a class="reference external" href="https://github.com/tal-tech/go-zero/blob/5c6a3132ebe96afee256b8ee07c0bf8b8c6e0a39/rest/router/patrouter.go#L64-L74">s.StartWithRouter</a> 服务启动:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">func</span> <span class="p">(</span><span class="n">s</span> <span class="o">*</span><span class="n">engine</span><span class="p">)</span> <span class="n">StartWithRouter</span><span class="p">(</span><span class="n">router</span> <span class="n">httpx</span><span class="o">.</span><span class="n">Router</span><span class="p">)</span> <span class="n">error</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="n">err</span> <span class="o">:=</span> <span class="n">s</span><span class="o">.</span><span class="n">bindRoutes</span><span class="p">(</span><span class="n">router</span><span class="p">);</span> <span class="n">err</span> <span class="o">!=</span> <span class="n">nil</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">err</span>
+  <span class="p">}</span>
+
+  <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">CertFile</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">KeyFile</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">internal</span><span class="o">.</span><span class="n">StartHttp</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">Host</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">Port</span><span class="p">,</span> <span class="n">router</span><span class="p">)</span>
+  <span class="p">}</span>
+
+  <span class="k">return</span> <span class="n">internal</span><span class="o">.</span><span class="n">StartHttps</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">Host</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">Port</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">CertFile</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">KeyFile</span><span class="p">,</span> <span class="n">router</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>分析:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mf">1.</span> <span class="n">s</span><span class="o">.</span><span class="n">bindRoutes</span><span class="p">(</span><span class="n">router</span><span class="p">):</span> <span class="n">本质是赋值</span> <span class="n">router</span> <span class="n">变量</span><span class="p">(</span><span class="n">期间应该会用到</span> <span class="n">Handler</span> <span class="n">方法</span><span class="p">)</span>
+<span class="mf">2.</span> <span class="n">internal</span><span class="o">.</span><span class="n">StartHttp</span><span class="p">:</span> <span class="n">启动</span> <span class="n">http</span> <span class="n">server</span>
+<span class="mf">3.</span> <span class="n">internal</span><span class="o">.</span><span class="n">StartHttps</span><span class="p">:</span> <span class="n">启动</span> <span class="n">https</span> <span class="n">server</span><span class="p">[</span><span class="n">注</span><span class="p">:</span> <span class="n">忽略</span><span class="p">,</span> <span class="n">暂只需要关注</span> <span class="n">http</span><span class="p">]</span>
+</pre></div>
+</div>
+<section id="internal-starthttp">
+<h4><a class="toc-backref" href="#id22" role="doc-backlink">internal.StartHttp</a><a class="headerlink" href="#internal-starthttp" title="此标题的永久链接">¶</a></h4>
+<p>先看 <a class="reference external" href="https://github.com/tal-tech/go-zero/blob/5c6a3132ebe96afee256b8ee07c0bf8b8c6e0a39/rest/internal/starter.go#L12-L41">internal.StartHttp</a></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>// 这是 http，https 类似
+func StartHttp(host string, port int, handler http.Handler) error {
+  return start(host, port, handler,
+      func(srv *http.Server) error {
+        return srv.ListenAndServe()
+      }
+  )
+}
+
+func start(host string, port int, handler http.Handler, run func(srv *http.Server) error) (err error) {
+  server := &amp;http.Server{
+    Addr:    fmt.Sprintf(&quot;%s:%d&quot;, host, port),
+    Handler: handler,
+  }
+  return run(server)
+}
+</pre></div>
+</div>
+<p>说明:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">本质是执行的</span> <span class="n">http</span><span class="o">.</span><span class="n">Server</span><span class="o">.</span><span class="n">ListenAndServe</span><span class="p">()</span>
+<span class="n">其中http</span><span class="o">.</span><span class="n">Server类型的字段</span><span class="p">:</span>
+  <span class="n">Addr</span><span class="p">:</span> <span class="n">host</span><span class="p">:</span><span class="n">port</span>
+  <span class="n">Handler</span><span class="p">:</span> <span class="n">前面传递过来的</span> <span class="n">httpx</span><span class="o">.</span><span class="n">Router</span><span class="p">(</span><span class="n">类型</span> <span class="n">router</span><span class="o">.</span><span class="n">patRouter</span><span class="p">)</span>
+<span class="n">所以现在的关键是</span> <span class="n">router</span><span class="o">.</span><span class="n">patRouter</span> <span class="n">如何生成了</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>到这儿我们就知道，服务启动后，当一个请求过来时，最后真正处理的是 patRouter 的 ServeHTTP 方法。这块后面细看，先看看这个 patRouter 是如何进行赋值的。</p>
+</div>
+</section>
+<section id="s-bindroutes-router">
+<h4><a class="toc-backref" href="#id23" role="doc-backlink">s.bindRoutes(router)</a><a class="headerlink" href="#s-bindroutes-router" title="此标题的永久链接">¶</a></h4>
+<p>一级循环生成 router:<a class="reference external" href="https://github.com/tal-tech/go-zero/blob/5c6a3132ebe96afee256b8ee07c0bf8b8c6e0a39/rest/engine.go#L132-L142">bindRoutes</a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">func</span> <span class="p">(</span><span class="n">s</span> <span class="o">*</span><span class="n">engine</span><span class="p">)</span> <span class="n">bindRoutes</span><span class="p">(</span><span class="n">router</span> <span class="n">httpx</span><span class="o">.</span><span class="n">Router</span><span class="p">)</span> <span class="n">error</span> <span class="p">{</span>
+  <span class="o">//</span> <span class="p">[</span><span class="n">一级</span> <span class="k">for</span><span class="p">]:</span>
+  <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">fr</span> <span class="o">:=</span> <span class="nb">range</span> <span class="n">s</span><span class="o">.</span><span class="n">routes</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="n">err</span> <span class="o">:=</span> <span class="n">s</span><span class="o">.</span><span class="n">bindFeaturedRoutes</span><span class="p">(</span><span class="n">router</span><span class="p">,</span> <span class="n">fr</span><span class="p">,</span> <span class="n">metrics</span><span class="p">);</span> <span class="n">err</span> <span class="o">!=</span> <span class="n">nil</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="n">err</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="n">nil</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>二级循环生成 router:<a class="reference external" href="https://github.com/tal-tech/go-zero/blob/5c6a3132ebe96afee256b8ee07c0bf8b8c6e0a39/rest/internal/starter.go#L92-L105">bindFeaturedRoutes</a></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">func</span> <span class="p">(</span><span class="n">s</span> <span class="o">*</span><span class="n">engine</span><span class="p">)</span> <span class="n">bindFeaturedRoutes</span><span class="p">(</span><span class="n">router</span> <span class="n">httpx</span><span class="o">.</span><span class="n">Router</span><span class="p">,</span> <span class="n">fr</span> <span class="n">featuredRoutes</span><span class="p">,</span> <span class="n">metrics</span> <span class="o">*</span><span class="n">stat</span><span class="o">.</span><span class="n">Metrics</span><span class="p">)</span> <span class="n">error</span> <span class="p">{</span>
+  <span class="n">verifier</span><span class="p">,</span> <span class="n">err</span> <span class="o">:=</span> <span class="n">s</span><span class="o">.</span><span class="n">signatureVerifier</span><span class="p">(</span><span class="n">fr</span><span class="o">.</span><span class="n">signature</span><span class="p">)</span>
+
+  <span class="o">//</span> <span class="p">[</span><span class="n">二级</span> <span class="k">for</span><span class="p">]:</span>
+  <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">route</span> <span class="o">:=</span> <span class="nb">range</span> <span class="n">fr</span><span class="o">.</span><span class="n">routes</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="n">err</span> <span class="o">:=</span> <span class="n">s</span><span class="o">.</span><span class="n">bindRoute</span><span class="p">(</span><span class="n">fr</span><span class="p">,</span> <span class="n">router</span><span class="p">,</span> <span class="n">metrics</span><span class="p">,</span> <span class="n">route</span><span class="p">,</span> <span class="n">verifier</span><span class="p">);</span> <span class="n">err</span> <span class="o">!=</span> <span class="n">nil</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="n">err</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="n">nil</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>说明:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">通过</span> <span class="mi">2</span> <span class="n">级</span> <span class="k">for</span> <span class="n">循环把</span> <span class="n">engine</span><span class="o">.</span><span class="n">routes</span> <span class="n">转化为</span> <span class="n">httpx</span><span class="o">.</span><span class="n">Router</span>
+</pre></div>
+</div>
+<p>最后的本质是对每一个 rest.Route 执行 <a class="reference external" href="https://github.com/tal-tech/go-zero/blob/5c6a3132ebe96afee256b8ee07c0bf8b8c6e0a39/rest/engine.go#L107-L130">bindRoute</a></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">func</span> <span class="p">(</span><span class="n">s</span> <span class="o">*</span><span class="n">engine</span><span class="p">)</span> <span class="n">bindRoute</span><span class="p">(</span><span class="n">fr</span> <span class="n">featuredRoutes</span><span class="p">,</span> <span class="n">router</span> <span class="n">httpx</span><span class="o">.</span><span class="n">Router</span><span class="p">,</span> <span class="n">metrics</span> <span class="o">*</span><span class="n">stat</span><span class="o">.</span><span class="n">Metrics</span><span class="p">,</span>
+  <span class="n">route</span> <span class="n">Route</span><span class="p">,</span> <span class="n">verifier</span> <span class="n">func</span><span class="p">(</span><span class="n">chain</span> <span class="n">alice</span><span class="o">.</span><span class="n">Chain</span><span class="p">)</span> <span class="n">alice</span><span class="o">.</span><span class="n">Chain</span><span class="p">)</span> <span class="n">error</span> <span class="p">{</span>
+  <span class="n">chain</span> <span class="o">:=</span> <span class="n">alice</span><span class="o">.</span><span class="n">New</span><span class="p">(</span>
+    <span class="n">handler</span><span class="o">.</span><span class="n">TracingHandler</span><span class="p">,</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">getLogHandler</span><span class="p">(),</span>
+    <span class="n">handler</span><span class="o">.</span><span class="n">PrometheusHandler</span><span class="p">(</span><span class="n">route</span><span class="o">.</span><span class="n">Path</span><span class="p">),</span>
+    <span class="n">handler</span><span class="o">.</span><span class="n">MaxConns</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">MaxConns</span><span class="p">),</span>
+    <span class="n">handler</span><span class="o">.</span><span class="n">BreakerHandler</span><span class="p">(</span><span class="n">route</span><span class="o">.</span><span class="n">Method</span><span class="p">,</span> <span class="n">route</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span> <span class="n">metrics</span><span class="p">),</span>
+    <span class="n">handler</span><span class="o">.</span><span class="n">SheddingHandler</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">getShedder</span><span class="p">(</span><span class="n">fr</span><span class="o">.</span><span class="n">priority</span><span class="p">),</span> <span class="n">metrics</span><span class="p">),</span>
+    <span class="n">handler</span><span class="o">.</span><span class="n">TimeoutHandler</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">Duration</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">Timeout</span><span class="p">)</span><span class="o">*</span><span class="n">time</span><span class="o">.</span><span class="n">Millisecond</span><span class="p">),</span>
+    <span class="n">handler</span><span class="o">.</span><span class="n">RecoverHandler</span><span class="p">,</span>
+    <span class="n">handler</span><span class="o">.</span><span class="n">MetricHandler</span><span class="p">(</span><span class="n">metrics</span><span class="p">),</span>
+    <span class="n">handler</span><span class="o">.</span><span class="n">MaxBytesHandler</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">MaxBytes</span><span class="p">),</span>
+    <span class="n">handler</span><span class="o">.</span><span class="n">GunzipHandler</span><span class="p">,</span>
+  <span class="p">)</span>
+  <span class="n">chain</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">appendAuthHandler</span><span class="p">(</span><span class="n">fr</span><span class="p">,</span> <span class="n">chain</span><span class="p">,</span> <span class="n">verifier</span><span class="p">)</span>
+
+  <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">middleware</span> <span class="o">:=</span> <span class="nb">range</span> <span class="n">s</span><span class="o">.</span><span class="n">middlewares</span> <span class="p">{</span>
+    <span class="n">chain</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">Append</span><span class="p">(</span><span class="n">convertMiddleware</span><span class="p">(</span><span class="n">middleware</span><span class="p">))</span>
+  <span class="p">}</span>
+  <span class="n">handle</span> <span class="o">:=</span> <span class="n">chain</span><span class="o">.</span><span class="n">ThenFunc</span><span class="p">(</span><span class="n">route</span><span class="o">.</span><span class="n">Handler</span><span class="p">)</span>
+
+  <span class="k">return</span> <span class="n">router</span><span class="o">.</span><span class="n">Handle</span><span class="p">(</span><span class="n">route</span><span class="o">.</span><span class="n">Method</span><span class="p">,</span> <span class="n">route</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span> <span class="n">handle</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>这儿用到了 alice，简单介绍下: <a class="reference external" href="https://github.com/justinas/alice">alice</a> is Painless middleware chaining for Go. In short, it transforms: <code class="docutils literal notranslate"><span class="pre">Middleware1(Middleware2(Middleware3(App)))</span></code> to <code class="docutils literal notranslate"><span class="pre">alice.New(Middleware1,</span> <span class="pre">Middleware2,</span> <span class="pre">Middleware3).Then(App)</span></code></p>
+</div>
+<p>说明:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>这块内容比较多，也比较重要，未来会专门介绍这部分
+现在需要知道的是这里面默认实现了好多中间件[先忽略，未来专门看]
+除此之外，剩下的本质就是:
+  router.Handle(route.Method, route.Path, handle)
+</pre></div>
+</div>
+<p><a class="reference external" href="https://github.com/tal-tech/go-zero/blob/5c6a3132ebe96afee256b8ee07c0bf8b8c6e0a39/rest/router/patrouter.go#L39-L57">patRouter的Handler</a> 实现:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">func</span> <span class="p">(</span><span class="n">pr</span> <span class="o">*</span><span class="n">patRouter</span><span class="p">)</span> <span class="n">Handle</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">reqPath</span> <span class="n">string</span><span class="p">,</span> <span class="n">handler</span> <span class="n">http</span><span class="o">.</span><span class="n">Handler</span><span class="p">)</span> <span class="n">error</span> <span class="p">{</span>
+  <span class="n">tree</span><span class="p">,</span> <span class="n">ok</span> <span class="o">:=</span> <span class="n">pr</span><span class="o">.</span><span class="n">trees</span><span class="p">[</span><span class="n">method</span><span class="p">]</span>
+  <span class="k">if</span> <span class="n">ok</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">tree</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">cleanPath</span><span class="p">,</span> <span class="n">handler</span><span class="p">)</span>
+  <span class="p">}</span>
+  <span class="n">tree</span> <span class="o">=</span> <span class="n">search</span><span class="o">.</span><span class="n">NewTree</span><span class="p">()</span>
+  <span class="n">pr</span><span class="o">.</span><span class="n">trees</span><span class="p">[</span><span class="n">method</span><span class="p">]</span> <span class="o">=</span> <span class="n">tree</span>
+  <span class="k">return</span> <span class="n">tree</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">cleanPath</span><span class="p">,</span> <span class="n">handler</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="nb">type</span> <span class="n">patRouter</span> <span class="n">struct</span> <span class="p">{</span>
+  <span class="n">trees</span>      <span class="nb">map</span><span class="p">[</span><span class="n">string</span><span class="p">]</span><span class="o">*</span><span class="n">search</span><span class="o">.</span><span class="n">Tree</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>小结:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">当一个请求过来时</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="id10">
+<h2><a class="toc-backref" href="#id24" role="doc-backlink">实际 http 请求</a><a class="headerlink" href="#id10" title="此标题的永久链接">¶</a></h2>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="search.html"><span class="std std-ref">搜索页面</span></a></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="05otel-intro.html" class="btn btn-neutral float-right" title="05快速学习了解 OpenTelemetry" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="01overview.html" class="btn btn-neutral" title="01整体源码分析" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+  
+  <div id="gitalk-container"></div>
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2010-2025, 新溪-gordon.
+
+    </p>
+  </div>
+  <div>备案号 <a href="http://www.beian.miit.gov.cn">京ICP备16018553号</a></div><div>Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a></div>. 
+
+
+</footer>
+
+<script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?042289284b8eb33866001347a3e0b129";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>     
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'V2025.06',
+            LANGUAGE:'zh-CN',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/documentation_options.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="_static/sphinx_highlight.js"></script>
+      <script type="text/javascript" src="_static/clipboard.min.js"></script>
+      <script type="text/javascript" src="_static/copybutton.js"></script>
+      <script type="text/javascript" src="_static/translations.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+
+  
+
+  <script type="text/javascript" src="_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+
+
+      // var gitalk = new Gitalk({
+      //         clientID: '565177626b5d46427009',
+      //         clientSecret: 'b2a36e67e1d2a73e43667f46d571c2624f8e1026',
+      //         repo: 'knowledge',
+      //         owner: 'zhaoweiguo',
+      //         admin: ['zhaoweiguo'],
+      //         id: location.pathname,      // Ensure uniqueness and length less than 50
+      //         distractionFreeMode: false  // Facebook-like distraction free mode
+      //       })
+      // gitalk.render('gitalk-container')
+
+  </script>
+
+
+<script type="text/javascript" src="_static/js/table-of-contents-sidebar.js"></script>
+<!-- <script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script> -->
+<script type="text/javascript">
+    window.onload = function(e){
+        TableOfContents.init({
+            basePath: "https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/",
+            querySelector: "body" // or other css querySelector
+        });
+    }
+</script> 
+
+</body>
+</html>

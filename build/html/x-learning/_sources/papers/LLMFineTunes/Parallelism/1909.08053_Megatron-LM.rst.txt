@@ -1,0 +1,206 @@
+1909.08053_Megatron-LM: Training Multi-Billion Parameter Language Models Using Model Parallelism
+################################################################################################
+
+* https://arxiv.org/abs/1909.08053
+* Nvidia
+* GitHub: https://github.com/NVIDIA/Megatron-LM
+* Label: Model Parallelism or Tensor Parallelism
+
+收集
+====
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/03/YUynk8.png
+
+    1D张量并行(张量并行的核心就是将矩阵乘法进行拆分，从而降低模型对单卡的显存需求。)
+
+
+
+
+Abstract
+========
+
+
+* 最近在语言模型方面的工作表明，训练大型模型可以推进自然语言处理应用的最先进水平。然而，由于内存限制，训练非常大的模型可能相当困难。在这项工作中，我们介绍了训练超大型transformer模型的技术，并实现了一种简单高效的层内模型并行方法，使得训练具有数十亿参数的变换器模型成为可能。我们的方法不需要新的编译器或库更改，与管道模型并行性正交且互补，并且可以通过在原生PyTorch中插入一些通信操作完全实现。我们通过使用512个GPU使基于变换器的模型收敛至多达83亿参数来展示这种方法。我们整个应用程序保持了15.1 PetaFLOPs的性能，与一个强单GPU基线（维持39 TeraFLOPs，即峰值FLOPs的30%）相比，实现了76%的扩展效率。
+* 为了证明大型语言模型能够进一步推动最先进水平的发展，我们训练了一个类似于GPT-2的83亿参数的变换器语言模型和一个类似于BERT的39亿参数模型。我们发现，在类似BERT的模型中注意层归一化的放置对于随着模型规模增长而提高性能至关重要。使用GPT-2模型，我们在WikiText103（困惑度为10.8，对比当前最先进水平的15.8）和LAMBADA（准确率为66.5%，对比当前最先进水平的63.2%）数据集上达到了最先进水平的结果。我们的BERT模型在RACE数据集上也取得了最先进水平的结果（准确率为90.9%，对比当前最先进水平的89.4%）。
+
+* Recent work in language modeling demonstrates that training large transformer models advances the state of the art in Natural Language Processing applications. However, very large models can be quite difficult to train due to memory constraints. In this work, we present our techniques for training very large transformer models and implement a simple, efficient intra-layer model parallel approach that enables training transformer models with billions of parameters. Our approach does not require a new compiler or library changes, is orthogonal and complimentary to pipeline model parallelism, and can be fully implemented with the insertion of a few communication operations in native PyTorch. We illustrate this approach by converging transformer based models up to 8.3 billion parameters using 512 GPUs. We sustain 15.1 PetaFLOPs across the entire application with 76% scaling efficiency when compared to a strong single GPU baseline that sustains 39 TeraFLOPs, which is 30% of peak FLOPs. To demonstrate that large language models can further advance the state of the art (SOTA), we train an 8.3 billion parameter transformer language model similar to GPT-2 and a 3.9 billion parameter model similar to BERT. We show that careful attention to the placement of layer normalization in BERT-like models is critical to achieving increased performance as the model size grows. Using the GPT-2 model we achieve SOTA results on the WikiText103 (10.8 compared to SOTA perplexity of 15.8) and LAMBADA (66.5% compared to SOTA accuracy of 63.2%) datasets. Our BERT model achieves SOTA results on the RACE dataset (90.9% compared to SOTA accuracy of 89.4%).
+
+
+1. Introduction
+===============
+
+* 1.背景介绍
+    * NLP的快速进展：NLP技术的进步主要得益于可用计算资源和数据集规模的增加，这使得可以训练更大规模的语言模型。这些更大的模型能够显著提升在诸如文章补全、问答和自然语言推理等任务中的表现。
+    * 无监督预训练：预训练模型（如 BERT 和 GPT）通过无监督学习方法被训练，然后在下游任务上进行微调，取得了很好的效果。
+* 2.模型规模的限制
+    * 随着模型变得越来越大，单一的计算资源（如现代处理器）无法容纳整个模型。为了应对这一挑战，采用了如 激活检查点（activation checkpointing）等内存管理技术，避免模型因内存限制无法训练。
+    * 现有的优化算法（如 ADAM）也需要更多的内存来存储动量等信息，这进一步限制了可训练的模型大小。
+* 3.模型并行方法
+    * 许多 模型并行 方法通过将模型分割成多个部分，使得模型的权重和优化器状态不需要同时存储在处理器上，从而解决了内存限制的问题。例如，GPipe 和 Mesh-TensorFlow 就是提供了这种框架。
+    * 但是，这些方法通常需要重写模型，并依赖于尚在开发中的自定义编译器和框架。
+* 4.提出的解决方案
+    * 本文提出了一种简单而高效的 模型并行 方法，利用 Transformer 模型的内在结构，使其能够在 PyTorch 中高效训练，而无需使用 C++ 代码或自定义编译器。
+    * 这种方法与如 GPipe 提出的基于流水线的模型并行方法互补（即并不依赖流水线并行）。
+
+
+* 【总结】本文的贡献在于提出了一种 简单高效的模型并行方法，通过合理的架构修改，实现了大规模模型的训练，同时解决了内存限制和模型准确度提升的问题。其实验结果显示，随着模型规模的增加，性能和准确性都得到了显著提升，尤其是在大规模硬件（如 512 GPUs）上表现出良好的扩展性。
+
+
+2. Background and Challenges
+============================
+
+2.1 Neural Language Model Pretraining
+-------------------------------------
+
+* 预训练语言模型的进展：预训练语言模型（如BERT和GPT）已经成为NLP研究中不可或缺的工具。最初的预训练工作展示了：相比于从零开始训练的词嵌入，通过预训练词嵌入表（word embedding tables）可以改善下游任务的效果。
+* 上下文表示学习的进展：随着研究的发展，语言模型不仅能够提取词的表示，还能学习和传递上下文信息，这极大地提升了NLP任务的性能。通过微调整个预训练语言模型，而不仅仅是词嵌入，进一步提高了性能。
+* 从词嵌入到多亿参数模型：这一领域的发展使得我们能够训练具有数十亿参数的语言模型，而这些模型在下游任务中表现出了显著的优势。随着模型规模的扩大，对硬件、系统技术和框架的需求也不断增加。
+
+
+2.2 Transformer Language Models and Multi-Head Attention
+--------------------------------------------------------
+
+* Transformer架构：Transformer模型（Vaswani等，2017）被认为在NLP中表现优秀，主要由于其更高的准确度和计算效率。原始的Transformer架构被设计为机器翻译模型，包含编码器（Encoder）和解码器（Decoder）。然而，像BERT和GPT-2这样的模型只使用了编码器或解码器的某一部分，针对具体的任务进行优化。
+* BERT和GPT-2的应用：BERT（Devlin等，2018）和GPT-2（Radford等，2019）都是基于Transformer架构的模型。BERT使用了Transformer的编码器（Encoder）部分，专注于生成上下文词表示；而GPT-2则使用了解码器（Decoder），专注于生成文本。
+* Transformer的细节：Transformer架构中的关键部分包括 多头注意力（multi-head attention）和 前馈网络（feed-forward network）。这两个部分会被多个Transformer层所组成，并且BERT和GPT-2使用了GeLU非线性激活函数以及层归一化（Layer Normalization），而原始的Transformer则使用了ReLU非线性函数和不同的层归一化方法。
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/02/j28fSL.png
+
+    Figure 2. Transformer Architecture. Purple blocks correspond to fully connected layers. Each blue block represents a single transformer layer that is replicated N times.
+
+
+
+2.3 Data and Model Parallelism in Deep Learning
+-----------------------------------------------
+
+* 数据并行（Data Parallelism）：数据并行是一种常见的并行训练方法，数据批次被分割到多个工作节点上进行处理，从而实现训练数据吞吐量的线性扩展。然而，随着批次大小的增加，优化过程可能出现精度下降或收敛速度变慢的问题，这就需要进一步的技术来减轻这种影响。
+* 模型并行（Model Parallelism）：模型并行则是将模型的计算和内存需求分配到多个工作节点上。随着模型的规模不断扩大，像 BERT 和 GPT-2 这样的超大模型逐渐超过了单个硬件加速器的内存容量，模型并行成为解决这一问题的关键。
+* 激活检查点（Activation Checkpointing）：为了进一步扩展训练，已有研究提出了 激活检查点技术，即在反向传播过程中重新计算激活值，而不在正向传播过程中存储它们，从而减少内存消耗。
+
+* 参数共享：为了减少内存占用，有些方法采用了 参数共享 技术，但这会限制模型的整体容量。
+* 流水线模型并行（Pipeline Model Parallelism）：流水线模型并行是将模型分成多个阶段，每个阶段在一个设备上执行，计算结果再传递给下一个设备。这种方法的一些实现（如GPipe）通过同步梯度下降克服了不一致性问题。
+* 分布式张量计算（Distributed Tensor Computation）：分布式张量计算是一种更通用的模型并行方法，通过将张量操作分配到多个设备上来加速计算。这种方法类似于 Mesh-TensorFlow，它允许用户指定并行维度，从而提高计算效率。
+
+
+总结
+----
+
+* 本文的目标是利用 模型并行 技术扩展大规模语言模型的训练，使其能够在内存受限的硬件上高效运行，并提出了一种简单的解决方案，不需要重写整个框架或编译器。通过在现有框架（如PyTorch）中做出少量调整，本文提供了一种高效的模型并行实现方法，旨在支持未来大规模模型的训练。
+
+
+3. Model Parallel Transformers
+==============================
+
+* 本章介绍了 模型并行（model parallelism）在Transformer模型中的实现，主要通过将Transformer层的计算过程拆分并分配到多个GPU上来加速训练，具体涉及对多层感知机（MLP）和自注意力（self-attention）模块的并行化优化。
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/02/Js2roj.png
+
+    Figure 3. Blocks of Transformer with Model Parallelism. f and g are conjugate. f is an identity operator in the forward pass and all reduce in the backward pass while g is an all reduce in the forward pass and identity in the backward pass.
+
+* Transformer模型的每一层包含两个主要部分：自注意力模块（self-attention）和多层感知机（MLP）。
+
+
+多层感知机(MLP)模块并行化
+-------------------------
+
+* 多层感知机（MLP） 是 transformer 层的组成部分之一，主要由两部分组成：
+    * GEMM（矩阵乘法）：对输入 𝑋 和权重矩阵 𝐴 进行矩阵乘法，得到结果。
+    * GeLU非线性激活函数：对计算结果进行非线性变换。
+
+
+* 假设我们有以下的矩阵：
+    - **X** 是输入矩阵，大小为 :math:`N \times D` （其中  **N** 是样本数， **D** 是输入特征的维度）。
+    - **A** 是权重矩阵，大小为 :math:`D \times H` （其中  **H** 是输出维度）。
+
+
+
+* 为了实现并行化，有两种方法：
+    - **方法一** ：将权重矩阵 **A** 按行切分，输入 **X** 按列切分。
+        - split the weight matrix A along its rows and input X along its columns:
+        - :math:`X=\left[X_{1}, X_{2}\right]` , :math:`A=\left[\begin{array}{l}A_{1} \\    A_{2}  \end{array}\right]`
+        - 这样做的结果是： :math:`Y = \text{GeLU}(X_1 A_1 + X_2 A_2)`
+        - 由于 GeLU 是一个非线性函数， **GeLU(X1A1 + X2A2)** 不等于 **GeLU(X1A1)+ GeLU(X2A2)**
+        - 因此，这种方法在 GeLU 计算之前需要同步。
+
+    - **方法二** ：只将 **A** 按列切分，，输入 **X** 不变。
+        - 这样可以使 GeLU 函数独立地应用于每个分块的结果：
+        - :math:`[Y_1, Y_2] = [\text{GeLU}(X A_1), \text{GeLU}(X A_2)]`
+        - 合并得到最终输出： :math:`Y = [Y_1, Y_2]`
+        - 这样，避免了同步点。
+        - 之后的 GEMM 也按行切分，得到的输出直接通过 GPU 内部通信进行合并（通过 **all-reduce** 操作），然后送入 dropout 层。
+        - 合并输出时只需要做一次 all-reduce 操作，这比起按行切分的方案减少了大量的通信开销。
+
+
+
+
+
+自注意力模块并行化
+------------------
+
+* 多头注意力（Multi-Head Attention）：自注意力模块中的每个注意力头的计算可以独立进行，因此可以通过 按列并行 的方式，将每个注意力头的计算分配到不同的GPU上。每个GPU只处理一个注意力头的计算，不需要立即进行跨GPU的通信。
+* 后续操作的并行化：自注意力模块的输出通常会通过一个线性层（GEMM操作）来进一步处理，这部分操作也是按行并行的，同样不需要跨GPU通信。
+* 优化效果：通过这种设计，作者成功地将MLP和自注意力模块的计算拆分，并减少了同步点，进而提升了计算效率和模型的扩展性。
+
+
+
+输出嵌入的并行化
+----------------
+
+* 输入和输出嵌入：Transformer模型的输入和输出嵌入层的计算是通过矩阵乘法（GEMM）完成的。由于词汇表的大小非常大（例如GPT-2的词汇表大小为50,257），因此在计算过程中，对输入和输出嵌入的矩阵也进行并行化是非常有益的。
+* 并行化方法：
+    * 将 输入嵌入矩阵 𝐸 按列切分。由于每个 GPU 只包含嵌入矩阵的一部分，计算后需要进行 all-reduce 操作来合并。
+    * 对于 输出嵌入的 GEMM 操作，首先并行化计算，再通过 all-gather 操作将结果聚集并传递给 交叉熵损失函数（cross-entropy loss）。
+    * 为了减少通信量，输出的嵌入结果和损失值融合后，减少了维度，传递的是标量损失而不是 logits，从而显著降低了通信成本。
+
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/02/Uc20oe.png
+
+    Figure 4. Communication operations in a transformer layer. There are 4 total communication operations in the forward and backward pass of a single model parallel transformer layer.
+
+
+
+总结
+----
+
+* 这段内容介绍的核心是 Transformer模型的并行化，通过将模型的计算划分到多个GPU上，减少了通信开销，并优化了计算效率。
+* 作者采用了简单且高效的策略，在不引入复杂编译器的情况下，通过精心设计的 列并行 和 行并行 方式，优化了MLP和自注意力模块的计算，并在前向传播和反向传播中通过少量的 all-reduce 操作来保持同步。这种方法提高了Transformer模型的扩展性和训练效率。
+
+
+
+
+
+
+
+
+
+
+
+* 数据并行（Data Parallelism）：每个 GPU 训练相同的模型，但使用不同的数据，然后在每个训练批次后同步梯度，使所有 GPU 的模型参数保持一致。
+* 模型并行（Model Parallelism）：把一个大模型拆分到多个 GPU 上，每个 GPU 只存储和计算模型的一部分，这样可以突破单个 GPU 内存的限制。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

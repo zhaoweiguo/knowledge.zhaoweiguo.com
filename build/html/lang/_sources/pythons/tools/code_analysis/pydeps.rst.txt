@@ -1,0 +1,223 @@
+pydeps-生成依赖图
+#################
+
+.. note:: 这个工具好用
+
+* GitHub: https://github.com/thebjorn/pydeps
+
+
+
+安装 pydeps::
+
+    pip install pydeps
+
+    注:
+        需求先安装 graphviz 保证 dot 命令可用
+
+
+生成依赖图::
+
+    pydeps /path/to/your/project
+
+选项
+====
+
+
+--max-bacon
+-----------
+
+::
+
+    # --max-bacon: 指定培根数(默认2)
+    # --max-bacon=0 (infinite)
+    shell> pydeps pydeps --show --max-bacon 2 --pylib -x os re types _\* enum
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/06/Edq1oC.png
+
+
+--cluster
+---------
+
+::
+
+    # --cluster: collapse external modules into folder-shaped objects
+    # 如果你对外部模块的内部结构不感兴趣，你可以添加 --cluster 标志，它将外部模块折叠成文件夹形状的对象
+    shell> pydeps pydeps --max-bacon=4 --cluster
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/06/aNPp7M.png
+
+
+--max-cluster-size=N
+--------------------
+
+::
+
+    # --max-cluster-size: controls how many nodes can be in a cluster before it is collapsed to a folder icon
+    # 要查看内部结构并描绘外部模块，请使用 --max-cluster-size 标志，该标志控制在折叠为文件夹图标之前集群中可以有多少个节点
+
+指定较大的 ``--max-cluster-size`` 就会把 ``yaml`` 内部结构展示出来::
+
+    shell> pydeps pydeps --max-bacon=4 --cluster --max-cluster-size=1000
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/06/u8gQNB.png
+
+
+指定较小的 ``--max-cluster-size`` 就会把大于3的 ``yaml`` 缩成一个文件夹::
+
+    shell> pydeps pydeps --max-bacon=4 --cluster --max-cluster-size=3
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/06/GuW2hC.png
+
+
+--min-cluster-size=N
+--------------------
+
+::
+
+    # --min-cluster-size: remove clusters with too few nodes
+
+--rmprefix xxxx
+---------------
+
+::
+
+    # --rmprefix pydeps.: 在显示的图表里面不显示 `pydeps.`
+
+
+
+--max-module-depth=N
+--------------------
+
+::
+
+    # --max-module-depth: 
+    # 标志检查包的内部依赖关系，同时限制模块深度
+    shell> pydeps pandas --only pandas --max-module-depth=2 -x pandas._\* pandas.test\* pandas.conftest
+
+
+--rankdir
+---------
+
+::
+
+    # Graph direction
+    # 指定显示方向
+
+Top to bottom (default)::
+
+    shell> pydeps pydeps --rankdir TB
+
+
+Bottom to top::
+
+    shell> pydeps pydeps --rankdir BT
+
+Left to right::
+
+    shell> pydeps pydeps --rankdir LR
+
+Right to left::
+
+    shell> pydeps pydeps --rankdir RL
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/06/MmBMFP.png
+
+    本图也可与下面选项 ``--collapse-target-cluster`` 对比，理解 ``--collapse-target-cluster`` 选项的作用
+
+--collapse-target-cluster
+-------------------------
+
+* 当内部目标包依赖项不重要时，可以使用 --collapse-target-cluster 标志折叠它们
+* 把内部依赖包看成一个整体
+* This option also implies ``--cluster``
+
+::
+
+    shell> pydeps pydeps --collapse-target-cluster
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/06/ODCXaE.png
+
+
+
+其他
+----
+
+
+常用选项::
+
+    -x/--exclude-exact: 排除module列表
+        -x PATTERN [PATTERN ...]
+        or
+        --exclude PATTERN [PATTERN ...]
+        示例:
+        shell> pydeps pandas --max-module-depth=2 -x pandas._\* pandas.test\* pandas.conftest
+
+    -xx/--exclude-exact: 
+        示例:
+        -xx foo.bar will exclude foo.bar, but not foo.bar.blob
+
+
+    --only MODULE_PATH [MODULE_PATH ...]
+        only include modules that start with MODULE_PATH
+
+
+    --pylib               include python std lib modules
+    --pylib-all           include python all std lib modules (incl. C modules)
+
+
+
+使用技巧::
+
+    指定主要模块/包
+    pydeps /path/to/your/project/main_module.py
+
+    排除不必要的依赖: 限制生成的依赖层数，只显示最多n层的依赖
+    pydeps --max-bacon=2 /path/to/your/project
+
+
+
+
+
+实战
+====
+
+
+metaGPT::
+
+    pydeps --max-bacon=2 ./metagpt/roles/product_manager.py
+    pydeps --max-bacon=2 ./metagpt/actions/action.py
+    ...
+
+
+llama_agent::
+
+    # 生成依赖图
+    pydeps  --max-bacon=5  --collapse-target-cluster  ./llama_agents
+
+    # 生成内部详细、外部cluster图
+    ➜ pydeps  --max-bacon=2  --cluster  ./llama_agents
+
+
+llama_index::
+
+    pydeps  --max-bacon=2  --collapse-target-cluster  ./llama-index-core/llama_index/core/
+
+    pydeps  --max-bacon=2  --cluster  ./llama-index-core/llama_index/core/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

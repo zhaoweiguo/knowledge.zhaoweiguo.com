@@ -1,0 +1,60 @@
+容器间通信方式
+##############
+
+1. 通过容器ip访问
+=================
+
+::
+
+    容器重启后，ip会发生变化。
+    通过容器ip访问不是一个好的方案。
+
+2. 通过宿主机的ip:port访问
+==========================
+
+::
+
+    通过宿主机的ip:port访问
+    只能依靠监听在暴露出的端口的进程来进行有限的通信。
+
+3. 通过link建立连接(不推荐)
+===========================
+
+::
+
+     运行容器时，指定参数link，
+     使得源容器与被链接的容器可以进行相互通信，并且接受的容器可以获得源容器的一些数据
+     比如: 环境变量
+
+命令::
+
+    # 源容器：mysql
+    $ docker run -itd --name test-mysql -e MYSQL_ROOT_PASSWORD=root mysql:5.7
+    # 被链接容器 centos
+    $ docker run -itd --name test-centos --link test-mysql:mysql  centos /bin/bash
+    # 进入test-centos
+    $ docker exec -it test-centos /bin/bash
+
+直接通过 link的名字或者link时候取的别名就能进入::
+
+    $ mysql -h test-mysql -uroot -proot
+    mysql> ...
+    $ mysql -h mysql -uroot -proot
+    mysql> ...
+    // 通过link建立连接的容器，被链接的容器能 ping 通源容器，反过来不行
+
+与/etc/hosts中的主机条目不同，如果重新启动源容器，则不会自动更新存储在环境变量中的IP地址。我们建议使用主机条目 /etc/hosts 来解析链接容器的IP地址。除了环境变量之外，Docker还将源容器的主机条目添加到/etc/hosts文件中。
+
+
+4. 通过 User-defined networks(推荐)
+===================================
+
+命令::
+
+    $ docker network create test-network
+
+参考
+====
+
+* docker 中容器之间通信方式: https://blog.csdn.net/u013355826/article/details/84987233
+

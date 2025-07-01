@@ -1,0 +1,56 @@
+证书创建-配置文件
+#################
+
+基本文件
+========
+
+有prompt的:
+
+.. literalinclude:: ./files/openssl-prompt.conf
+
+没有prompt的:
+
+.. literalinclude:: ./files/openssl-nonprompt.conf
+
+
+基本命令
+========
+
+0. 前提::
+
+    mkdir -p CA/{certs,crl,newcerts,private}
+    touch CA/index.txt
+    echo 00 > CA/serial
+
+1. 生成 ca.key 并自签署::
+
+    openssl req -new -x509 -days 3650 -keyout ca.key -out ca.crt -config openssl.conf
+
+2. 生成 server.key::
+
+    openssl genrsa -out server.key 2048
+
+3. 生成证书签名请求::
+
+    openssl req -new -key server.key -out server.csr -config openssl.conf
+    注: Common Name 这个写主要域名就好了 (注意：这个域名也要在 openssl.cnf 的 DNS.x 里)
+
+4. 查看请求文件::
+
+    openssl req -text -noout -in server.csr
+
+5. 使用自签署的 CA，签署 server.scr::
+
+    openssl ca -in server.csr -out server.crt -cert ca.crt -keyfile ca.key -extensions v3_req -config openssl.conf
+    注: #输入第一步设置的密码，一直按 y 就可以了
+    再注：这一步执行失败，原因未定
+
+6. 生成个人证书::
+
+    openssl pkcs12 -export -inkey xxx.key -in xxx.crt -out xxx.p12
+
+
+
+
+
+

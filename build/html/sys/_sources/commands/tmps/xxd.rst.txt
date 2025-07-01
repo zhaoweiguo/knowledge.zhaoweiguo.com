@@ -1,0 +1,103 @@
+xxd命令
+#######
+
+* 用于生成十六进制（hexadecimal）表示的工具，也可以将十六进制数据还原为原始的二进制数据。它通常用于查看二进制文件的内容、调试或者修改文件。
+* 特别适合处理二进制文件的十六进制表示和还原，适用于文件调试、数据转换和脚本自动化任务。
+
+
+选项
+====
+
+* -g：分组大小，默认是 2（表示每两个字节为一组）。
+* -u：将输出中的十六进制字符显示为大写。
+* -i：生成 C 语言数组形式的输出，用于嵌入二进制数据到代码中。
+* -s：跳过的偏移量（单位：字节）。
+* -l：要读取的长度（单位：字节）。
+* -r：表示反转操作，从十六进制数据还原为二进制。
+* -c 选项指定每行显示的字节数（默认为 16）。
+* -p 显示纯十六进制数据
+
+::
+
+    -p | -ps | -postscript | -plain
+        Output in PostScript continuous hex dump style. Also known as plain hex dump style.
+
+
+
+
+基本
+====
+
+将文件转换为十六进制格式::
+
+    $ xxd example.bin
+    00000000: 1266 179c 70dc e631 4bde d13a 6b22 f4dd  .f..p..1K..:k"..
+    00000010: 4959 1412 ecce 6975 f374 9a8d 34e5 1cbc  IY....iu.t..4...
+
+每一行包含三个部分：
+
+    1. 偏移量（行首的 00000000 表示第 0 字节）。
+    2. 每 16 个字节的十六进制数据。
+    3. ASCII 表示（右边部分显示可见字符，不可见字符用 . 表示）。
+
+-p 选项
+=======
+
+显示纯十六进制数据::
+
+    $ xxd -p example.bin
+    1266179c70dce6314bded13a6b22f4dd49591412ecce6975f3749a8d34e5
+    1cbc
+
+生成十六进制文件::
+
+    $ xxd -p example.bin > example.hex
+
+
+-r 选项
+=======
+
+从十六进制文件还原::
+
+    $ xxd -r -p example.hex
+    f�p��1K��:k"��IY��iu�t��4��%
+
+    $ xxd -r -p example.hex > restore.bin
+
+
+
+-i 选项
+=======
+
+::
+
+    $ xxd -i example.bin
+
+    # 输出
+    unsigned char secret_key_bin[] = {
+      0x12, 0x66, 0x17, 0x9c, 0x70, 0xdc, 0xe6, 0x31, 0x4b, 0xde, 0xd1, 0x3a,
+      0x6b, 0x22, 0xf4, 0xdd, 0x49, 0x59, 0x14, 0x12, 0xec, 0xce, 0x69, 0x75,
+      0xf3, 0x74, 0x9a, 0x8d, 0x34, 0xe5, 0x1c, 0xbc
+    };
+    unsigned int secret_key_bin_len = 32;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

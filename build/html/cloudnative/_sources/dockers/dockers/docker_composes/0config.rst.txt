@@ -1,0 +1,123 @@
+配置实例
+########
+
+::
+
+    version: '3'
+    services:
+      web:
+        build: .
+        ports:
+        - "5000:5000"
+        volumes:
+        - .:/code
+        - logvolume01:/var/log
+        links:
+        - redis
+      redis:
+        image: redis
+    volumes:
+      logvolume01: {}
+
+version
+=======
+
+::
+
+    version: '3.6'  # 使用的Docker Compose版本号
+
+
+services
+========
+
+::
+
+    services:  # 定义了一个或多个服务
+      api:  # 服务名称为"api"
+        image: quay.io/go-skynet/local-ai:latest  # 使用的Docker镜像
+
+
+
+build
+=====
+
+::
+
+    build:  # 构建选项，用于构建自定义镜像
+      context: .  # Dockerfile所在的上下文路径，通常是当前目录
+      dockerfile: Dockerfile  # 指定要使用的Dockerfile文件
+
+
+volumes
+=======
+
+如下两条的区别::
+
+    volumes:
+      - ./models:/models:cached
+    volumes:
+      - ./models:/models
+
+    :cached选项是用来优化性能的。
+    这个选项告诉Docker将本地文件系统中的数据缓存到内存中，以加快容器访问这些文件的速度。
+
+
+
+
+
+实例
+====
+
+drone实例
+---------
+
+.. literalinclude:: /files/dockers/drone.composer.yml
+
+etcd集群
+--------
+
+.. literalinclude:: /files/dockers/etcd.composer.yml
+
+
+LocalAI
+-------
+
+::
+
+    version: '3.6'
+
+    services:  # 定义了一个或多个服务
+      api:  # 服务名称为"api"
+        image: quay.io/go-skynet/local-ai:latest  # 使用的Docker镜像
+        build:  # 构建选项，用于构建自定义镜像
+          context: .  # Dockerfile所在的上下文路径，通常是当前目录
+          dockerfile: Dockerfile  # 指定要使用的Dockerfile文件
+        ports:  # 指定端口映射规则，将主机端口映射到容器端口
+          - 8080:8080  # 将主机的8080端口映射到容器的8080端口
+        env_file:  # 指定环境变量文件，用于将环境变量传递给容器
+          - .env  # 使用当前目录下的.env文件
+        volumes:  # 定义卷挂载规则，将主机目录挂载到容器中
+          - ./models:/models:cached  # 将主机当前目录下的models目录挂载到容器中的/models目录，并使用缓存选项
+        command: ["/usr/bin/local-ai"]  # 指定容器启动时要运行的命令
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

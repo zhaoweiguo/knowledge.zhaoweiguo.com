@@ -1,0 +1,300 @@
+amixer
+######
+
+
+Usage::
+
+	amixer <options> [command]
+
+
+
+基本语法::
+
+	$ amixer -card <card> -device <device> <control> <value>
+
+	-card <card>:指定要控制的声卡,默认为 0
+	-device <device>:指定声卡上的设备,默认为 0
+	<control>:要设置的混音器控件,如音量、静音等 
+	<value>:要设置的值,可为 on/off,0-100% 等
+
+
+	- amixer -c 1 sset Master 70%: 将第二块声卡(card 1)的主音量(Master)设置为 70%
+	- amixer -D hw:0,3 cset Capture toggle: 将第三个设备(device 3)的录音通道(Capture)开/关 
+	- amixer cset numid=34,iface=MIXER,name='Line In' 80%: 通过控件的ID和名称设置输入通道80% 
+
+
+
+Available options::
+
+	-c,--card N     select the card
+	-D,--device N   select the device, default 'default'
+	-d,--debug      debug mode
+	-n,--nocheck    do not perform range checking
+	-v,--version    print version of this program
+	-q,--quiet      be quiet
+	-i,--inactive   show also inactive controls
+	-a,--abstract L select abstraction level (none or basic)
+	-s,--stdin      Read and execute commands from stdin sequentially
+	-R,--raw-volume Use the raw value (default)
+	-M,--mapped-volume Use the mapped volume
+
+Available commands::
+
+	scontrols       show all mixer simple controls
+	scontents	  show contents of all mixer simple controls (default command)
+	sset sID P      set contents for one mixer simple control
+	sget sID        get contents for one mixer simple control
+	controls        show all controls for given card
+	contents        show contents of all controls for given card
+	cset cID P      set control contents for one control
+	cget cID        get control contents for one control
+
+Available advanced commands::
+
+	sevents	  show the mixer events for simple controls
+	events	  show the mixer events for simple controls
+
+
+说明
+====
+
+amixer 是 ALSA 提供的命令行混音器控制工具::
+
+	1. 查看和控制声卡上的所有混音器控件,如音量控制、静音控制、捕捉选项等
+	2. 设置混音器控件的值,如设置音量、开/关静音等 
+	3. 保存和恢复混音器的状态
+
+
+名称说明::
+
+	1. Master:主控件,影响所有的音频内容与输出设备。用于控制系统的总体音量。当其值为 0 时,所有输出均无音频信号。
+	2. PCM:专门影响数字音频信号的大小,用于调整数字音频内容(如电影、音乐)的播放音量。其它模拟音频内容(如系统提示音)不受影响。但若为 0 时,数字音频内容也无输出。
+	3. Speaker:只影响内建扬声器或扩音器的音量输出。用于专门控制这些输出设备的音量大小与开关。为 0 时,只有扬声器/扩音器无音频输出,耳机或其它接口输出可正常工作。
+	4. Headphone 只影响耳机输出
+	5. Mic Boost:麦克风增益控件,用于增强麦克风输入的信号。0 到 3 的范围,当前为关闭状态。
+	6. Capture:录音输入控件,用于开关录音输入和控制录音音量。0 到 63 的范围,当前最大 63,开启状态。注意：只有此值为开启状态录音才有声音。
+	7. Auto-Mute Mode:自动静音模式控件,用于启用或禁用自动静音功能。当前为 ‘Disabled’ 禁用状态。
+	8. Internal Mic Boost:此控件与麦克风增益控件功能类似,也用于控制输入信号的增益。当前也为最大值 3 和 30dB 的增益。
+
+
+	- Master、PCM、Speaker、Headphone 用于控制播放相关的音量和开关。
+	- Capture、Mic Boost、Internal Mic Boost 用于控制录音输入相关的增益和音量。
+	- Auto-Mute Mode 为辅助功能,可以自动静音。
+
+
+
+
+
+
+
+
+示例
+====
+
+
+示例1: $ amixer -c 0::
+
+	Simple mixer control 'Mic ACP LED',0
+	  Capabilities: cswitch cswitch-joined
+	  Capture channels: Mono
+	  Mono: Capture [off]
+	Simple mixer control 'IEC958',0
+	  Capabilities: pswitch pswitch-joined
+	  Playback channels: Mono
+	  Mono: Playback [off]
+	Simple mixer control 'IEC958',1
+	  Capabilities: pswitch pswitch-joined
+	  Playback channels: Mono
+	  Mono: Playback [off]
+
+	说明:
+		Capabilities:
+			- cswitch:捕捉开/关开关 
+			- pswitch:播放开/关开关 
+		Capture channels / Playback channels:
+			- 表示此控件对应的录音/播放通道,这里都是 Mono(单通道)
+
+		Mono/Stereo:
+			- 显示控件当前的开/关状态
+
+
+示例2(插耳机前): $ amixer -c 1::
+
+	Simple mixer control 'Master',0
+	  Capabilities: pvolume pvolume-joined pswitch pswitch-joined
+	  Playback channels: Mono
+	  Limits: Playback 0 - 87
+	  Mono: Playback 59 [68%] [-21.00dB] [on]
+	Simple mixer control 'Headphone',0
+	  Capabilities: pvolume pswitch
+	  Playback channels: Front Left - Front Right
+	  Limits: Playback 0 - 87
+	  Mono:
+	  Front Left: Playback 0 [0%] [-65.25dB] [off]
+	  Front Right: Playback 0 [0%] [-65.25dB] [off]
+	Simple mixer control 'Speaker',0
+	  Capabilities: pvolume pswitch
+	  Playback channels: Front Left - Front Right
+	  Limits: Playback 0 - 87
+	  Mono:
+	  Front Left: Playback 87 [100%] [0.00dB] [on]
+	  Front Right: Playback 87 [100%] [0.00dB] [on]
+	Simple mixer control 'PCM',0
+	  Capabilities: pvolume
+	  Playback channels: Front Left - Front Right
+	  Limits: Playback 0 - 255
+	  Mono:
+	  Front Left: Playback 255 [100%] [0.00dB]
+	  Front Right: Playback 255 [100%] [0.00dB]
+	Simple mixer control 'Mic Boost',0
+	  Capabilities: volume
+	  Playback channels: Front Left - Front Right
+	  Capture channels: Front Left - Front Right
+	  Limits: 0 - 3
+	  Front Left: 0 [0%] [0.00dB]
+	  Front Right: 0 [0%] [0.00dB]
+	Simple mixer control 'Capture',0
+	  Capabilities: cvolume cswitch
+	  Capture channels: Front Left - Front Right
+	  Limits: Capture 0 - 63
+	  Front Left: Capture 63 [100%] [30.00dB] [off]
+	  Front Right: Capture 63 [100%] [30.00dB] [off]
+	Simple mixer control 'Auto-Mute Mode',0
+	  Capabilities: enum
+	  Items: 'Disabled' 'Enabled'
+	  Item0: 'Disabled'
+	Simple mixer control 'Internal Mic Boost',0
+	  Capabilities: volume
+	  Playback channels: Front Left - Front Right
+	  Capture channels: Front Left - Front Right
+	  Limits: 0 - 3
+	  Front Left: 3 [100%] [30.00dB]
+	  Front Right: 3 [100%] [30.00dB]
+
+	说明:
+		6 个混音器控件:
+			- Master: 主音量控制, 开启 
+			- Headphone: 耳机控制, 关闭 
+			- Speaker: 扬声器控制, 开启
+			- PCM: 数字音频信号控制
+			- Mic Boost:麦克风增益控制,
+			- Capture:录音控制, 开启 
+			- Auto-Mute Mode: 自动静音模式选择,当前为 'Disabled'
+			- Internal Mic Boost: 麦克风控件,当前关闭 
+
+		Capabilities:
+			- pvolume:音量控制 
+			- pswitch:播放开/关 
+			- cvolume:录音音量 
+			- cswitch:录音开/关 
+			- enum:选择项 
+
+		其他:
+			[on]/[off] 表示开/关状态,
+			[100%] 表示相对最大值的百分比,
+			[-4.50dB] 为实际衰减值
+
+
+
+示例3(插耳机后): $ amixer -c 1::
+
+	Simple mixer control 'Master',0
+	  Capabilities: pvolume pvolume-joined pswitch pswitch-joined
+	  Playback channels: Mono
+	  Limits: Playback 0 - 87
+	  Mono: Playback 54 [62%] [-24.75dB] [on]
+	Simple mixer control 'Headphone',0
+	  Capabilities: pvolume pswitch
+	  Playback channels: Front Left - Front Right
+	  Limits: Playback 0 - 87
+	  Mono:
+	  Front Left: Playback 87 [100%] [0.00dB] [on]
+	  Front Right: Playback 87 [100%] [0.00dB] [on]
+	Simple mixer control 'Speaker',0
+	  Capabilities: pvolume pswitch
+	  Playback channels: Front Left - Front Right
+	  Limits: Playback 0 - 87
+	  Mono:
+	  Front Left: Playback 0 [0%] [-65.25dB] [off]
+	  Front Right: Playback 0 [0%] [-65.25dB] [off]
+	Simple mixer control 'PCM',0
+	  Capabilities: pvolume
+	  Playback channels: Front Left - Front Right
+	  Limits: Playback 0 - 255
+	  Mono:
+	  Front Left: Playback 255 [100%] [0.00dB]
+	  Front Right: Playback 255 [100%] [0.00dB]
+	Simple mixer control 'Mic Boost',0
+	  Capabilities: volume
+	  Playback channels: Front Left - Front Right
+	  Capture channels: Front Left - Front Right
+	  Limits: 0 - 3
+	  Front Left: 3 [100%] [30.00dB]
+	  Front Right: 3 [100%] [30.00dB]
+	Simple mixer control 'Capture',0
+	  Capabilities: cvolume cswitch
+	  Capture channels: Front Left - Front Right
+	  Limits: Capture 0 - 63
+	  Front Left: Capture 63 [100%] [30.00dB] [off]
+	  Front Right: Capture 63 [100%] [30.00dB] [off]
+	Simple mixer control 'Auto-Mute Mode',0
+	  Capabilities: enum
+	  Items: 'Disabled' 'Enabled'
+	  Item0: 'Disabled'
+	Simple mixer control 'Internal Mic Boost',0
+	  Capabilities: volume
+	  Playback channels: Front Left - Front Right
+	  Capture channels: Front Left - Front Right
+	  Limits: 0 - 3
+	  Front Left: 0 [0%] [0.00dB]
+	  Front Right: 0 [0%] [0.00dB]
+
+	说明:
+		 Headphone 控件打开,因为插入耳机后声音输出到耳机。原来该控件显示为关闭状态 [off]。
+		 Speaker 控件关闭,因为插入耳机后声音不再从扬声器输出。原来该控件显示为打开状态 [on]。
+
+
+示例2、3对比说明::
+
+		1. 不带耳机时:
+		- Speaker 控件显示为开启,这很可能对应内建扬声器 
+		- Headphone 控件显示为关闭
+		- Internal Mic Boost 为 3 [100%],Mic Boost 为 0 [0%]
+		2. 带耳机时:
+		- Headphone 控件显示为开启,这对应插入的耳机 
+		- Speaker 控件显示为关闭 
+		- Internal Mic Boost 为 0 [0%],Mic Boost 未变化仍为 3 [100%] 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

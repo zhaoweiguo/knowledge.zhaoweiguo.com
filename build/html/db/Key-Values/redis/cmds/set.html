@@ -1,0 +1,993 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="zh-CN" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="zh-CN" > <!--<![endif]-->
+<head>
+
+
+<!-- start added 2025-04-14   增加对markdown中公式的支持 -->
+<script>
+window.MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+    },
+    options: {
+        ignoreHtmlClass: "tex2jax_ignore|mathjax_ignore",
+        processHtmlClass: "tex2jax_process|mathjax_process|math|output_area"
+    }
+};
+</script>
+<script defer="defer" src="https://fastly.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<!-- end added 2025-04-14   增加对markdown中公式的支持 -->
+
+
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Redis 集合(Set) &mdash; 新溪-gordon V2025.06 文档</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+    <link rel="index" title="索引" href="../../../genindex.html" />
+    <link rel="search" title="搜索" href="../../../search.html" />
+    <link rel="next" title="基本命令" href="connection.html" />
+    <link rel="prev" title="Redis 列表(List)" href="list.html" /> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+  <script src="../../../_static/js/jquery.min.js"></script>
+
+
+<!-- 评论插件 gittalk start -->
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script> -->
+<!-- 评论插件 gittalk end -->
+
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> 新溪-gordon
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                V2025.06
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../normal.html">1. 常用</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../normals/index.html">1.1. 索引</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../normals/indexs/mongo_mysql_tree.html">1.1.1. 为什么 MongoDB 索引选择B-树,而 Mysql 索引选择B+树</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../normals/indexs/tmp.html">1.1.2. 临时</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../normals/normal.html">1.2. 常用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../normals/normal.html#mongodb-elasticsearch">1.2.1. MongoDB 和 Elasticsearch 对比</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../normals/SQL.html">1.3. SQL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../normals/file_format.html">1.4. 文件存储格式</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../normals/file_format.html#parquet">1.4.1. Parquet</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../normals/tmp.html">1.5. 临时</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../../Key-Value.html">2. K/V数据库</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../redis.html">2.1. Redis相关文档</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../redis_command.html">2.1.1. redis命令</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="0usage.html">用法</a></li>
+<li class="toctree-l4"><a class="reference internal" href="key.html">Redis 键(key)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="string.html">Redis 字符串(String)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="hash.html">Redis 哈希(Hash)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="list.html">Redis 列表(List)</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">Redis 集合(Set)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="connection.html">基本命令</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sortedSet.html">Redis 有序集合(sorted set)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="server.html">Redis 服务器命令</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../redis_config.html">2.1.2. redis配置</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../configs/redis_file_config.html">redis配置文件详解</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../configs/redis_normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../configs/redis_slave.html">redis主从配置</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../redis_normal.html">2.1.3. 常用</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../normals/dump_in_out.html">redis几种数据导出导入方式</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../redis_optimize.html">2.1.4. redis的优化</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../redis_question.html">2.1.5. redis常见问题</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../redis_question.html#rediskey">redis的key字符串中不能有空格和回车</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../redis_question.html#noauth-authentication-required">NOAUTH Authentication required</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../memcached.html">2.2. Memcached相关文档</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../etcd.html">2.3. etcd</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../etcds/etcd.html">2.3.1. etcd命令</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../etcds/etcd.html#member-flags">Member flags</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../etcds/etcd.html#clustering-flags">Clustering flags</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../etcds/etcd.html#proxy-flags">Proxy flags</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../etcds/etcd.html#security-flags">Security flags</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../etcds/etcd.html#logging-flags">Logging flags</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../etcds/etcd.html#unsafe-flags">Unsafe flags</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../etcds/etcd.html#miscellaneous-flags">Miscellaneous flags</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../etcds/etcd.html#profiling-flags">Profiling flags</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../etcds/etcd.html#auth-flags">Auth flags</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../etcds/etcd.html#id2">参考</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../etcds/etcdctl.html">2.3.2. etcdctl命令 </a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../etcds/etcdctl.html#flag">常用flag</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../etcds/etcdctl.html#id3">数据库操作</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../etcds/etcdctl.html#lead">lead 租约</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../etcds/etcdctl.html#id4">分布式锁</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../etcds/principle.html">2.3.3. 原理</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../etcds/principle.html#etcd">etcd读请求</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../etcds/principle.html#id4">etcd写请求</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../etcds/normal.html">2.3.4. 常用</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../etcds/normals/normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../etcds/normals/install.html">安装&amp;使用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../etcds/normals/tmp.html">临时</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../etcds/api.html">2.3.5. api</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../etcds/api.html#v3-4">实例(以v3.4+版本为例)</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../etcds/history.html">2.3.6. 历史版本</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../etcds/historys/v2.3.html">v2.3</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../etcds/historys/v3.0.html">v3.0 </a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../etcds/historys/v3.1.html">v3.1 </a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../etcds/historys/v3.2.html">v3.2 </a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../etcds/historys/v3.3.html">v3.3 </a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../etcds/historys/v3.4.html">v3.4 </a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../etcds/historys/v4.0.html">v4.0 </a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../zookeeper.html">2.4. zookeeper相关</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../zookeepers/zk_normal.html">2.4.1. 常见命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../zookeepers/zk_question.html">2.4.2. 常见问题</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../consul.html">2.5. consul</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../consuls/normal.html">2.5.1. 常用</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../consuls/normal.html#agent">基本使用-一个Agent的开发模式</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../consuls/normal.html#id3">注册服务</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../consuls/normal.html#consul">Consul集群</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../consuls/normal.html#kv">KV数据</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../consuls/normal.html#web-ui">WEB UI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../consuls/normal.html#id4">参考</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../consuls/install.html">2.5.2. 安装</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../nacos.html">2.6. nacos</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../nacos/normal.html">2.6.1. 常用</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../bolt.html">2.7. bolt</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Document.html">3. 文档型 DB</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../Documents/MongoDB.html">3.1. MongoDB的使用 </a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../Documents/MongoDBs/normal.html">3.1.1. mongo基本</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/normals/normal.html">基本</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/normals/design.html">模型设计</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/normals/architecture.html">架构设计</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/normals/history.html">历史</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Documents/MongoDBs/select.html">3.1.2. 查询相关命令</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/selects/basic.html">数据查询</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/selects/date.html">日期查询</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/selects/groupby.html">groupby</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/selects/regex.html">正则查询</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/selects/array.html">数组相关操作 </a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/selects/other.html">其他</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Documents/MongoDBs/command.html">3.1.3. 其他命令</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/commands/db.html">DB相关</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/commands/table.html">表(集合)相关</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/commands/insert.html">数据插入</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/commands/update.html">数据删除/修改</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/commands/array.html">数组修改</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/commands/view.html">View的使用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/commands/aggregate.html">使用聚合</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/commands/user.html">用户使用命令</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Documents/MongoDBs/index.html">3.1.4. 索引</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/indexs/normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/indexs/get.html">查看索引</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/indexs/create.html">创建索引</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/indexs/delete.html">删除索引</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/indexs/index_hash.html">哈希索引</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/indexs/index_unique.html">唯一索引</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/indexs/index_sparse.html">稀疏索引</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/indexs/index_partial.html">局部索引</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/indexs/index_ttl.html">TTL索引</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Documents/MongoDBs/replica-set.html">3.1.5. 副本集架构</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/replica-set.html#id3">复制的基本架构</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/replica-set.html#id4">复制集中成员说明</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/replica-set.html#id5">测试主从复制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/replica-set.html#id6">复制集管理操作</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Documents/MongoDBs/sharded-cluster.html">3.1.6. 分片集群</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/sharded-clusters/normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/sharded-clusters/concept.html">基本概念</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/sharded-clusters/command.html">基本命令</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/sharded-cluster.html#id3">参考</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Documents/MongoDBs/optimize.html">3.1.7. 优化</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/optimizes/normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/optimizes/command.html">常用命令</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/optimizes/explain.html">explain命令</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/optimizes/query_plan.html">查询计划-Query Plans</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/optimizes/origin_explain.html">原始explain函数 </a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Documents/MongoDBs/server.html">3.1.8. Mongod服务的启动</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/servers/normal.html">基本</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/servers/shard_cluster.html">分片实例</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Documents/MongoDBs/practice.html">3.1.9. 实战</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/practices/normal.html">常见实战例子</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/practices/example.html">实例实例</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/practice.html#id3">参考</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Documents/MongoDBs/question.html">3.1.10. 常见问题</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/question.html#todo">todo</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/question.html#done">done</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Documents/MongoDBs/extend.html">3.1.11. 扩展命令</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/extends/mongostat.html">mongostat</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Documents/MongoDBs/extends/mongodump.html">数据导入导出</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Documents/ElasticSearch.html">3.2. ElasticSearch</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Column.html">4. 列式存储 DB</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../Columns/normal.html">4.1. 常用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../Columns/normals/columnar.html">4.1.1. 列式存储格式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Columns/normals/other.html">4.1.2. 其他</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../Columns/normals/other.html#greenplum-db">Greenplum DB</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Columns/normals/other.html#impala">Impala</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Columns/normals/other.html#pinot">Pinot</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Columns/normals/other.html#kylin">Kylin</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Columns/hbase.html">4.2. HBase相关文档</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../Columns/hbases/normal.html">4.2.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Columns/hbases/hbase_shell.html">4.2.2. HBase Shell</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../Columns/hbases/hbase_shell.html#id2">HBase Shell 入门</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Columns/ClickHouse.html">4.3. ClickHouse</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Columns/Presto.html">4.4. Presto</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Columns/RedShift.html">4.5. RedShift</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../Columns/RedShift.html#id2">4.5.1. 简介</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Columns/RedShift.html#id3">4.5.2. 使用案例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../Columns/RedShift.html#id4">商业智能</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Columns/RedShift.html#id5">对事件进行运营分析</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Columns/RedShift.html#id6">数据即服务</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Columns/RedShift.html#id7">预测分析</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Relational.html">5. 关系型数据库</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../Relationals/MySQL.html">5.1. MySQL使用文档</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/MySQLs/mysql_user.html">5.1.1. 用户使用命令</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/MySQLs/mysql_user.html#rootmysql">新增用户(前提:用root用户进入mysql客户端):</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/MySQLs/mysql_user.html#id3">修改用户密码:</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/MySQLs/mysql_user.html#id4">删除用户</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/MySQLs/mysql_user.html#id5">为用户授权</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/MySQLs/mysql_user.html#id6">取消用户授权</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/MySQLs/mysql_user.html#mysql">查看 MySQL 用户权限</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/MySQLs/mysql_question.html">5.1.2. MySQL问题汇总</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/MySQLs/questions/mysql_simple.html">MySQL简单错误</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/MySQLs/questions/mysql_advance.html">MySQL高级错误</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/MySQLs/questions/mysql_optimize.html">MySQL优化相关</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/MySQLs/mysql_check.html">5.1.3. 检查命令使用汇总</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/MySQLs/mysql_check.html#infomation-schema">通过infomation_schema查看系统变量数</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/MySQLs/mysql_check.html#show-global-status">通过show global status查看全局状态</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/MySQLs/mysql_check.html#show-variables">通过show variables查看变量</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/MySQLs/mysql_check.html#id3">其他使用命令</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/MySQLs/mysql_config.html">5.1.4. MySQL配置文件修改</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/MySQLs/configs/mysql_important.html">重要参数说明</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/MySQLs/configs/mysql_example.html">文件詳細说明</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/MySQLs/configs/mysql_config_param.html">配置文件相关参数</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/MySQLs/configs/mysql_config_cmd.html">配置参数查询优化</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/MySQLs/mysql_tool.html">5.1.5. MySQL工具</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/MySQLs/tools/mysqlsla.html">慢查询日志分析工具</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/MySQLs/tools/mysqldumpslow.html">mysqldumpslow——MySQL自带慢查询工具</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/MySQLs/tools/pt-table-checksum.html">pt-table-checksum命令</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/MySQLs/mysql_practice.html">5.1.6. MySQL实际操作</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/MySQLs/practices/mysql_practice_replication.html">实践MySQL复制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/MySQLs/practices/mysql_practice_checkout.html">MySQL查看操作</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/MySQLs/practices/mysql_example.html">MySQL实例</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/MySQLs/practices/mysql_summary.html">MySQL知识汇总</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/MySQLs/06mysql_security.html">5.1.7. 06. 安全</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/MySQLs/06mysql_security.html#id3">5.1.8. 6.1. 安全使用指南</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/MySQLs/07mysql_backup.html">5.1.9. 07. 备份与恢复</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/MySQLs/07backups/backup_type.html">7.1 备份与恢复类型</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/MySQLs/07backups/backup_method.html">7.2 数据库备份方法</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/MySQLs/07backups/backup_example.html">7.3 备份与恢复机制实例</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/MySQLs/07backups/backup_mysqldump.html">7.4 使用mysqldump命令备份</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/MySQLs/07backups/backup_incremental.html">7.5 使用Binary Log工具恢复按时间点增量备份</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/MySQLs/16mysql_replication.html">5.1.10. 16. 复制</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/MySQLs/16mysql_replication.html#configure">16.1 配置文件</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/MySQLs/16mysql_replication.html#id4">16.1.1 如何建立复制</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/MySQLs/mysql_other.html">5.1.11. 其他MySQL相关</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/MySQLs/mysql_other.html#mysqlid4">获取MySQL自增ID的4种方法</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/MySQLs/mysql_other.html#id2">其他</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/MySQLs/mysql_architecture.html">5.1.12. MySQL架构</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/MySQLs/mysql-proxy.html">5.1.13. MySQL代理</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/MySQLs/mysql-proxys/mysql-proxy_install.html">MySQL代理安装</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/MySQLs/mysql-proxys/mysql-proxy_usage.html">MySQL代理的使用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/MySQLs/mysql-proxys/mysql-proxy_config.html">MySQL代理配置</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Relationals/command.html">5.2. 基本命令与实例</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/commands/cmd_shell.html">5.2.1. shell操作mysql命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/commands/cmd_db.html">5.2.2. 数据库级操作</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/commands/cmd_table.html">5.2.3. 表级操作</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/commands/cmd_alter.html">5.2.4. alter修改表字段</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/commands/cmd_select.html">5.2.5. select命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/commands/cmd_update.html">5.2.6. update命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/commands/cmd_insert.html">5.2.7. insert命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/commands/cmd_delete.html">5.2.8. delete命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/commands/cmd_index.html">5.2.9. index索引操作</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/commands/cmd_event.html">5.2.10. event事件调度器</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/commands/cmd_declare.html">5.2.11. MySQL变量</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/commands/cmd_procedure.html">5.2.12. procedure存储过程相关</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/commands/cmd_procedure.html#id2">实例</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/commands/cmd_partition.html">5.2.13. partition分区表相关</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/commands/cmd_lock.html">5.2.14. lock锁相关</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/commands/cmd_foreignkey.html">5.2.15. 外键</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/commands/cmd_explain.html">5.2.16. explain命令相关</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/commands/cmd_profile.html">5.2.17. profiling分析查询</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/commands/cmd_show.html">5.2.18. show查看相关命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/commands/cmd_other.html">5.2.19. 其他命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/commands/cmd_optimization.html">5.2.20. 优化相关</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/commands/cmd_optimization.html#information-schema">8.2.4 优化INFORMATION_SCHEMA請求</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/commands/cmd_optimization.html#id3">8.2.5 其他优化小节</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/commands/cmd_type.html">5.2.21. 时间类型</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/commands/cmd_type.html#timestamp">timestamp</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/commands/cmd_mysqldump.html">5.2.22. mysqldump–数据库备份程序</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/commands/cmd_mysqladmin.html">5.2.23. mysqladmin命令使用</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Relationals/PostgreSQL.html">5.3. postgresql使用文档</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/PostgreSQLs/normal.html">5.3.1. 常用</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/PostgreSQLs/normals/install.html">安装</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/PostgreSQLs/command.html">5.3.2. 命令相关</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/PostgreSQLs/commands/console.html">控制台命令</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/PostgreSQLs/commands/user.html">用户</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/PostgreSQLs/commands/db.html">数据库</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/PostgreSQLs/commands/table.html">表</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/PostgreSQLs/config.html">5.3.3. 配置文件</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/PostgreSQLs/configs/pg_settings.html">pg_settings表相关</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/PostgreSQLs/configs/option.html">选项</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/PostgreSQLs/config.html#id3">参考</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/PostgreSQLs/docker.html">5.3.4. docker相关</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Relationals/SQLite.html">5.4. SQLite使用文档</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/SQLites/normal.html">5.4.1. sqlite基本介绍</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/SQLites/command.html">5.4.2. sqlite基本命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/SQLites/question.html">5.4.3. 常见问题</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../Relationals/SQLites/question.html#id3">版本太低问题</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Relationals/SQLites/tmp.html">5.4.4. 临时</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../MQ.html">6. MQ</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../MQs/kafka.html">6.1. Kafka的使用 </a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../MQs/kafkas/normal.html">6.1.1. 常用</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/normals/normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/normals/introduce.html">1.Kafka简介</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/normals/design.html">4.Kafka设计</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/normals/usecase.html">Kafka用例</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/normals/quickstart.html">Kafka快速使用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/normals/stream.html">Kafka Streams </a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/normals/storage.html">文件存储机制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/normals/other.html">Kafka其他</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../MQs/kafkas/config.html">6.1.2. 3.Kafka配置</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/configs/normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/configs/cleaner.html">Cleaner</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/configs/ssl.html">SSL相关</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/configs/thread.html">Thread</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/configs/zookeeper.html">zookeeper</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/configs/log.html">日志相关</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/configs/kafka_broker_config.html">Kafka Broker 配置文件</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/configs/kafka_topic_config.html">Kafka Topic配置</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/configs/zookeeper.properties.html">zookeeper.properties</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/configs/server.properties.html">server.properties</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../MQs/kafkas/command.html">6.1.3. 命令</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/commands/normal.html">脚本列表</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/commands/connect-distributed.sh.html">Kafka Connect</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/commands/connect-standalone.sh.html">connect-standalone.sh</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/commands/kafka-configs.sh.html">kafka-configs.sh</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/commands/kafka-broker-api-versions.sh.html">kafka-broker-api-versions.sh</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/commands/kafka-console-consumer.sh.html">kafka-console-consumer.sh</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/commands/kafka-console-producer.sh.html">kafka-console-producer.sh</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/commands/kafka-consumer-groups.sh.html">kafka-consumer-groups.sh</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/commands/kafka-consumer-perf-test.sh.html">kafka-consumer-perf-test.sh</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/commands/kafka-delete-records.sh.html">kafka-delete-records.sh</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/commands/kafka-log-dirs.sh.html">kafka-log-dirs.sh</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/commands/kafka-preferred-replica-election.sh.html">kafka-preferred-replica-election.sh</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/commands/kafka-producer-perf-test.sh.html">kafka-producer-perf-test.sh</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/commands/kafka-reassign-partitions.sh.html">kafka-reassign-partitions.sh</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/commands/kafka-replica-verification.sh.html">kafka-replica-verification.sh</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/commands/kafka-server-start.sh.html">kafka-server-start.sh</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/commands/kafka-server-stop.sh.html">kafka-server-stop.sh</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/commands/kafka-topics.sh.html">kafka-topics.sh</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/commands/kafka-verifiable-consumer.sh.html">kafka-verifiable-consumer.sh</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/commands/kafka-verifiable-producer.sh.html">kafka-verifiable-producer.sh</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/commands/zookeeper-shell.sh.html">zookeeper-shell.sh</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/commands/kafka-simple-consumer-shell.sh.html">kafka-simple-consumer-shell.sh</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../MQs/kafkas/practice.html">6.1.4. Kafka实践</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/practices/kafka_replica.html">使用多副本(replica)实现高可用</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../MQs/kafkas/tool.html">6.1.5. 工具</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/tools/kafkaTool.html">Kafka Tool</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../MQs/kafkas/question.html">6.1.6. 常见问题</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/question.html#broker-may-not-be-available">Broker may not be available</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/question.html#panic-kafka-client-has-run-out-of-available-brokers">panic: kafka: client has run out of available brokers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../MQs/kafkas/question.html#kafka">kafka如何保证这种有序性</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../MQs/pulsar.html">6.2. pulsar</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../MQs/Beanstalk.html">6.3. Beanstalk</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Time-Serie.html">7. TSDB数据库</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../Time-Series/influxdb.html">7.1. InfluxDB</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../Time-Series/influxdbs/normal.html">7.1.1. 基本</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../Time-Series/influxdbs/normals/concept.html">基本概念</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Time-Series/influxdbs/normals/protocol.html">协议</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Time-Series/influxdbs/normals/api.html">协议-HTTP API</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Time-Series/influxdbs/normals/docker.html">Docker版使用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Time-Series/influxdbs/normals/performance.html">性能优化</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Time-Series/influxdbs/normals/history.html">历史</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Time-Series/influxdbs/normals/other.html">其他</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Time-Series/influxdbs/command.html">7.1.2. 协议-CLI</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../Time-Series/influxdbs/commands/db.html">DB级,表级</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Time-Series/influxdbs/commands/influx.html">influx命令</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Time-Series/influxdbs/commands/insert.html">插入</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Time-Series/influxdbs/commands/select.html">查询</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Time-Series/influxdbs/commands/rp.html">保留策略Retention Policy(RP)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Time-Series/influxdbs/commands/cq.html">连续查询Continuous Query(CQ)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Time-Series/influxdbs/commands/influxd.html">influxd命令</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Time-Series/influxdbs/practice.html">7.1.3. 实战</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../Time-Series/influxdbs/practices/practice1.html">实战1</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Time-Series/influxdbs/question.html">7.1.4. 常见问题 </a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../Time-Series/influxdbs/question.html#partial-write-points-beyond-retention-policy-dropped-1">partial write: points beyond retention policy dropped=1</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Time-Series/influxdbs/question.html#id4">时区问题</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Time-Series/influxdbs/question.html#group-by-1w">GROUP BY(1w)按周查询问题</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Time-Series/influxdbs/question.html#group-by-1m">GROUP BY(1M)按月查询问题</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Time-Series/influxdbs/question.html#id5">查询返回结果为空的问题</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Time-Series/influxdbs/question.html#into">INTO子句的共同问题</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Time-Series/influxdbs/question.html#id6">为啥是从周四开始</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Time-Series/influxdbs/question.html#partial-write-max-values-per-tag-limit-exceeded-100000-100000">partial write: max-values-per-tag limit exceeded (100000/100000)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Time-Series/prometheus.html">7.2. Prometheus</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Time-Series/opentsdb.html">7.3. OpenTSDB</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../Time-Series/opentsdb.html#telegraf-3">7.3.1. Telegraf </a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Time-Series/M3DB.html">7.4. M3DB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Time-Series/normal.html">7.5. 常用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../Time-Series/normals/tsdb.html">7.5.1. 其他时序数据库</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../Time-Series/normals/difference.html">7.5.2. 几种时序DB的不同 </a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../Time-Series/normals/difference.html#id3">前言</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Time-Series/normals/difference.html#id4">监控系统</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Time-Series/normals/difference.html#push-vs-pull">Push vs Pull</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Time-Series/normals/difference.html#id7">查询语法</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../Time-Series/normals/difference.html#id12">总结</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../GraphDB.html">8. 图数据库</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../GraphDBs/normal.html">8.1. 基本</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../GraphDBs/normal.html#id3">8.1.1. 两个重要属性</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../GraphDBs/normal.html#id4">8.1.2. 标记属性图模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../GraphDBs/normal.html#id5">8.1.3. 关联</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../GraphDBs/neo4j.html">8.2. neo4j </a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../GraphDBs/neo4j.html#cypher">8.2.1. Cypher图查询语言</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../GraphDBs/dgraph.html">8.3. dgraph </a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../GraphDBs/cayley.html">8.4. cayley</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../GraphDBs/cayleys/normal.html">8.4.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../GraphDBs/cayleys/config.html">8.4.2. 配置文件</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../GraphDBs/cayleys/config.html#store-backend">store.backend</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../GraphDBs/cayleys/config.html#store-address">store.address</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../GraphDBs/cayleys/config.html#store-read-only">store.read_only</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../GraphDBs/cayleys/config.html#configuration-file-location">Configuration File Location</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../GraphDBs/cayleys/GizmoAPI.html">8.4.3. GizmoAPI</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../GraphDBs/cayleys/GizmoAPI.html#id2">数据源</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../GraphDBs/cayleys/GizmoAPI.html#graph-object">Graph object</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../GraphDBs/cayleys/GizmoAPI.html#path-object">Path object</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../GraphDBs/cayleys/GizmoAPI.html#example">Example</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../GraphDBs/cayleys/advance.html">8.4.4. 高级</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../GraphDBs/cayleys/practice1.html">8.4.5. 实战1-启动</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../GraphDBs/cayleys/practice2.html">8.4.6. 实战2-简单的例子 </a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../GraphDBs/cayleys/practice2.html#id4">查询一共有多少条数据</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../GraphDBs/cayleys/practice2.html#id5">查询全部电影</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../GraphDBs/cayleys/practice2.html#id6">查询电影《流浪地球》的所有属性值</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../GraphDBs/cayleys/practice2.html#id7">查询沈腾主演的电影</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../GraphDBs/cayleys/practice2.html#id8">查询&lt;捉妖记&gt;与&lt;捉妖记2&gt;的共同演员</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../GraphDBs/cayleys/practice2.html#cayley-visualize">Cayley图数据库的可视化(Visualize)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../GraphDBs/cayleys/practice2.html#id9">查看某个实体的所有属性及属性值</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../GraphDBs/cayleys/practice2.html#id10">显示属性及属性值关系</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../GraphDBs/cayleys/practice2.html#id11">原始数据</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../GraphDBs/cayleys/practice3.html">8.4.7. 实践3</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../GraphDBs/cayleys/question.html">8.4.8. 常见问题</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../GraphDBs/cayleys/question.html#g-v-all">g.V().All()不能显示全部数据</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../GraphDBs/Neptune.html">8.5. Neptune</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../GraphDBs/Neptune.html#id2">8.5.1. 概述</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../GraphDBs/other.html">8.6. 其他</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../GraphDBs/other.html#nebulagraph">8.6.1. NebulaGraph</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../VectorDB.html">9. 向量数据库</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../VectorDBs/normal.html">9.1. 常用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../VectorDBs/normal.html#db">9.1.1. 各向量DB对比</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../VectorDBs/normal.html#id3">9.1.2. 索引方法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../VectorDBs/normal.html#id4">9.1.3. 其他</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../VectorDBs/tradition.html">9.2. 传统DB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../VectorDBs/Milvus.html">9.3. Milvus</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../VectorDBs/Faiss.html">9.4. Faiss</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../VectorDBs/Chroma.html">9.5. Chroma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../VectorDBs/Pinecone.html">9.6. Pinecone</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../VectorDBs/Weaviate.html">9.7. Weaviate</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Multi-Model.html">10. 多模 DB</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../Multi-Model.html#arangodb">10.1. ArangoDB</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../FullText-Index.html">11. 全文索引</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../FullText-Indexs/Lucene.html">11.1. Lucene</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../FullText-Indexs/solr.html">11.2. Solr</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../FullText-Indexs/sphinx.html">11.3. Sphinx文档</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../FullText-Indexs/sphinxs/coreseek.html">11.3.1. coreseek文档</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../FullText-Indexs/sphinxs/coreseek_introduce.html">coreseek介绍</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../FullText-Indexs/sphinxs/coreseek_install.html">coreseek安装</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other.html">12. 其他DB</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../others/oracle.html">12.1. Oracle文档</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../others/oracles/oracle_simple.html">12.1.1. oracle的简单使用</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../others/sqlserver.html">12.2. SQLserver文档</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../others/sqlservers/sqlserver_simple.html">12.2.1. sqlserver命令</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../others/other.html">12.3. 其他</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../others/other.html#doozer-1">12.3.1. doozer </a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../others/other.html#clickhouse-2">12.3.2. clickhouse </a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../others/other.html#db">12.3.3. 其他DB</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">新溪-gordon</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../Key-Value.html"><span class="section-number">2. </span>K/V数据库</a> &raquo;</li>
+        
+          <li><a href="../../redis.html"><span class="section-number">2.1. </span>Redis相关文档</a> &raquo;</li>
+        
+          <li><a href="../redis_command.html"><span class="section-number">2.1.1. </span>redis命令</a> &raquo;</li>
+        
+      <li>Redis 集合(Set)</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../../_sources/Key-Values/redis/cmds/set.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            <nav id="local-table-of-contents" role="navigation" aria-labelledby="local-table-of-contents-title">
+              <h4 id="local-table-of-contents-title">On This Page</h4>
+              <ul>
+<li><a class="reference internal" href="#">Redis 集合(Set)</a><ul>
+<li><a class="reference internal" href="#sadd">sadd</a></li>
+<li><a class="reference internal" href="#srem">srem</a></li>
+<li><a class="reference internal" href="#sismember">sismember</a></li>
+<li><a class="reference internal" href="#smembers">smembers</a></li>
+<li><a class="reference internal" href="#sunion">sunion</a></li>
+</ul>
+</li>
+</ul>
+
+            </nav>
+  <table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="../../../genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../../py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../../search.html"><span class="std std-ref">搜索页面</span></a></p></td>
+</tr>
+</tbody>
+</table>
+<section id="redis-set">
+<h1>Redis 集合(Set)<a class="headerlink" href="#redis-set" title="此标题的永久链接">¶</a></h1>
+<section id="sadd">
+<h2>sadd<a class="headerlink" href="#sadd" title="此标题的永久链接">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sadd</span> <span class="n">sets</span> <span class="s2">&quot;a&quot;</span><span class="o">//</span><span class="n">增加</span>
+<span class="n">sadd</span> <span class="n">sets</span> <span class="s2">&quot;b&quot;</span>
+<span class="n">sadd</span> <span class="n">sets</span> <span class="s2">&quot;c&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="srem">
+<h2>srem<a class="headerlink" href="#srem" title="此标题的永久链接">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">srem</span> <span class="n">sets</span> <span class="s2">&quot;c&quot;</span><span class="o">//</span><span class="n">移除</span>
+</pre></div>
+</div>
+</section>
+<section id="sismember">
+<h2>sismember<a class="headerlink" href="#sismember" title="此标题的永久链接">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sismember</span> <span class="n">sets</span> <span class="s2">&quot;a&quot;</span> <span class="o">=&gt;</span> <span class="mi">1</span><span class="o">//</span><span class="n">查看有无些元素</span>
+<span class="n">sismember</span> <span class="n">sets</span> <span class="s2">&quot;d&quot;</span> <span class="o">=&gt;</span> <span class="mi">0</span>
+</pre></div>
+</div>
+</section>
+<section id="smembers">
+<h2>smembers<a class="headerlink" href="#smembers" title="此标题的永久链接">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">smembers</span> <span class="n">sets</span> <span class="o">=&gt;</span><span class="p">[</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">]</span><span class="o">//</span><span class="n">查看所有元素</span>
+</pre></div>
+</div>
+</section>
+<section id="sunion">
+<h2>sunion<a class="headerlink" href="#sunion" title="此标题的永久链接">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sadd</span> <span class="n">anothers</span> <span class="s2">&quot;a&quot;</span><span class="o">//</span><span class="n">新增一个set</span>
+<span class="n">sadd</span> <span class="n">anothers</span> <span class="s2">&quot;d&quot;</span>
+<span class="n">sunion</span> <span class="n">sets</span> <span class="n">anothers</span> <span class="o">=&gt;</span> <span class="p">[</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">,</span><span class="s2">&quot;d&quot;</span><span class="p">]</span><span class="o">//</span><span class="n">把两set合并</span>
+</pre></div>
+</div>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="../../../genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../../py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../../search.html"><span class="std std-ref">搜索页面</span></a></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="connection.html" class="btn btn-neutral float-right" title="基本命令" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="list.html" class="btn btn-neutral" title="Redis 列表(List)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+  
+  <div id="gitalk-container"></div>
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2010-2025, 新溪-gordon.
+
+    </p>
+  </div>
+  <div>备案号 <a href="http://www.beian.miit.gov.cn">京ICP备16018553号</a></div><div>Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a></div>. 
+
+
+</footer>
+
+<script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?042289284b8eb33866001347a3e0b129";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>     
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'V2025.06',
+            LANGUAGE:'zh-CN',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../../_static/sphinx_highlight.js"></script>
+      <script type="text/javascript" src="../../../_static/clipboard.min.js"></script>
+      <script type="text/javascript" src="../../../_static/copybutton.js"></script>
+      <script type="text/javascript" src="../../../_static/translations.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+
+  
+
+  <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+
+
+      // var gitalk = new Gitalk({
+      //         clientID: '565177626b5d46427009',
+      //         clientSecret: 'b2a36e67e1d2a73e43667f46d571c2624f8e1026',
+      //         repo: 'knowledge',
+      //         owner: 'zhaoweiguo',
+      //         admin: ['zhaoweiguo'],
+      //         id: location.pathname,      // Ensure uniqueness and length less than 50
+      //         distractionFreeMode: false  // Facebook-like distraction free mode
+      //       })
+      // gitalk.render('gitalk-container')
+
+  </script>
+
+
+<script type="text/javascript" src="../../../_static/js/table-of-contents-sidebar.js"></script>
+<!-- <script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script> -->
+<script type="text/javascript">
+    window.onload = function(e){
+        TableOfContents.init({
+            basePath: "https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/",
+            querySelector: "body" // or other css querySelector
+        });
+    }
+</script> 
+
+</body>
+</html>

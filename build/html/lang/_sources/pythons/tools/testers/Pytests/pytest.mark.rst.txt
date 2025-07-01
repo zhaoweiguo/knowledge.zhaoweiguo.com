@@ -1,0 +1,137 @@
+pytest.mark
+###########
+
+
+
+@pytest.mark.skip/skipif 跳过测试
+=================================
+
+* @pytest.mark.skip 是一个用于在 pytest 测试框架中跳过某些测试用例或测试类的装饰器。其主要作用是临时禁用一些不需要运行的测试
+
+常用于以下几种情况::
+
+    1. 测试尚未完成或稳定
+        当某些测试用例还在开发中或者有已知问题暂时不能解决时，可以使用这个装饰器跳过它们，以便不会影响整体测试的运行。
+    2. 外部依赖不可用
+        如果某些测试依赖于外部资源（如数据库、网络服务）而这些资源暂时不可用，使用 @pytest.mark.skip 可以跳过这些测试，避免测试失败。
+    3. 条件性跳过
+        根据某些条件决定是否跳过测试，例如特定的平台或环境下运行时跳过某些测试
+
+示例::
+
+    import pytest
+
+    @pytest.mark.skip(reason="Test is under development")
+    def test_example():
+        assert 1 == 1
+
+    # 条件性跳过测试
+    @pytest.mark.skipif(sys.platform == "win32", reason="does not run on windows")
+    def test_example_on_non_windows():
+        assert 1 == 1
+
+
+@pytest.mark.xfail 标记失败
+===========================
+
+* 使用@pytest.mark.xfail标记用例，表示期望这个用例执行失败。
+* 标记后的用例会正常执行，只是失败时不再显示堆栈信息，最终的结果有两个：用例执行失败时（XFAIL：符合预期的失败）、用例执行成功时（XPASS：不符合预期的成功）
+* 结构::
+
+    pytest.mark.xfail(condition=None, *, reason=None, raises=None, run=True, strict=False)
+    参数:
+    condition位置参数，默认值为None，表示只有满足条件时才标记用例；
+    reason关键字参数，默认值为None，表示可以指定一个reason字符串，说明标记用例的原因；
+    raises关键字参数，默认值为None
+        可以指定为一个异常类或者多个异常类的元组，表示我们期望用例上报指定的异常；
+        如果用例的失败不是因为所期望的异常导致的，pytest将会把测试结果标记为FAILED;
+    run关键字参数，默认值为True:
+        当run=False时，pytest不会再执行测试用例，直接将结果标记为XFAIL；
+    strict关键字参数，默认值为False
+        当strict=False时，如果用例执行失败，结果标记为XFAIL，表示符合预期的失败；如果用例执行成功，结果标记为XPASS，表示不符合预期的成功；
+        当strict=True时，如果用例执行成功，结果将标记为FAILED；
+
+
+示例::
+
+    import pytest
+
+    @pytest.mark.xfail
+    def test_example():
+        assert 1 == 2
+
+
+
+@pytest.mark.asyncio
+====================
+
+* 参见: 插件-pytest-asyncio
+
+
+
+@pytest.mark.parametrize
+========================
+
+* allows you to run a test function multiple times with different sets of arguments. 
+* This is especially useful for testing functions with multiple input scenarios in a concise and readable way.
+
+示例::
+
+    def add(a, b):
+        return a + b
+
+    import pytest
+
+    @pytest.mark.parametrize("a, b, expected", [
+        (1, 2, 3),
+        (4, 5, 9),
+        (-1, -2, -3),
+        (0, 0, 0),
+    ])
+    def test_add(a, b, expected):
+        assert add(a, b) == expected
+
+
+    """
+    结果:
+    normal/pytest/mark/test_mark_parametrize.py::test_add[1-2-3] PASSED
+    normal/pytest/mark/test_mark_parametrize.py::test_add[4-5-9] PASSED
+    normal/pytest/mark/test_mark_parametrize.py::test_add[-1--2--3] PASSED
+    normal/pytest/mark/test_mark_parametrize.py::test_add[0-0-0] PASSED
+    """
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

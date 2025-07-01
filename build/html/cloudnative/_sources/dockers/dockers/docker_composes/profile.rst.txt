@@ -1,0 +1,65 @@
+profiles 声明
+#######################
+
+docker-compose 中包含许多服务，我们可以通过使用 profiles 属性来控制是否启动某项服务。profiles 属性的值是数组形式的，例如我将为 redis 属性增加一个名为 alming 的 profile::
+
+	version: "3.9"
+	services:
+	  web:
+	    build: .
+	    ports:
+	      - "5000:5000"
+	    volumes:
+	    #将宿主机当前目录与容器内/code目录绑定，功能与docker run的-vc参数一致
+	      - .:/code
+	    environment:
+	    # 设置容器内环境变量，功能与Dockerfile ENV指令以及docker run的-e参数一致
+	      FLASK_ENV: development
+	  redis:
+	    image: "redis:alpine"
+	    profiles: alming
+
+
+启动它，会发现 redis 服务并未启动::
+
+	$ docker-compose up
+	Starting compose_web_1 ... done
+	Attaching to compose_web_1
+	web_1    |  * Serving Flask app 'app.py' (lazy loading)
+	web_1    |  * Environment: development
+	web_1    |  * Debug mode: on
+	web_1    |  * Running on all addresses.
+	web_1    |    WARNING: This is a development server. Do not use it in a production deployment.
+	web_1    |  * Running on http://172.18.0.2:5000/ (Press CTRL+C to quit)
+	web_1    |  * Restarting with stat
+	web_1    |  * Debugger is active!
+	web_1    |  * Debugger PIN: 132-905-791
+
+
+激活 profiles
+====================
+
+第一种就是使用 --profile 参数，启动命令如下::
+
+	$ docker-compose --profile alming -f docker-compose-profiles.yml up
+
+第二种方式是配置 COMPOSE_PROFILES 环境变量，例如执行以下命令添加环境便令::
+
+	$ export COMPOSE_PROFILES=alming
+	$ docker-compose up
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

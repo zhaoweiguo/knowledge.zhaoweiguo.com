@@ -1,0 +1,882 @@
+RFC6762: mDNS
+######################
+
+
+* February 2013
+* Apple Inc.
+
+
+收集
+====
+
+* mDNS 协议适用于局域网内没有 DNS 服务器时的域名解析，设备通过组播的方式交互 DNS 记录来完成域名解析，约定的组播地址是：224.0.0.251，端口号是 5353，mDNS 协议使用 DNS 协议一样的数据包
+* mDNS 只能用于局域网内部，并且它只接受解析主机名前缀为.local 的域名，因此 mDNS 也是可以和 DNS 在同一台设备上共存的，以及它们存储记录的区域是分开的。
+
+chatGPT
+=======
+
+* mDNS（Multicast Domain Name System）是一种用于在本地网络中寻找设备和服务的方式，它允许设备使用易于记忆的名称来查找和识别其他设备。 mDNS通常在局域网（LAN）环境中使用，可以在不需要全局DNS服务器的情况下实现服务发现。它通过将DNS请求以多播方式发送到本地网络来实现。
+* mDNS协议旨在解决局域网中的主机发现和服务发现问题，这是因为传统的DNS（Domain Name System）解决方案需要专门的DNS服务器来支持，这在一些场景下可能不可行。mDNS协议允许设备在没有中央DNS服务器的情况下进行命名解析，通过将查询广播到局域网中的所有设备，并等待响应来实现主机发现和服务发现。这意味着设备可以通过广播自己的IP地址和服务信息来让其他设备发现它们，而无需依赖外部DNS服务器。
+
+
+
+
+1. 简介::
+
+    旨在提供一种基于多播的局域网主机名解析和服务发现机制，以简化设备管理和配置。
+    该协议通过在局域网内进行DNS查询和响应，以实现主机名到IP地址的映射和服务类型和实例的发现。
+
+
+2. 目标和使用场景::
+
+    主要目标是简化设备管理和配置，提高操作简便性和降低设备配置复杂度。
+    该协议适用于各种局域网环境，包括家庭网络、企业网络和移动网络等。
+
+
+3. 优点和限制::
+
+    优点是简单易用、灵活性高、支持即插即用和自动配置等特点
+    但也存在一些限制，如传输距离短、网络规模有限和安全性问题等。
+
+
+4. 关键功能和技术::
+
+    包括:
+        主机名解析、
+        服务类型和实例的发现、
+        DNS消息格式的扩展、
+        基于多播的DNS查询和响应机制等。
+
+
+规范和要求
+----------
+
+1. DNS消息格式的扩展::
+
+    扩展了标准DNS消息格式的哪些部分以支持局域网环境中的主机名解析和服务发现。
+
+
+2. 基于多播的DNS查询和响应机制::
+
+    使用多播方式进行DNS查询和响应的机制。
+    局域网中的每个设备都可以使用相同的多播地址和端口号，以共享查询和响应消息。
+
+
+3. 主机名解析和服务发现的操作规范::
+
+    包括主机名格式、查询和响应的过程、TTL值、重复记录的处理等。
+
+
+4. 安全性和隐私性的考虑::
+
+    包括使用DNSSEC和TSIG签名、对查询和响应消息进行加密和认证等。
+
+实现和应用
+----------
+
+包括如何在不同类型的设备和网络环境中使用该协议，以及如何处理协议中的异常情况和错误。
+
+
+1. 实现mDNS协议所需要满足的要求::
+
+    包括支持IPv4和IPv6多播、遵循DNS消息格式、支持DNS查询和响应、处理重复记录等。
+
+2. 服务类型和实例的注册::
+
+    包括服务类型的命名、服务实例的属性和操作、服务的注销等。
+
+3. 基于DNS-SD的服务发现::
+
+    mDNS协议基于DNS-SD（DNS Service Discovery）的服务发现机制
+    包括如何发现局域网中的服务、如何使用DNS-SD的各种查询和响应操作、如何处理不同类型的服务实例等。
+
+
+4. mDNS协议的应用举例::
+
+    如在家庭网络中实现自动打印机发现、在企业网络中实现VoIP电话发现、在移动网络中实现局域网设备控制等。
+
+安全性
+------
+
+1. 安全威胁::
+
+    包括DNS欺骗、DoS攻击、窃听和篡改等。
+
+2. 安全机制::
+
+    包括DNSSEC、TLS、IPsec等。
+    使用DNSSEC保护DNS记录、使用IPSec保护mDNS报文等。
+
+3. 安全实现::
+
+    该章节提供了一些实现mDNS协议安全的建议，包括如何使用TLS证书、如何配置IPsec策略、如何处理重复记录等。
+    包括随机化ID、避免泄露信息、加强授权验证等
+
+4. 安全策略::
+
+    包括如何制定安全策略、如何处理恶意行为、如何限制服务访问等。
+
+
+性能和可扩展性
+--------------
+
+1. 性能指标::
+
+    包括响应时间、响应成功率、响应时间变化率等。
+
+2. 性能优化::
+
+    包括使用缓存、优化查询和响应、选择合适的TTL等。
+
+3. 可扩展性::
+
+    包括多播范围、查询响应数量等。
+
+4. 实施建议::
+
+    包括如何配置主机名和服务名称、如何处理缓存、如何选择合适的查询频率等。
+
+实现::
+
+    1. 实现要求：包括协议规范、多播范围、DNS记录类型等。
+    2. 实现建议：包括如何处理冲突、如何使用DNS记录、如何处理IPv6地址等。
+    3. 调试建议：包括如何检查记录、如何分析DNS报文、如何定位问题等。
+    4. 其他实现问题：包括TCP实现、IPv4地址转换等。
+
+
+
+
+
+
+Abstract
+========
+
+
+* As networked devices become smaller, more portable, and more ubiquitous, the ability to operate with less configured infrastructure is increasingly important.
+
+The primary benefits of mDNS names are::
+
+    1. they require little or no administration or configuration to set them up
+    2. they work when no infrastructure is present
+    3. they work during infrastructure failures.
+
+1.  Introduction
+================
+
+* 背景：mDNS 协议是为了解决零配置网络中的主机名解析问题而创建的。在零配置网络中，网络设备需要自动地发现和连接到网络上的其他设备，但由于没有中央管理器，没有分配 IP 地址或域名，因此网络设备需要一种协议来解决主机名解析问题。
+* 目的：mDNS 协议的目的是提供一种简单的、去中心化的解决方案，使设备可以在不需要专门的服务器或域名系统的情况下进行主机名解析。多播 DNS 通过本地多播协议实现，使每个设备都能够在本地网络中提供 DNS 服务和响应 DNS 查询。
+* 应用场景：mDNS 协议适用于一些小型网络场景，如家庭网络、小型办公室网络、无线局域网（WLAN）和其他一些需要零配置的场合。例如，用户可以使用 mDNS 协议在家庭网络中直接访问其他设备的共享文件夹或打印机，而无需知道 IP 地址或设备名称。
+
+* mDNS and its companion technology DNS-Based Service Discovery [RFC6763] were created to provide IP networking with the ease-of-use and autoconfiguration for which AppleTalk was well-known [RFC6760].  
+* When reading this document, familiarity with the concepts of Zero Configuration Networking [Zeroconf] and automatic link-local addressing [RFC3927] [RFC4862] is helpful.
+* mDNS borrows heavily from the existing DNS protocol [RFC1034] [RFC1035] [RFC6195], using the existing DNS message structure, name syntax, and resource record types.
+
+3.  mDNS Names
+=======================
+
+主要包括以下核心点::
+
+    1. mDNS域名格式：使用与DNS相同的域名格式，包括由一系列标签组成的点分隔的层次结构。
+    2. 多标签主机名： 与DNS不同，mDNS允许使用多个标签来表示主机名。例如，主机名"printer1.local"由两个标签组成，分别为"printer1"和"local"。
+    3. 保留标签：mDNS协议定义了一些保留的标签，用于表示特定的功能或服务。例如，标签“_services._dns-sd._udp.local.”用于发现可用的服务。
+    4. 长度限制： mDNS域名长度不能超过255个字节，其中每个标签不能超过63个字符。
+    5. 大小写敏感性： mDNS域名是区分大小写的，因此“example.local”和“Example.local”是不同的域名。
+
+* This document specifies that the DNS top-level domain ".local." is a special domain with special semantics, namely that any fully qualified name ending in ".local." is link-local, and names within this domain are meaningful only on the link where they originate. This is analogous to IPv4 addresses in the ``169.254/16`` prefix or IPv6 addresses in the ``FE80::/10`` prefix, which are link-local and meaningful only on the link where they originate.
+
+* Any DNS query for a name ending with ".local." MUST be sent to the mDNS IPv4 link-local multicast address 224.0.0.251 (or its IPv6 equivalent FF02::FB). 
+* In summary: It is required that the protocol have the ability to detect and handle name conflicts, but it is not required that this ability be used for every record.
+
+4. Reverse Address Mapping
+==========================
+
+IP地址和域名之间的反向映射，主要包括以下核心点::
+
+    1. 反向域名： 与DNS类似，mDNS也支持反向域名。在IPv4地址上，反向域名是.in-addr.arpa，而在IPv6地址上，反向域名是.ip6.arpa。
+    2. PTR记录： 为了实现反向映射，mDNS使用PTR记录，将IP地址映射到对应的域名。例如，对于IPv4地址“192.0.2.1”，对应的PTR记录可能是“1.2.0.192.in-addr.arpa”。
+    3. 反向查询：为了查询特定IP地址的域名，mDNS使用反向查询。在反向查询中，请求消息的查询类型为PTR，查询名是反向域名下的IP地址，回复消息包含一个或多个PTR记录，指向与该IP地址关联的一个或多个主机名。
+    4. 生命周期：与正向映射类似，mDNS中的反向映射也具有生命周期，即反向映射的记录将在特定时间后过期并被删除。
+
+
+* Like ".local.", the IPv4 and IPv6 reverse mapping domains are also defined to be link-local:
+
+* Any DNS query for a name ending with "254.169.in-addr.arpa." MUST be sent to the mDNS IPv4 link-local multicast address 224.0.0.251 or the mDNS IPv6 multicast address FF02::FB.  Since names under this domain correspond to IPv4 link-local addresses, it is logical that the local link is the best place to find information pertaining to those names.
+* Likewise, any DNS query for a name within the reverse mapping domains for IPv6 link-local addresses ("8.e.f.ip6.arpa.", "9.e.f.ip6.arpa.", "a.e.f.ip6.arpa.", and "b.e.f.ip6.arpa.") MUST be sent to the mDNS IPv6 link-local multicast address FF02::FB or the mDNS IPv4 link-local multicast address 224.0.0.251.
+
+
+5. Querying
+===========
+
+主要包括以下核心点::
+
+    1. 查询类型：mDNS支持多种查询类型，包括A、AAAA、SRV、PTR和TXT等
+    2. 服务类型：mDNS通过服务类型标识符来标识网络服务。
+        服务类型标识符由服务名称、协议名称和传输协议组成，
+        例如，"_http._tcp.local"表示HTTP服务在TCP协议上使用的本地传输协议。
+    3. 广播：为了查询多个主机上的服务，mDNS使用广播机制。
+        查询消息被广播到本地网络上的所有主机，并通过回复消息进行响应。
+        回复消息包含一个或多个资源记录，其中包含了请求的信息。
+    4. 生存时间：与其他mDNS消息类似，查询和回复消息也具有生存时间。
+        查询消息中的生存时间用于限制查询的时间，而回复消息中的生存时间用于限制回复消息的有效期。
+
+
+* There are two kinds of mDNS queries::
+
+    1. one-shot queries of the kind made by legacy DNS resolvers
+    2. continuous, ongoing mDNS queries made by fully compliant mDNS queriers
+
+5.1.  One-Shot mDNS Queries
+------------------------------------
+
+* The most basic kind of mDNS client may simply send standard DNS queries blindly to 224.0.0.251:5353, without necessarily even being aware of what a multicast address is.
+* In one-shot queries, the underlying assumption is that the transaction begins when the application issues a query, and ends when the first response is received.
+
+
+5.2.  Continuous mDNS Querying
+---------------------------------------
+
+* There is another type of query operation that is more asynchronous, in which having received one response is not necessarily an indication that there will be no more relevant responses, and the querying operation continues until no further responses are required.  
+* Determining when no further responses are required depends on the type of operation being performed.  
+* If the operation is looking up the IPv4 and IPv6 addresses of another host, then no further responses are required once a successful connection has been made to one of those IPv4 or IPv6 addresses.  
+* If the operation is browsing to present the user with a list of DNS-SD services found on the network [RFC6763], then no further responses are required once the user indicates this to the user-interface software, e.g., by closing the network browsing window that was displaying the list of discovered services.
+
+example
+'''''''
+
+* Imagine some hypothetical software that allows users to discover network printers.  
+* The user wishes to discover all printers on the local network, not only the printer that is quickest to respond. 
+* When the user is actively looking for a network printer to use, they open a network browsing window that displays the list of discovered printers.  
+* It would be convenient for the user if they could rely on this list of network printers to stay up to date as network printers come and go, rather than displaying out-of-date stale information, and requiring the user explicitly to click a "refresh" button any time they want to see accurate information (which, from the moment it is displayed, is itself already beginning to become out-of-date and stale).  
+* If we are to display a continuously updated live list like this, we need to be able to do it efficiently, without naive constant polling, which would be an unreasonable burden on the network.  
+* It is not expected that all users will be browsing to discover new printers all the time, but when a user is browsing to discover service instances for an extended period, we want to be able to support that operation efficiently.
+
+intervals
+'''''''''
+
+* Therefore, when retransmitting mDNS queries to implement this kind of continuous monitoring, the interval between the first two queries MUST be at least one second, the intervals between successive queries MUST increase by at least a factor of two, and the querier MUST implement Known-Answer Suppression, as described below
+
+optimise
+''''''''
+
+* in Section 7.1. The ``Known-Answer Suppression mechanism`` tells responders which answers are already known to the querier, thereby allowing responders to avoid wasting network capacity with pointless repeated transmission of those answers.  
+* When the interval between queries reaches or exceeds 60 minutes, a querier MAY cap the interval to a maximum of 60 minutes, and perform subsequent queries at a steady-state rate of one query per hour.  
+* To avoid accidental synchronization, a mDNS querier SHOULD also delay the first query of the series by a randomly chosen amount in the range 20-120 ms.
+
+TTL
+'''
+
+* When a mDNS querier receives an answer, the answer contains a TTL value that indicates for how many seconds this answer is valid. After this interval has passed, the answer will no longer be valid and SHOULD be deleted from the cache. 
+* To perform this cache maintenance, a mDNS querier should plan to retransmit its query after at least 50% of the record lifetime has elapsed.
+
+port
+''''
+
+* A compliant mDNS querier, which implements the rules specified in this document, MUST send its mDNS queries from UDP source port 5353 (the well-known port assigned to mDNS), and MUST listen for mDNS replies sent to UDP destination port 5353 at the mDNS link-local multicast address (224.0.0.251 and/or its IPv6 equivalent FF02::FB).
+
+
+5.3.  Multiple Questions per Query
+----------------------------------
+
+* mDNS allows a querier to place multiple questions in the Question Section of a single mDNS query message.
+* The semantics of a mDNS query message containing multiple questions is identical to a series of individual DNS query messages containing one question each.  Combining multiple questions into a single message is purely an efficiency optimization and has no other semantic significance.
+
+
+5.4.  Questions Requesting Unicast Responses
+--------------------------------------------
+
+* Sending mDNS responses via multicast has the benefit that all the other hosts on the network get to see those responses, enabling them to keep their caches up to date and detect conflicting responses. 
+* However, there are situations where all the other hosts on the network don't need to see every response. Some examples are a laptop computer waking from sleep, the Ethernet cable being connected to a running machine, or a previously inactive interface being activated through a configuration change.
+* The unicast-response bit SHOULD be set in this situation.
+
+* When receiving a question with the unicast-response bit set, a responder SHOULD usually respond with a unicast packet directed back to the querier.
+* The responder should always generate the requested unicast response, but it may also send a multicast announcement if the time since the last multicast announcement of that record is more than a quarter of its TTL.
+
+
+
+5.5.  Direct Unicast Queries to Port 5353
+-----------------------------------------
+
+* In specialized applications there may be rare situations where it makes sense for a mDNS querier to send its query via unicast to a specific machine.
+
+6. Responding
+=============
+
+核心点::
+
+    1. 响应消息：当收到查询消息时，设备可以发送响应消息以回复查询。
+        响应消息包含一个或多个资源记录，其中包括请求的信息。
+    2. TTL：响应消息中的每个资源记录都包含一个生存时间（TTL），用于指示资源记录的有效期。
+        一旦资源记录的TTL过期，它将被认为是无效的，并且不再包含在响应消息中。
+    3. 重复响应：
+        在某些情况下，设备可能会收到多个查询消息，
+        例如当网络中的多个设备都在查找相同的服务时。
+        为了避免多个响应消息相互干扰，RFC 建议在发送响应消息之前进行等待，并且在发送响应消息后等待一段时间，以便在这段时间内不会发送其他响应消息。
+
+服务发现代理：在某些情况下，设备可能需要代理其他设备的服务发现请求。RFC 6762允许设备作为服务发现代理来处理其他设备的请求，并发送代理响应来响应这些请求。
+
+common
+------
+
+random delay for avoiding collision
+'''''''''''''''''''''''''''''''''''
+
+* If a large number of mDNS responders were all to respond immediately to a particular query, a collision would be virtually guaranteed.
+* By imposing a small random delay, the number of collisions is dramatically reduced.
+
+Responding with/without delay
+'''''''''''''''''''''''''''''
+
+* Responding without delay is appropriate for records like the address record for a particular host name, when the host name has been previously verified unique.
+* Responding without delay is **not** appropriate for things like looking up PTR records used for DNS-Based Service Discovery [RFC6763], where a large number of responses may be anticipated.
+
+* In any case where there may be multiple responses, such as queries where the answer is a member of a shared resource record set, each responder SHOULD delay its response by a random amount of time selected with uniform random distribution in the range 20-120 ms.
+
+src/dst port
+''''''''''''
+
+* The source UDP port in all mDNS responses MUST be 5353 (the well-known port assigned to mDNS).  mDNS implementations MUST silently ignore any mDNS responses they receive where the source UDP port is not 5353.
+* The destination UDP port in all mDNS responses MUST be 5353, and the destination address MUST be the mDNS IPv4 link-local multicast address 224.0.0.251 or its IPv6 equivalent FF02::FB, except when generating a reply to a query that explicitly requested a unicast response:
+
+
+6.1.  Negative Responses
+------------------------
+
+* In the early design of mDNS it was assumed that explicit negative responses would never be needed.
+* However, operational experience showed that explicit negative responses can sometimes be valuable.  One such example is when a querier is querying for a AAAA record, and the host name in question has no associated IPv6 addresses.
+
+
+
+6.2.  Responding to Address Queries
+-----------------------------------
+
+...
+
+
+
+
+
+7. Traffic Reduction
+====================
+
+A variety of techniques are used to reduce the amount of traffic on the network.
+
+如何减少在使用mDNS时产生的网络流量，包括以下核心点::
+
+    1. 重复记录消除：当设备发送响应消息时，它们可能会发送包含重复记录的消息。RFC 6762建议在发送消息之前删除所有重复记录，以减少网络流量。
+    2. 报告间隔：为了避免多个设备同时发送相同的信息，RFC 6762建议设备在发送消息之前等待一个随机的时间间隔。这有助于确保不会有太多的设备同时发送相同的信息，从而减少网络流量。
+    3. 限制响应数量：为了避免发送过多的响应消息，RFC 6762建议设备限制每个查询消息的响应数量。这可以通过在响应消息中包含最多一个资源记录来实现。
+    4. 延迟重发：当设备发送响应消息时，如果没有收到来自请求方的确认消息，则它可以选择在一段时间后重新发送响应消息。RFC 6762建议在重新发送响应消息之前等待一个随机的时间间隔，以避免重复消息的冲突。
+
+
+8. Probing and Announcing on Startup
+====================================
+
+* Typically a mDNS responder should have, at the very least, address records for all of its active interfaces. Creating and advertising an HINFO record on each interface as well can be useful to network administrators.
+* Whenever a mDNS responder starts up, wakes up from sleep, receives an indication of a network interface "Link Change" event, or has any other reason to believe that its network connectivity may have changed in some relevant way, it MUST perform the two startup steps below: Probing (Section 8.1) and Announcing (Section 8.3).
+
+在设备启动时使用探测和宣布机制来确保使用mDNS服务的设备在同一局域网中不会发生冲突::
+
+    1. 探测：设备启动时，它将尝试发送一系列mDNS查询消息，以查看是否有其他设备在使用相同的本地主机名或服务名。
+        如果设备接收到回复，它将选择一个不同的名字并重试查询。这个过程将重复几次，直到设备选择了一个唯一的名字。
+    2. 宣布：一旦设备选择了一个唯一的本地主机名和服务名，它将通过发送宣布消息来通知其他设备。宣布消息包含设备的名字、IP地址和其他信息。其他设备将收到宣布消息并更新它们的缓存，以便它们可以通过使用设备的名字来解析设备的IP地址。
+    3. 宣布延迟：为了避免在设备启动时发送太多的宣布消息，RFC 6762建议设备在发送第一条宣布消息之前等待一段时间。这可以通过随机延迟来实现，以确保不同设备之间的延迟是不同的。
+
+
+9. Conflict Resolution
+======================
+
+* A conflict occurs when a mDNS responder has a unique record for which it is currently authoritative, and it receives a mDNS response message containing a record with the same name, rrtype and rrclass, but inconsistent rdata.
+
+在使用mDNS协议的网络中，可能会出现多个设备使用相同的主机名或服务名称的情况，这种情况称为“名称冲突”::
+
+    1. 当发现名称冲突时，设备需要立即采取措施来解决冲突，并且不应该继续使用该名称，直到冲突得到解决。
+    2. 解决名称冲突的方法是执行冲突解决流程，这个流程由以下步骤组成：
+        a. 设备发送查询以确定哪些设备使用相同的名称。
+        b. 如果发现冲突，设备会生成一个随机的名称，以替代其原始名称，并使用此新名称进行操作，直到进行手动更改为止。
+        c. 设备还应该尽可能通知网络上的其他设备，以便它们也能更新其记录。
+    3. 为了避免无限制的名称更改，RFC 6762建议在冲突解决过程中限制名称更改的次数，例如通过设置一个固定的更改次数阈值。如果达到此阈值，则应该考虑手动更改名称。
+    4. 最后，RFC 6762还提供了一些实现建议，包括避免随机生成名称时使用可能会导致其他设备错误解释的字符，以及尽可能避免在名称中包含设备的MAC地址等信息。
+
+
+
+
+10. Resource Record TTL Values and Cache Coherency
+==================================================
+
+如何设置资源记录（Resource Record）的TTL（Time to Live）值，以及如何维护缓存的一致性::
+
+    在mDNS中，为了减少网络流量，资源记录通常使用短暂的TTL值。
+        但是，如果设置的值过小，可能会导致查询无法及时响应。
+        RFC 6762建议，对于可以通过本地缓存响应的查询，可以将TTL设置为255秒。对于无法缓存的查询，TTL应该根据网络情况和查询类型进行合理的设置。
+    在缓存方面，RFC 6762指出，缓存必须实现TTL的过期处理，并在缓存数据被清除时立即更新缓存。
+        另外，当收到来自其他主机的回答时，如果已经存在相同的记录，则缓存必须使用新记录更新现有的缓存记录。
+        这些缓存管理策略有助于维护缓存的一致性和减少网络流量。
+
+* As a general rule, the recommended TTL value for mDNS resource records with a host name as the resource record's name (e.g., A, AAAA, HINFO) or a host name contained within the resource record's rdata (e.g., SRV, reverse mapping PTR record) SHOULD be 120 seconds.
+
+
+11.  Source Address Check
+=========================
+
+如何防止恶意攻击者利用mDNS进行欺骗攻击::
+
+    RFC 6762要求设备在接收到mDNS查询或响应时，必须检查数据包的源地址是否属于IPv4本地链路或IPv6本地链路地址。
+    如果不是本地链路地址，则设备必须丢弃数据包，并且不应该对查询或响应作出响应。
+
+
+* All mDNS responses (including responses sent via unicast) SHOULD be sent with IP TTL set to 255.  This is recommended to provide backwards-compatibility with older mDNS queriers (implementing a draft version of this document, posted in February 2004) that check the IP TTL on reception to determine whether the packet originated on the local link.  These older queriers discard all packets with TTLs other than 255.
+
+12.  Special Characteristics of mDNS Domains
+=====================================================
+
+mDNS域名的一些特殊性质::
+
+    在mDNS域名中，“.”（点）是一个合法的字符，并且在解析时需要进行转义，以避免混淆。
+    mDNS域名不是全局唯一的，因此，同一名称在不同网络上的主机上可能会有不同的含义。
+    mDNS域名解析时，不会涉及到DNS根域名服务器，因此，mDNS域名解析不受互联网DNS根域名服务器的影响。
+    mDNS域名可以包含特殊的后缀“local”，以便将其与全局DNS域名区分开来。
+
+
+
+* Unlike conventional DNS names, names that end in ".local." have only local significance.  The same is true of names within the IPv4 link-local reverse mapping domain "254.169.in-addr.arpa." and the IPv6 link-local reverse mapping domains "8.e.f.ip6.arpa.", "9.e.f.ip6.arpa.", "a.e.f.ip6.arpa.", and "b.e.f.ip6.arpa.".
+
+13.  Enabling and Disabling mDNS
+=========================================
+
+* The option to fail-over to mDNS for names not ending in ".local." SHOULD be a user-configured option, and SHOULD be disabled by default because of the possible security issues related to unintended local resolution of apparently global names.  Enabling mDNS for names not ending in ".local." may be appropriate on a secure isolated network, or on some future network were machines exclusively use DNSSEC for all DNS queries, and have mDNS responders capable of generating the appropriate cryptographic DNSSEC signatures, thereby guarding against spoofing.
+
+在特定情况下启用和禁用mDNS（mDNS）协议的方法和建议::
+
+    1. 首先，该节介绍了一些情况下可能需要禁用mDNS，例如当主机存在DNS服务器时，当网络内存在多个mDNS实现时，或者当安全要求需要限制哪些主机可以访问服务时。
+    2. 然后，该节提供了一些方法来禁用mDNS，例如禁用主机上的mDNS守护程序或防火墙规则。
+    3. 此外，RFC还强调了禁用mDNS的注意事项和潜在问题，并建议在使用mDNS时考虑网络管理和安全的需求。
+
+
+14.  Considerations for Multiple Interfaces
+===========================================
+
+该部分指出，在具有多个接口的设备上，可能会有多个mDNS响应器和查询器同时运行，这可能会导致多个响应和重复的查询。因此，RFC建议实现在接口之间共享资源记录缓存，并提供一个机制来防止不同接口上的查询器发出相同的查询。该部分还讨论了在多个接口上使用IPv6的情况下需要注意的一些问题。
+
+* A host SHOULD defend its dot-local host name on all active interfaces on which it is answering mDNS queries.
+
+
+15.  Considerations for Multiple Responders on the Same Machine
+===============================================================
+
+重点讨论了针对 IPv4 和 IPv6 地址的不同的回答缓存管理方式，以及使用不同端口号进行服务区分的方法。该部分还指出了应答器的开发人员需要注意的其他一些问题，如避免对查询的响应过于频繁以及处理和回答多个查询的能力等。
+
+* It is possible to have more than one mDNS responder and/or querier implementation coexist on the same machine, but there are some known issues
+
+
+16.  mDNS Character Set
+================================
+
+主要阐述了使用哪些字符集在mDNS环境中合适，以及在这些字符集中哪些字符可以在mDNS名称中使用::
+
+    mDNS支持ASCII字符集，其中包含大小写字母、数字和一些特殊字符。所有字符都使用8位编码。
+    非ASCII字符可以使用UTF-8编码进行传输，但是对于非ASCII字符，必须进行特殊的转义，以确保它们在网络上正确传输。
+    mDNS使用反斜杠（\）作为转义字符。如果要在名称中使用反斜杠字符，必须将其转义为“\”。
+    mDNS还支持一些特殊字符序列，如“\032”表示空格、“\010”表示制表符等。
+    mDNS的名称长度限制为63个字符，其中包括转义字符和点号。如果名称超过63个字符，则必须进行截断。
+    该部分的主要目的是确保所有的mDNS实现都能够正确地处理特殊字符和字符序列，以避免因字符编码问题而导致的通信错误。
+
+
+
+* Historically, Unicast DNS has been used with a very restricted set of characters.  Indeed, conventional DNS is usually limited to just twenty-six letters, ten digits and the hyphen character, not even allowing spaces or other punctuation.
+* mDNS is a new protocol and doesn't (yet) have old buggy legacy implementations to constrain the design choices.  Accordingly, it adopts the simple obvious elegant solution: all names in mDNS MUST be encoded as precomposed UTF-8 [RFC3629] "Net-Unicode" [RFC5198] text.
+
+17.  mDNS Message Size
+===============================
+
+主要介绍了在mDNS中使用的消息格式的大小限制，以及各种情况下的建议消息大小限制::
+
+    首先，该部分介绍了mDNS消息格式的基本结构，并描述了各个字段的大小。
+    然后，它指出mDNS协议不支持分片和重组，因此发送方需要注意消息的大小限制，以避免数据包丢失或被分段。
+    此外，它还提供了一些建议的消息大小限制，以便在多种网络环境下获得最佳性能。
+
+具体来说，RFC建议以下内容::
+
+    尽量不要使用大于9000字节的MTU，以确保mDNS消息可以避免被IP分片。
+    推荐mDNS查询消息和响应消息的最大大小为896字节。
+    推荐mDNS通告消息的最大大小为1400字节，以使其适合在具有802.11 MTU的无线网络中传输。
+
+* The 1987 DNS specification [RFC1035] restricts DNS messages carried by UDP to no more than 512 bytes (not counting the IP or UDP headers).  For UDP packets carried over the wide-area Internet in 1987, this was appropriate.  For link-local multicast packets on today's networks, there is no reason to retain this restriction. Given that the packets are by definition link-local, there are no Path MTU issues to consider.
+* mDNS messages carried by UDP may be up to the IP MTU of the physical interface, less the space required for the IP header (20 bytes for IPv4; 40 bytes for IPv6) and the UDP header (8 bytes).
+
+
+18.  mDNS Message Format
+=================================
+
+这个部分定义了多播DNS消息的格式和各个字段的含义，这对于实现和理解多播DNS协议是非常重要的::
+
+    消息格式：消息分为报头和查询/响应部分。
+
+    报头包括标识符、标志和问题计数等字段，查询/响应部分包括查询和响应记录列表。
+        标识符：标识符字段是一个16位的随机数，用于标识查询和响应之间的匹配关系。
+        标志：标志字段包括查询/响应、递归查询支持、可截断的标志以及各种错误代码。
+        问题计数：问题计数字段指定在查询部分中的问题数。
+    查询/响应部分：查询部分由查询记录列表组成，响应部分由资源记录列表组成。
+        记录类型：记录类型字段指定记录的类型，如A、AAAA、PTR、SRV等。
+        TTL：TTL字段指定资源记录的存活时间，以秒为单位。
+        数据长度：数据长度字段指定资源记录数据字段的长度。
+        压缩指针：压缩指针用于在消息中引用先前出现的名称，以便减小消息大小。
+
+
+
+* This section describes specific rules pertaining to the allowable values for the header fields of a mDNS message, and other message format considerations.
+
+
+18.1.  ID (Query Identifier)
+----------------------------
+
+* mDNS implementations SHOULD listen for unsolicited responses issued by hosts booting up (or waking up from sleep or otherwise joining the network). Since these unsolicited responses may contain a useful answer to a question for which the querier is currently awaiting an answer, mDNS implementations SHOULD examine all received mDNS response messages for useful answers, without regard to the contents of the ID field or the Question Section.  In mDNS, knowing which particular query message (if any) is responsible for eliciting a particular response message is less interesting than knowing whether the response message contains useful information.
+* mDNS implementations MAY cache data from any or all mDNS response messages they receive, for possible future use, provided of course that normal TTL aging is performed on these cached resource records.
+* In multicast query messages, the Query Identifier SHOULD be set to zero on transmission.
+* In multicast responses, including unsolicited multicast responses, the Query Identifier MUST be set to zero on transmission, and MUST be ignored on reception.
+* In legacy unicast response messages generated specifically in response to a particular (unicast or multicast) query, the Query Identifier MUST match the ID from the query message.
+
+
+
+18.2.  QR (Query/Response) Bit
+------------------------------
+
+* In query messages the QR bit MUST be zero.
+* In response messages the QR bit MUST be one.
+
+18.3.  OPCODE
+-------------
+
+* In both multicast query and multicast response messages, the OPCODE MUST be zero on transmission
+
+18.4.  AA (Authoritative Answer) Bit
+------------------------------------
+
+* In query messages, the Authoritative Answer bit MUST be zero on transmission, and MUST be ignored on reception.
+* In response messages for Multicast domains, the Authoritative Answer bit MUST be set to one and MUST be ignored on reception.
+
+18.5.  TC (Truncated) Bit
+-------------------------
+
+* In query messages, if the TC bit is set, it means that additional Known-Answer records may be following shortly. A responder SHOULD record this fact, and wait for those additional Known-Answer records, before deciding whether to respond. If the TC bit is clear, it means that the querying host has no additional Known Answers.
+* In multicast response messages, the TC bit MUST be zero on transmission, and MUST be ignored on reception.
+
+
+18.6.  RD (Recursion Desired) Bit
+---------------------------------
+
+* In both multicast query and multicast response messages, the Recursion Desired bit SHOULD be zero on transmission, and MUST be ignored on reception.
+
+
+18.7.  RA (Recursion Available) Bit
+-----------------------------------
+
+* In both multicast query and multicast response messages, the Recursion Available bit MUST be zero on transmission, and MUST be ignored on reception.
+
+18.8.  Z (Zero) Bit
+-------------------
+
+* In both query and response messages, the Zero bit MUST be zero on transmission, and MUST be ignored on reception.
+
+18.9.  AD (Authentic Data) Bit
+------------------------------
+
+* In both multicast query and multicast response messages, the Authentic Data bit [RFC2535] MUST be zero on transmission, and MUST be ignored on reception.
+
+18.10.  CD (Checking Disabled) Bit
+----------------------------------
+
+* In both multicast query and multicast response messages, the Checking Disabled bit [RFC2535] MUST be zero on transmission, and MUST be ignored on reception.
+
+18.11.  RCODE (Response Code)
+-----------------------------
+
+* In both multicast query and multicast response messages, the Response Code MUST be zero on transmission.  mDNS messages received with non-zero Response Codes MUST be silently ignored.
+
+18.12.  Repurposing of Top Bit of qclass in Question Section
+------------------------------------------------------------
+
+* In the Question Section of a mDNS query, the top bit of the qclass field is used to indicate that unicast responses are preferred for this particular question.  (See Section 5.4.)
+
+
+18.13.  Repurposing of Top Bit of rrclass in Resource Record Sections
+---------------------------------------------------------------------
+
+* In the Resource Record Sections of a mDNS response, the top bit of the rrclass field is used to indicate that the record is a member of a unique RRSet, and the entire RRSet has been sent together.
+
+18.14.  Name Compression
+------------------------
+
+* When generating mDNS messages, implementations SHOULD use name compression wherever possible to compress the names of resource records, by replacing some or all of the resource record name with a compact two-byte reference to an appearance of that data somewhere earlier in the message [RFC1035].
+
+18.5.  TC (Truncated) Bit
+-------------------------
+
+* In query messages, if the TC bit is set, it means that additional Known-Answer records may be following shortly.
+* In multicast response messages, the TC bit MUST be zero on transmission, and MUST be ignored on reception.
+* In legacy unicast response messages, the TC bit has the same meaning as in conventional Unicast DNS: it means that the response was too large to fit in a single packet, so the querier SHOULD reissue its query using TCP in order to receive the larger response.
+
+18.6.  RD (Recursion Desired) Bit
+---------------------------------
+
+In both multicast query and multicast response messages, the Recursion Desired bit SHOULD be zero on transmission, and MUST be ignored on reception.
+
+18.7.  RA (Recursion Available) Bit
+-----------------------------------
+
+In both multicast query and multicast response messages, the Recursion Available bit MUST be zero on transmission, and MUST be ignored on reception.
+
+18.8.  Z (Zero) Bit
+-------------------
+
+* In both query and response messages, the Zero bit MUST be zero on transmission, and MUST be ignored on reception.
+
+18.9.  AD (Authentic Data) Bit
+------------------------------
+
+* In both multicast query and multicast response messages, the Authentic Data bit [RFC2535] MUST be zero on transmission, and MUST be ignored on reception.
+
+18.10.  CD (Checking Disabled) Bit
+----------------------------------
+
+* In both multicast query and multicast response messages, the Checking Disabled bit [RFC2535] MUST be zero on transmission, and MUST be ignored on reception.
+
+18.11.  RCODE (Response Code)
+-----------------------------
+
+* In both multicast query and multicast response messages, the Response Code MUST be zero on transmission.  mDNS messages received with non-zero Response Codes MUST be silently ignored.
+
+18.12.  Repurposing of Top Bit of qclass in Question Section
+------------------------------------------------------------
+
+* In the Question Section of a mDNS query, the top bit of the qclass field is used to indicate that unicast responses are preferred for this particular question.  (See Section 5.4.)
+
+18.13.  Repurposing of Top Bit of rrclass in Resource Record Sections
+---------------------------------------------------------------------
+
+* In the Resource Record Sections of a mDNS response, the top bit of the rrclass field is used to indicate that the record is a member of a unique RRSet, and the entire RRSet has been sent together (in the same packet, or in consecutive packets if there are too many records to fit in a single packet).  (See Section 10.2.)
+
+18.14.  Name Compression
+------------------------
+
+* When generating mDNS messages, implementations SHOULD use name compression wherever possible to compress the names of resource records, by replacing some or all of the resource record name with a compact two-byte reference to an appearance of that data somewhere earlier in the message [RFC1035].
+
+
+
+19.  Summary of Differences between mDNS and Unicast DNS
+=================================================================
+
+多播 DNS 和单播 DNS 之间的差异。它列举了以下不同之处::
+
+    1. 名称可见性：多播 DNS 的名称只对特定的本地网络可见，而单播 DNS 的名称对互联网上的任何计算机都可见。
+    2. 配置：单播 DNS 的配置通常是手动配置的，而多播 DNS 不需要手动配置，因为它们使用本地网络上的信息。
+    3. 响应时间：多播 DNS 的响应时间通常比单播 DNS 更短，因为它们在本地网络上。
+    4. 网络流量：由于多播 DNS 只在本地网络上工作，因此它们通常产生更少的网络流量。
+    5. 权威性：多播 DNS 不涉及权威 DNS 服务器，而是使用本地网络上的其他计算机响应查询。
+
+
+
+* mDNS shares, as much as possible, the familiar APIs, naming syntax, resource record types, etc., of Unicast DNS.  
+* There are, of course, necessary differences by virtue of it using multicast, and by virtue of it operating in a community of cooperating peers, rather than a precisely defined hierarchy controlled by a strict chain of formal delegations from the root. 
+  
+These differences are summarized below::
+
+    * uses multicast
+    * uses UDP port 5353 instead of port 53
+    * operates in well-defined parts of the DNS namespace
+    * has no SOA (Start of Authority) records
+    * uses UTF-8, and only UTF-8, to encode resource record names
+    * allows names up to 255 bytes plus a terminating zero byte
+    * allows name compression in rdata for SRV and other record types
+    * allows larger UDP packets
+    * allows more than one question in a query message
+    * defines consistent results for qtype "ANY" and qclass "ANY" queries
+    * uses the Answer Section of a query to list Known Answers
+    * uses the TC bit in a query to indicate additional Known Answers
+    * uses the Authority Section of a query for probe tiebreaking
+    * ignores the Query ID field (except for generating legacy responses)
+    * doesn't require the question to be repeated in the response message
+    * uses unsolicited responses to announce new records
+    * uses NSEC records to signal nonexistence of records
+    * defines a unicast-response bit in the rrclass of query questions
+    * defines a cache-flush bit in the rrclass of response records
+    * uses DNS RR TTL 0 to indicate that a record has been deleted
+    * recommends AAAA records in the additional section when responding
+      to rrtype "A" queries, and vice versa
+    * monitors queries to perform Duplicate Question Suppression
+    * monitors responses to perform Duplicate Answer Suppression...
+    * ... and Ongoing Conflict Detection
+    * ... and Opportunistic Caching
+
+20.  IPv6 Considerations
+========================
+
+::
+
+    1. IPv6地址格式：IPv6地址使用128位二进制数字表示，与IPv4地址有很大不同。多播DNS协议中使用的IPv6地址格式需要遵循RFC4291中定义的规范。
+    2. IPv6多播地址：多播DNS协议在IPv6网络中使用特殊的多播地址。这些地址也需要遵循RFC4291中的规范，并且要注意在使用时避免与其他多播协议的地址冲突。
+    3. IPv6套接字接口标识符：在IPv6网络中，每个网络接口都有一个唯一的标识符，称为接口标识符。多播DNS协议需要在发送和接收消息时使用正确的接口标识符，以确保消息能够正确地发送和接收。
+    4. IPv6单播地址的优先级：多播DNS协议在IPv6网络中也支持使用单播地址。在这种情况下，需要定义单播地址和多播地址之间的优先级顺序，以便正确地选择地址。
+    5. 链路本地多播DNS回环：在IPv6网络中，多播DNS协议还需要支持链路本地多播DNS回环，以便处理来自本地应用程序的请求。
+
+* An IPv4-only host and an IPv6-only host behave as "ships that pass in the night".  Even if they are on the same Ethernet, neither is aware of the other's traffic.  For this reason, each physical link may have *two* unrelated ".local." zones, one for IPv4 and one for IPv6. Since for practical purposes, a group of IPv4-only hosts and a group of IPv6-only hosts on the same Ethernet act as if they were on two entirely separate Ethernet segments, it is unsurprising that their use of the ".local." zone should occur exactly as it would if they really were on two entirely separate Ethernet segments.
+
+* A dual-stack (v4/v6) host can participate in both ".local." zones, and should register its name(s) and perform its lookups both using IPv4 and IPv6. This enables it to reach, and be reached by, both IPv4-only and IPv6-only hosts. In effect, this acts like a multihomed host, with one connection to the logical "IPv4 Ethernet segment", and a connection to the logical "IPv6 Ethernet segment". When such a host generates NSEC records, if it is using the same host name for its IPv4 addresses and its IPv6 addresses on that network interface, its NSEC records should indicate that the host name has both A and AAAA records.
+
+21.  Security Considerations
+============================
+
+
+* 风险：Multicast DNS协议不提供身份验证或加密，因此可能会受到各种安全威胁，例如欺骗、窃听、重放攻击和拒绝服务攻击等。
+* 解决方案：为了降低安全威胁，RFC 6762建议实施一些安全措施，例如使用IPsec加密来保护Multicast DNS消息的传输，使用DNSSEC防止DNS欺骗，使用防火墙和入侵检测系统来保护网络等。
+* 多播DNS协议中使用的共享密钥（Shared Secret）模型可能存在安全风险，因为共享密钥在所有设备之间共享。为了避免这种风险，建议使用公钥基础设施（PKI）或其他更强的身份验证机制来保护多播DNS消息。
+
+* mDNS uses IP multicast, and as a result, the protocol is vulnerable to network-based attacks such as eavesdropping and spoofing. An attacker can capture and manipulate multicast traffic to create false information, leading to security breaches.
+* mDNS does not provide end-to-end security features like message encryption or authentication. As a result, attackers can modify mDNS packets, leading to security threats and breaches.
+* Implementers are advised to use security mechanisms such as IPsec, DNSSEC, or Transport Layer Security (TLS) to secure mDNS transactions. These security measures can help prevent attacks such as packet tampering, replay attacks, and man-in-the-middle attacks.
+* To ensure secure communication, hosts must authenticate and authorize each other before exchanging any information. Hosts must use strong authentication methods such as X.509 certificates or shared secrets to prevent unauthorized access.
+* mDNS relies on DNS naming conventions to name and discover devices on a network, and if these naming conventions are not correctly implemented, it could lead to security risks such as DNS cache poisoning, reflection attacks, and amplification attacks.
+
+
+
+
+
+22. IANA Considerations
+=======================
+
+主要涵盖了mDNS协议中与IANA（Internet Assigned Numbers Authority）相关的考虑事项。以下是这个部分的核心点：
+
+    1. 命名空间：RFC 6762规定了多播DNS名称的格式和语法，并分配了.mDNS顶级域名的定义。
+    2. DNS资源记录类型：RFC 6762为多播DNS定义了两个新的DNS资源记录类型：PTR（指针）和SRV（服务）记录。
+    3. mDNS端口：RFC 6762指定了多播DNS消息的源和目的端口号，即5353。
+
+it defines the format and values of the following::
+
+    1. The mDNS responder's port number (UDP 5353)
+    2. The mDNS message header's "op" field, used to indicate the type of message
+    3. The mDNS message header's "rcode" field, used to indicate the response code
+    4. The mDNS message question and resource record types (QTYPE and RTYPE), including reserved values
+    5. The mDNS message question and resource record classes (QCLASS and RCLASS), including reserved values
+    6. The mDNS resource record types used for service discovery, including the format and values of the service type, service instance name, and domain names
+
+
+
+
+
+Appendix A. Design Rationale for Choice of UDP Port Number
+==========================================================
+
+* 描述了选择使用本地端口5353的UDP端口号的设计理由。本地端口5353在DNS-SD和DNS消息传输中使用，这可以将服务发现和DNS数据隔离开来，并使DNS和DNS-SD交通不会干扰多播DNS交通。此外，这种选择还可以避免UDP端口号重用和端口占用等问题，因为这种本地端口是为mDNS专门保留的。
+
+
+Appendix B. Design Rationale for Not Using Hashed Multicast Addresses
+=====================================================================
+
+使用规范中使用特定多播地址（224.0.0.251）的设计原理，同时提供了一些原因来解释为什么没有使用哈希多播地址的替代方法::
+
+    通过使用专门的多播地址，mDNS可以避免与其他协议或应用程序冲突，并提供单独的多播组，以便更好地控制和管理。
+    使用特定多播地址还使得协议实现更加简单，因为不需要实现哈希函数或地址选择算法来计算多播地址。
+    尽管使用哈希多播地址可能会增加一些安全性，但由于哈希函数可能会被攻击者破解，因此该方法可能会导致更大的安全风险。
+    同时使用特定多播地址还使得协议实现更容易进行调试和故障排除，因为特定的多播地址使得网络中的mDNS通信易于识别和跟踪。
+
+Appendix C. Design Rationale for Maximum Multicast DNS Name Length
+===================================================================
+
+为什么将mDNS名称的最大长度限制为255个字节，其核心点包括::
+
+    1. DNS规范中的名称长度限制：DNS规范将DNS名称的最大长度限制为255个字节，因此，为了保持与DNS兼容性并简化实现，mDNS名称的最大长度也设置为255个字节
+    2. DNS消息大小限制：DNS消息被限制为512个字节，为了确保mDNS消息可以适当地容纳在DNS消息中，mDNS名称的最大长度也被限制为255个字节
+    3. 处理器和内存限制：为了适应处理器和内存的限制，限制mDNS名称的最大长度可以降低实现和处理这些消息所需的资源
+
+因此，通过将mDNS名称的最大长度限制为255个字节，可以确保与DNS的兼容性和简化实现，并在资源受限的环境中保持可扩展性。
+
+
+
+Appendix D. Benefits of Multicast Responses
+===========================================
+
+使用多播响应可以节省网络带宽和降低对 DNS 服务器的负载，使用多播响应可以实现以下几点优势::
+
+    1. 减少网络带宽的使用：使用单播响应时，每个查询都会引起一个响应。如果有多个客户端查询相同的服务，就会在网络上产生大量的单播响应。而使用多播响应可以将多个响应合并为一个，从而减少网络带宽的使用。
+    2. 降低对 DNS 服务器的负载：使用单播响应时，每个查询都需要 DNS 服务器进行处理并生成相应的响应。如果有大量的查询请求，就会给 DNS 服务器带来很大的负载。而使用多播响应可以让局域网内的设备共同承担查询的负载，从而降低对 DNS 服务器的负载。
+    3. 提高响应速度：由于多播响应可以让局域网内的多个设备同时响应查询，所以可以更快地获得响应结果。
+
+
+
+
+Appendix E. Design Rationale for Encoding Negative Responses
+============================================================
+
+* 在DNS协议中，如果请求的记录不存在，DNS服务器将返回NXDOMAIN（不存在的域名）响应。
+* 为了节省带宽和减少网络流量，RFC 6762 引入了使用 ICMP 错误消息代替 NXDOMAIN 响应的概念。这意味着当 mDNS 查询发现目标主机不存在时，应该发送一个 ICMPv6 错误消息。
+* 为了支持这种方法，mDNS 定义了一个称为“RRsig0”的 DNS 资源记录，用于在 mDNS 响应中传输负状态（例如 NXDOMAIN）。这是通过在 DNS 消息中使用特殊的 RCODE 值和将 RRsig0 插入 DNS 响应中来实现的
+* 使用 RRsig0 的好处是，它使得 mDNS 负响应的大小比 NXDOMAIN 响应更小。此外，使用 ICMPv6 错误消息也可以节省带宽和减少网络流量。
+
+
+Appendix F. Use of UTF-8
+========================
+
+* 描述了在多播DNS协议中使用UTF-8字符集的设计理念和使用建议
+
+Appendix G. Private DNS Namespaces
+==================================
+
+* 提供了有关在局域网中使用私有DNS命名空间的指导
+
+
+Appendix H.  Deployment History
+===============================
+
+部署历史分为三个阶段::
+
+    早期部署、早期标准化和最终标准化。
+
+    1. 早期部署是指在mDNS标准化工作之前，mDNS技术被广泛应用于Apple公司的各种产品中。
+    2. 早期标准化阶段是指在IETF成立mDNS工作组之后，mDNS协议逐渐被标准化，但仍未被正式发布为RFC。
+    3. 最终标准化阶段是指mDNS协议被正式发布为RFC，并逐渐被广泛应用于各种设备中。
+
+
+还介绍了一些相关的标准化工作，包括::
+
+    DNS-SD协议（RFC6763）
+    DNS-SD配置文件（RFC6764）
+    DNS-SD DHCP选项（RFC7568）
+
+
+
+参考
+====
+
+* https://www.rfc-editor.org/rfc/rfc6762.html
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,622 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="zh-CN" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="zh-CN" > <!--<![endif]-->
+<head>
+
+
+<!-- start added 2025-04-14   增加对markdown中公式的支持 -->
+<script>
+window.MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+    },
+    options: {
+        ignoreHtmlClass: "tex2jax_ignore|mathjax_ignore",
+        processHtmlClass: "tex2jax_process|mathjax_process|math|output_area"
+    }
+};
+</script>
+<script defer="defer" src="https://fastly.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<!-- end added 2025-04-14   增加对markdown中公式的支持 -->
+
+
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>微软makecert导出私钥 &mdash; 新溪-gordon V2025.06 文档</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+    <link rel="index" title="索引" href="../../genindex.html" />
+    <link rel="search" title="搜索" href="../../search.html" />
+    <link rel="next" title="证书生成" href="gen-cert.html" />
+    <link rel="prev" title="mac的p12导出私钥" href="encrypt_mac_p12.html" /> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+  <script src="../../_static/js/jquery.min.js"></script>
+
+
+<!-- 评论插件 gittalk start -->
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script> -->
+<!-- 评论插件 gittalk end -->
+
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> 新溪-gordon
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                V2025.06
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">安全相关</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../normal.html">常用</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/normal.html">常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/mfa.html">多因素认证</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/hacker.html">黑客相关</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/DNS.html">DNS相关安全</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/resource.html">资源</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/tmp.html">临时</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../vulnerability.html">漏洞相关</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../vulnerabilities/injection.html">injection 注入攻击</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../vulnerabilities/injections/injection_xPath.html">XPath injection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vulnerabilities/injections/injection_sql.html">sql injection</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../vulnerabilities/XSS.html">XSS跨站脚本攻击</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../vulnerabilities/CSRF.html">CSRF</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../vulnerabilities/SSRF.html">SSRF</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../vulnerabilities/Control_Missing.html">越权(控制缺失)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../vulnerabilities/Clickjacking.html">Clickjacking</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../cryptography.html">加密</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../cryptographys/normal.html">常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../cryptographys/symmetric-key.html">对称加密(Symmetric-key Cryptography)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/symmetric-keys/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/symmetric-keys/SM4.html">SM4-国密</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/symmetric-keys/AES.html">AES加解密</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/symmetric-keys/other.html">其他</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../cryptographys/public-key.html">公钥加密(Public-key Cryptography)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/public-keys/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/public-keys/SM2.html">SM2-国密</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/public-keys/RSA.html">rsa加解密</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/public-keys/DH.html">DH</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/public-keys/EC.html">EC</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/public-keys/PKCS.html">PKCS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/public-keys/file.html">文件</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../cryptographys/digest-algorithm.html">摘要算法(digest-algorithm)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/digest-algorithms/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/digest-algorithms/SM3.html">SM3-国密</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/digest-algorithms/sha2.html">SHA-2</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/digest-algorithms/sha3.html">SHA-3</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/digest-algorithms/bcrypt.html">bcrypt算法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/digest-algorithms/md5.html">md5摘要算法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/digest-algorithms/other.html">其他</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../cryptographys/message-authentication-code.html">消息认证码(MAC, Message Authentication Code)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/macs/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/macs/HMAC-SHA256.html">HMAC-SHA256</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../cryptographys/signature-algorithm.html">数字签名</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/signature-algorithms/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/signature-algorithms/RSA.html">RSA签名算法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/signature-algorithms/DSA.html">DSA</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/signature-algorithms/ECDSA.html">ECDSA</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/signature-algorithms/other.html">其他</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../cryptographys/key.html">密钥——秘密的精华</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/keys/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/keys/KDF.html">密码衍生函数(key derivation function)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../cryptographys/keys/kdfs/normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../cryptographys/keys/kdfs/PAKE.html">PAKE</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../cryptographys/keys/kdfs/PBKDF.html">PBKDF(Password-Based Key Derivation Function)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../cryptographys/keys/kdfs/PBKDF2.html">PBKDF2</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../cryptographys/keys/kdfs/bcrypt.html">bcrypt</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../cryptographys/keys/kdfs/scrypt.html">scrypt</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../cryptographys/rand-generator.html">伪随机数生成器(Pseudo Random Number Generator, PRNG)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/rand-generators/normal.html">常用</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../cryptographys/0knowledge-proof.html">零知识证明(zero-knowledge proof)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/0knowledge-proofs/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/0knowledge-proofs/Proof%20of%20knowledge.html">Proof of knowledge</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/0knowledge-proofs/Interactive%20proof%20system.html">Interactive proof system</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/0knowledge-proofs/Zero-knowledge%20proof.html">Zero-knowledge proof</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/0knowledge-proofs/Sigma.html">Sigma</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../cert.html">证书相关</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../certs/normal.html">基本</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../certs/cert_normal.html">数字证书简介</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../certs/cert_ca.html">ca证书相关</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../certs/letsencrypt.html">Let’s Encrypt</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../certs/hpkp.html">证书固定(钉扎)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../certs/subjectAlternativeName.html">subjectAlternativeName</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../certs/question.html">常见问题</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../authn.html">认证授权——认证</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../authns/normal.html">常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../authns/basic.html">四种基本的认证方式</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../authns/oauth.html">oauth协议</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../authns/oauths/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../authns/oauths/oauth1.html">OAuth1.0协议</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../authns/oauths/oauth2.html">OAuth2.0协议</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../authns/oauths/oauth2_4patterns.html">四种授权模式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../authns/oauths/example.html">示例</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../authns/jwt.html">JWT</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../authns/AK-SK.html">AK/SK</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../authz.html">认证授权——授权</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../authzs/access-control.html">授权&gt;权限模型-Access Control</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../trust_network.html">信任网络</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../trust_networks/normal.html">常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trust_networks/PKI.html">PKI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trust_networks/PGP.html">pgp/gpg相关</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trust_networks/PGP.html#id3">参考</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../tool.html">加密工具</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../encrypt_openssl.html">Openssl命令相关</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../openssls/normal.html">openssl基本</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../openssls/openssl_rsa.html">openssl rsa命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../openssls/openssl_ciphers.html">openssl ciphers命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../openssls/openssl_pkcs12.html">openssl pkcs12命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../openssls/openssl_rand.html">openssl rand命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../openssls/openssl_ecparam.html">openssl ecparam命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../openssls/openssl_enc.html">openssl enc命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../openssls/openssl_sha.html">openssl sha命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../openssls/openssl_s_client.html">openssl s_client命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../openssls/openssl_dgst.html">openssl dgst命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../openssls/openssl_x509.html">openssl x509命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../openssls/openssl_verify.html">openssl verify命令</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../encrypt_base64.html">baseXX命令使用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../encrypt_easy-rsa.html">easy-rsa命令</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../encrypt_cfssl.html">cfssl命令</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../web.html">web</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../practice.html">实战</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="encrypt_mac_p12.html">mac的p12导出私钥</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">微软makecert导出私钥</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gen-cert.html">证书生成</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="gen-certs/normal.html">说明</a></li>
+<li class="toctree-l4"><a class="reference internal" href="gen-certs/gen_normal.html">证书创建-基本</a></li>
+<li class="toctree-l4"><a class="reference internal" href="gen-certs/gen_conf.html">证书创建-配置文件</a></li>
+<li class="toctree-l4"><a class="reference internal" href="gen-certs/tmp.html">临时</a></li>
+<li class="toctree-l4"><a class="reference internal" href="gen-certs/tmp.html#ca">生成ca证书并签名子证书</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ssl_to_ssh.html">OpenSSL转OpenSSH密钥</a></li>
+<li class="toctree-l3"><a class="reference internal" href="disable_tls1.0.html">网站如何禁止tls1.0漏洞</a></li>
+<li class="toctree-l3"><a class="reference internal" href="self_signed_cert.html">新增可信CA证书库</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cert_match.html">验证是否与秘钥匹配</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../encrypt_mbedtls.html">mbedtls-主流的SSL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../kerberos.html">Kerberos</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../question.html">常见问题</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../practice.html">实践</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../practices/normal.html">临时</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../practices/example.html">示例</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../%E5%8F%AF%E4%BF%A1%E7%A1%AC%E4%BB%B6.html">可信硬件</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">新溪-gordon</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../tool.html">加密工具</a> &raquo;</li>
+        
+          <li><a href="../practice.html">实战</a> &raquo;</li>
+        
+      <li>微软makecert导出私钥</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/tools/practices/encrypt_makecert.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            <nav id="local-table-of-contents" role="navigation" aria-labelledby="local-table-of-contents-title">
+              <h4 id="local-table-of-contents-title">On This Page</h4>
+              <ul>
+<li><a class="reference internal" href="#">微软makecert导出私钥</a><ul>
+<li><a class="reference internal" href="#id2">微软生成需要的文件</a></li>
+<li><a class="reference internal" href="#id4">导出公私钥具体步骤</a></li>
+<li><a class="reference internal" href="#id5">通过公私钥具体操作</a></li>
+</ul>
+</li>
+</ul>
+
+            </nav>
+  <table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="../../genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../search.html"><span class="std std-ref">搜索页面</span></a></p></td>
+</tr>
+</tbody>
+</table>
+<section id="makecert">
+<h1>微软makecert导出私钥<a class="headerlink" href="#makecert" title="此标题的永久链接">¶</a></h1>
+<section id="id2">
+<h2>微软生成需要的文件<a class="headerlink" href="#id2" title="此标题的永久链接">¶</a></h2>
+<p>使用makecert生成证书 <a class="footnote-reference brackets" href="#id6" id="id3" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>// 1.生成一个自签名的根证书（issuer,签发者）
+$&gt; makecert -n &quot;CN=Root&quot; -r -sv makecert.pvk makecert.cer
+// 2.使用这个证书签发一个子证书（使用者，subject）
+// 注: 这儿未使用子证书
+$&gt; makecert -n &quot;CN=Child&quot; -iv makecert.pvk -ic makecert.cer -sv ChildSubject.pvk ChildSubject.cer
+
+// 3.公钥证书格式转换成SPC。 cert2spc.exe
+$&gt; cert2spc makecert.cer makecert.spc
+
+// 4.将公钥证书和私钥合并成一个PFX格式的证书文件。pvk2pfx.exe
+$&gt; pvk2pfx -pvk makecert.pvk -spc makecert.spc -pfx makecert.pfx
+
+最后得到文件:
+makecert.pfx    // 证书文件,内含私钥
+makecert.cer    // 证书文件,内含公钥
+</pre></div>
+</div>
+</section>
+<section id="id4">
+<h2>导出公私钥具体步骤<a class="headerlink" href="#id4" title="此标题的永久链接">¶</a></h2>
+<p>1.提取私钥:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$&gt; openssl pkcs12 -nodes -nocerts -in makecert.pfx -out makecert_private.pem -passin pass:&quot;&quot;
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Bag</span> <span class="n">Attributes</span>
+    <span class="n">localKeyID</span><span class="p">:</span> <span class="mi">01</span> <span class="mi">00</span> <span class="mi">00</span> <span class="mi">00</span> 
+    <span class="n">Microsoft</span> <span class="n">CSP</span> <span class="n">Name</span><span class="p">:</span> <span class="n">Microsoft</span> <span class="n">Strong</span> <span class="n">Cryptographic</span> <span class="n">Provider</span>
+    <span class="n">friendlyName</span><span class="p">:</span> <span class="n">PvkTmp</span><span class="p">:</span><span class="mf">4e0</span><span class="n">ee9f1</span><span class="o">-</span><span class="mi">300</span><span class="n">d</span><span class="o">-</span><span class="mi">4314</span><span class="o">-</span><span class="mi">80</span><span class="n">de</span><span class="o">-</span><span class="n">fa493a4737db</span>
+<span class="n">Key</span> <span class="n">Attributes</span>
+    <span class="n">X509v3</span> <span class="n">Key</span> <span class="n">Usage</span><span class="p">:</span> <span class="mi">80</span> 
+<span class="o">-----</span><span class="n">BEGIN</span> <span class="n">PRIVATE</span> <span class="n">KEY</span><span class="o">-----</span>
+<span class="n">MIIEwAIBADANBgkqhkiG9w0BAQEFAASCBKowggSmAgEAAoIBAQC1</span><span class="o">/</span><span class="n">TE</span><span class="o">/</span><span class="n">kSSWfcOe</span>
+<span class="n">fG9aQbJdexWH7KSnJQB9riyKuRU2ddJBAycxIXrVtmwsWfJTFwajKaGddG22R</span><span class="o">/</span><span class="n">AH</span>
+<span class="n">jmUULLg4fc9b3NdoyPd3sYGhNk1mfGcju7K348fBdmmxhOF</span><span class="o">/</span><span class="n">PIKv4N5W</span><span class="o">/</span><span class="n">CDX0uX4</span>
+<span class="n">l</span><span class="o">/</span><span class="mi">9</span><span class="n">Ns9fw4ICsrRib</span><span class="o">+</span><span class="n">X1nuuNNDGPPHsmH2qNnfp36nMmQBXIGgueDMomxVnN6AE</span><span class="o">/</span><span class="n">u</span>
+<span class="o">/</span><span class="n">syxLc7</span><span class="o">+</span><span class="n">Qj5KUa9P9dgglQdsqegm2uuJm5xmlIhOufZ</span><span class="o">/</span><span class="n">BuUi</span><span class="o">+</span><span class="mi">8</span><span class="n">EsTm0GPO66uKsq</span>
+<span class="n">ApI0Lqixe2</span><span class="o">/</span><span class="mi">6</span><span class="n">CQ2ZvbGc7PfALRTKRpKMLyoG</span><span class="o">/</span><span class="n">UrBU6CTA93wDl</span><span class="o">/</span><span class="n">EhzBcekuQRiFz</span>
+<span class="n">K2vNWEk5AgMBAAECggEBAJpn</span><span class="o">+</span><span class="mi">8</span><span class="n">TnLJfSlIp</span><span class="o">/</span><span class="n">ISr</span><span class="o">+</span><span class="mi">2</span><span class="n">oqdx6LPkNOPfV8ky</span><span class="o">/</span><span class="mi">3</span><span class="n">XErxm</span>
+<span class="n">MsGeHz58HW</span><span class="o">/</span><span class="mi">9</span><span class="n">msH2frcoriT5SXoCMqOZXXnLws7fMl4bwDc8pDbva6dOH6HcJMdz</span>
+<span class="n">fT7AHd4PkIgAI6TODVSaznbS31IGEQeMlDnbHG2czPY</span><span class="o">+</span><span class="n">RG49XsfXYiMEWZ4hiP1M</span>
+<span class="n">ulV</span><span class="o">/</span><span class="n">WsxNDPf</span><span class="o">/</span><span class="mi">8</span><span class="n">Eqq33XUlbLrDGSCDoVyXBjgGhdEaoLxRiit0w2Dt</span><span class="o">/</span><span class="n">c6nfE3DBoz</span>
+<span class="n">FScJ7eV5eT2ufhn7BSDT1EVyAjr4vlDVH9rmyoCPt1d3xA5W5zyw</span><span class="o">+</span><span class="mi">33</span><span class="n">UBXWXKGe</span><span class="o">/</span>
+<span class="mi">0</span><span class="n">OD4LHrM</span><span class="o">+</span><span class="n">j14DhAEwOFveuYicas3icnFc</span><span class="o">+</span><span class="n">kOpEfHuAECgYEA</span><span class="o">/</span><span class="mi">1</span><span class="n">TR</span><span class="o">/</span><span class="n">pF884Fb4p2I</span>
+<span class="n">LbFnIq9Ymy5mEWnDImoWDXeFi2fftEYcxCCaNaF5Ei9f9lPzsQmLfYAwDuHB1ymO</span>
+<span class="mi">2</span><span class="o">+</span><span class="n">sMYgD3Bo1hPEbA9wE4Cd</span><span class="o">/</span><span class="n">H4uJCCNNklaC8EA5Y59g7iUoTXHAycJqG2enqeiGr</span>
+<span class="n">M6KlHq2gVnhIRXIW2HU446cvH</span><span class="o">/</span><span class="n">kCgYEAtnczqYPj</span><span class="o">+</span><span class="n">TvZwMu6ROZtr2TIBCJDL4OS</span>
+<span class="mi">7</span><span class="n">wmTohzObpwrI48</span><span class="o">/</span><span class="n">RQoW</span><span class="o">+</span><span class="n">Sqycpj1dvJqqoPAGWDAOnvec5pgTU2NC0Kp9d9dtSva</span>
+<span class="n">dMDNdEcYTYUyPcdv1CC</span><span class="o">/</span><span class="n">OOxMoUYoGifbld5c1JeH5PFUbzQsjg</span><span class="o">+</span><span class="n">ILE8Qb2vSwOxW</span>
+<span class="n">FGvcQsPbQ0ECgYEAhUMi2ufaPElOyMcJlTebKao058FeukXl96dA3UR9adYMFs3l</span>
+<span class="n">I6QUeFtPkmMxhaIpdUQTDqyB6LKBdigVjMhvzRLN2xidIFWZTxHOyrCGZe9LIcob</span>
+<span class="n">HFEo9oRWeKMN58jGtB9G5Chyq3d</span><span class="o">/</span><span class="n">zsCV1zxTS</span><span class="o">+</span><span class="n">C454idx8kVDWKZD5BpcxkCgYEA</span>
+<span class="n">oJLiSgmhdFIxXTNsZvoKCNI</span><span class="o">+</span><span class="n">GzUzvvqhMe9RltaW7ExOwmprmYw5j2j9xU</span><span class="o">/</span><span class="n">KpLTN</span>
+<span class="n">HeX4Bd1ZDZ64sy9mFGFtAD3YaGH7i1ZeV2Tc6bkvL</span><span class="o">/</span><span class="n">lJr4h1Z06yOZvqC</span><span class="o">/</span><span class="n">s7i1kM</span>
+<span class="n">KyWWuBfqJZYjYgGePB57DdM</span><span class="o">+</span><span class="n">eW9</span><span class="o">/</span><span class="mi">9</span><span class="n">vuE</span><span class="o">/</span><span class="n">U</span><span class="o">+</span><span class="mi">2</span><span class="n">dKL7sIECgYEAtIjrheH4mRl7s</span><span class="o">/</span><span class="n">IA</span>
+<span class="n">sQBX</span><span class="o">/</span><span class="n">S99sptDKpv2x0iCOHoDRruYx3t1wHbtUr60IyQcOenlyK9MQKMLlxxkP9yb</span>
+<span class="n">I2dAJ4b4qJacEzu6XZai97WIRUJGJp5Mr1Feu6gQ8gwcC6DT1uaBORTG808N2fm6</span>
+<span class="n">lm3kPkYbtv4Nc1aZGsKcHRcZqxI</span><span class="o">=</span>
+<span class="o">-----</span><span class="n">END</span> <span class="n">PRIVATE</span> <span class="n">KEY</span><span class="o">-----</span>
+</pre></div>
+</div>
+<p>2.把der格式的证书转化为pem格式:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$&gt; openssl x509 -in makecert.cer -inform der -outform pem -out makecert_sign.pem
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-----</span><span class="n">BEGIN</span> <span class="n">CERTIFICATE</span><span class="o">-----</span>
+<span class="n">MIIDGTCCAgGgAwIBAgIQ7uSueMJL9KVIi2t3xhHt3jANBgkqhkiG9w0BAQsFADAl</span>
+<span class="n">MSMwIQYDVQQDExpUcnVzdCAtIExlbm92byBDZXJ0aWZpY2F0ZTAeFw0xMjA2MjAw</span>
+<span class="n">MzM4MTFaFw0zOTEyMzEyMzU5NTlaMBAxDjAMBgNVBAMTBU1vY2NhMIIBIjANBgkq</span>
+<span class="n">hkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtf0xP5Ekln3DnnxvWkGyXXsVh</span><span class="o">+</span><span class="n">ykpyUA</span>
+<span class="n">fa4sirkVNnXSQQMnMSF61bZsLFnyUxcGoymhnXRttkfwB45lFCy4OH3PW9zXaMj3</span>
+<span class="n">d7GBoTZNZnxnI7uyt</span><span class="o">+</span><span class="n">PHwXZpsYThfzyCr</span><span class="o">+</span><span class="n">DeVvwg19Ll</span><span class="o">+</span><span class="n">Jf</span><span class="o">/</span><span class="n">TbPX8OCArK0Ym</span><span class="o">/</span><span class="n">l9</span>
+<span class="n">Z7rjTQxjzx7Jh9qjZ36d</span><span class="o">+</span><span class="n">pzJkAVyBoLngzKJsVZzegBP7v7MsS3O</span><span class="o">/</span><span class="n">kI</span><span class="o">+</span><span class="n">SlGvT</span><span class="o">/</span><span class="n">XY</span>
+<span class="n">IJUHbKnoJtrriZucZpSITrn2fwblIvvBLE5tBjzuurirKgKSNC6osXtv</span><span class="o">+</span><span class="n">gkNmb2x</span>
+<span class="n">nOz3wC0UykaSjC8qBv1KwVOgkwPd8A5fxIcwXHpLkEYhcytrzVhJOQIDAQABo1ow</span>
+<span class="n">WDBWBgNVHQEETzBNgBBi7mB</span><span class="o">+</span><span class="n">hoAYkIgwqqvULbkioScwJTEjMCEGA1UEAxMaVHJ1</span>
+<span class="n">c3QgLSBMZW5vdm8gQ2VydGlmaWNhdGWCEF7S5f9r</span><span class="o">+</span><span class="n">P2eQAlgRgqiwAcwDQYJKoZI</span>
+<span class="n">hvcNAQELBQADggEBAGS</span><span class="o">+</span><span class="n">lixkAvR4JmaDYGeP6MoFZMH0Ws</span><span class="o">+</span><span class="n">hTuETu1bxtA8fA</span><span class="o">+</span><span class="n">SO</span>
+<span class="n">rQVEzDyskS5VTneNVmNGxkco</span><span class="o">+</span><span class="n">O9Qnv4wtm2kQW0</span><span class="o">+</span><span class="n">LGXEQ8MNBd8Lzxt79vfketz3</span>
+<span class="n">ux8ZnGTA4eaTYOLqzhix00SfDMeMSdmvFNxFo06AFy1XqJEisqfVjmRqhRVcOPNl</span>
+<span class="n">K8AsvyIazHP85fwKC</span><span class="o">+</span><span class="n">VYQv</span><span class="o">+</span><span class="n">DJXm3dAtlg4ZwS1YrS87kkYAR7C4o7uKDuU4mS3oP</span>
+<span class="n">qpdf4F3nB72qJmd9Cd9m18vyGL6LjPqq5Cc9Ik7kmJE1SP7CTjho2oYx9ZyJMfD2</span>
+<span class="n">PVFFzfTOwgLOI</span><span class="o">+</span><span class="n">WFlFfdwn2</span><span class="o">+</span><span class="n">I1pfdV</span><span class="o">/</span><span class="n">RovsAPrQ</span><span class="o">=</span>
+<span class="o">-----</span><span class="n">END</span> <span class="n">CERTIFICATE</span><span class="o">-----</span>
+</pre></div>
+</div>
+<p>3.提取公钥:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$&gt; openssl x509 -pubkey -noout -in makecert_sign.pem &gt; makecert.pem
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-----</span><span class="n">BEGIN</span> <span class="n">PUBLIC</span> <span class="n">KEY</span><span class="o">-----</span>
+<span class="n">MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtf0xP5Ekln3DnnxvWkGy</span>
+<span class="n">XXsVh</span><span class="o">+</span><span class="n">ykpyUAfa4sirkVNnXSQQMnMSF61bZsLFnyUxcGoymhnXRttkfwB45lFCy4</span>
+<span class="n">OH3PW9zXaMj3d7GBoTZNZnxnI7uyt</span><span class="o">+</span><span class="n">PHwXZpsYThfzyCr</span><span class="o">+</span><span class="n">DeVvwg19Ll</span><span class="o">+</span><span class="n">Jf</span><span class="o">/</span><span class="n">TbPX</span>
+<span class="mi">8</span><span class="n">OCArK0Ym</span><span class="o">/</span><span class="n">l9Z7rjTQxjzx7Jh9qjZ36d</span><span class="o">+</span><span class="n">pzJkAVyBoLngzKJsVZzegBP7v7MsS3O</span>
+<span class="o">/</span><span class="n">kI</span><span class="o">+</span><span class="n">SlGvT</span><span class="o">/</span><span class="n">XYIJUHbKnoJtrriZucZpSITrn2fwblIvvBLE5tBjzuurirKgKSNC6o</span>
+<span class="n">sXtv</span><span class="o">+</span><span class="n">gkNmb2xnOz3wC0UykaSjC8qBv1KwVOgkwPd8A5fxIcwXHpLkEYhcytrzVhJ</span>
+<span class="n">OQIDAQAB</span>
+<span class="o">-----</span><span class="n">END</span> <span class="n">PUBLIC</span> <span class="n">KEY</span><span class="o">-----</span>
+</pre></div>
+</div>
+</section>
+<section id="id5">
+<h2>通过公私钥具体操作<a class="headerlink" href="#id5" title="此标题的永久链接">¶</a></h2>
+<p>执行命令加解密:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">公钥签名</span>
+<span class="n">openssl</span> <span class="n">dgst</span> <span class="o">-</span><span class="n">sha256</span> <span class="o">-</span><span class="n">sign</span> <span class="n">makecert_private</span><span class="o">.</span><span class="n">pem</span> <span class="o">-</span><span class="n">out</span> <span class="n">signature</span><span class="o">.</span><span class="n">bin</span> <span class="n">testfile</span>
+<span class="o">//</span> <span class="n">私钥验证</span>
+<span class="n">openssl</span> <span class="n">dgst</span> <span class="o">-</span><span class="n">sha256</span> <span class="o">-</span><span class="n">verify</span> <span class="n">makecert</span><span class="o">.</span><span class="n">pem</span> <span class="o">-</span><span class="n">signature</span> <span class="n">signature</span><span class="o">.</span><span class="n">bin</span> <span class="n">testfile</span>
+</pre></div>
+</div>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="id6" role="note">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id3">1</a><span class="fn-bracket">]</span></span>
+<p><a class="reference external" href="https://www.cnblogs.com/aiqingqing/p/4503051.html">https://www.cnblogs.com/aiqingqing/p/4503051.html</a></p>
+</aside>
+</aside>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="../../genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../search.html"><span class="std std-ref">搜索页面</span></a></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="gen-cert.html" class="btn btn-neutral float-right" title="证书生成" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="encrypt_mac_p12.html" class="btn btn-neutral" title="mac的p12导出私钥" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+  
+  <div id="gitalk-container"></div>
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2010-2025, 新溪-gordon.
+
+    </p>
+  </div>
+  <div>备案号 <a href="http://www.beian.miit.gov.cn">京ICP备16018553号</a></div><div>Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a></div>. 
+
+
+</footer>
+
+<script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?042289284b8eb33866001347a3e0b129";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>     
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'V2025.06',
+            LANGUAGE:'zh-CN',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../_static/sphinx_highlight.js"></script>
+      <script type="text/javascript" src="../../_static/clipboard.min.js"></script>
+      <script type="text/javascript" src="../../_static/copybutton.js"></script>
+      <script type="text/javascript" src="../../_static/translations.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+
+  
+
+  <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+
+
+      // var gitalk = new Gitalk({
+      //         clientID: '565177626b5d46427009',
+      //         clientSecret: 'b2a36e67e1d2a73e43667f46d571c2624f8e1026',
+      //         repo: 'knowledge',
+      //         owner: 'zhaoweiguo',
+      //         admin: ['zhaoweiguo'],
+      //         id: location.pathname,      // Ensure uniqueness and length less than 50
+      //         distractionFreeMode: false  // Facebook-like distraction free mode
+      //       })
+      // gitalk.render('gitalk-container')
+
+  </script>
+
+
+<script type="text/javascript" src="../../_static/js/table-of-contents-sidebar.js"></script>
+<!-- <script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script> -->
+<script type="text/javascript">
+    window.onload = function(e){
+        TableOfContents.init({
+            basePath: "https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/",
+            querySelector: "body" // or other css querySelector
+        });
+    }
+</script> 
+
+</body>
+</html>

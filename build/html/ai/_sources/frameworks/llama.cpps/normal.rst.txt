@@ -1,0 +1,122 @@
+常用
+####
+
+
+简介
+====
+
+
+* llama.cpp 是一个轻量级的 C++ 项目，用于在 CPU 上运行 Meta 的 LLaMA（Large Language Model Meta AI）语言模型。该项目旨在将 LLaMA 模型在资源有限的环境中运行，并在 CPU 上实现相对高效的推理。
+* GitHub: https://github.com/ggml-org/llama.cpp
+
+
+* Georgi Gerganov 是一位使用 C/C++ 语言编写神经网络代码的开发者中的佼佼者。Georgi Gerganov 是资深的开源社区开发者，曾为 OpenAI 的 Whisper 自动语音识别模型开发 whisper.cpp。
+* 2023 年 3 月 Georgi Gerganov 又构建了开源项目 llama.cpp，llama.cpp 让开发者在没有 GPU 的条件下也能运行 Meta 的 LLaMA 模型。
+* 2023 年 6 月 Georgi Gerganov 宣布创立一家新公司 ggml.ai，旨在支持 ggml 的开发。ggml 是 Georgi Gerganov 使用 C/C++ 构建了机器学习张量库，能够帮助开发者在消费级硬件上实现大模型，并提升模型性能。
+
+
+
+
+
+主要特点
+--------
+
+* 轻量级和简洁：llama.cpp 设计简洁，代码库较小，非常轻量，适合在资源受限的环境中运行。
+* 无 GPU 依赖：不同于许多深度学习模型，llama.cpp 旨在在 CPU 上运行。这使得它在没有高性能 GPU 的设备上也可以使用。
+* 本地推理：因为在 CPU 上运行，llama.cpp 可以在本地环境中使用，无需依赖云计算。这对于隐私和离线应用非常有帮助。
+* 多平台支持：llama.cpp 可以在各种操作系统上运行，包括 Linux、Windows 和 macOS。
+* 适用范围广：尽管 llama.cpp 针对 LLaMA 语言模型，但它的设计理念可以适用于其他大规模语言模型，扩展性强。
+
+
+
+安装
+====
+
+
+::
+
+    apt-get update
+    apt-get install pciutils build-essential cmake curl libcurl4-openssl-dev -y
+    git clone https://github.com/ggml-org/llama.cpp
+
+    # 设置环境变量
+    export CUDA_HOME=/usr/local/cuda
+    export PATH=$CUDA_HOME/bin:$PATH
+    export LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
+    # 编译
+    cmake llama.cpp -B llama.cpp/build \
+        -DBUILD_SHARED_LIBS=OFF -DGGML_CUDA=ON -DLLAMA_CURL=ON
+    cmake --build llama.cpp/build --config Release -j --clean-first --target llama-cli llama-gguf-split
+    cp llama.cpp/build/bin/llama-* llama.cpp
+
+
+指定cuda版本::
+
+    rm -rf llama.cpp/build
+    cmake llama.cpp -B llama.cpp/build \
+      -DBUILD_SHARED_LIBS=OFF \
+      -DGGML_CUDA=ON \
+      -DLLAMA_CURL=ON \
+      -DCMAKE_CUDA_COMPILER=/usr/local/cuda-12.4/bin/nvcc \
+      -DCUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda-12.4 \
+      -DCMAKE_CUDA_ARCHITECTURES="50;61;70;75;80;86;89;90"
+    cmake --build llama.cpp/build --config Release -j --clean-first --target llama-cli llama-gguf-split
+
+
+
+注意事项::
+
+    1. nvcc 与 cuda驱动(可通过nvidia-smi查看)版本要对应
+    2. H20 需要指定compute_90
+
+
+
+CMake 选项::
+
+    LLAMA_CURL=ON           : 支持从URL加载模型
+    LLAMA_SERVER=ON         : 编译 HTTP Web server
+    BUILD_SHARED_LIBS=ON/OFF: 是否构建动态库
+    GGML_CUDA=ON            : 启用 GPU 支持
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

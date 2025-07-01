@@ -1,0 +1,257 @@
+VS Code插件-RESTClient
+######################
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/06/5F3B9l.png
+
+    使用cookie时需要注意，这儿有缓存，需要设置一下
+
+* 为开发人员提供了发送 HTTP 请求并无缝查看相应响应消息的卓越功能，所有这些都在 VS Code 本身的范围内完成。
+* https://marketplace.visualstudio.com/items?itemName=humao.rest-client
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/04/usage.gif
+
+
+示例::
+
+    GET https://example.com/comments/1 HTTP/1.1
+
+    ###
+
+    GET https://example.com/topics/1 HTTP/1.1
+
+    ###
+
+    POST https://example.com/comments HTTP/1.1
+    content-type: application/json
+
+    {
+        "name": "sample",
+        "time": "Wed, 21 Oct 2015 18:27:50 GMT"
+    }
+
+
+支持的cURL选项
+==============
+
+.. warning:: REST Client doesn't fully support all the options of cURL, since underneath we use ``request`` library to send request which doesn't accept all the cURL options.
+
+
+Supported options are listed below::
+
+    -X, --request
+    -L, --location, --url
+    -H, --header(no @ support)
+    -I, --head
+    -b, --cookie(no cookie jar file support)
+    -u, --user(Basic auth support only)
+    -d, --data, --data-ascii,--data-binary, --data-raw
+
+
+
+
+技巧
+====
+
+
+.. note:: 【如何生成对应的curl命令】选中对应的命令，右击选择「Generate Code Snippet」
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/06/G0AjWw.png
+
+
+
+
+
+
+
+Authentication
+==============
+
+Basic Auth::
+
+    GET https://httpbin.org/basic-auth/user/passwd HTTP/1.1
+    Authorization: Basic user:passwd
+
+    GET https://httpbin.org/basic-auth/user/passwd HTTP/1.1
+    Authorization: Basic dXNlcjpwYXNzd2Q=
+
+    GET https://httpbin.org/basic-auth/user/passwd HTTP/1.1
+    Authorization: Basic user passwd
+
+
+Digest Auth::
+
+    GET https://httpbin.org/digest-auth/auth/user/passwd
+    Authorization: Digest user passwd
+
+
+request/variable
+================
+
+定义::
+
+    @name = Gordon
+    @url = https://api.zhaoweiguo.com
+
+使用::
+
+    GET {{url}}/api?name={{name}}
+
+
+Prompt Variables::
+
+    # @prompt cmd
+    GET http://api.zhaoweiguo.com/api?cmd={{cmd}}
+
+    说明:
+        cmd在运行时手工录入
+
+
+Request Variables::
+
+    @baseUrl = https://example.com/api
+
+    # @name login
+    POST {{baseUrl}}/api/login HTTP/1.1
+    Content-Type: application/x-www-form-urlencoded
+
+    name=foo&password=bar
+
+    ###
+
+    @authToken = {{login.response.headers.X-AuthToken}}
+
+    # @name createComment
+    POST {{baseUrl}}/comments HTTP/1.1
+    Authorization: {{authToken}}
+    Content-Type: application/json
+
+    {
+        "content": "fake content"
+    }
+
+    ###
+
+    @commentId = {{createComment.response.body.$.id}}
+
+    # @name getCreatedComment
+    GET {{baseUrl}}/comments/{{commentId}} HTTP/1.1
+    Authorization: {{authToken}}
+
+
+
+* System dynamic variables::
+
+    # RFC 4122 v4 UUID
+    {{$guid}}
+    # 随机数
+    {{$randomInt min max}}
+
+    # 时间戳
+    {{$timestamp [offset option]}}
+        示例:
+        {{$timestamp -3 h}}
+        {{$timestamp 2 d}}
+    # 日期
+    {{$datetime rfc1123|iso8601 [offset option]}}
+        示例:
+        {{$datetime "DD-MM-YYYY" 1 y}}  # 一年后的值
+        {{$datetime iso8601 1 y}}
+    # 本地日期
+    {{$localDatetime rfc1123|iso8601 [offset option]}}
+
+    # 环境变量
+    {{$processEnv [%]envVarName}}
+    # 返回.env文件指定的环境变量值
+    {{$dotenv [%]variableName}}
+
+    # Azure Active Directory token
+    {{$aadToken [new] [public|cn|de|us|ppe] [<domain|tenantId>] [aud:<domain|tenantId>]}}
+
+
+    offset options you can specify in timestamp and datetime:
+        Option  Description
+        y       Year
+        M       Month
+        w       Week
+        d       Day
+        h       Hour
+        m       Minute
+        s       Second
+        ms      Millisecond
+
+
+
+Environments
+============
+
+::
+
+    "rest-client.environmentVariables": {
+        "$shared": {
+            "version": "v1",
+            "prodToken": "foo",
+            "nonProdToken": "bar"
+        },
+        "local": {
+            "version": "v2",
+            "host": "localhost",
+            "token": "{{$shared nonProdToken}}",
+            "secretKey": "devSecret"
+        },
+        "production": {
+            "host": "example.com",
+            "token": "{{$shared prodToken}}",
+            "secretKey" : "prodSecret"
+        }
+    }
+
+
+常见问题
+========
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/05/2RzdNv.png
+
+    VSCode RESTClient 返回结果中文乱码
+
+
+
+实战
+====
+
+上传文件示例::
+
+    POST {{host}}/api/rag/collection/upload_doc
+    Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+    ------WebKitFormBoundary7MA4YWxkTrZu0gW
+    Content-Disposition: form-data; name="file"; filename="book.txt"
+
+    < files/book.txt
+    ------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+    ==> 等同于:
+    curl -F "file=@files/content.txt" http://localhost:8000/api/rag/collection/upload_doc
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

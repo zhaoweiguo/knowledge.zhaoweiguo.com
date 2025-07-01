@@ -1,0 +1,988 @@
+.. _rfc3550:
+
+RFC3550: RTP: A Transport Protocol for Real-Time Applications
+#############################################################
+
+* Category: Standards Track
+* Obsoletes: ``RFC1889`` 
+* July 2003
+
+
+Abstract
+========
+
+* RTP provides end-to-end network transport functions suitable for applications transmitting real-time data, such as audio, video or simulation data, over multicast or unicast network services.
+* RTP does not address resource reservation and does not guarantee quality-of-service for real-time services.  
+* The data transport is augmented by a control protocol (RTCP) to allow monitoring of the data delivery in a manner scalable to large multicast networks, and to provide minimal control and identification functionality.  
+* RTP and RTCP are designed to be independent of the underlying transport and network layers.
+* The protocol supports the use of RTP-level translators and mixers.
+
+* Most of the text in this memorandum is identical to RFC 1889 which it obsoletes.  
+* There are no changes in the packet formats on the wire, only changes to the rules and algorithms governing how the protocol is used.  
+* The biggest change is an enhancement to the scalable timer algorithm for calculating when to send RTCP packets in order to minimize transmission in excess of the intended rate when many participants join a session simultaneously.
+
+
+1. Introduction
+===============
+
+* RTP provides end-to-end delivery services for data with real-time characteristics, such as interactive audio and video.
+* Those services include payload type identification, sequence numbering, timestamping and delivery monitoring.  
+* Applications typically run RTP on top of UDP to make use of its multiplexing and checksum services; both protocols contribute parts of the transport protocol functionality. 
+* However, RTP may be used with other suitable underlying network or transport protocols (see Section 11).  
+* RTP supports data transfer to multiple destinations using multicast distribution if provided by the underlying network.
+
+This document defines RTP, consisting of two closely-linked parts::
+
+   - the real-time transport protocol (RTP), 
+   		to carry data that has real-time properties.
+   - the RTP control protocol (RTCP), 
+   		to monitor the quality of service and to convey information about the participants in an on-going session.
+
+
+A complete specification of RTP for a particular application will require one or more companion documents (see Section 13)::
+
+	- a profile specification document, 
+		which defines a set of payload type codes and their mapping to payload formats (e.g., media encodings).  
+		A profile may also define extensions or modifications to RTP that are specific to a particular class of applications. 
+		Typically an application will operate under only one profile.  
+		A profile for audio and video data may be found in the companion `RFC 3551`
+
+	- payload format specification documents, 
+		which define how a particular payload, such as an audio or video encoding, is to be carried in RTP.
+
+
+2. RTP Use Scenarios
+====================
+
+2.1 Simple Multicast Audio Conference
+-------------------------------------
+
+* The audio conferencing application used by each conference participant sends audio data in small chunks of, say, 20 ms duration. 
+* Each chunk of audio data is preceded by an RTP header; RTP header and data are in turn contained in a UDP packet.  
+* The RTP header indicates what type of audio encoding (such as PCM, ADPCM or LPC) is contained in each packet so that senders can change the encoding during a conference, for example, to accommodate a new participant that is connected through a low-bandwidth link or react to indications of network congestion.
+
+
+2.2 Audio and Video Conference
+------------------------------
+
+* If both audio and video media are used in a conference, they are transmitted as separate RTP sessions.  
+* That is, separate RTP and RTCP packets are transmitted for each medium using two different UDP port pairs and/or multicast addresses.  
+* There is no direct coupling at the RTP level between the audio and video sessions, except that a user participating in both sessions should use the same distinguished (canonical) name in the RTCP packets for both so that the sessions can be associated.
+
+
+2.3 Mixers and Translators
+--------------------------
+
+* So far, we have assumed that all sites want to receive media data in the same format.  However, this may not always be appropriate.
+* Consider the case where participants in one area are connected through a low-speed link to the majority of the conference participants who enjoy high-speed network access.
+* Instead of forcing everyone to use a lower-bandwidth, reduced-quality audio encoding, an RTP-level relay called a mixer may be placed near the low-bandwidth area.  
+* This mixer resynchronizes incoming audio packets to reconstruct the constant 20 ms spacing generated by the sender, mixes these reconstructed audio streams into a single stream, translates the audio encoding to a lower-bandwidth one and forwards the lower- bandwidth packet stream across the low-speed link.
+
+
+2.4 Layered Encodings
+---------------------
+
+* Multimedia applications should be able to adjust the transmission rate to match the capacity of the receiver or to adapt to network congestion.
+* Many implementations place the responsibility of rate-adaptivity at the source. This does not work well with multicast transmission because of the conflicting bandwidth requirements of heterogeneous receivers. 
+* The result is often a least-common denominator scenario, where the smallest pipe in the network mesh dictates the quality and fidelity of the overall live multimedia "broadcast".
+* Details of the use of RTP with layered encodings are given in Sections 6.3.9, 8.3 and 11.
+
+
+
+3. Definitions
+==============
+
+* RTP payload: The data transported by RTP in a packet, for example audio samples or compressed video data.  The payload format and interpretation are beyond the scope of this document.
+* RTP packet: A data packet consisting of the fixed RTP header, a possibly empty list of contributing sources (see below), and the payload data.
+* RTCP packet: A control packet consisting of a fixed header part similar to that of RTP data packets, followed by structured elements that vary depending upon the RTCP packet type.
+* RTP session: An association among a set of participants communicating with RTP.
+* Synchronization source (SSRC, 同步源标识符): The source of a stream of RTP packets, identified by a 32-bit numeric SSRC identifier carried in the RTP header so as not to be dependent upon the network address.
+   - SSRC标识RTP数据包真正来自的流源,它直接连接到媒体捕获设备上
+   - 一个RTP数据包只能有一个SSRC,表示它来自单个RTP流
+   - SSRC出现在RTP数据包的包首,用于标识包的真正源流,以及同步不同的媒体流
+
+* Contributing source (CSRC, 贡献源标识符): A source of a stream of RTP packets that has contributed to the combined stream produced by an RTP mixer (see below).
+   - CSRC出现在RTP数据包的CSRC列表中,标识这个数据包由哪些源的RTP流贡献数据构成
+   - 一个RTP数据包的CSRC列表可以包含多个CSRC,表示这个包来自多个RTP流的混合
+   - CSRC通常出现在由中继或混合器生成的RTP数据包中,用来标识混合的来源流
+
+* 区别:
+   * CSRC列表出现在RTP数据包中,可能包含多个标识符,表示该数据包混合自多个源流。它通常由中继或混合器在转发/混合流时添加,用以标识原始来源流。
+   * 而SSRC仅出现一次,指示RTP数据包直接来自的真实流源。它在流捕获的起始添加,用于标识流并让不同媒体流保持同步。
+   * CSRC和SSRC为RTP的工作提供了关键信息,分别从“混合后的来源”和“真实来源”两方面标识流,以实现RTP的转发、同步和混合功能。
+
+
+* Mixer: An intermediate system that receives RTP packets from one or more sources, possibly changes the data format, combines the packets in some manner and then forwards a new RTP packet.
+* Translator: An intermediate system that forwards RTP packets with their synchronization source identifier intact.
+* Monitor: An application that receives RTCP packets sent by participants in an RTP session, in particular the reception reports, and estimates the current quality of service for distribution monitoring, fault diagnosis and long-term statistics.
+* Non-RTP means: Protocols and mechanisms that may be needed in addition to RTP to provide a usable service.
+
+4. Byte Order, Alignment, and Time Format
+=========================================
+
+* All integer fields are carried in network byte order, that is commonly known as big-endian.
+
+
+5. RTP Data Transfer Protocol
+=============================
+
+5.1 RTP Fixed Header Fields
+---------------------------
+
+The RTP header has the following format::
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |V=2|P|X|  CC   |M|     PT      |       sequence number         |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                           timestamp                           |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |           synchronization source (SSRC) identifier            |
+   +=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+   |            contributing source (CSRC) identifiers             |
+   |                             ....                              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+The fields have the following meaning::
+
+   version (V): 2 bits
+   padding (P): 1 bit
+   extension (X): 1 bit
+   CSRC count (CC): 4 bits
+   	contains the number of CSRC identifiers that follow the fixed header.
+   marker (M): 1 bit
+   payload type (PT): 7 bits
+   sequence number: 16 bits
+   	The sequence number increments by one for each RTP data packet sent
+   timestamp: 32 bits
+   SSRC: 32 bits
+   CSRC list: 0 to 15 items, 32 bits each
+
+
+
+5.2 Multiplexing RTP Sessions
+-----------------------------
+
+* For efficient protocol processing, the number of multiplexing points should be minimized, as described in the integrated layer processing design principle
+* In RTP, multiplexing is provided by the destination transport address (network address and port number) which is different for each RTP session.
+
+
+
+5.3  Profile-Specific Modifications to the RTP Header
+-----------------------------------------------------
+
+* The existing RTP data packet header is believed to be complete for the set of functions required in common across all the application classes that RTP might support.
+
+5.3.1 RTP Header Extension
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* An extension mechanism is provided to allow individual implementations to experiment with new payload-format-independent functions that require additional information to be carried in the RTP data packet header.
+
+::
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |      defined by profile       |           length              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                        header extension                       |
+   |                             ....                              |
+
+
+
+6.  RTP Control Protocol -- RTCP
+================================
+
+* The RTP control protocol (RTCP) is based on the periodic transmission of control packets to all participants in the session, using the same distribution mechanism as the data packets.
+
+RTCP performs four functions::
+
+   1. The primary function is to provide feedback on the quality of the data distribution.
+	2. RTCP carries a persistent transport-level identifier for an RTP source called the canonical name or CNAME
+   3. The first two functions require that all participants send RTCP packets,
+   	therefore the rate must be controlled in order for RTP to scale up to a large number of participants.
+	4. OPTIONAL function is to convey minimal session control information, 
+		for example participant identification to be displayed in the user interface.
+
+
+
+6.1  RTCP Packet Format
+-----------------------
+
+This specification defines several RTCP packet types to carry a variety of control information::
+
+   SR:   Sender report, 
+   	for transmission and reception statistics from participants that are active senders
+
+   RR:   Receiver report, 
+   	for reception statistics from participants that are not active senders and in combination with SR for active senders reporting on more than 31 sources
+
+   SDES: Source description items, including CNAME
+
+   BYE:  Indicates end of participation
+
+   APP:  Application-specific functions
+
+
+* Each RTCP packet begins with a fixed part similar to that of RTP data packets, followed by structured elements that MAY be of variable length according to the packet type but MUST end on a 32-bit boundary.
+
+
+
+Figure 1: Example of an RTCP compound packet::
+
+   if encrypted: random 32-bit integer
+   |
+   |[--------- packet --------][---------- packet ----------][-packet-]
+   |
+   |                receiver            chunk        chunk
+   V                reports           item  item   item  item
+   --------------------------------------------------------------------
+   R[SR #sendinfo #site1#site2][SDES #CNAME PHONE #CNAME LOC][BYE##why]
+   --------------------------------------------------------------------
+   |                                                                  |
+   |<-----------------------  compound packet ----------------------->|
+   |<--------------------------  UDP packet ------------------------->|
+
+   #: SSRC/CSRC identifier
+
+
+
+6.2  RTCP Transmission Interval
+-------------------------------
+
+* RTP is designed to allow an application to scale automatically over session sizes ranging from a few participants to thousands. For example, in an audio conference the data traffic is inherently self-limiting because only one or two people will speak at a time. However, the control traffic is not self-limiting. If the reception reports from each participant were sent at a constant rate, the control traffic would grow linearly with the number of participants. Therefore, the rate must be scaled down by dynamically calculating the interval between RTCP packet transmissions.
+
+6.2.1 Maintaining the Number of Session Members
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Calculation of the RTCP packet interval depends upon an estimate of the number of sites participating in the session.
+
+6.3  RTCP Packet Send and Receive Rules
+---------------------------------------
+
+* The rules for how to send, and what to do when receiving an RTCP packet are outlined here.
+
+To execute these rules, a session participant must maintain several pieces of state::
+
+   tp: the last time an RTCP packet was transmitted;
+
+   tc: the current time;
+
+   tn: the next scheduled transmission time of an RTCP packet;
+
+   pmembers: the estimated number of session members at the time tn was last recomputed;
+
+   members: the most current estimate for the number of session members;
+
+   senders: the most current estimate for the number of senders in the session;
+
+   rtcp_bw: The target RTCP bandwidth, i.e., 
+      the total bandwidth that will be used for RTCP packets by all members of this session, in octets per second. 
+      This will be a specified fraction of the "session bandwidth" parameter supplied to the application at startup.
+
+   we_sent: Flag that is true if the application has sent data since the 2nd previous RTCP report was transmitted.
+
+   avg_rtcp_size: The average compound RTCP packet size, in octets, over all RTCP packets sent and received by this participant.  
+      The size includes lower-layer transport and network protocol headers (e.g., UDP and IP) as explained in Section 6.2.
+
+   initial: Flag that is true if the application has not yet sent an RTCP packet.
+
+6.3.1 Computing the RTCP Transmission Interval
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* To maintain scalability, the average interval between packets from a session participant should scale with the group size.
+* This interval is called the calculated interval.
+* It is obtained by combining a number of the pieces of state described above.
+
+
+6.3.2 Initialization
+^^^^^^^^^^^^^^^^^^^^
+
+* Upon joining the session, the participant initializes::
+
+    tp to 0, 
+    tc to 0, 
+    senders to 0, 
+    pmembers to 1, 
+    members to 1, 
+    we_sent to false, 
+    rtcp_bw to the specified fraction of the session bandwidth, 
+    initial to true,
+    avg_rtcp_size to the probable size of the first RTCP packet that the application will later construct
+
+
+6.3.3 Receiving an RTP or Non-BYE RTCP Packet
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* When an RTP or RTCP packet is received from a participant whose SSRC is not in the member table, the SSRC is added to the table, and the value for members is updated once the participant has been validated
+* When an RTP packet is received from a participant whose SSRC is not in the sender table, the SSRC is added to the table, and the value for senders is updated.
+
+For each compound RTCP packet received, the value of avg_rtcp_size is updated::
+
+   avg_rtcp_size = (1/16) * packet_size + (15/16) * avg_rtcp_size
+   // where packet_size is the size of the RTCP packet just received.
+
+
+6.3.4 Receiving an RTCP BYE Packet
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Except as described in Section 6.3.7 for the case when an RTCP BYE is to be transmitted, if the received packet is an RTCP BYE packet, the SSRC is checked against the member table.  If present, the entry is removed from the table, and the value for members is updated.  The SSRC is then checked against the sender table.  If present, the entry is removed from the table, and the value for senders is updated.
+
+Furthermore, to make the transmission rate of RTCP packets more adaptive to changes in group membership, the following "reverse reconsideration" algorithm SHOULD be executed when a BYE packet is received that reduces members to a value less than pmembers::
+
+   o  The value for tn is updated according to the following formula:
+
+         tn = tc + (members/pmembers) * (tn - tc)
+
+   o  The value for tp is updated according the following formula:
+
+         tp = tc - (members/pmembers) * (tc - tp).
+
+   o  The next RTCP packet is rescheduled for transmission at time tn, which is now earlier.
+
+   o  The value of pmembers is set equal to members.
+
+
+6.3.5 Timing Out an SSRC
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+* At occasional intervals, the participant MUST check to see if any of the other participants time out.
+* If any members time out, the reverse reconsideration algorithm described in Section 6.3.4 SHOULD be performed.
+* The participant MUST perform this check at least once per RTCP transmission interval.
+
+6.3.6 Expiration of Transmission Timer
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When the packet transmission timer expires, the participant performs the following operations::
+
+   o  The transmission interval T is computed as described in Section 6.3.1, including the randomization factor.
+
+   o  If tp + T is less than or equal to tc, 
+         an RTCP packet is transmitted.
+         tp is set to tc, then another value for T is calculated as in the previous step
+         tn is set to tc + T.
+         The transmission timer is set to expire again at time tn.  
+      If tp + T is greater than tc, 
+         No RTCP packet is transmitted. 
+         tn is set to tp + T. 
+         The transmission timer is set to expire at time tn.
+   o  pmembers is set to members.
+
+      If an RTCP packet is transmitted, the value of initial is set to FALSE.  
+      Furthermore, the value of avg_rtcp_size is updated:
+
+         avg_rtcp_size = (1/16) * packet_size + (15/16) * avg_rtcp_size
+         // where packet_size is the size of the RTCP packet just transmitted.
+
+6.3.7 Transmitting a BYE Packet
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* When a participant wishes to leave a session, a BYE packet is transmitted to inform the other participants of the event.
+* In order to avoid a flood of BYE packets when many participants leave the system, a participant MUST execute the following algorithm if the number of members is more than 50 when the participant chooses to leave::
+
+   o  When the participant decides to leave the system,
+      tp is reset to tc, the current time, 
+      members and pmembers are initialized to 1,
+      initial is set to 1,
+      we_sent is set to false,
+      senders is set to 0,
+      avg_rtcp_size is set to the size of the compound BYE packet.
+      The calculated interval T is computed.
+      The BYE packet is then scheduled for time tn = tc + T.
+
+   o  Every time a BYE packet from another participant is received,
+      members is incremented by 1 regardless of whether that participant exists in the member table or not,
+         and when SSRC sampling is in use, regardless of whether or not the BYE SSRC would be included in the sample.
+      members is NOT incremented when other RTCP packets or RTP packets are received, but only for BYE packets.
+      Similarly, avg_rtcp_size is updated only for received BYE packets.
+      senders is NOT updated when RTP packets arrive; it remains 0.
+
+   o  Transmission of the BYE packet then follows the rules for transmitting a regular RTCP packet, as above.
+
+* If the group size estimate members is less than 50 when the participant decides to leave, the participant MAY send a BYE packet immediately.  Alternatively, the participant MAY choose to execute the above BYE backoff algorithm.
+* In either case, a participant which never sent an RTP or RTCP packet MUST NOT send a BYE packet when they leave the group.
+
+6.3.8 Updating we_sent
+^^^^^^^^^^^^^^^^^^^^^^
+
+* The variable we_sent contains true if the participant has sent an RTP packet recently, false otherwise.
+* If the participant sends an RTP packet when we_sent is false, it adds itself to the sender table and sets we_sent to true.
+* The normal sender timeout algorithm is then applied to the participant -- if an RTP packet has not been transmitted since time tc - 2T, the participant removes itself from the sender table, decrements the sender count, and sets we_sent to false.
+
+
+6.3.9 Allocation of Source Description Bandwidth
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* This specification defines several source description (SDES) items in addition to the mandatory CNAME item, such as NAME (personal name) and EMAIL (email address).
+
+
+6.4  Sender and Receiver Reports
+--------------------------------
+
+* RTP receivers provide reception quality feedback using RTCP report packets which may take one of two forms depending upon whether or not the receiver is also a sender.
+* The only difference between the sender report (SR) and receiver report (RR) forms, besides the packet type code, is that the sender report includes a 20-byte sender information section for use by active senders.
+
+
+6.4.1 SR: Sender Report RTCP Packet
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+::
+
+           0                   1                   2                   3
+           0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   header |V=2|P|    RC   |   PT=SR=200   |             length            |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |                         SSRC of sender                        |
+          +=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+   sender |              NTP timestamp, most significant word             |
+   info   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |             NTP timestamp, least significant word             |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |                         RTP timestamp                         |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |                     sender's packet count                     |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |                      sender's octet count                     |
+          +=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+   report |                 SSRC_1 (SSRC of first source)                 |
+   block  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+     1    | fraction lost |       cumulative number of packets lost       |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |           extended highest sequence number received           |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |                      interarrival jitter                      |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |                         last SR (LSR)                         |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |                   delay since last SR (DLSR)                  |
+          +=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+   report |                 SSRC_2 (SSRC of second source)                |
+   block  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+     2    :                               ...                             :
+          +=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+          |                  profile-specific extensions                  |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+
+The sender report packet consists of three sections, possibly followed by a fourth profile-specific extension section if defined::
+
+   1. the header, is 8 octets long
+      version (V): 2 bits
+      padding (P): 1 bit
+      reception report count (RC): 5 bits
+      packet type (PT): 8 bits
+      length: 16 bits
+      SSRC: 32 bits
+
+   2. the sender information, is 20 octets long and is present in every sender report packet.
+      NTP timestamp: 64 bits
+      RTP timestamp: 32 bits
+      sender's packet count: 32 bits
+      sender's octet count: 32 bits
+
+   3. zero or more reception report blocks depending on the number of other sources heard by this sender since the last report.
+      SSRC_n (source identifier): 32 bits
+      fraction lost: 8 bits
+      cumulative number of packets lost: 24 bits
+      extended highest sequence number received: 32 bits
+      interarrival jitter: 32 bits
+      last SR timestamp (LSR): 32 bits
+      delay since last SR (DLSR): 32 bits
+
+Figure 2: Example for round-trip time computation::
+
+   [10 Nov 1995 11:33:25.125 UTC]       [10 Nov 1995 11:33:36.5 UTC]
+   n                 SR(n)              A=b710:8000 (46864.500 s)
+   ---------------------------------------------------------------->
+                      v                 ^
+   ntp_sec =0xb44db705 v               ^ dlsr=0x0005:4000 (    5.250s)
+   ntp_frac=0x20000000  v             ^  lsr =0xb705:2000 (46853.125s)
+     (3024992005.125 s)  v           ^
+   r                      v         ^ RR(n)
+   ---------------------------------------------------------------->
+                          |<-DLSR->|
+                           (5.250 s)
+
+   A     0xb710:8000 (46864.500 s)
+   DLSR -0x0005:4000 (    5.250 s)
+   LSR  -0xb705:2000 (46853.125 s)
+   -------------------------------
+   delay 0x0006:2000 (    6.125 s)
+
+
+6.4.2 RR: Receiver Report RTCP Packet
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+::
+
+           0                   1                   2                   3
+           0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   header |V=2|P|    RC   |   PT=RR=201   |             length            |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |                     SSRC of packet sender                     |
+          +=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+   report |                 SSRC_1 (SSRC of first source)                 |
+   block  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+     1    | fraction lost |       cumulative number of packets lost       |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |           extended highest sequence number received           |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |                      interarrival jitter                      |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |                         last SR (LSR)                         |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |                   delay since last SR (DLSR)                  |
+          +=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+   report |                 SSRC_2 (SSRC of second source)                |
+   block  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+     2    :                               ...                             :
+          +=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+          |                  profile-specific extensions                  |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+6.4.3 Extending the Sender and Receiver Reports
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* A profile SHOULD define profile-specific extensions to the sender report and receiver report if there is additional information that needs to be reported regularly about the sender or receivers.
+*  The extension is a fourth section in the sender- or receiver-report packet which comes at the end after the reception report blocks, if any.
+
+6.4.4 Analyzing Sender and Receiver Reports
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* It is expected that reception quality feedback will be useful not only for the sender but also for other receivers and third-party monitors.
+* The
+   * sender may modify its transmissions based on the feedback; 
+   * receivers can determine whether problems are local, regional or global; 
+   * network managers may use profile-independent monitors that receive only the RTCP packets and not the corresponding RTP data packets to evaluate the performance of their networks for multicast distribution.
+
+
+
+6.5  SDES: Source Description RTCP Packet
+-----------------------------------------
+
+::
+
+           0                   1                   2                   3
+           0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   header |V=2|P|    SC   |  PT=SDES=202  |             length            |
+          +=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+   chunk  |                          SSRC/CSRC_1                          |
+     1    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |                           SDES items                          |
+          |                              ...                              |
+          +=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+   chunk  |                          SSRC/CSRC_2                          |
+     2    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |                           SDES items                          |
+          |                              ...                              |
+          +=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+
+
+* The SDES packet is a three-level structure composed of a header and zero or more chunks, each of which is composed of items describing the source identified in that chunk::
+
+   version (V), padding (P), length:
+   packet type (PT): 8 bits
+      202: means an RTCP SDES packet
+   source count (SC): 5 bits
+
+
+* Each chunk consists of an SSRC/CSRC identifier followed by a list of zero or more items, which carry information about the SSRC/CSRC. 
+* Each chunk starts on a 32-bit boundary.  
+* Each item consists of an 8-bit type field, an 8-bit octet count describing the length of the text (thus, not including this two-octet header), and the text itself.
+
+.. note:: 下面是各种SDES items
+
+6.5.1 CNAME: Canonical End-Point Identifier SDES Item
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+::
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |    CNAME=1    |     length    | user and domain name        ...
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+
+
+
+6.5.2 NAME: User Name SDES Item
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+::
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     NAME=2    |     length    | common name of source       ...
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+6.5.3 EMAIL: Electronic Mail Address SDES Item
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+::
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |    EMAIL=3    |     length    | email address of source     ...
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+6.5.4 PHONE: Phone Number SDES Item
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+::
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |    PHONE=4    |     length    | phone number of source      ...
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+6.5.5 LOC: Geographic User Location SDES Item
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+::
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     LOC=5     |     length    | geographic location of site ...
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+6.5.6 TOOL: Application or Tool Name SDES Item
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+::
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     TOOL=6    |     length    |name/version of source appl. ...
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+6.5.7 NOTE: Notice/Status SDES Item
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+::
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     NOTE=7    |     length    | note about the source       ...
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+6.5.8 PRIV: Private Extensions SDES Item
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+::
+
+     0                   1                   2                   3
+     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |     PRIV=8    |     length    | prefix length |prefix string...
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    ...             |                  value string               ...
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+
+
+6.6  BYE: Goodbye RTCP Packet
+-----------------------------
+
+::
+
+          0                   1                   2                   3
+          0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+         +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+         |V=2|P|    SC   |   PT=BYE=203  |             length            |
+         +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+         |                           SSRC/CSRC                           |
+         +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+         :                              ...                              :
+         +=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+   (opt) |     length    |               reason for leaving            ...
+         +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+The BYE packet indicates that one or more sources are no longer active::
+
+   version (V), padding (P), length:
+   packet type (PT): 8 bits
+   source count (SC): 5 bits
+      The number of SSRC/CSRC identifiers included in this BYE packet.
+      A count value of zero is valid, but useless.
+
+
+6.7  APP: Application-Defined RTCP Packet
+-----------------------------------------
+
+::
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |V=2|P| subtype |   PT=APP=204  |             length            |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                           SSRC/CSRC                           |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                          name (ASCII)                         |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                   application-dependent data                ...
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+::
+
+   version (V), padding (P), length:
+   subtype: 5 bits
+   packet type (PT): 8 bits
+   name: 4 octets
+   application-dependent data: variable length
+
+
+
+7.  RTP Translators and Mixers
+==============================
+
+* In addition to end systems, RTP supports the notion of "translators" and "mixers", which could be considered as "intermediate systems" at the RTP level.
+
+
+7.1  General Description
+------------------------
+
+* An RTP translator/mixer connects two or more transport-level "clouds".  
+* Typically, each cloud is defined by a common network and transport protocol (e.g., IP/UDP) plus a multicast address and transport level destination port or a pair of unicast addresses and ports.
+* One system may serve as a translator or mixer for a number of RTP sessions, but each is considered a logically separate entity.
+
+* The distinction between translators and mixers is that a translator passes through the data streams from different sources separately, whereas a mixer combines them to form one new stream:
+* Translator: Forwards RTP packets with their SSRC identifier intact; this makes it possible for receivers to identify individual sources even though packets from all the sources pass through the same translator and carry the translator's network source address.
+* Mixer: Receives streams of RTP data packets from one or more sources, possibly changes the data format, combines the streams in some manner and then forwards the combined stream.
+
+
+Figure 3: Sample RTP network with end systems, mixers and translators::
+
+         [E1]                                    [E6]
+          |                                       |
+    E1:17 |                                 E6:15 |
+          |                                       |   E6:15
+          V  M1:48 (1,17)         M1:48 (1,17)    V   M1:48 (1,17)
+         (M1)-------------><T1>-----------------><T2>-------------->[E7]
+          ^                 ^     E4:47           ^   E4:47
+     E2:1 |           E4:47 |                     |   M3:89 (64,45)
+          |                 |                     |
+         [E2]              [E4]     M3:89 (64,45) |
+                                                  |        legend:
+   [E3] --------->(M2)----------->(M3)------------|        [End system]
+          E3:64        M2:12 (64)  ^                       (Mixer)
+                                   | E5:45                 <Translator>
+                                   |
+                                  [E5]          source: SSRC (CSRCs)
+                                                ------------------->
+
+7.2  RTCP Processing in Translators
+-----------------------------------
+
+* In addition to forwarding data packets translators and mixers MUST also process RTCP packets.
+* A translator that does not modify the data packets
+
+
+
+7.3  RTCP Processing in Mixers
+------------------------------
+
+* Since a mixer generates a new data stream of its own, it does not pass through SR or RR packets at all and instead generates new information for both sides
+
+
+
+7.4  Cascaded Mixers
+--------------------
+
+* An RTP session may involve a collection of mixers and translators
+
+
+8.  SSRC Identifier Allocation and Use
+======================================
+
+* It is crucial that the number be chosen with care in order that participants on the same network or starting at the same time are not likely to choose the same number.
+
+.. note:: 重点是SSRC ID不重复很重要
+
+9.  Security
+============
+
+* Lower layer protocols may eventually provide all the security services that may be desired for applications of RTP, including authentication, integrity, and confidentiality.
+
+
+9.1 Confidentiality
+-------------------
+
+* When it is desired to encrypt RTP or RTCP according to the method specified in this section, all the octets that will be encapsulated for transmission in a single lower-layer packet are encrypted as a unit.
+* For RTCP, a 32-bit random number redrawn for each unit MUST be prepended to the unit before encryption.  
+* For RTP, no prefix is prepended; instead, the sequence number and timestamp fields are initialized with random offsets.  
+* This is considered to be a weak initialization vector (IV) because of poor randomness properties.  
+* In addition, if the subsequent field, the SSRC, can be manipulated by an enemy, there is further weakness of the encryption method.
+
+
+* For RTCP, an implementation MAY segregate the individual RTCP packets in a compound RTCP packet into two separate compound RTCP packets, one to be encrypted and one to be sent in the clear.
+
+Figure 4: Encrypted and non-encrypted RTCP packets::
+
+             UDP packet                     UDP packet
+   -----------------------------  ------------------------------
+   [random][RR][SDES #CNAME ...]  [SR #senderinfo #site1 #site2]
+   -----------------------------  ------------------------------
+             encrypted                     not encrypted
+
+   #: SSRC identifier
+
+
+9.2 Authentication and Message Integrity
+----------------------------------------
+
+* It is expected that authentication and integrity services will be provided by lower layer protocols.
+
+
+
+10. Congestion Control
+======================
+
+* All transport protocols used on the Internet need to address congestion control in some way
+* Because the data transported over RTP is often inelastic (generated at a fixed or controlled rate), the means to control congestion in RTP may be quite different from those for other transport protocols such as TCP. 
+* In one sense, inelasticity reduces the risk of congestion because the RTP stream will not expand to consume all available bandwidth as a TCP stream can.
+* However, inelasticity also means that the RTP stream cannot arbitrarily reduce its load on the network to eliminate congestion when it occurs.
+
+* Since RTP may be used for a wide variety of applications in many different contexts, there is no single congestion control mechanism that will work for all.  Therefore, congestion control SHOULD be defined in each RTP profile as appropriate.  For some profiles, it may be sufficient to include an applicability statement restricting the use of that profile to environments where congestion is avoided by engineering.  For other profiles, specific methods such as data rate adaptation based on RTCP feedback may be required.
+
+11. RTP over Network and Transport Protocols
+============================================
+
+* RTP relies on the underlying protocol(s) to provide demultiplexing of RTP data and RTCP control streams.  For UDP and similar protocols, RTP SHOULD use an even destination port number and the corresponding RTCP stream SHOULD use the next higher (odd) destination port number.
+
+
+12. Summary of Protocol Constants
+=================================
+
+12.1 RTCP Packet Types
+----------------------
+
+::
+
+   abbrev.  name                 value
+   SR       sender report          200
+   RR       receiver report        201
+   SDES     source description     202
+   BYE      goodbye                203
+   APP      application-defined    204
+
+
+12.2 SDES Types
+---------------
+
+::
+
+   abbrev.  name                            value
+   END      end of SDES list                    0
+   CNAME    canonical name                      1
+   NAME     user name                           2
+   EMAIL    user's electronic mail address      3
+   PHONE    user's phone number                 4
+   LOC      geographic user location            5
+   TOOL     name of application or tool         6
+   NOTE     notice about the source             7
+   PRIV     private extensions                  8
+
+
+
+13. RTP Profiles and Payload Format Specifications
+==================================================
+
+* A complete specification of RTP for a particular application will require one or more companion documents of two types described here: ``profiles``, and ``payload format specifications``.
+* RTP may be used for a variety of applications with somewhat differing requirements.
+* The flexibility to adapt to those requirements is provided by allowing multiple choices in the main protocol specification, then selecting the appropriate choices or defining extensions for a particular environment and class of applications in a separate profile document. Typically an application will operate under only one profile in a particular RTP session, so there is no explicit indication within the RTP protocol itself as to which profile is in use. A profile for audio and video applications may be found in the companion RFC 3551.  Profiles are typically titled ``"RTP Profile for ..."``.
+* The second type of companion document is a payload format specification, which defines how a particular kind of payload data, such as H.261 encoded video, should be carried in RTP.  These documents are typically titled ``"RTP Payload Format for XYZ Audio/Video Encoding"``.
+
+
+The following items have been identified for possible definition within a profile::
+
+   1. RTP data header
+   2. Payload types
+   3. RTP data header additions
+   4. RTP data header extensions
+   5. RTCP packet types
+   6. RTCP report interval
+   7. SR/RR extension
+   8. SDES use
+   9. Security
+   10. String-to-key mapping
+   11. Congestion
+   12. Underlying protocol
+   13. Transport mapping
+   14. Encapsulation
+
+
+Appendix A.   Algorithms
+========================
+
+* We provide examples of C code for aspects of RTP sender and receiver algorithms.
+
+
+
+Appendix B.   Changes from RFC 1889
+===================================
+
+* Most of this RFC is identical to RFC 1889.  There are no changes in the packet formats on the wire, only changes to the rules and algorithms governing how the protocol is used.  
+* The biggest change is an enhancement to the scalable timer algorithm for calculating when to send RTCP packets:
+
+   1. The algorithm for calculating the RTCP transmission interval
+   2. Section 6.3.7 specifies new rules controlling when an RTCP BYE packet should be sent in order to avoid a flood of packets when many participants leave a session simultaneously.
+   3. The requirement to retain state for inactive participants for a period long enough to span typical network partitions was removed from Section 6.2.1.
+
+.. note:: It should be noted that these enhancements only have a significant effect when the number of session participants is large (thousands) and most of the participants join or leave at the same time.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

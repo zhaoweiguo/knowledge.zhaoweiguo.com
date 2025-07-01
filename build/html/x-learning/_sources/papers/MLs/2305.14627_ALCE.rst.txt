@@ -1,0 +1,160 @@
+2305.14627_ALCE: Enabling Large Language Models to Generate Text with Citations
+###############################################################################
+
+* Tianyu Gao Howard Yen Jiatong Yu Danqi Chen
+* 高天宇， 颜霍华德， 于佳彤， 陈丹琪
+* 普林斯顿大学计算机科学与普林斯顿语言与智能系
+* https://arxiv.org/pdf/2305.14627
+* 大型语言模型 （LLMs） 已成为一种广泛使用的信息搜索工具，但它们生成的输出容易产生幻觉。在这项工作中，我们的目标是允许LLMs生成带有引文的文本，提高其事实正确性和可验证性。现有的工作主要依赖于商业搜索引擎和人工评估，这使得复制和比较不同的建模方法具有挑战性。我们提出了ALCE，这是自动LLMs引文评估的第一个基准。ALCE收集了各种各样的问题和检索语料库，并需要构建端到端的系统来检索支持证据并生成带有引文的答案。我们根据三个维度（流畅性、正确性和引用质量）开发自动指标，并证明它们与人类判断具有很强的相关性。我们对最先进LLMs和新颖的提示策略的实验表明，当前的系统有相当大的改进空间——例如，在 ELI5 数据集上，即使是最好的模型也有 50% 的时间缺乏完整的引用支持。我们的分析进一步强调了有前途的未来方向，包括开发更好的检索器、推进长期背景LLMs以及提高从多个来源合成信息的能力。
+* Large language models (LLMs) have emerged as a widely-used tool for information seeking, but their generated outputs are prone to hallucination. In this work, our aim is to allow LLMs to generate text with citations, improving their factual correctness and verifiability. Existing work mainly relies on commercial search engines and human evaluation, making it challenging to reproduce and compare different modeling approaches. We propose ALCE, the first benchmark for Automatic LLMs' Citation Evaluation. ALCE collects a diverse set of questions and retrieval corpora and requires building end-to-end systems to retrieve supporting evidence and generate answers with citations. We develop automatic metrics along three dimensions -- fluency, correctness, and citation quality -- and demonstrate their strong correlation with human judgements. Our experiments with state-of-the-art LLMs and novel prompting strategies show that current systems have considerable room for improvement -- For example, on the ELI5 dataset, even the best models lack complete citation support 50% of the time. Our analyses further highlight promising future directions, including developing better retrievers, advancing long-context LLMs, and improving the ability to synthesize information from multiple sources.
+
+
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/08/jo6xXq.png
+
+    Figure 1: The task setup of ALCE. Given a question, the system generates text while providing citing passages from a large retrieval corpus. Each statement may contain multiple citations
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/08/2CCjiJ.png
+
+    Figure 2: Evaluation of correctness
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/08/ZxvUTK.png
+
+    Figure 3: Evaluation of citation quality (details in §3.3). We use an **NLI** model to verify whether a statement is supported by its citations.
+
+
+* Citation recall(引文召回): 如果前提(Premise)包含假设(Hypothesis)，则输出 1，否则为 0
+* Citation precision(引文精度): 可以检测不相关的引文。
+
+
+
+
+NLI 在引用质量评估中的应用
+==========================
+
+* 在引用质量评估的背景下，使用 NLI 模型的目的是验证生成的文本内容（“假设”）是否被引用的文献或信息源（“前提”）所支持::
+
+    前提：引用的文献或信息源的内容。
+    假设：生成文本中的某一陈述或句子。
+
+* 通过使用 NLI 模型，系统可以自动判断这些陈述是否与引用的文献内容一致（蕴含）、矛盾，或者中立。这种方法帮助确保生成的文本中引用的质量，即引用的内容确实支持生成的文本陈述，从而提高文本的事实性和可信度。
+
+
+
+论文中用的prompt
+================
+
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/08/MsOOT1.png
+
+    蓝色文本是模型生成。棕色文本是我们想要为其生成子权利要求的 ELI5 示例。我们通过手动编写训练集中三个问题的子声明来构建prompt。
+
+
+```
+Read the original question and passage, and generate 3 additional claims that are supported by the
+passage and answer the question.
+Original question: What’s the difference between Shia vs. Sunni Islam?
+Passage: The main difference between Shia and Sunni Muslim is related to ideological heritage and
+issues of leadership. This difference is first formed after the death of the Prophet Muhammad in 632
+A.D. The ideological practice of the Sunni branch strictly follows Prophet Muhammad and his
+teachings, while the Shia branch follows Prophet Muhammad’s son-in-law Ali. Nowadays, Sunni and
+Shia are the major branches of Islam.
+Claim 1: The major branches of Islam are Sunni and Shia.
+Claim 2: Prophet Muhammad died in 632 A.D.
+Claim 3: The ideological practice of the Sunni branch strictly follows Prophet Muhammad and his
+teachings.
+Original question: What causes Bi-polar disorder?
+Passage: Bipolar disorder is an emotional disorder that causes extreme mood swings between
+excitement and depression. The spectrum of mood swing may span from days to months. We are still not
+certain of the exact factors that cause such disorder, but genetics is considered a major factor.
+Claim 1: One symptom of Bi-polar disorder is extreme mood swings between excitement and depression.
+Claim 2: Genetics could be one of the major factors that causes Bi-polar disorder.
+Claim 3: The mood swing from Bi-polar disorder can last days to months.
+Original question: How do we hear differences in sound besides volume and pitch?
+Passage: Pitch refers to the frequency of soundwave, and volumn refers to the amplitude of the
+soundwave. Besides volumn and pitch, we can also tell the difference between sounds based on the
+tone of sound. For example, we can differentiate the sound of different instruments based on the
+tone of the sounds.
+Claim 1: Volume of sound is the amplitude of the soundwave.
+Claim 2: Pitch is the frequency of soundwave.
+Claim 3: We can use the tone of the sounds to differentiate the sound of different instruments.
+Original question: How are we able to discern whether a sound is coming from in front of us or
+behind us?
+Passage: There are multiple explanations for why we can localize sounds. One explanation is that
+sounds travelling to the corresponding side of one’s ear will be slightly louder. Another
+explanation is that there is a slight difference in the hitting time to one’s left and right ear
+based on the sound’s direction. However, these explanation means that when a sound is exactly in
+front of someone or exactly behind someone, he or she can not tell the difference.
+Claim 1:
+```
+
+
+
+
+
+```
+Instruction: Write an accurate, engaging, and concise answer for the given question using only
+the provided search results (some of which might be irrelevant) and cite them properly. Use an
+unbiased and journalistic tone. Always cite for any factual claim. When citing several search
+results, use [1][2][3]. Cite at least one document and at most three documents in each sentence.
+If multiple documents support the sentence, only cite a minimum sufficient subset of the
+documents.
+```
+
+
+```
+Instruction: Write a high-quality answer for the given question using only the provided search
+results and cite them properly using [1][2][3].
+```
+
+```
+Summarize the following document within 50 words with the question of interest "{QUESTION}"
+Return "irrelevant" if the document is irrelevant to the question. Try to keep all the important
+dates, numbers, and names.
+Title: {TITLE}
+Text: {TEXT}
+Summary:
+```
+
+
+
+
+```
+Given the follow passage and the question "{QUESTION}", extract a useful span from the passage
+that can answer the question. Resolve all the coreference issues to make the extracted span
+understandable standalone. If the passage is not helpful for answering the question, return
+"irrelevant".
+Title: {TITLE}
+Text: {TEXT}
+Extracted span:
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

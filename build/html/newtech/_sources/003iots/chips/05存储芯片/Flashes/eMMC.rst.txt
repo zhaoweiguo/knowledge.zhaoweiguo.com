@@ -1,0 +1,93 @@
+eMMC
+####
+
+* eMMC (Embedded Multi Media Card）是 MMC 协会订立、主要针对手机或平板电脑等产品的内嵌式存储器标准规格。
+* eMMC 在封装中集成了一个控制器，提供标准接口并管理闪存，使得手机厂商就能专注于产品开发的其它部分，并缩短向市场推出产品的时间。
+* eMMC 具有快速、可升级的性能
+* eMMC=NAND 闪存 + 闪存控制芯片 + 标准接口封装
+
+MultiMediaCard，即 MMC， 是一种闪存卡（Flash Memory Card）标准，它定义了 MMC 的架构以及访问　Flash Memory 的接口和协议。而 eMMC 则是对 MMC 的一个拓展，以满足更高标准的性能、成本、体积、稳定、易用等的需求。
+
+::
+
+    接口电压: 1.8v、3.3v
+    接口速度: 每秒 52MBytes (1.0 版本)
+
+在 NAND 闪存芯片的基础上，额外集成了控制器，并将二者 “打包” 封装封成一颗 BGA 芯片，从而减少了对 PCB 主板的空间占用，也是移动设备中普及度最高的存储单元。
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/04/ikBScl.jpg
+
+   eMMC 的整体架构：内部是把 NAND Flash 芯片（Flash 内存阵列） 、Device Controller 芯片（也叫 Flash 控制器、eMMC 控制器）封装在一块。Flash 控制器负责管理内存，并且提供标准接口，使得 EMMC 能够自动调整主机与从机的工作方式，没有位数限制，不需要处理其他繁杂的 NAND Flash 兼容性和管理问题，同时，控制器是其卡的应用和多媒体总线之间的联系介质，它能在应用程序总线和标准多媒体总线之前完成协议转换。他的通信基于先进的 10 个信号总线，通信协议被定义为这个标准的一部分，简称多媒体模式。
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/04/vWqU3U.jpg
+
+   eMMC 则在其内部集成了 Flash Controller，包括了协议、擦写均衡、坏块管理、ECC 校验、电源管理、时钟管理、数据存取等功能。相比于直接将 NAND Flash 接入到 Host 端，eMMC 屏蔽了 NAND Flash 的物理特性，可以减少 Host 端软件的复杂度，让 Host 端专注于上层业务，省去对 NAND Flash 进行特殊的处理。同时，eMMC 通过使用 Cache、Memory Array 等技术，在读写性能上也比 NAND Flash 要好很多。
+
+
+
+
+缺点
+====
+
+1. 需要先擦除再写入::
+
+    Flash Memory 写入数据时有一定的限制。
+    它只能将当前为 1 的比特改写为 0，而无法将已经为 0 的比特改写为 1，只有在擦除的操作中，才能把整块的比特改写为 1。
+
+2. 块擦除次数有限::
+
+    Flash Memory 的每个数据块都有擦除次数的限制（十万到百万次不等），擦写超过一定次数后，该数据块将无法可靠存储数据，成为坏块。
+    为了最大化的延长 Flash Memory 的寿命，在软件上需要做擦写均衡（Wear Leveling），通过分散写入、动态映射等手段均衡使用各个数据块。
+    同时，软件还需要进行坏块管理（Bad Block Management，BBM），标识坏块，不让坏块参与数据存储。
+    （注：除了擦写导致的坏块外，Flash Memory 在生产过程也会产生坏块，即固有坏块。）
+
+3. 读写干扰::
+
+    由于硬件实现上的物理特性，Flash Memory 在进行读写操作时，有可能会导致邻近的其他比特发生位翻转，导致数据异常。
+    这种异常可以通过重新擦除来恢复。
+    Flash Memory 应用中通常会使用 ECC 等算法进行错误检测和数据修正。
+
+4. 电荷泄漏::
+
+    存储在 Flash Memory 存储单元的电荷，如果长期没有使用，会发生电荷泄漏，导致数据错误。
+    不过这个时间比较长，一般十年左右。此种异常是非永久性的，重新擦除可以恢复。
+
+
+
+区域划分
+========
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/04/oJ7GkH.jpg
+
+   eMMC 在内部对 Flash Memory 划分了几个主要区域
+
+1. BOOT Area Partition 1 & 2::
+
+    此分区主要是为了支持从 eMMC 启动系统而设计的。
+    该分区的数据，在 eMMC 上电后，可以通过很简单的协议就可以读取出来。
+    同时，大部分的 SOC 都可以通过 GPIO 或者 FUSE 的配置，
+      让 ROM 代码在上电后，将 eMMC BOOT 分区的内容加载到 SOC 内部的 SRAM 中执行
+
+2. RPMB Partition::
+
+    RPMB 是 Replay Protected Memory Block 的简称，
+      它通过 HMAC SHA-256 和 Write Counter 来保证保存在 RPMB 内部的数据不被非法篡改。
+    在实际应用中，RPMB 分区通常用来保存安全相关的数据，例如指纹数据、安全支付相关的密钥等。
+
+3. General Purpose Partition 1～4::
+
+    此区域则主要用于存储系统或者用户数据。
+    General Purpose Partition 在芯片出厂时，通常是不存在的，需要主动进行配置后，才会存在。
+
+4. User Data Area::
+
+    此区域则主要用于存储系统和用户数据。
+    User Data Area 通常会进行再分区，例如:
+      Android 系统中，通常在此区域分出 boot、system、userdata 等分区。
+
+
+
+
+
+

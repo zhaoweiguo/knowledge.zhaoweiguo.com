@@ -1,0 +1,57 @@
+历史
+####
+
+
+
+传统方法-基于规则
+=================
+
+* 基于规则的方法的优点是简单直观，但缺点是对于复杂的文本结构和多样性的实体类别可能效果有限。
+
+示例::
+
+    import re
+
+    def rule_based_ner(text):
+        entities = []
+
+        # 人名识别规则
+        person_pattern = re.compile(r"([张李王赵陈刘]先生|[A-Za-z]+\s[A-Za-z]+)")
+        persons = re.findall(person_pattern, text)
+        entities.extend([(p, "PERSON") for p in persons])
+
+        # 地名识别规则
+        location_pattern = re.compile(r"(北京|上海|广州|深圳|[\u4e00-\u9fa5]+[市省])")
+        locations = re.findall(location_pattern, text)
+        entities.extend([(l, "LOCATION") for l in locations])
+
+        # 组织机构名识别规则
+        org_pattern = re.compile(r"(公司|集团|[\u4e00-\u9fa5]+[公司])")
+        orgs = re.findall(org_pattern, text)
+        entities.extend([(o, "ORGANIZATION") for o in orgs])
+
+        return entities
+
+    text = "张先生在北京的公司工作，与李女士一起参加了上海的会议。"
+    entities = rule_based_ner(text)
+    print(entities)
+
+    # [('张先生', 'PERSON'), ('北京', 'LOCATION'), ('上海', 'LOCATION'), ('张先生在北京的公司', 'ORGANIZATION')]
+
+
+传统方法-基于统计
+=================
+
+* 通过词频统计判断每个词是否可能是人名、地名或组织机构名。这种方法的优点是简单易懂，缺点是可能对于一些出现频率较低但仍然重要的实体难以识别。
+
+
+
+
+
+
+
+
+
+
+
+

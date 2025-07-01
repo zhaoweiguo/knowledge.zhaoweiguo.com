@@ -1,0 +1,275 @@
+BERT
+####
+
+* https://github.com/google-research/bert
+
+BERT
+====
+
+BERT (Bidirectional Encoder Representations from Transformers) 是 Google 在 2018 年提出的一个具有划时代意义的自然语言处理预训练模型。其主要特征和创新点包括::
+
+	利用 Transformer 编码器作为模型结构，相比 RNN 等结构，能够更好地学习语言的本质特征。
+	采用 Masked LM 和 Next Sentence Prediction 两种预训练目标，可以学习语言的双向特征。
+	可以充分预训练深度双向 Transformer 模型，然后 fine tune 到下游 NLP 任务中，
+		取得了当时多个 benchmark 的 state-of-the-art 结果。
+	提出了 WordPiece embeding, 很好地处理了词汇表问题。可以处理未登录词，减小词汇表大小。
+	提出了 segment embeding, 可以区分不同句子，有利于学习句子关系。
+	采用了残差连接和 LayerNorm 技术，可以训练更深的神经网络。
+	有着出众的论文写作、模型设计、实验和论述，影响了后续的 NLP 研究方向。
+
+总之，BERT 开创了预训练语言模型 + fine-tuning 方法论的新范式，对 NLP 产生了深远的影响，被广泛应用在问答系统、情感分析、语言推断等任务中。
+
+
+The following BERT models can be used for multilingual tasks::
+
+	bert-base-multilingual-uncased(Masked language modeling+Next sentence prediction,102 langs)
+	bert-base-multilingual-cased(Masked language modeling+Next sentence prediction,104 langs)
+
+
+* BERT 还有多语言的优势。在以前的算法中，比如 SVM，如果要做多语言的模型，就要涉及分词、提取关键词等操作，而这些操作要求你对该语言有所了解。像阿拉伯文、日语等语言，咱们大概率是看不懂的，这会对我们最后的模型效果产生极大影响。
+* BERT 则不需要担心这个问题，通过基于字符、字符片段、单词等不同粒度的 token 覆盖并作 ``WordPiece``，能够覆盖上百种语言，甚至可以说，只要你能够发明出一种逻辑上自洽的语言，BERT 就能够处理。
+
+
+
+
+模型匹配的格式
+==============
+
+输入的数据不能是直接把词塞到模型里，而是要转化成后面这三种向量::
+
+	1. Token embeddings
+		词向量
+		注意：
+			Token embeddings 的第一个开头的 token 一定得是 “[CLS]”。
+			[CLS] 作为整篇文本的语义表示，用于文本分类等任务
+		如：
+			input_ids
+	2. Segment embeddings
+		这个向量主要是用来将两句话进行区分
+		比如问答任务，会有问句和答句同时输入，这就需要一个能够区分两句话的操作
+		分类任务中，只有一个句子
+		如：
+			token_type_ids
+	3. Position embeddings
+		记录了单词的位置信息
+		如：
+			attention_mask
+
+
+
+
+
+
+
+bert-base-chinese
+=================
+
+* https://huggingface.co/bert-base-chinese
+
+::
+
+	# Use a pipeline as a high-level helper
+	from transformers import pipeline
+	pipe = pipeline("fill-mask", model="bert-base-chinese")
+
+
+	# Load model directly
+	from transformers import AutoTokenizer, AutoModelForMaskedLM
+	tokenizer = AutoTokenizer.from_pretrained("bert-base-chinese")
+	model = AutoModelForMaskedLM.from_pretrained("bert-base-chinese")
+
+
+
+
+
+
+bert-base-uncased
+=================
+
+* https://huggingface.co/bert-base-uncased
+
+Bert-base-uncased是一个著名的NLP预训练语言模型,具有以下特点::
+
+	- 由谷歌AI团队于2018年提出,基于transformer架构。
+	- 未分词,所有单词小写。
+	- 预训练了大规模文本语料,对语义表示学习能力强。
+	- 模型参数量较小,训练耗时较短。
+	- 提供了多种下游任务的fine-tuning架构。
+
+AutoModelForMultipleChoice这里加载的是Bert在多项选择任务上的fine-tuning架构,主要由以下部分组成::
+
+	- Bert encoder层,用于文本表示提取。
+	- Pooler层,合并序列表示为分类表示。
+	- 选项分类器,以Softmax方式计算各选项概率。
+	- 交叉熵损失函数,训练二分类判断。
+
+通过fine-tuning,可以快速让Bert适应多项选择等任务,发挥强大的语义建模能力。
+综上,该模型组合利用了Bert的 representation学习效果,在多个备选项中判断正确连续性,可用于提升多项选择任务的性能。
+
+示例::
+
+	# 多项选择任务
+	tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+	model = AutoModelForMultipleChoice.from_pretrained("bert-base-uncased")
+
+	# 其他
+	- 文本分类:
+		AutoModelForSequenceClassification
+	- 命名实体识别:
+		AutoModelForTokenClassification
+	- 问答任务:
+		AutoModelForQuestionAnswering
+	- 文本生成:
+		AutoModelForCausalLM
+	- 文本摘要:
+		AutoModelForSeq2SeqLM
+
+
+
+
+roberta-base
+============
+
+RoBERTa-base是Facebook在2019年提出的一个强大的预训练语言表示模型,具有以下几个特点::
+
+	- 基于BERT进行改进,修改了BERT的预训练方式
+	- 使用更多数据进行预训练,总量达到160GB
+	- 应用了动态标注等技术增强训练效果
+	- 在GLUE基准测试上的表现优于BERT
+	- 模型大小约为125MB,参数量约为125M
+	- 12层Transformer编码器结构
+	- 隐层大小为768的multi-head self-attention
+	- 采用BPE with 50K vocabulary size
+	- 支持PyTorch和TensorFlow实现
+	- 可生成文本表示用于迁移学习
+
+RoBERTa-base通过预训练obtain了强大的语言理解能力,是自然语言处理的基础模型之一,支持多种下游任务进行fine-tuning。 
+
+示例::
+
+	tokenizer = AutoTokenizer.from_pretrained("roberta-base")
+	model = AutoModel.from_pretrained("roberta-base")
+
+
+distilroberta-base
+==================
+
+distilroberta-base是RoBERTa-base模型的蒸馏版本,由HuggingFace的团队提出,其具体特点如下::
+
+	- 基于RoBERTa-base进行知识蒸馏得到
+	- 参数量减少了40%,从125M降至82M
+	- 模型大小从438MB减小到317MB
+	- 训练和推理速度更快
+	- 性能与RoBERTa-base相当
+	- 支持PyTorch、TensorFlow和JAX
+	- 实现了transformer的编码器结构
+	- 基于masked language modelingpretrain
+	- 采用BPE分词,词表大小50265
+	- 12层transformer block,hidden size 768
+	- 12个attention head
+
+distilroberta-base是一个轻量高效的语言表示模型,适合在资源受限或要求低延迟的场景中使用,可作为RoBERTa-base的替代方案。它继承了RoBERTa强大的语言表示能力,是预训练模型领域的重要成果之一。
+
+
+
+
+
+深度解析
+========
+
+BERT 模型输出
+-------------
+
+last_hidden_state 字段
+^^^^^^^^^^^^^^^^^^^^^^
+
+* 是 BERT 模型输出中的一个重要字段，它代表了模型最后一个隐藏层的输出
+* 是一个形状为 [batch_size, sequence_length, hidden_size] 的张量::
+
+	batch_size 表示输入序列的批次大小
+	sequence_length 表示输入序列的长度，即词汇数
+	hidden_size 表示每个词的隐藏状态的维度大小，通常是模型中隐藏层的大小
+
+pooler_output 字段
+^^^^^^^^^^^^^^^^^^
+
+* 代表经过池化层处理后的模型输出。通常用于整体句子级别的表示，可以用作下游任务的输入。
+* 形状：[batch_size, hidden_size]
+
+
+
+hidden_states 字段
+^^^^^^^^^^^^^^^^^^
+
+* 代表模型各个隐藏层的输出。
+* 这是一个包含所有隐藏层输出的列表，这些隐藏状态可以用于自定义任务，或者进行其他进一步的分析。
+* 形状：[num_hidden_layers, batch_size, sequence_length, hidden_size]
+
+
+
+attentions 字段
+^^^^^^^^^^^^^^^
+
+* 代表模型的注意力权重。
+* 这是一个包含所有注意力权重的列表，这些注意力权重可以用于分析模型在输入序列中不同位置之间的关注程度。
+* 形状：[num_hidden_layers, batch_size, sequence_length, sequence_length]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

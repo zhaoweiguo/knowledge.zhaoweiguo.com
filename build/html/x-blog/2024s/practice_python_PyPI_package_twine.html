@@ -1,0 +1,493 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="zh-CN" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="zh-CN" > <!--<![endif]-->
+<head>
+
+
+<!-- start added 2025-04-14   增加对markdown中公式的支持 -->
+<script>
+window.MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+    },
+    options: {
+        ignoreHtmlClass: "tex2jax_ignore|mathjax_ignore",
+        processHtmlClass: "tex2jax_process|mathjax_process|math|output_area"
+    }
+};
+</script>
+<script defer="defer" src="https://fastly.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<!-- end added 2025-04-14   增加对markdown中公式的支持 -->
+
+
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>实践：如何打包你的Python项目并分发到TestPyPI &mdash; 新溪-gordon V2025.06 文档</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="prev" title="实践：快速搭建一个可运行的docker gpu环境" href="practice_docker_gpu_environment.html" /> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+  <script src="../_static/js/jquery.min.js"></script>
+
+
+<!-- 评论插件 gittalk start -->
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script> -->
+<!-- 评论插件 gittalk end -->
+
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> 新溪-gordon
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                V2025.06
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">个人博客</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="question_vscode_plugin_jupyter_port_listen.html">怪异问题：一个由vscode jupyter插件占用端口引起的问题</a></li>
+<li class="toctree-l1"><a class="reference internal" href="practice_docker_gpu_environment.html">实践：快速搭建一个可运行的docker gpu环境</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">实践：如何打包你的Python项目并分发到TestPyPI</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">新溪-gordon</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>实践：如何打包你的Python项目并分发到TestPyPI</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/2024s/practice_python_PyPI_package_twine.md.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            <nav id="local-table-of-contents" role="navigation" aria-labelledby="local-table-of-contents-title">
+              <h4 id="local-table-of-contents-title">On This Page</h4>
+              <ul>
+<li><a class="reference internal" href="#">实践：如何打包你的Python项目并分发到TestPyPI</a><ul>
+<li><a class="reference internal" href="#id1">说明</a></li>
+<li><a class="reference internal" href="#testpypi-pypi">注册 TestPyPI PyPI会员</a></li>
+<li><a class="reference internal" href="#id2">模拟一个要分发的项目</a></li>
+<li><a class="reference internal" href="#id3">打包&amp;分发</a></li>
+<li><a class="reference internal" href="#id4">最后成果</a></li>
+<li><a class="reference internal" href="#id5">常见问题</a><ul>
+<li><a class="reference internal" href="#twine-upload-403">twine upload 报 403</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            </nav>
+  <section class="tex2jax_ignore mathjax_ignore" id="pythontestpypi">
+<h1>实践：如何打包你的Python项目并分发到TestPyPI<a class="headerlink" href="#pythontestpypi" title="此标题的永久链接">¶</a></h1>
+<section id="id1">
+<h2>说明<a class="headerlink" href="#id1" title="此标题的永久链接">¶</a></h2>
+<ul class="simple">
+<li><p>测试项目，纯为了演示如何打包并分发，所以没有使用正式的 <a class="reference external" href="https://pypi.org/">PyPI</a>，使用了测试专用的 <a class="reference external" href="https://test.pypi.org/">TestPyPI</a></p></li>
+<li><p>最近一直在看、在写Python项目，就想着是否可以把一些通用的、业务无关的东西放到 PyPI 上，方便调用</p></li>
+</ul>
+</section>
+<section id="testpypi-pypi">
+<h2>注册 TestPyPI PyPI会员<a class="headerlink" href="#testpypi-pypi" title="此标题的永久链接">¶</a></h2>
+<ul class="simple">
+<li><p>分别注册 <a class="reference external" href="https://pypi.org/">PyPI</a> 和 <a class="reference external" href="https://test.pypi.org/">TestPyPI</a> 会员</p></li>
+<li><p>在对应网站(<a class="reference external" href="https://test.pypi.org/search/?q=zwgpackage">TestPyPI</a> 或 <a class="reference external" href="https://pypi.org/search/?q=zwgpackage">TestPyPI</a>)上查询未被人注册的 Package(我这儿用的是<code class="docutils literal notranslate"><span class="pre">zwgpackage</span></code>)</p></li>
+<li><p>注册后，启动 <code class="docutils literal notranslate"><span class="pre">2FA</span></code>后生成<code class="docutils literal notranslate"><span class="pre">API</span> <span class="pre">tokens</span></code>(这个以pypi-开头的字符串就是下面要用的password)</p></li>
+<li><p>创建或编辑 .pypirc 文件</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">distutils</span><span class="p">]</span>
+<span class="n">index</span><span class="o">-</span><span class="n">servers</span> <span class="o">=</span>
+    <span class="n">pypi</span>
+    <span class="n">testpypi</span>
+
+<span class="p">[</span><span class="n">pypi</span><span class="p">]</span>
+<span class="n">username</span> <span class="o">=</span> <span class="n">__token__</span>
+<span class="n">password</span> <span class="o">=</span> <span class="n">pypi</span><span class="o">-&lt;</span><span class="n">your</span><span class="o">-</span><span class="n">pypi</span><span class="o">-</span><span class="n">token</span><span class="o">&gt;</span>
+
+<span class="p">[</span><span class="n">testpypi</span><span class="p">]</span>
+<span class="n">repository</span> <span class="o">=</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">test</span><span class="o">.</span><span class="n">pypi</span><span class="o">.</span><span class="n">org</span><span class="o">/</span><span class="n">legacy</span><span class="o">/</span>
+<span class="n">username</span> <span class="o">=</span> <span class="n">__token__</span>
+<span class="n">password</span> <span class="o">=</span> <span class="n">pypi</span><span class="o">-&lt;</span><span class="n">your</span><span class="o">-</span><span class="n">testpypi</span><span class="o">-</span><span class="n">token</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+</section>
+<section id="id2">
+<h2>模拟一个要分发的项目<a class="headerlink" href="#id2" title="此标题的永久链接">¶</a></h2>
+<p>创建项目结构:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>mkdir<span class="w"> </span>zwg_project<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>zwg_project
+touch<span class="w"> </span>setup.py
+touch<span class="w"> </span>README.md
+mkdir<span class="w"> </span>zwgpackage
+touch<span class="w"> </span>zwgpackage/__init__.py
+touch<span class="w"> </span>zwgpackage/greetings.py
+</pre></div>
+</div>
+<p>编写代码:.gitignore:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>tee<span class="w"> </span>.gitignore<span class="w"> </span><span class="s">&lt;&lt;-&#39;EOF&#39;</span>
+<span class="s">zwgpackage.egg-info</span>
+<span class="s">build</span>
+<span class="s">dist</span>
+<span class="s">EOF</span>
+</pre></div>
+</div>
+<p>编写代码:zwgpackage/greetings.py:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>tee<span class="w"> </span>zwgpackage/greetings.py<span class="w"> </span><span class="s">&lt;&lt;-&#39;EOF&#39;</span>
+<span class="s">def say_hello(name):</span>
+<span class="s">    return f&quot;Hello, {name}!&quot;</span>
+<span class="s">EOF</span>
+</pre></div>
+</div>
+<p>编写代码:zwgpackage/<strong>init</strong>.py:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>tee<span class="w"> </span>zwgpackage/__init__.py<span class="w"> </span><span class="s">&lt;&lt;-&#39;EOF&#39;</span>
+<span class="s">from .greetings import say_hello</span>
+<span class="s">EOF</span>
+</pre></div>
+</div>
+<p>编写安装脚本:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">tee</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="o">&lt;&lt;-</span><span class="s1">&#39;EOF&#39;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">setuptools</span><span class="w"> </span><span class="kn">import</span> <span class="n">setup</span><span class="p">,</span> <span class="n">find_packages</span>
+
+<span class="n">setup</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;zwgpackage&#39;</span><span class="p">,</span>
+    <span class="n">version</span><span class="o">=</span><span class="s1">&#39;0.1&#39;</span><span class="p">,</span>
+    <span class="n">packages</span><span class="o">=</span><span class="n">find_packages</span><span class="p">(),</span>
+    <span class="n">install_requires</span><span class="o">=</span><span class="p">[</span>
+        <span class="c1"># 任何依赖项可以在这里列出</span>
+    <span class="p">],</span>
+    <span class="n">author</span><span class="o">=</span><span class="s1">&#39;Your Name&#39;</span><span class="p">,</span>
+    <span class="n">author_email</span><span class="o">=</span><span class="s1">&#39;your.email@example.com&#39;</span><span class="p">,</span>
+    <span class="n">description</span><span class="o">=</span><span class="s1">&#39;A simple greetings plugin&#39;</span><span class="p">,</span>
+    <span class="n">long_description</span><span class="o">=</span><span class="nb">open</span><span class="p">(</span><span class="s1">&#39;README.md&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">(),</span>
+    <span class="n">long_description_content_type</span><span class="o">=</span><span class="s1">&#39;text/markdown&#39;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">EOF</span>
+</pre></div>
+</div>
+<p>文档:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>tee<span class="w"> </span>README.md<span class="w"> </span><span class="s">&lt;&lt;-&#39;EOF&#39;</span>
+<span class="s"># zwgpackage</span>
+
+<span class="s">This is a simple greeting package.</span>
+
+<span class="s">## Installation</span>
+
+<span class="s">You can install `zwgpackage` by running:</span>
+<span class="s">pip install zwgpackage</span>
+
+
+<span class="s">## Usage</span>
+
+<span class="s">To use this package:</span>
+
+<span class="s">&quot;&quot;&quot;</span>
+<span class="s">from zwgpackage import say_hello</span>
+<span class="s">print(say_hello(&quot;World&quot;))</span>
+<span class="s">&quot;&quot;&quot;</span>
+<span class="s">EOF</span>
+</pre></div>
+</div>
+</section>
+<section id="id3">
+<h2>打包&amp;分发<a class="headerlink" href="#id3" title="此标题的永久链接">¶</a></h2>
+<p>测试你的插件:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>.
+<span class="c1"># 安装后使用Readme里面Usage的方法测试</span>
+</pre></div>
+</div>
+<p>打包：</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>setup.py<span class="w"> </span>sdist
+</pre></div>
+</div>
+<p>分发：</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>twine<span class="w"> </span>upload<span class="w"> </span>--repository<span class="w"> </span>testpypi<span class="w"> </span>dist/*
+<span class="c1"># 注：你可能需要先安装twine: pip install twine</span>
+</pre></div>
+</div>
+<p>分发-自己的仓库</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># 指定repo url</span>
+twine<span class="w"> </span>upload<span class="w"> </span>--repository-url<span class="w"> </span>http://10.140.13.16:9081/repository/<span class="w"> </span>dist/*
+</pre></div>
+</div>
+<p>成功日志</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>twine upload --repository testpypi dist/*
+Uploading distributions to https://test.pypi.org/legacy/
+Uploading zwgpackage-0.1.tar.gz
+100% ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.1/4.1 kB • 00:00 • ?
+View at:
+https://test.pypi.org/project/zwgpackage/0.1/
+</pre></div>
+</div>
+</section>
+<section id="id4">
+<h2>最后成果<a class="headerlink" href="#id4" title="此标题的永久链接">¶</a></h2>
+<ul class="simple">
+<li><p>参见：https://test.pypi.org/project/zwgpackage/0.1/</p></li>
+<li><p>安装</p></li>
+</ul>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-i<span class="w"> </span>https://test.pypi.org/simple/<span class="w"> </span><span class="nv">zwgpackage</span><span class="o">==</span><span class="m">0</span>.1
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>使用自己的仓库</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">zwgpackage</span><span class="o">==</span><span class="mf">0.1.0</span> <span class="o">-</span><span class="n">i</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="mf">10.140.13.16</span><span class="p">:</span><span class="mi">9081</span><span class="o">/</span><span class="n">repository</span><span class="o">/</span><span class="n">pypi</span><span class="o">/</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>使用</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">zwgpackage</span><span class="w"> </span><span class="kn">import</span> <span class="n">say_hello</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">say_hello</span><span class="p">(</span><span class="s2">&quot;World&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+</section>
+<section id="id5">
+<h2>常见问题<a class="headerlink" href="#id5" title="此标题的永久链接">¶</a></h2>
+<section id="twine-upload-403">
+<h3>twine upload 报 403<a class="headerlink" href="#twine-upload-403" title="此标题的永久链接">¶</a></h3>
+<p>执行 twine upload 命令:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>➜ twine upload --repository testpypi dist/*
+Uploading distributions to https://test.pypi.org/legacy/
+Uploading my_package-0.1.tar.gz
+100% ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.1/4.1 kB • 00:03 • ?
+WARNING  Error during upload. Retry with the --verbose option for more details.
+ERROR    HTTPError: 403 Forbidden from https://test.pypi.org/legacy/
+         The user &#39;zhaoweiguo&#39; isn&#39;t allowed to upload to project &#39;my_package&#39;. See https://test.pypi.org/help/#project-name for more information.
+</pre></div>
+</div>
+<p>这个可能的原因:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. `my_package` 这个Package 已经被人用了，你没有权限使用了
+2. 你没有好配置 ~/.pypirc，记得 username = __token__
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="practice_docker_gpu_environment.html" class="btn btn-neutral" title="实践：快速搭建一个可运行的docker gpu环境" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+  
+  <div id="gitalk-container"></div>
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2010-2025, 新溪-gordon.
+
+    </p>
+  </div>
+  <div>备案号 <a href="http://www.beian.miit.gov.cn">京ICP备16018553号</a></div><div>Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a></div>. 
+
+
+</footer>
+
+<script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?042289284b8eb33866001347a3e0b129";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>     
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'V2025.06',
+            LANGUAGE:'zh-CN',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="../_static/sphinx_highlight.js"></script>
+      <script type="text/javascript" src="../_static/clipboard.min.js"></script>
+      <script type="text/javascript" src="../_static/copybutton.js"></script>
+      <script type="text/javascript" src="../_static/translations.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+
+  
+
+  <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+
+
+      // var gitalk = new Gitalk({
+      //         clientID: '565177626b5d46427009',
+      //         clientSecret: 'b2a36e67e1d2a73e43667f46d571c2624f8e1026',
+      //         repo: 'knowledge',
+      //         owner: 'zhaoweiguo',
+      //         admin: ['zhaoweiguo'],
+      //         id: location.pathname,      // Ensure uniqueness and length less than 50
+      //         distractionFreeMode: false  // Facebook-like distraction free mode
+      //       })
+      // gitalk.render('gitalk-container')
+
+  </script>
+
+
+<script type="text/javascript" src="../_static/js/table-of-contents-sidebar.js"></script>
+<!-- <script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script> -->
+<script type="text/javascript">
+    window.onload = function(e){
+        TableOfContents.init({
+            basePath: "https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/",
+            querySelector: "body" // or other css querySelector
+        });
+    }
+</script> 
+
+</body>
+</html>

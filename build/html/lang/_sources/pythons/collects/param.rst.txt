@@ -1,0 +1,278 @@
+参数相关
+##############
+
+
+参数类型::
+
+    位置参数
+    关键字参数
+    默认参数
+    可变参数
+    仅关键字参数
+
+
+.. warning:: 【思考】函数调用时，只会包括两种实际参数（元组解包对应于普通参数、字典解包对应于关键字参数）
+
+
+
+位置参数-Positional Arguments
+=============================
+
+* 位置参数是最常见的参数类型。当你调用一个函数时，你必须按照定义函数时参数的顺序来传递参数。参数的值将按照位置顺序被传递给函数。
+* 示例::
+
+    def greet(name, message):
+        return f"Hello, {name}! {message}"
+
+    # 调用函数时必须按照顺序传递参数
+    print(greet("Alice", "How are you?"))
+
+
+关键字参数-Keyword parameter
+============================
+
+.. note:: 函数调用时，指定参数名称，称为关键字参数
+
+* 示例::
+
+    def greet(name, message):
+        print(f"Hello, {name}! {message}")
+
+    greet(message="How are you?", name="Alice")
+
+
+
+
+默认参数-Default Arguments
+==========================
+
+* 默认参数允许你在定义函数时为参数指定默认值。如果函数调用时没有提供参数值，则会使用默认值。默认参数必须放在位置参数后面。
+* 示例::
+
+    def greet(name, message="How are you?"):
+        return f"Hello, {name}! {message}"
+
+    # 可以只传递一个参数，使用默认的 message
+    print(greet("Alice"))
+
+.. warning:: 重要警告：默认值只能会执行一次（来自官方）。官方建议默认参数尽量使用不可变对象！！
+
+示例说明::
+
+    def f(a, L=[]):
+        L.append(a)
+        return L
+
+    print(f(1))
+    print(f(2))
+    print(f(3))
+
+    输出:
+    [1]
+    [1, 2]
+    [1, 2, 3]
+
+
+
+可变参数
+========
+
+说明::
+
+    *参数
+        最常见的变量名是args，指向一个tuple对象
+        自动收集所有未匹配的位置参数到一个tuple对象中，变量名args指向了此tuple对象
+
+    **参数
+        最常见的变量名是kwargs，指向一个dict对象
+        自动收集所有未匹配的关键字参数到一个dict对象中，变量名kwargs指向了此dict对象
+
+
+
+
+可变位置参数-Arbitrary Positional Arguments: \*参数
+---------------------------------------------------
+
+可变参数(\*args)-自动组装成元组::
+
+    // 加了星号(*)的变量名会存放所有未命名的变量参数
+    格式:
+      def functionname(arg1, arg2=v, *args):
+
+    实例:
+    def printinfo(arg1, *args):
+        print(arg1)
+        for var in args:
+            print(var)
+
+
+    printinfo(10)  # 10
+    printinfo(70, 60, 50)
+    # 70
+    # 60
+    # 50
+
+可变关键字参数-Arbitrary Keyword Arguments: \*\*参数
+----------------------------------------------------
+
+
+命名关键字参数(\*\*kw)-自动组装成字典::
+
+    **kw - 关键字参数()
+    格式:
+      def functionname(arg1, arg2=v, args, **kw):
+
+
+    实例:
+    def printinfo(arg1, *, nkw, **kwargs):
+        print(arg1)
+        print(nkw)
+        print(kwargs)
+
+    printinfo(70, nkw=10, a=1, b=2)
+    # 70
+    # 10
+    # {'a': 1, 'b': 2}
+
+    printinfo(70, 10, a=1, b=2)
+    # TypeError: printinfo() takes 1 positional argument but 2 were given
+    原因:
+        没有写参数名nwk，因此 10 被当成「位置参数」，
+        而原函数只有 1 个位置函数，现在调用了 2 个，因此程序会报错
+
+
+参数解包
+--------
+
+* kwargs: keyword argument unpacking(关键字参数解包)
+* 说明：参数解包是在函数调用过程用的
+
+
+语法::
+
+    **kwargs
+
+* 主要作用是将一个字典中的所有键值对作为关键字参数传递给一个函数、类、或方法。这使得你可以动态地构建参数，并灵活地传递给函数，从而提高代码的灵活性和可读性。
+
+使用场景::
+
+    动态参数
+        需要将一个字典中的参数动态传递给一个函数时，** 语法可以将字典中的所有键值对展开，并作为关键字参数传递给函数。
+        这在处理动态配置、外部数据或参数可变的情况下非常有用。
+    参数转发
+        需要将函数参数直接转发给其他函数。这时，可以使用 **kwargs 来接受所有关键字参数，然后通过 **kwargs 转发给其他函数。
+    字典解包
+        当需要将字典的内容与其他参数一起传递给函数时，** 语法非常方便
+
+
+示例::
+
+    # 定义一个函数，接受关键字参数
+    def display_info(name, age, **kwargs):
+        print(f"Name: {name}, Age: {age}")
+        for key, value in kwargs.items():
+            print(f"{key}: {value}")
+
+    # 定义一个字典
+    external_data = {
+        "location": "New York",
+        "occupation": "Engineer",
+        "hobby": "Reading"
+    }
+
+    # 使用 **external_data 解包并传递给函数
+    display_info("Alice", 30, **external_data)
+
+
+
+
+
+
+
+
+仅关键字参数-Keyword-only parameter
+=====================================
+
+.. note:: 特点：必须使用关键字方式传递参数
+
+说明::
+
+    格式:
+      def functionname(arg1, arg2=v, args, *, nkw, *kw):
+    说明:
+      *, nkw - 命名关键字参数，用户想要输入的关键字参数，定义方式是在nkw 前面加个分隔符 *
+      如果要限制关键字参数的名字，就可以用「命名关键字参数」
+      使用命名关键字参数时，要特别注意不能缺少参数名
+
+
+示例::
+
+    def only_kw(a,*,b,c)
+        print(a)
+        print(b)
+        print(c)
+
+    only_kw(100,b=1000,c=99) #b和c必须使用参数名传递参数
+
+
+打包&拆包-Packing&Unpacking
+===========================
+
+Packing::
+
+    def sum(*args):
+        total = 0
+        for num in args:
+            total += num
+        return total
+
+    print(sum(1, 2, 3, 4, 5))  # 输出：15
+
+
+Unpacking::
+
+    numbers = [1, 2, 3, 4, 5]
+    print(*numbers)  # 输出：1 2 3 4 5
+
+    def greet(name, age):
+        print(f"Hello, {name}! You are {age} years old.")
+
+    person = ("Alice", 30)
+    greet(*person)  # 输出：Hello, Alice! You are 30 years old.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

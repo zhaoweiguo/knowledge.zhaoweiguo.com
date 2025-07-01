@@ -1,0 +1,424 @@
+常用
+####
+
+* DNS 报文格式解析（非常详细）: http://c.biancheng.net/view/6457.html
+
+
+来自客户端的查询消息包含以下 3 种信息::
+
+    1. 域名
+    2. Class
+    3. 记录类型
+
+Class::
+
+    在最早设计 DNS 方案时，DNS 在互联网以外的其他网络中的应用也被考虑到了
+    而 Class 就是用来识别网络的信息。
+    不过，如今除了互联网并没有其他的网络了，因此 Class 的值永远是代表互联网的 IN
+
+* |:ref:| `nslookup命令`
+
+记录类型
+========
+
+1. A::
+
+    Address 的缩写
+    返回值:
+      ip 地址
+      如: 192.168.0.23
+
+    验证生效方法:
+      $ ping zhaoweiguo.com
+
+    AAAA: 用来指定主机名（或域名）对应的 IPv6 地址
+
+2. MX::
+
+    邮件交换记录，用于将以该域名为结尾的电子邮件指向对应的邮件服务器以进行处理
+    Mail eXchange，邮件交换
+    返回值:
+      域名和优先级
+      如: 10 mail.qq.com
+    说明: 优先级数值较小的邮件服务器代表更优先
+
+    验证生效方法:
+        // linux/mac 用法:
+        ➜ nslookup -type=mx mail.zhaoweiguo.com
+        Server:   10.96.1.18
+        Address:  10.96.1.18#53
+
+        Non-authoritative answer:
+        mail.zhaoweiguo.com canonical name = mail.mxhichina.com.
+        // windows 用法
+        $ nslookup -qt=mx zhaoweiguo.com
+
+
+3. PTR::
+
+    DNS PTR 记录是一个指向域名的 IP 地址的指针
+    DNS PTR 记录，通常被称为指针记录，通过告诉 IP 客户分配给它的系统名称，帮助将 IP 地址映射到主机名
+
+    主要用在两个方面
+        a. 用 DNS 服务器验证电子邮件地址，以便它们能够被邮件系统接受；以及
+        b. 用 DNS 服务器验证主机名，以便它们能被网络浏览器和其他网络客户端接受。
+
+    格式:
+        <name>   <ttl>  <class>   <type> <rdata>
+    示例:
+        192.1.06.427   14400  <network class>  PTR  example.com
+
+    存储:
+        IPv4:
+            IP 地址 192.1.2.100 的 PTR 记录将被存储在 “100.2.1.192.in-addr.arpa”.
+        IPv6:
+            IP 地址 4321:0:1:2:3:4:567:89ab 在 IPv6 中的 PTR 记录将被存储于 
+            “b.a.9.8.7.6.5.0.4.0.0.0.3.0.0.0.2.0.0.0.1.0.0.0.0.0.0.0.1.2.3.4.IP6.ARPA”.
+
+    用途:
+        用于反向 DNS 查询，以确定一台主机是否代表发件人与另一台主机进行通信。
+        这些记录在反垃圾邮件、排除电子邮件交付问题、电子邮件服务器验证和验证外发邮件中非常有用。
+
+    命令行:
+        <windows>: nslookup IP_ADDRESS
+        <linux>: dig -x IP_ADDRESS
+
+
+
+4. SOA::
+
+    查询域名属性信息
+
+5. NS::
+
+    查询 DNS 服务器 IP 地址
+    域名服务器记录，如果需要把子域名交给其他 DNS 服务器解析，就需要添加 NS 记录。
+
+
+6. CNAME::
+
+    查询域名相关别名:
+    CNAME 的全称是 Canonical Name，通常称别名记录
+    如果需要将域名指向另一个域名，再由另一个域名提供 IP 地址，就需要添加 CNAME 记录
+
+    $ nslookup -type=CNAME www.zhaoweiguo.com
+
+7. TXT::
+
+    记录值：没有固定的格式。大部分时间，TXT 记录是用来做 SPF 反垃圾邮件的。
+      最典型的 SPF 格式的 TXT 记录例子为 “v=spf1 a mx ~all”，
+        表示只有这个域名的 A 记录和 MX 记录中的 IP 地址有权限使用这个域名发送邮件
+    主机记录：填写子域名。
+      例如，添加 www.123.com 的 TXT 记录，您在 “主机记录” 处选择 “www” 即可
+      如果只是想添加 123.com 的 TXT 记录，您在 “主机记录” 处选择 “@” 即可
+
+    验证生效方法:
+      $ dig -t txt _dns-acme.zhaoweiguo.com
+
+    可以填写任何东西，长度限制 255。
+    绝大多数的 TXT 记录是用来做 SPF 记录（反垃圾邮件）
+    MX 记录的作用是给寄信者指明某个域名的邮件服务器有哪些。
+    SPF 的作用跟 MX 相反，它向收信者表明，哪些邮件服务器是经过某个域名认可会发送邮件的
+
+8. 显性 URL::
+
+    从一个地址 301 重定向（也叫「永久性转移」）到另一个地址的时候，就需要添加显性 URL 记录。
+
+9. 隐性 URL::
+
+    从一个地址 302 跳转（也叫「临时跳转」）到另一个地址，需要添加隐性 URL 记录。
+    它类似于显性 URL，区别在于隐性 URL 不会改变地址栏中的域名。
+
+
+0. SRV（记录提供特定服务的服务器）::
+
+    DNS “服务” (SRV) 记录为特定的服务（如 IP 语音 (VoIP)）、即时通讯等）指定主机和端口。
+    大多数其他 DNS 记录只指定一个服务器或一个 IP 地址，但 SRV 记录还包括该 IP 地址的一个端口。
+
+    格式: _Service._Proto.Name TTL Class SRV Priority Weight Port Target
+    示例: _xmpp._tcp.example.com. 86400 IN SRV 10 5 5223 server.example.com
+    详解:
+        Service:  服务名称，前缀“_”是为防止与DNS Label（普通域名）冲突
+        Proto:    服务使用的通信协议，_TCP、_UDP、其它标准协议或者自定义的协议
+        Name:     提供服务的域名
+        TTL:      缓存有效时间
+        CLASS:    类别
+        Priority: 该记录的优先级，数值越小表示优先级越高，范围0-65535
+        Weight:   该记录的权重，数值越高权重越高，范围0-65535。    
+        Port:     服务端口号，0-65535
+        Target:   host地址
+    说明:
+        优先级不同选优先级高的
+        优先级相同，按权重比例选取
+
+    配置举例:
+    ```
+        $ORIGIN example.com.
+        @               SOA server.example.com. root.example.com. (
+                            1995032001 3600 3600 604800 86400 )
+                        NS  server.example.com.
+                        NS  ns1.ip-provider.net.
+                        NS  ns2.ip-provider.net.
+        ; foobar - use old-slow-box or new-fast-box if either is
+        ; available, make three quarters of the logins go to
+        ; new-fast-box.
+        _foobar._tcp     SRV 0 1 9 old-slow-box.example.com.
+                         SRV 0 3 9 new-fast-box.example.com.
+        ; if neither old-slow-box or new-fast-box is up, switch to
+        ; using the sysdmin’s box and the server
+                         SRV 1 0 9 sysadmins-box.example.com.
+                         SRV 1 0 9 server.example.com.
+        server           A   172.30.79.10
+        old-slow-box     A   172.30.79.11
+        sysadmins-box    A   172.30.79.12
+        new-fast-box     A   172.30.79.13
+        ; NO other services are supported
+        *._tcp          SRV  0 0 0 .
+        *._udp          SRV  0 0 0 .
+    ```
+    示例说明:
+    ```
+        1. example.com 域名提供了一个名为_foobar._tcp 的服务
+        2. 这个服务有4个 SRV 记录:
+            优先级0的有: old-slow-box.example.com:9 和 new-fast-box.example.com:9
+                1/4的概率选择: old-slow-box.example.com
+                3/4的概率选择: new-fast-box.example.com
+            优先级1的有: sysadmins-box.example.com:9 和 server.example.com:9
+                只有优先级为0的都没有启动才会使用优先级1的
+        3. SRV的Target对应的域名解析应该使用A或AAAA，不能再用CNAME
+    ```
+
+1. RRSIG::
+
+    详见DNSSEC
+
+
+
+存储表格式
+==========
+
+
+DNS服务器存储「资源记录」表格式::
+
+    域名              Class     记录类型        响应数据
+    ===========      ======     =======       =============
+    www.zwg.com       IN          A           192.168.0.23
+    zwg.com           IN          MX          10 mail.zwg.com
+    mail.zwg.com      IN          A           192.168.1.23
+
+
+.. figure:: https://img.zhaoweiguo.com/knowledge/images/protocols/dns1.png
+
+   找到目标 DNS 服务器
+
+
+TTL 设置
+========
+
+
+
+.. figure:: https://img.zhaoweiguo.com/knowledge/images/protocols/dns2.png
+
+   找到目标 DNS 服务器
+
+
+DNS Mapping
+===========
+
+DNS mapping 通过配置 “域名 - 公网地址 - 公网端口 - 协议类型” 的映射表，建立内部服务器域名与内部服务器公网信息的对应关系。在配置了 NAT 的接口上，设备检查接收到的 DNS 响应报文，根据报文中的域名查找用户配置的 DNS mapping 映射表，并根据表项内的 “公网地址 - 公网端口 - 协议类型” 查找内部服务器，然后用内部服务器的私网地址替换 DNS 查询结果中的公网地址。这样私网用户收到的 DNS 响应报文中就包含了要访问的私网内部服务器的私网地址，就可以使用内部服务器域名访问同一私网内的内部服务器。
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/HZS5kO.jpg
+
+   NAT DNS mapping 工作示意图：一般情况下，DNS 服务器和访问私网服务器的用户都在公网，通过在 NAT 设备的公网接口上配置内部服务器，可以将公网地址、端口等信息映射到私网内的服务器上，使得公网用户可以通过内部服务器的域名或公网地址来访问内部服务器。但是，如果 DNS 服务器在公网，私网用户希望通过域名来访问私网的 Web 服务器，则会由于 DNS 服务器向私网用户发送的响应报文中包含的是私网服务器的公网地址，而导致收到响应报文的私网用户 无法利用域名访问私网服务器。通过在设备上配置 DNS mapping 可以解决该问题。
+
+
+
+
+* DNS mapping 问题: https://zhiliao.h3c.com/questions/dispcont/6957
+
+DDNS
+====
+
+DDNS（Dynamic Domain Name Server，动态域名服务）是将用户的动态 IP 地址映射到一个固定的域名解析服务上，用户每次连接网络的时候客户端程序就会通过信息传递把该主机的动态 IP 地址传送给位于服务商主机上的服务器程序，服务器程序负责提供 DNS 服务并实现动态域名解析。
+
+
+DNSSEC
+======
+
+* 域名系统安全扩展（Domain Name System Security Extensions，DNSSEC）是添加到 DNS 记录中的加密签名，有助于保证通过互联网协议（IP）网络传输数据时的安全性。
+* DNS 最初的架构只考虑了可扩展性，并未在协议层面包含任何安全措施，因此攻击者可能设法伪造记录，将用户引导到欺诈性的网站。为此业界引入了 DNSSEC 门户，可以为 DNS 响应增加一层真实性和完整性保护。
+* DNSSEC 通过向现有 DNS 记录添加加密签名的方式来建立一种更安全的 DNS。这个签名会与常见的记录类型（如 AAAA 和 MX 记录）一起存储在 DNS 名称服务器中。随后只需检查所请求的 DNS 记录对应的签名，即可验证该记录是否直接来自权威名称服务器。
+
+为了促进签名验证工作，DNSSEC 会添加下列一种 DNS 记录类型之一::
+
+    1. Resource record signature (RRSIG)：包含一整个记录集的加密 DNSSEC 签名
+    2. DNSKEY：包含一个签名公钥
+    3. DS：包含 DNSKEY 记录的哈希值
+    4. NSEC 和 NSEC3：在区域中提供记录名之间的链接，同时列出了记录名可用的记录类型
+    5. CDNSKEY 和 CDS：将请求的 DS 状态从子区域传递到父区域，并请求更新父区域的 DS 记录
+
+* 作用: DNSSEC 有助于保护域名防范缓存投毒和应答伪造，可对域名提供重要的防护能力，因为当今数字环境需要对网站的整个架构提供端到端保护，而成功的 DNS 攻击会极大损害品牌声誉。DNS 解析工作在用户与网站开始互动之前就发生了，如果 DNS 被攻击者劫持，用户可能最终会被引导至虚假网站（进而被骗遭受各种损失）。由于 DNS 协议大量使用了缓存机制，因此一旦 DNS 记录被投毒，往往很难在短时间内加以纠正。
+* 目标: 保护应用（和 DNS 服务器），不受到伪造的 DNS 记录影响。在使用 DNSSEC 的状况下，所有的 DNS 回复都应该要附上签名。透过检查签名内容的有效性，接受到 DNS 回复的一方可以确定这个资讯是安全、完整、没有被窜改过的。
+
+* 相关RFC： RFC4033, RFC4034, RFC4035
+
+
+
+
+RRSIG
+-----
+
+* DNSSEC 的状况下，每一个纪录都应该要做数字签名。所以 DNSSEC 裡面有提到一种 DNS 纪录，这个纪录叫做 RRSIG，会附在 DNS 请求的回复中。
+
+
+内容::
+
+    网址           TTL  CLASS 类別   內容
+    a.z.w.example. 3600 IN   MX     1 ai.example.
+    a.z.w.example. 3600 IN   RRSIG  MX 5 2 3600 20040509183619 (
+                                      20040409183619 38519 example.
+                                      OMK8rAZlepfzLWW75Dxd63jy2wswESzxDKG2
+                                      f9AMN1CytCd10cYISAxfAdvXSZ7xujKAtPbc
+                                      tvOQ2ofO7AZJ+d01EeeQTVBPq4/6KCWhqe2X
+                                      TjnkVLNvvhnc0u28aoSsG0+4InvkkOHknKxw
+                                      4kX18MMR34i8lC36SR5xBni8vHI= )
+
+RRSIG格式解释::
+
+    [对应格式] [算法编号] [标签数(通配符)]   [TTL]   [签名过期时间] 
+    |            |         |              |           |
+    |   ---------/         |              |           |
+    |  /  -----------------/              |           |
+    |  | /  /-----------------------------/           |
+    |  | |  |        /--------------------------------/
+    |  | |  |        |
+    |  | |  |        |
+    MX 5 2 3600 20040509183619 ( 20040409183619 38519 example. OM.....HI= ) 
+                                 |               |     |         |
+      /--------------------------/               |     |         |
+      |          /-------------------------------/     |         |
+      |          |      /------------------------------/         |
+      |          |      |            /---------------------------/
+    [签署日期]  [Tag] [签署者名称] [内容，base64]
+
+
+
+DNSKEY
+------
+
+* 随著 RRSIG 的出现，我们拿到凭证的内容了。不过我们需要验证这个签章是不是伪造的，然后是谁签的。这个资讯，会在 DNSKEY 纪录当中。
+
+示例::
+
+    example.com. 86400 IN DNSKEY 256 3 5 ( AQPSKmynfzW4kyBv015MUG2DeIQ3
+                                          Cbl+BBZH4b/0PY1kxkmvHjcZc8no
+                                          kfzj31GajIQKY+5CptLr3buXA10h
+                                          WqTkF7H6RfoRqXQeogmMHfpftf6z
+                                          Mv1LyBUgia7za6ZEzOJBOztyvhjL
+                                          742iU/TpPSEDhm2SNKLijfUppn1U
+                                          aNvv4w==  )
+
+
+.. note:: DNSKEY 里面会包含拿去签名 RRSIG 的公钥。
+
+
+* 不过，即使我们能够确认“这个 RRSIG 和 DNSKEY 对得起来”，也还不能够确认“这个 DNSKEY 真的属于这个网域”。所以我们会需要一个能够信任方式，来验证这个 DNSKEY，一种类似 HTTPS 证书信任链的方法。
+
+信任链机制
+''''''''''
+
+* 方法：依赖上一级网域的 DNS 纪录，把上一级证书的公钥放在那边。
+* 在 DNSSEC 中，这个叫做 DS (Delegation Signer) 纪录。
+* 由于你可以指定非常多的子网域，所以 DS 纪录中，只会记载“这个凭证的指纹 (hash)”。
+
+DS
+--
+
+DS 示例::
+
+    dskey.example.com. 86400 IN DS 60485 5 1 ( 2BB183AF5F22588179A53B0A
+                                            98631FAD1A292118 )
+
+如果 DNSKEY 是被上一级签署过的话，他会看起来像这样::
+
+    dskey.example.com. 86400 IN DNSKEY 256 3 5 ( AQOeiiR0GOMYkDshWoSKz9Xz
+                                             fwJr1AYtsmx3TGkJaNXVbfi/
+                                             2pHm822aJ5iI9BMzNXxeYCmZ
+                                             DRD99WYwYqUSdjMmmAphXdvx
+                                             egXd/M5+X7OrzKBaMbCVdFLU
+                                             Uh6DhweJBjEVv5f2wwjM9Xzc
+                                             nOf+EPbtG9DMBmADjFDc2w/r
+                                             ljwvFw==
+                                             ) ;  key id = 60485
+
+
+
+.. note:: key id 和上面的 DS 纪录是一样的。另外，是可以通过 DNSKEY 去计算出 DS 的数值，所以我们可以透过证明这两个之间的关係，来保证 DNSKEY 纪录的可靠性。
+
+
+
+
+NSEC(找不到纪录)
+----------------
+
+* 在 DNS 的状况下，基本上，若找不到东西，只要回覆 NXDOMAIN 就好了。不过在 DNSSEC 的状况下，由于回覆的资料内容内也要证明这讯息不是伪造的，但这东西根本查不到，所以我们要想办法告诉对方“我真的找不到”。如果不做签名验证，攻击者可以利用这个漏洞，伪造网站主机名的 NXDOMAIN 响应使网站无法访问。
+* DNSSEC 想到了这个问题，所以又有一种纪录叫做 ``NSEC (Next Secure)``。这个纪录里面会记载说“下一笔纪录是什么”。当查询收到一个不存在的名称时，它可以提供一条 NSEC 记录来代表区域中的下一个权威记录是真实存在的，并代表该名称下出现的记录类型。
+
+* 举例来说，如果 “example.com” 区域经过排序，让 “beta.example.com” 成为第一条记录，那么针对 “alpha.example.com” 的查询将导致 NXDOMAIN，并产生一条指向 “beta.example.com” 的 NSEC 记录。NSEC 记录与其他任何记录一样，都由 ZSK 签名，具备对应的 RRSIG。因此对 NXDOMAIN 的响应需要具备经过认证的 RRSIG NSEC 记录才算有效。
+
+
+NSEC3
+-----
+
+NSEC 会带来安全性的疑虑。是因为::
+
+    DNS 纪录是按照字母排序的
+    NSEC 会回覆排序中下一个存在的纪录
+
+* 所以攻击者只要从 A 开始穷举，一直让服务器回 NSEC，就可以穷举所有的纪录了。因为这会有很大的问题，加上部分网域商会因此不使用 DNSSEC，于是后来就出现了 NSEC3。
+
+
+* NSEC3 的诞生就是为了解决 NSEC 记录被用于列出区域中所有有效记录而造成的问题。NSEC3 在行为上与 NSEC 完全相同，不过区域中的 Next secure 名称会显示为哈希而非明文。这有助于保护信息并防止区域遍历。
+
+
+DNSSEC 缺点
+-----------
+
+* DNSSEC 要多回覆很多封包，多用了流量
+* 如果私钥被偷的话，就要重搞一份凭证和金钥，但是 DNS 又有快取，过程中有一堆人会因为凭证对不上而解析失败
+* 大家不熟 DNSSEC，有时候会因为一直报错，所以干脆关了
+* 不能伪造 DNS 纪录，不能限制网路和言论自由，很不方便
+
+
+
+
+
+
+
+
+参考
+====
+
+* https://ithelp.ithome.com.tw/articles/10194247
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

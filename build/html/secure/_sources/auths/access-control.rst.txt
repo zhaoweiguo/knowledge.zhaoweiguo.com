@@ -1,0 +1,235 @@
+权限模型-Access Control
+#######################
+
+常见的权限模型有下面这 5 种::
+
+    1. 权限控制列表（ACL，Access Control List）
+        一种简单的权限模型
+    2. 自主访问控制（DAC，Discretionary Access Control）
+        DAC 基于 ACL，将权限下放给具有此权限的主题；
+        但 DAC 因为权限下放，导致它对权限的控制过于分散
+    3. 强制访问控制（MAC，Mandatory Access Control）
+        为了弥补 DAC 的对权限的控制过于分散这个缺陷，诞生了 MAC 权限模型
+    4. 基于角色的访问控制（RBAC，Role-Based Access Control）
+        ACL 及其衍生是旧时代的权限模型，灵活性和功能性满足不了现代应用的权限需求，所以诞生了 RBAC
+    5. 基于属性的权限验证（ABAC，Attribute-Based Access Control）
+        随着组织和应用规模的增长，所需的角色数量越来越多，变得难以管理，进而导致角色爆炸和职责分离（SoD）失败
+        最后，引入了一种新的、更动态的访问控制形式，称为基于属性的访问控制，也就是 ABAC
+
+
+ACL-权限控制列表
+================
+
+* Access Control List，权限控制列表
+* 用来判断用户是否可以对资源做特定的操作
+
+
+例如，允许 Colin 创建文章的 ACL 策略为::
+
+    Subject: Colin
+    Action: Create
+    Object: Article
+
+.. note:: 在 ACL 权限模型下，权限管理是围绕资源 Object 来设定的，ACL 权限模型也是比较简单的一种模型
+
+DAC-自主访问控制
+=================
+
+* Discretionary Access Control，自主访问控制
+* 不仅可以判断 Subject 是否可以对 Object 做 Action 操作，同时也能让 Subject 将 Object、Action 的相同权限授权给其他的 Subject
+
+例如，Colin 也可以授予 James 创建文章的权限::
+
+    Subject: James
+    Action: Create
+    Object: Article
+
+    因为权限下放，Colin 有这个权限，他就可以把权限给另一个人
+
+.. note:: 经典的 ACL 模型权限集中在同一个 Subject 上，缺乏灵活性，为了加强灵活性，在 ACL 的基础上，DAC 模型将权限下放，允许拥有权限的 Subject 自主地将权限授予其他 Subject。
+
+
+MAC-强制访问控制
+================
+
+* Mandatory Access Control，强制访问控制
+* 安全性更高。MAC 权限模型下，Subject 和 Object 同时具有安全属性。
+
+在做授权时，需要同时满足两点才能授权通过::
+
+    1. Subject 可以对 Object 做 Action 操作
+    2. Object 可以被 Subject 做 Action 操作
+
+
+
+例如::
+
+    我们设定了 “Colin 和 James 可以创建文章” 这个 MAC 策略：
+    Subject: Colin
+    Action: Create
+    Object: Article
+    Subject: James
+    Action: Create
+    Object: Article
+
+    我们还有另外一个 MAC 策略 “文章可以被 Colin 创建”：
+    Subject: Article
+    Action: Create
+    Object: Colin
+
+    说明: Colin 可以创建文章，但是 James 不能创建文章，因为第二条要求没有满足
+
+
+RBAC-基于角色的访问控制
+=======================
+
+* Role-Based Access Control，基于角色的访问控制
+* 引入了 Role（角色）的概念，并且将权限与角色进行关联。用户通过扮演某种角色，具有该角色的所有权限
+
+
+.. note:: 每个用户关联一个或多个角色，每个角色关联一个或多个权限，每个权限又包含了一个或者多个操作，操作包含了对资源的操作集合。通过用户和权限解耦，可以实现非常灵活的权限管理
+
+
+可以满足以下两个权限场景::
+
+    第一，可以通过角色批量给一个用户授权
+    第二，可以批量修改用户的权限
+
+RBAC 又分为 RBAC0、RBAC1、RBAC2、RBAC3::
+
+    1. RBAC0 是 RBAC 的核心思想
+    2. RBAC1 是基于 RBAC 的角色分层模型
+    3. RBAC2 增加了 RBAC 的约束模型
+    4. RBAC3，其实相当于 RBAC1 + RBAC2
+
+
+1. RBAC0::
+
+    基础模型，只包含核心的四要素:
+      a. 用户（User）
+      b. 角色（Role）
+      c. 权限（Permission：Objects-Operations）
+      d. 会话（Session）
+      用户和角色可以是多对多的关系，权限和角色也是多对多的关系
+
+2. RBAC1
+
+    包括了 RBAC0，并且添加了角色继承
+    角色继承，即角色可以继承自其他角色，在拥有其他角色权限的同时，还可以关联额外的权限
+
+3. RBAC2::
+
+    包括 RBAC0，并且添加了约束。具有以下核心特性:
+    a. 互斥约束
+        包括互斥用户、互斥角色、互斥权限:
+        同一个用户不能拥有相互排斥的角色
+        两个互斥角色不能分配一样的权限集
+        互斥的权限不能分配给同一个角色
+        在 Session 中，同一个角色不能拥有互斥权限
+    b. 基数约束
+        一个角色被分配的用户数量受限，它指的是有多少用户能拥有这个角色
+        例如，一个角色是专门为公司 CEO 创建的，那这个角色的数量就是有限的
+    c. 先决条件角色
+        指要想获得较高的权限，要首先拥有低一级的权限
+        例如，先有副总经理权限，才能有总经理权限
+    d. 静态职责分离 (Static Separation of Duty)
+        用户无法同时被赋予有冲突的角色
+    e. 动态职责分离 (Dynamic Separation of Duty)
+        用户会话中，无法同时激活有冲突的角色
+
+
+RBAC3::
+
+    全功能的 RBAC，合并了 RBAC0、RBAC1、RBAC2
+
+
+
+ABAC-基于属性的权限验证
+=======================
+
+* Attribute-Based Access Control，基于属性的权限验证
+* 有时也被称为 PBAC（Policy-Based Access Control）或 CBAC（Claims-Based Access Control）
+* 规定了哪些属性的用户可以对哪些属性的资源在哪些限制条件下进行哪些操作
+
+跟 RBAC 相比，ABAC 对权限的控制粒度更细，主要规定了下面这四类属性::
+
+    1. 用户属性，例如性别、年龄、工作等
+    2. 资源属性，例如创建时间、所属位置等
+    3. 操作属性，例如创建、修改等
+    4. 环境属性，例如来源 IP、当前时间等
+
+
+示例::
+
+    Subject:
+        Name: Colin
+        Department: Product
+        Role: Writer
+    Action:
+        - create
+        - update
+    Resource:
+        Type: Article
+        Tag:
+            - technology
+            - software
+        Mode:
+            - draft
+    Contextual:
+        IP: 10.0.0.10
+    说明:
+      产品部门的 Colin 作为一个 Writer 角色，可以通过来源 IP 是 10.0.0.10 的客户端，
+      创建和更新带有 technology 和 software 标签的草稿文章
+
+实例-腾讯云的 CAM 策略::
+
+    {
+      "version": "2.0",
+      "statement": [
+        {
+          "effect": "allow",
+          "action": [
+            "cos:List*",
+            "cos:Get*",
+            "cos:Head*",
+            "cos:OptionsObject"
+          ],
+          "resource": "qcs::cos:ap-shanghai:uid/1250000000:Bucket1-1250000000/dir1/*",
+          "condition": {
+            "ip_equal": {
+              "qcs:ip": [
+                "10.217.182.3/24",
+                "111.21.33.72/24"
+              ]
+            }
+          }
+        }
+      ]
+    }
+    说明:
+    用户必须在 10.217.182.3/24 或者 111.21.33.72/24 网段
+    才能调用云 API（cos:List*、cos:Get*、cos:Head*、cos:OptionsObject），
+    对 1250000000 用户下的 dir1 目录下的文件进行读取操作
+
+    这里，ABAC 规定的四类属性分别是:
+    1. 用户属性：用户为 1250000000
+    2. 资源属性：dir1 目录下的文件
+    3. 操作属性：读取（cos:List*、cos:Get*、cos:Head*、cos:OptionsObject 都是读取 API）
+    4. 环境属性：10.217.182.3/24 或者 111.21.33.72/24 网段
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,154 @@
+arecord
+#######
+
+* arecord 是 ALSA 项目提供的一个命令行下的音频录制工具。它可以通过 ALSA 驱动从音频输入设备录制音频,并保存为音频文件。
+
+.. note:: arecord -l 命令用于列出系统中所有的录音设备信息,而不是某个具体设备的状态。它显示的内容由系统的硬件配置决定,和是否插入耳机无关。
+
+arecord 的主要功能包括::
+
+	1. 支持大多数音频文件格式,如 WAV、MP3、OGG 等。录制完成后可以将录音保存为相应格式。
+	2. 可以选择录制设备和子设备,如果系统有多个音频设备的话。使用 -D 或 -d 参数指定设备。
+	3. 可以设置录音相关参数,如采样率、声道数、格式等。使用 -r、-c、-f 等参数。
+	4. 支持录音时间和文件大小限制。使用 -d 和 -s 参数。
+	5. 支持监听录音(输入信号)。使用 -vv 参数开启。
+	6. 支持非交互模式,可以在脚本中使用。
+	7. 支持基本的录音效果,如混响等。需要搭配 aeffect 工具使用。
+
+
+arecord 的基本语法是::
+
+	arecord [options] <filename>  
+
+选项参数包括::
+
+	-l, --list-devices      list all soundcards and digital audio devices
+	-L, --list-pcms         list device names
+	-D, --device=NAME       select PCM by name
+	-q, --quiet             quiet mode
+	-t, --file-type TYPE    file type (voc, wav, raw or au)
+	-c, --channels=#        channels
+	-f, --format=FORMAT     sample format (case insensitive)
+	-r, --rate=#            sample rate
+	-d, --duration=#        interrupt after # seconds
+	-s, --samples=#         interrupt after # samples per channel
+	-v, --verbose           show PCM structure and setup (accumulative)
+	-i, --interactive       allow interactive operation from stdin
+
+
+
+
+
+录音::
+
+	arecord -D plughw:0,0 -d 5 -f cd test.wav
+
+	选项:
+	   -r 采样率,默认44100Hz
+	   -c 声道数,1为单声道,2为立体声
+	   -t 录音格式,可选wav, au
+	   -D 指定录音设备
+	   		格式为plughw:卡号,设备号,如plughw:0,0
+	   		hw:1 表示第二块声卡
+	   		plughw:0 表示第一块声卡+插件
+	   -d 指定录音时长,单位秒
+	   -f 指定录音格式,可以是S16_LE, S24_LE, S32_LE 等
+	   -t 指定录音文件格式,可以是wav, au, raw 等
+
+
+-D/--device 选项
+================
+
+示例::
+
+	- default: 默认的输入设备,通常是系统的内建麦克风
+	- hw:0,0: 第一块声卡的第一个输入设备
+	- hw:1,3: 第二块声卡的第四个输入设备
+	- plughw:0,0: 与 hw:0,0 相同,但可能允许额外的插件处理
+	- front:mic: 设置命名为 front:mic 的输入设备 
+
+
+
+
+
+-f/--format 选项
+================
+
+The available format shortcuts are::
+
+	-f cd (16 bit little endian, 44100, stereo)
+		即: 相当于 -f S16_LE, -r 44100, -c 2
+	-f cdr (16 bit big endian, 44100, stereo)
+	-f dat (16 bit little endian, 48000, stereo)
+
+常用的格式选项示例::
+
+	- S16_LE:普通的16位有符号小端序PCM格式,CD音质
+	- Float32_LE:高精度32位浮点PCM格式
+	- mu_law:用于传统电话系统的μ律编码,8KHz
+	- mp3:MP3编码格式,较高压缩比
+
+FORMAT 可以设置为 ALSA 支持的各种音频格式。主要包括::
+
+	- S32_LE/BE, U32_LE/BE: 32位有符号/无符号小/大端序
+	- S24_LE/BE, U24_LE/BE: 24位有符号/无符号小/大端序 
+	- S16_LE/BE, U16_LE/BE: 16位有符号/无符号小/大端序
+	- S8, U8: 8位有符号/无符号格式
+	- Float32_LE/BE: 32位浮点小/大端序
+	- Float64_LE/BE: 64位浮点小/大端序
+	- MU_LAW, A_LAW: μ律和A律编码格式
+	- IMA_ADPCM: IMA ADPCM 编码格式
+	- MPEG: MPEG 音频编码格式
+	- GSM: GSM 全速率编码格式 
+	- SPECIAL: 特殊的原始二进制格式
+
+
+
+
+
+
+
+
+
+示例
+====
+
+
+显示录音设备列表::
+
+	$ arecord -l
+	**** List of CAPTURE Hardware Devices ****
+	card 1: Generic_1 [HD-Audio Generic], device 0: ALC257 Analog [ALC257 Analog]
+	  Subdevices: 1/1
+	  Subdevice #0: subdevice #0
+	card 2: acp6x [acp6x], device 0: DMIC capture dmic-hifi-0 []
+	  Subdevices: 1/1
+	  Subdevice #0: subdevice #0
+
+	说明:
+		ALC257 是瑞昱(Realtek)生产的常见音频编解码器芯片
+
+
+
+
+
+开始录音5秒,单声道,采样率16000Hz,保存为test.wav::
+
+	arecord -D plughw:0,0 -d 5 -r 16000 -c 1 -t wav -f S16_LE test.wav 
+
+播放录音::
+
+	aplay test.wav
+
+
+
+录制 wav 格式音频,设备为 hw:0.0,录制时间为 6 秒,采样率为 44100Hz,保存为 record.wav::
+
+	arecord -D hw:0.0 -d 6 -r 44100 -f cd record.wav
+
+
+
+
+
+
+

@@ -1,0 +1,252 @@
+实践
+####
+
+
+案例1-默认网络
+==============
+
+运行以下两个命令以启动两个Ubuntu容器，每个容器都连接到默认bridge网络::
+
+    $ docker run -itd --name container1 ubuntu
+    ea30f1c9d86621b54e38b0c890c717b1a56391f0545560b883322edd398c7d98
+
+    $ docker run -itd --name container2 ubuntu
+    ecc3bdf69155dd76955ea2ef7573789ab293ecab61488e5d9c81e589d4395d2b
+
+bridge启动两个容器后再次检查网络。确保两个Ubuntu容器都连接到网络::
+
+    $ docker network inspect bridge
+    [
+        {
+            "Name": "bridge",
+            "Id": "4784e1934901e6ec7b3575d824904e9022980563aa547059e2e842016e05cf4b",
+            "Created": "2019-02-15T17:33:24.059683063+08:00",
+            "Scope": "local",
+            "Driver": "bridge",
+            "EnableIPv6": false,
+            "IPAM": {
+                "Driver": "default",
+                "Options": null,
+                "Config": [
+                    {
+                        "Subnet": "172.17.0.0/16",
+                        "Gateway": "172.17.0.1"
+                    }
+                ]
+            },
+            "Internal": false,
+            "Attachable": false,
+            "Ingress": false,
+            "ConfigFrom": {
+                "Network": ""
+            },
+            "ConfigOnly": false,
+            "Containers": {
+                "ea30f1c9d86621b54e38b0c890c717b1a56391f0545560b883322edd398c7d98": {
+                    "Name": "container1",
+                    "EndpointID": "eb8055f5187b1dfa8c17049ca55c53d28c52de6c95ff42d0d23892f0151151f4",
+                    "MacAddress": "02:42:ac:11:00:02",
+                    "IPv4Address": "172.17.0.2/16",
+                    "IPv6Address": ""
+                },
+                "ecc3bdf69155dd76955ea2ef7573789ab293ecab61488e5d9c81e589d4395d2b": {
+                    "Name": "container2",
+                    "EndpointID": "e0fc810bf1fded3c80a7d89c84bc41a0f83b742f280cab7111002fd266c6ec7c",
+                    "MacAddress": "02:42:ac:11:00:03",
+                    "IPv4Address": "172.17.0.3/16",
+                    "IPv6Address": ""
+                }
+            },
+            "Options": {
+                "com.docker.network.bridge.default_bridge": "true",
+                "com.docker.network.bridge.enable_icc": "true",
+                "com.docker.network.bridge.enable_ip_masquerade": "true",
+                "com.docker.network.bridge.host_binding_ipv4": "0.0.0.0",
+                "com.docker.network.bridge.name": "docker0",
+                "com.docker.network.driver.mtu": "1500"
+            }
+        }
+    ]
+
+
+
+案例2-自己的桥接网络
+====================
+
+创建自己的桥接网络
+------------------
+
+::
+
+    $ docker network create -d bridge tinywan_bridge
+    // Docker Engine本身支持桥接网络和覆盖网络。
+    //     桥接网络仅限于运行Docker Engine的单个主机
+    //     覆盖网络可以包含多个主机，是一个更高级的主题
+    // 在本例中，您将创建一个桥接网络
+
+    $ docker network ls    // 查看
+    NETWORK ID          NAME                DRIVER              SCOPE
+    4784e1934901        bridge              bridge              local
+    e8e19c0711e1        host                host                local
+    1e8bc1e399a7        none                null                local
+    9fd23f7f3998        tinywan_bridge      bridge              local    <-- 新增
+
+指定网络启动容器db
+------------------
+
+::
+
+    $ docker run -d --net=tinywan_bridge  --name db redis:5.0-alpine
+    // 利用`--network`或者`--net`启动容器提供服务
+    // 或者使用全名:
+    $ docker run -d --network=tinywan_bridge  --network-alias db redis:5.0-alpine
+    通过选项--network-alias将取名的db起了一个别名
+
+    $ docker inspect --format='{{json .NetworkSettings.Networks}}' db
+    {
+        "tinywan_bridge": {
+            "IPAMConfig": null,
+            "Links": null,
+            "Aliases": [
+                "11379ad91a62"
+            ],
+            "NetworkID": "9fd23f7f3998962d6b378f4cbab8cc9f8a2e7aa64bb3502dd1c0b3a5c1d0c7b0",
+            "EndpointID": "9c530e400049590b4ba63b75de96c0039b4ee52dbf36fad51df84a24fc028e3e",
+            "Gateway": "192.168.192.1",
+            "IPAddress": "192.168.192.2",
+            "IPPrefixLen": 20,
+            "IPv6Gateway": "",
+            "GlobalIPv6Address": "",
+            "GlobalIPv6PrefixLen": 0,
+            "MacAddress": "02:42:c0:a8:c0:02",
+            "DriverOpts": null
+        }
+    }
+
+方法1:手工附加网络连接db容器
+----------------------------
+
+使用默认网络启动容器web::
+
+    $ docker run -d  --name web nginx
+    // 默认bridge网络中运行
+    $ docker inspect --format='{{json .NetworkSettings.Networks}}' web
+    {
+        "bridge": {
+            "IPAMConfig": null,
+            "Links": null,
+            "Aliases": null,
+            "NetworkID": "4784e1934901e6ec7b3575d824904e9022980563aa547059e2e842016e05cf4b",
+            "EndpointID": "4f6372bc7152f73b6ddc13296ce365a024ada4074d19b2aaac8066b1a6f8ca92",
+            "Gateway": "172.17.0.1",
+            "IPAddress": "172.17.0.2",
+            "IPPrefixLen": 16,
+            "IPv6Gateway": "",
+            "GlobalIPv6Address": "",
+            "GlobalIPv6PrefixLen": 0,
+            "MacAddress": "02:42:ac:11:00:02",
+            "DriverOpts": null
+        }
+    }
+    //获取您的IP地址web容器的
+    $ docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' web
+    172.17.0.2
+
+在web容器ping db容器::
+
+    $ docker exec -it web bash
+
+    root@b6b8928824f8:/# ifconfig 
+    eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+            inet 172.17.0.2  netmask 255.255.0.0  broadcast 172.17.255.255
+            ether 02:42:ac:11:00:02  txqueuelen 0  (Ethernet)
+            RX packets 2521  bytes 8728256 (8.3 MiB)
+            RX errors 0  dropped 0  overruns 0  frame 0
+            TX packets 2460  bytes 175592 (171.4 KiB)
+
+    // ping失败。这是因为两个容器在不同的网络上运行
+    root@b6b8928824f8:/# ping 192.168.192.2 
+    PING 192.168.192.2 (192.168.192.2) 56(84) bytes of data.
+    ^C
+    --- 192.168.192.2 ping statistics ---
+    7 packets transmitted, 0 received, 100% packet loss, time 6046ms
+
+将容器附加到指定网络::
+
+    $ docker network connect tinywan_bridge web
+    $ docker inspect --format='{{range .NetworkSettings.Networks}} {{.IPAddress}}{{end}}' web
+    172.17.0.2 192.168.192.3
+
+断开容器与docker0的连接::
+
+    $ docker network disconnect bridge web
+    // 我们的容器仍然连接着默认bridge docker0 ，而现在我们已经不需要它
+
+再次在web容器ping db容器::
+
+        root@b6b8928824f8:/# ping db 
+        // 成功ping通
+        注: 只使用容器名称db而不是IP地址
+        PING db (192.168.192.2) 56(84) bytes of data.
+        64 bytes from db.tinywan_bridge (192.168.192.2): icmp_seq=1 ttl=64 time=0.079 ms
+
+.. image:: https://img.zhaoweiguo.com/knowledge/images/dockers/net_eth0.png
+
+
+
+方法2:启动容器指定网络连接db容器
+--------------------------------
+
+启动容器::
+
+    $ docker run -d --network=tinywan_bridge  --network-alias web --name web nginx
+
+ping db容器::
+
+        root@b6b8928824f8:/# ping db 
+        // 成功ping通
+        注: 只使用容器名称db而不是IP地址
+        PING db (192.168.192.2) 56(84) bytes of data.
+        64 bytes from db.tinywan_bridge (192.168.192.2): icmp_seq=1 ttl=64 time=0.079 ms
+
+自定义网络&指定IP
+========================
+
+* 参考: https://blog.csdn.net/sbxwy/article/details/78962809
+
+[错误]使用默认的网络是不支持指派固定IP的::
+
+    ~ docker run -itd --net bridge --ip 172.17.0.10 centos:latest/bin/bash
+    6eb1f228cf308d1c60db30093c126acbfd0cb21d76cb448c678bab0f1a7c0df6
+    docker: Error response from daemon: User specified IP address is supported on user defined networks only.
+
+步骤1: 创建自定义网络::
+
+    ➜ ~ docker network create --subnet=172.18.0.0/16 mynetwork
+    ➜ ~ docker network ls
+    NETWORK ID     NAME        DRIVER       SCOPE
+    9781b1f585ae    bridge      bridge      local
+    1252da701e55    host        host        local
+    4f11ae9c85de    mynetwork   bridge      local
+    237ea3d5cfbf    none        null        local
+
+步骤2: 创建Docker容器::
+
+    ~ docker run -itd --name networkTest1 --net mynetwork --ip 172.18.0.2 centos:latest bash
+
+    [root@ec8e31938fe7 /]# ifconfig
+    eth0   Link encap:Ethernet HWaddr 02:42:AC:12:00:02
+         inet addr:172.18.0.2 Bcast:0.0.0.0 Mask:255.255.0.0
+         inet6 addr: fe80::42:acff:fe12:2/64Scope:Link
+         UP BROADCAST RUNNING MULTICAST MTU:1500 Metric:1
+         RX packets:88 errors:0 dropped:0 overruns:0 frame:0
+         TX packets:14 errors:0 dropped:0 overruns:0 carrier:0
+         collisions:0 txqueuelen:0
+         RX bytes:4056 (3.9 KiB) TX bytes:1068 (1.0 KiB)
+
+
+
+
+
+
+

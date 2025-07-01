@@ -1,0 +1,412 @@
+# 模型参数计算
+
+## 📌 通用说明
+
+* 基本参数：
+    * H: hidden_size(隐藏层大小)
+    * L: num_layers(Transformer层数)
+    * V: vocab_size(词表大小)
+    * M: ffn_mult: FFN 中间层与隐藏层之间的系数
+        * ffn_dim: FFN 中间层的维度大小
+            * ffn_dim = M × H
+        * 说明
+            * GPT 系列模型中 ffn_mult 通常为 4.0
+            * LLaMA 系列中一般使用 3.5
+            * 一些轻量化模型可能会使用更小的值（如 2.0）
+            * 说明：但qwen好像是5.375, 而deepseek是2.6875
+
+* Self Attention 参数:
+    * 多头注意力
+        * head_dim: 多头注意力的单Head 维度
+        * num_heads: 多头注意力的Head数
+        * 说明：
+            * H = head_dim * num_heads
+    * K/V Cache
+        * 普通(MHA)情况
+            * num_kv_heads: K/V 的Head数
+            * kv_dim: K/V 维度
+                * = num_kv_heads × head_dim
+            * 说明：
+                * H = kv_dim * num_kv_heads
+        * GQA的情况
+            * 说明：
+              * Q 使用所有的 attention heads（如 32）
+              * K/V 只用部分 heads（如 8）
+              * 这样就降低了 KV-cache 的存储需求和读取开销
+
+
+## 📌 估算级参数计算
+
+
+### 公式
+
+* 那么总参数(不考虑GQA)近似为：
+
+```text
+Total ≈ V × H                  （词嵌入）
+            + L × 4H²      （Transformer层 Self-Attention）
+            + L × 3MH²     （Transformer层 FFN)
+       + V × H                 （输出层）
+```
+
+### 示例
+
+
+* 参数
+    * H = 4096
+    * V = 32000
+    * L = 32
+    * ffn_dim = M\*H = 3.5 * 4096= 14336
+
+
+* 总参数
+
+```
+= 32000 * 4096 + 32 *(4*4096^2 + 3*4096^2*3.5) + 4096*32000
+= 2 * 32000 * 4096 + 32 *(4*4096^2 + 3*4096^2*3.5)
+= 2 * 32000 * 4096 + 32 * 4096^2 * (4 + 3*3.5)
+= 2 * 32000 * 4096 + 32 * 4096^2 * 14.5
+= 250M + 7.25B
+= 7.5B
+注意: 
+    1. 只有在存储时，单位B才用 1024 * 1024 * 1024
+    2. 计算参数量时，单位B应该是1000*1000*1000
+所以: 7.5B = 7.5 * (1024*1024*1024)/ (1000*1000*1000)
+          ≈ 8.053B
+```
+
+
+## 📌 标准参数计算
+
+### 参数计算公式
+
+#### 总公式结构
+```
+一个 LLM 的总参数量 ≈
+词嵌入层 + Transformer层(Attention + FFN) + 输出层
+```
+
+#### 1.词嵌入层（Embedding）
+
+```text
+词嵌入矩阵参数量 = V × H
+```
+
+
+#### 2.Transformer Block × N 层
+
+
+##### A.注意力机制（Self-Attention）
+
+* 多头注意力需要生成 Q、K、V 以及一个输出映射：
+    * 如果有多头 attention，通常 `head_dim × num_heads = hidden_size`
+    * 在未使用GQA时，Attention参数只与hidden_size有关，与head_dim × num_heads无关。
+
+```text
+Attention参数 = 3 × H × H  （Q, K, V 权重）
+              + H × H      （输出投影）
+    = 4 × H²
+```
+
+* 注意：使用 GQA 参见后面
+
+
+##### B.前馈网络（Feed-Forward Network, FFN）
+
+* 通常结构是：
+
+```text
+hidden_size → intermediate_size → hidden_size
+```
+
+* 且 intermediate_size 常为：
+
+```text
+intermediate_size = M × H （如 4x 或 3.5x）
+```
+
+* FFN 结构有两种情况：
+    * 普通版
+        * FFN 部分乘以 3
+        * 计算公式
+        ```text
+        FFN参数量 = H × intermediate_size （第一层）
+                + intermediate_size × H （第二层）
+                = 2 × H × intermediate_size
+        ```
+    * 使用 Gated FFN（如 SwiGLU）结构(如 LLaMA 系列)
+        * 使用 SwiGLU，所以 FFN 部分乘以 3
+        * 因为：
+          * 第一层 Linear 输出的不是一个向量，而是 两个 intermediate_size 向量拼接在一起
+          * 所以第一层的参数是： `Linear1: hidden_size × (2 × intermediate_size)`
+        * 计算公式
+        ```text
+        FFN参数量 = 3 × H × intermediate_size
+        = 3 × H × (M × H)
+        = 3 × M × H^2
+```
+
+
+##### C.总 Transformer 层参数量
+
+* 对于使用 SwiGLU 的结构（如 LLaMA、Mistral），每层 Transformer 层参数量：
+
+```text
+params_per_layer = 4 × hidden_size²           ← Attention部分
+                 + 3 × hidden_size × ffn_dim  ← FFN部分
+```
+
+* L 层总参数量：
+
+```text
+transformer_params = L × params_per_layer
+```
+
+
+#### 3.输出层（LM Head）
+
+结构与 embedding 类似：
+
+```text
+输出层参数 = vocab_size × hidden_size
+```
+
+* 如果共享权重（weight tying，输出层 = embedding 权重），这部分参数可省略。
+
+
+
+
+### 示例：Mistral 7B 参数计算
+
+* 参数
+    * hidden_size = 4096
+    * vocab_size = 32000
+    * num_layers = 32
+    * ffn_dim = 14336 = 3.5 × hidden_size
+
+* 1.词嵌入层
+
+```text
+embedding = 32000 × 4096 = 131M
+```
+
+* 2.Transformer 总参数
+
+```text
+每层 = 4 × 4096² + 3 × 4096 × 14336
+    = 4096² × (4 + 3 × 3.5)
+    = 4096² × 14.5
+    = 232M
+32 层 = 32 × 232M = 7.25B
+```
+
+* 其中
+    * Self-Attention参数为
+    ```text
+    每层 = 4 × 4096²
+        = 64M
+    32层 = 32 × 64M = 2B
+    ```
+
+> 实际中稍多，因为还有 LayerNorm 等少量偏置项，但可以忽略
+
+* 3.输出层
+
+```text
+= 32000 × 4096 = 131M（如果不 weight tie）
+```
+
+* 4.总计：
+
+```text
+131M + 7.25B + 131M ≈ 7.51B （仅近似）
+```
+
+* 但是实际 Mistral 7B 是 7.2B，因为：
+    * 使用了多组 Attention（grouped QKV）
+    * 更多细节优化（RMSNorm，bias，rotary embedding 等）
+
+
+
+## 📌 使用GQA时的参数计算
+
+### 定义：GQA 是什么
+
+* GQA: Grouped Query Attention(分组查询注意力)
+* 在标准多头注意力（Multi-Head Attention，MHA）中：
+    * 每个 head 都有自己的一套 Q（查询）、K（键）、V（值）：
+      ```
+      Q_head_i = X × W_q_i
+      K_head_i = X × W_k_i
+      V_head_i = X × W_v_i
+      ```
+    * 参数说明
+
+    | 符号         | 含义                 | 维度 |
+    | ---------- | ------------------ | ----------------------|
+    | `X`        | 当前 token 的表示（输入张量） | `[T, H]`       |
+    | `W_q_i`    | 第 i 个头的 Query 投影矩阵 | `[H, head_dim]`  |
+    | `W_k_i`    | 第 i 个头的 Key 投影矩阵   | `[H, head_dim]`  |
+    | `W_v_i`    | 第 i 个头的 Value 投影矩阵 | `[H, head_dim]`  |
+    | `Q_head_i` | 第 i 个头的 Query 向量   | `[T, head_dim]`   |
+    | `K_head_i` | 第 i 个头的 Key 向量     | `[T, head_dim]`   |
+    | `V_head_i` | 第 i 个头的 Value 向量   | `[T, head_dim]`   |
+
+* 而在 GQA 中：
+    * 每个 head 有自己的 Q（Query）
+    * 但多个 head 共享同一组 K 和 V
+
+* 示例：
+    * 如果
+        * 模型总共有 32 个 Attention heads
+        * 使用 GQA 分成 **8 组**
+        * 每组 4 个头共享一套 K/V
+    * 那么：
+        * 有 32 套 Q 权重
+        * 但只有 **8 套 K 权重** 和 **8 套 V 权重**
+
+
+| 类型      | Q 权重数 | K/V 权重数 | 总参数量  |
+| ------- | ----- | ------- | ---------------------------- |
+| **MHA** | 32    | 32      | Q: 4096×4096, K/V: 4096×4096 |
+| **GQA** | 32    | **8**   | Q: 4096×4096, K/V: 4096×1024 |
+| **MQA** | 32    | **1**   | Q: 4096×4096, K/V: 4096×128  |
+
+
+
+### 为什么使用 GQA？
+
+1. **减少参数数量**（尤其适合大模型）
+2. **节省显存和带宽**
+3. **对模型性能影响很小，甚至提升稳定性**
+4. **比 MQA（Multi-Query Attention）更灵活**
+   * MQA 是 GQA 的极端版本，所有 head 共享同一套 K/V（只有 1 套）
+
+### GQA 在参数计算中的体现
+
+* 新增参数
+    * n_head:Attention head 数
+    * n_head_kv: K/V的Attention head 数
+    * group_size: 共享一套 K/V Group 的数量
+    * d_head: 每个 head 的维度
+
+* 参数关系
+    * H = d_head * n_head
+    * n_head = n_head_kv * group_size
+
+* 公式
+
+```text
+# 单层 Self Attention 参数计算
+= H*d_head*n_head + H*d_head*n_head_kv*2 + H*d_head * n_head)
+= 2* H^2 + 2*H*d_head*n_head_kv
+= 2*H^2 + 2H^2/group_size
+= H^2 (2 + 2/group_size)
+```
+
+
+
+### 示例讲解——以上面的 Mistral 7B 示例分析
+
+* 说明：与前面示例相比，只有计算 Self Attention 的参数量不同
+* 参数
+    * H = 4096
+    * n_head = 32
+    * n_head_kv = 8
+    * group_size = 4
+    * d_head = 128
+    * L = 32
+
+* 计算
+```
+单层Self Attention 参数量
+    = H^2 (2 + 2/group_size)
+    = (4096 × 4096) × (2 + 2/4)
+    = 40M
+32层Self Attention 参数量
+    = 32 * 40M
+    = 1.25G
+```
+
+```note
+相比不用 GQA, self attention 的参数量从 **2G** 降低到 **1.25G**
+```
+
+
+## 示例-Qwen2.5-3B
+
+### 模型结构
+
+```python
+Qwen2ForCausalLM(
+  (model): Qwen2Model(
+    (embed_tokens): Embedding(151936, 2048)
+    (layers): ModuleList(
+      (0-35): 36 x Qwen2DecoderLayer(
+        (self_attn): Qwen2Attention(
+          (q_proj): Linear(in_features=2048, out_features=2048, bias=True)
+          (k_proj): Linear(in_features=2048, out_features=256, bias=True)
+          (v_proj): Linear(in_features=2048, out_features=256, bias=True)
+          (o_proj): Linear(in_features=2048, out_features=2048, bias=False)
+        )
+        (mlp): Qwen2MLP(
+          (gate_proj): Linear(in_features=2048, out_features=11008, bias=False)
+          (up_proj): Linear(in_features=2048, out_features=11008, bias=False)
+          (down_proj): Linear(in_features=11008, out_features=2048, bias=False)
+          (act_fn): SiLU()
+        )
+        (input_layernorm): Qwen2RMSNorm((2048,), eps=1e-06)
+        (post_attention_layernorm): Qwen2RMSNorm((2048,), eps=1e-06)
+      )
+    )
+    (norm): Qwen2RMSNorm((2048,), eps=1e-06)
+    (rotary_emb): Qwen2RotaryEmbedding()
+  )
+  (lm_head): Linear(in_features=2048, out_features=151936, bias=False)
+)
+```
+
+### 参数分析
+
+* H: 2048
+* V: 151936
+* L: 36
+* ffn_hidden: 11008
+* M: 11008/2048=5.375
+* K/V的 out_features: 256
+* 查 config.json 文件
+    * num_heads = 16
+    * num_KV_heads = 2  (GQA 机制，表示只用 2 个 key/value 头，节省 KV-cache 开销)
+* 则
+    * head_dim = 2048 / 16 = 128  (每个 head 是 128 维)
+    * num_group = 256 / 2 = 128
+    * group_size: 一个kv组有8(=16/2)个query head
+
+
+### 参数计算
+
+* 词嵌入层: 151936 × 2048 = 311,205,888 = 296.75M
+* Transformer Block
+    * Attention 模块: L * H^2 (2 + 2/group_size)
+        * = 36 * 2048^2 * (2 + 2/2)
+        * = 324M
+    * FFN 模块: L × 3 × M × H^2
+        * = 36 × 3 × 5.375 × 2048^2
+        * = 2322M
+* 输出层: 151936 × 2048 = 296.75M
+* 总计算: 2322M + 324M +296.75M*2
+    * = 3.16G
+
+
+
+
+
+
+
+
+
+
+
+
+
+

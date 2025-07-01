@@ -1,0 +1,98 @@
+常见问题
+########
+
+
+
+CUDA版本低
+==========
+
+::
+
+  $ pip install flash_attn==2.5.8
+  Collecting flash_attn==2.5.8
+    Downloading http://mirrors.tencentyun.com/pypi/packages/72/94/06f618bb338ec7203b48ac542e73087362b7750f9c568b13d213a3f181bb/flash_attn-2.5.8.tar.gz (2.5 MB)
+       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.5/2.5 MB 3.5 MB/s eta 0:00:00
+    Preparing metadata (setup.py) ... error
+    error: subprocess-exited-with-error
+
+    × python setup.py egg_info did not run successfully.
+    │ exit code: 1
+    ╰─> [12 lines of output]
+        fatal: not a git repository (or any of the parent directories): .git
+        Traceback (most recent call last):
+          File "<string>", line 2, in <module>
+          File "<pip-setuptools-caller>", line 34, in <module>
+          File "/tmp/pip-install-_1_7_f40/flash-attn_025e23eb3d9444449dca3b9e8cf9e649/setup.py", line 115, in <module>
+            raise RuntimeError(
+        RuntimeError: FlashAttention is only supported on CUDA 11.6 and above.  Note: make sure nvcc has a supported version by running nvcc -V.
+
+
+        torch.__version__  = 2.3.0+cu121
+
+
+        [end of output]
+
+    note: This error originates from a subprocess, and is likely not a problem with pip.
+  error: metadata-generation-failed
+
+  × Encountered error while generating package metadata.
+  ╰─> See above for output.
+
+  note: This is an issue with the package mentioned above, not pip.
+
+问题定位::
+
+    $ nvcc -V
+    nvcc: NVIDIA (R) Cuda compiler driver
+    Copyright (c) 2005-2021 NVIDIA Corporation
+    Built on Thu_Nov_18_09:45:30_PST_2021
+    Cuda compilation tools, release 11.5, V11.5.119
+    Build cuda_11.5.r11.5/compiler.30672275_0
+
+
+    $ nvidia-smi
+    Tue Aug 27 15:33:45 2024
+    +---------------------------------------------------------------------------------------+
+    | NVIDIA-SMI 535.183.01             Driver Version: 535.183.01   CUDA Version: 12.2     |
+    |-----------------------------------------+----------------------+----------------------+
+
+
+分析::
+
+    机器支持的最大cuda版本是12.2，现在用的是11.5不满足flash_attn需要的11.6
+    结论: 升级下cuda驱动
+
+
+安装::
+
+    # 卸载现有 CUDA 版本
+    sudo apt-get --purge remove "*cublas*" "cuda*"
+    sudo apt-get autoremove
+
+
+    # 打开Nvidia网站:
+    https://developer.nvidia.com/cuda-downloads
+
+    # 安装命令:
+    wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
+    sudo dpkg -i cuda-keyring_1.1-1_all.deb
+    sudo apt-get update
+    sudo apt-get -y install cuda-toolkit-12-6
+
+    # 安装地址
+    ls /usr/local/cuda/bin/nvcc
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

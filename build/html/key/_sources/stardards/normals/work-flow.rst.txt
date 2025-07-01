@@ -1,0 +1,144 @@
+工作流规范
+##########
+
+使用 Git 开发时，有 4 种常用的工作流，也叫开发模式，按演进顺序分为::
+
+    1. 集中式工作流
+    2. 功能分支工作流
+    3. Git Flow 工作流
+    4. Forking 工作流
+
+
+
+集中式工作流
+============
+
+.. figure:: https://img.zhaoweiguo.com/knowledge/images/soft-engineerings/standard-flow1-simple1.png
+
+   集中式工作流的工作模式
+
+集中式工作流是最简单的开发模式，但它的缺点也很明显::
+
+    不同开发人员的提交日志混杂在一起，难以定位问题。
+    如果同时开发多个功能，不同功能同时往 master 分支合并，代码之间也会相互影响，从而产生代码冲突。
+
+.. figure:: https://img.zhaoweiguo.com/knowledge/images/soft-engineerings/standard-flow1-simple2.webp
+
+   远程仓库 master 分支的日志展示
+
+.. note:: 和其他工作流相比，集中式工作流程的代码管理较混乱，容易出问题，因此适合用在团队人数少、开发不频繁、不需要同时维护多个版本的小项目中。
+
+
+
+功能分支工作流
+==============
+
+.. figure:: https://img.zhaoweiguo.com/knowledge/images/soft-engineerings/standard-flow2-feature.png
+
+   功能分支工作流基于集中式工作流演进而来。在开发新功能时，基于 master 分支新建一个功能分支，在功能分支上进行开发，而不是直接在本地的 master 分支开发，开发完成之后合并到 master 分支
+
+.. note:: 相较于集中式工作流，这种工作流让不同功能在不同的分支进行开发，只在最后一步合并到 master 分支，不仅可以避免不同功能之间的相互影响，还可以使提交历史看起来更加简洁。在合并到 master 分支时，需要提交 PR（pull request），而不是直接将代码 merge 到 master 分支。PR 流程不仅可以把分支代码提供给团队其他开发人员进行 CR（Code Review），还可以在 PR 页面讨论代码。通过 CR ，我们可以确保合并到 master 的代码是健壮的；通过 PR 页面的讨论，可以使开发者充分参与到代码的讨论中，有助于提高代码的质量，并且提供了一个代码变更的历史回顾途径。
+
+
+功能分支工作流具体的开发流程::
+
+    1. 基于 master 分支新建一个功能分支，功能分支可以取一些有意义的名字，便于理解，例如 feature/rate-limiting
+        $ git checkout -b feature/rate-limiting
+
+    2. 在功能分支上进行代码开发，开发完成后 commit 到功能分支
+        $ git add limit.go
+        $ git commit -m "add rate limiting"
+
+    3. 将本地功能分支代码 push 到远程仓库。
+        $ git push origin feature/rate-limiting
+
+    4. 在远程仓库上创建 PR（例如：GitHub）
+    5. 代码管理员收到 PR 后，可以 CR 代码，CR 通过后，再点击 Merge pull request 将 PR 合并到 master
+
+``Merge pull request`` 提供了 3 种 merge 方法::
+
+    1. Create a merge commit
+        GitHub 的底层操作是 git merge --no-ff
+        feature 分支上所有的 commit 都会加到 master 分支上，并且会生成一个 merge commit。
+        这种方式可以让我们清晰地知道是谁做了提交，做了哪些提交，回溯历史的时候也会更加方便。
+    2. Squash and merge
+        GitHub 的底层操作是 git merge --squash
+        Squash and merge 会使该 pull request 上的所有 commit 都合并成一个 commit 
+        然后加到 master 分支上，但原来的 commit 历史会丢失
+        如开发人员在 feature 分支上提交的 commit 非常随意，没有规范，那我们可以选择这种方法来丢弃无意义的 commit
+        但是在大型项目中，每个开发人员都应该是遵循 commit 规范的，因此不建议在团队开发中使用 Squash and merge
+    3. Rebase and merge
+        GitHub 的底层操作是 git rebase
+        这种方式会将 pull request 上的所有提交历史按照原有顺序依次添加到 master 分支的头部（HEAD）
+        因为 git rebase 有风险，在你不完全熟悉 Git 工作流时，我不建议 merge 时选择这个
+
+
+.. note:: 功能分支工作流上手比较简单，不仅能使你并行开发多个功能，还可以添加 code review，从而保障代码质量。当然它也有缺点，就是无法给分支分配明确的目的，不利于团队配合。它适合用在开发团队相对固定、规模较小的项目中
+
+Git Flow 工作流
+===============
+
+.. note:: Git Flow 工作流是一个非常成熟的方案，也是非开源项目中最常用到的工作流。它定义了一个围绕项目发布的严格分支模型，通过为代码开发、发布和维护分配独立的分支来让项目的迭代流程更加顺畅，比较适合大型的项目或者迭代速度快的项目。
+
+Git Flow 的 5 种分支::
+
+    master、develop、feature、release 和 hotfix
+
+
+.. figure:: https://img.zhaoweiguo.com/knowledge/images/soft-engineerings/standard-flow3-git-flow1.png
+
+   分支命令规则
+
+.. figure:: https://img.zhaoweiguo.com/knowledge/images/soft-engineerings/standard-flow3-git-flow2.png
+
+    5 种分支的详细介绍
+
+缺点::
+
+    有一定的上手难度
+
+优点::
+
+    Git Flow 工作流的每个分支分工明确，这可以最大程度减少它们之间的相互影响。
+    因为可以创建多个分支，所以也可以并行开发多个功能。
+    另外，和功能分支工作流一样，它也可以添加 code review，保障代码质量。
+    因此，Git Flow 工作流比较适合开发团队相对固定，规模较大的项目。
+
+
+Forking 工作流
+==============
+
+.. note:: 在开源项目中，最常用到的是 Forking 工作流。
+
+
+.. figure:: https://img.zhaoweiguo.com/knowledge/images/soft-engineerings/standard-flow4-forking.webp
+
+    Forking 工作流的流程
+
+优点::
+
+    Forking 工作流中，项目远程仓库和开发者远程仓库完全独立，
+    开发者通过提交 Pull Request 的方式给远程仓库贡献代码，项目维护者选择性地接受任何开发者的提交，
+    通过这种方式，可以避免授予开发者项目远程仓库的权限，
+    从而提高项目远程仓库的安全性，这也使得任意开发者都可以参与项目的开发。
+
+局限性::
+
+    就是对于职能分工明确且不对外开源的项目优势不大
+
+Forking 工作流比较适用于以下三种场景::
+
+    1. 开源项目中
+    2. 开发者有衍生出自己的衍生版的需求
+    3. 开发者不固定，可能是任意一个能访问到项目的开发者
+
+
+实践
+====
+
+以git的分支 feature、release、hotfix和里程碑tag进行持续集成和构建；
+release 出发测试环境构建、tag出发生产环境部署
+
+
+
+

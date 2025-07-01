@@ -1,0 +1,621 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="zh-CN" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="zh-CN" > <!--<![endif]-->
+<head>
+
+
+<!-- start added 2025-04-14   增加对markdown中公式的支持 -->
+<script>
+window.MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+    },
+    options: {
+        ignoreHtmlClass: "tex2jax_ignore|mathjax_ignore",
+        processHtmlClass: "tex2jax_process|mathjax_process|math|output_area"
+    }
+};
+</script>
+<script defer="defer" src="https://fastly.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<!-- end added 2025-04-14   增加对markdown中公式的支持 -->
+
+
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>01整体源码分析 &mdash; 新溪-gordon V2025.06 文档</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="搜索" href="search.html" />
+    <link rel="next" title="02对最简单的 api gateway 项目并进行源码分析" href="02api-gateway.html" />
+    <link rel="prev" title="go-zero 框架源码学习" href="index.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+  <script src="_static/js/jquery.min.js"></script>
+
+
+<!-- 评论插件 gittalk start -->
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script> -->
+<!-- 评论插件 gittalk end -->
+
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> 新溪-gordon
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                V2025.06
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">01整体源码分析</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id4">整体分析</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">目录结构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id6">一级目录</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#core">core 目录</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#rest">rest 目录</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#zrpc">zrpc 目录</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tools">tools 目录</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id7">相关链接</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="02api-gateway.html">02对最简单的 api gateway 项目并进行源码分析</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="02api-gateway.html#id3">生成 api gateway 项目</a></li>
+<li class="toctree-l2"><a class="reference internal" href="02api-gateway.html#id4">入口文件分析</a></li>
+<li class="toctree-l2"><a class="reference internal" href="02api-gateway.html#rest-server">1. 生成 rest.Server 结构体</a></li>
+<li class="toctree-l2"><a class="reference internal" href="02api-gateway.html#id7">2. 注册路由</a></li>
+<li class="toctree-l2"><a class="reference internal" href="02api-gateway.html#server">3. server 启动</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="02api-gateway.html#httpx-router">3.1 生成httpx.Router接口</a></li>
+<li class="toctree-l3"><a class="reference internal" href="02api-gateway.html#http">3.2 启动 http 服务</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="02api-gateway.html#internal-starthttp">internal.StartHttp</a></li>
+<li class="toctree-l4"><a class="reference internal" href="02api-gateway.html#s-bindroutes-router">s.bindRoutes(router)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="02api-gateway.html#id10">实际 http 请求</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="05otel-intro.html">05快速学习了解 OpenTelemetry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tmp.html">临时</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">新溪-gordon</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>01整体源码分析</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/01overview.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            <nav id="local-table-of-contents" role="navigation" aria-labelledby="local-table-of-contents-title">
+              <h4 id="local-table-of-contents-title">On This Page</h4>
+              <ul>
+<li><a class="reference internal" href="#">01整体源码分析</a><ul>
+<li><a class="reference internal" href="#id4">整体分析</a></li>
+<li><a class="reference internal" href="#id5">目录结构</a><ul>
+<li><a class="reference internal" href="#id6">一级目录</a></li>
+<li><a class="reference internal" href="#core">core 目录</a></li>
+<li><a class="reference internal" href="#rest">rest 目录</a></li>
+<li><a class="reference internal" href="#zrpc">zrpc 目录</a></li>
+<li><a class="reference internal" href="#tools">tools 目录</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id7">相关链接</a></li>
+</ul>
+</li>
+</ul>
+
+            </nav>
+  <table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="search.html"><span class="std std-ref">搜索页面</span></a></p></td>
+</tr>
+</tbody>
+</table>
+<section id="id2">
+<h1><a class="toc-backref" href="#id9" role="doc-backlink">01整体源码分析</a><a class="headerlink" href="#id2" title="此标题的永久链接">¶</a></h1>
+<details>
+<summary>目录</summary><aside class="sidebar">
+<p class="sidebar-title">目录</p>
+<nav class="contents" id="id3">
+<p class="topic-title">目录</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#id2" id="id9">01整体源码分析</a></p>
+<ul>
+<li><p><a class="reference internal" href="#id4" id="id10">整体分析</a></p></li>
+<li><p><a class="reference internal" href="#id5" id="id11">目录结构</a></p>
+<ul>
+<li><p><a class="reference internal" href="#id6" id="id12">一级目录</a></p></li>
+<li><p><a class="reference internal" href="#core" id="id13">core 目录</a></p></li>
+<li><p><a class="reference internal" href="#rest" id="id14">rest 目录</a></p></li>
+<li><p><a class="reference internal" href="#zrpc" id="id15">zrpc 目录</a></p></li>
+<li><p><a class="reference internal" href="#tools" id="id16">tools 目录</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#id7" id="id17">相关链接</a></p></li>
+</ul>
+</li>
+</ul>
+</nav>
+</aside>
+</details><p>说明:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mf">1.</span> <span class="n">以最新的稳定版</span> <span class="n">tag</span><span class="p">:</span> <span class="n">v1</span><span class="mf">.1.10</span> <span class="n">为讲解实例</span>
+<span class="mf">2.</span> <span class="n">前提条件</span><span class="p">:</span>
+     <span class="n">a</span><span class="o">.</span> <span class="n">你已经熟练使用</span> <span class="n">go</span><span class="o">-</span><span class="n">zero</span> <span class="n">进行开发</span>
+     <span class="n">b</span><span class="o">.</span> <span class="n">熟练使用</span> <span class="n">goctl</span> <span class="n">命令做最常用操作</span>
+     <span class="n">c</span><span class="o">.</span> <span class="n">对</span> <span class="n">grpc</span> <span class="n">有简单了解</span>
+     <span class="n">d</span><span class="o">.</span> <span class="n">对</span> <span class="n">Golang</span> <span class="n">语言有一定了解</span>
+</pre></div>
+</div>
+<section id="id4">
+<h2><a class="toc-backref" href="#id10" role="doc-backlink">整体分析</a><a class="headerlink" href="#id4" title="此标题的永久链接">¶</a></h2>
+<p>查看源码规模:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>➜ cloc .
+     758 text files.
+     758 unique files.
+      22 files ignored.
+
+github.com/AlDanial/cloc v 1.86  T=0.63 s (1186.3 files/s, 131911.8 lines/s)
+-------------------------------------------------------------------------------
+Language                     files          blank        comment           code
+-------------------------------------------------------------------------------
+Go                             706          11812           2774          64908
+Markdown                        11            537              0           1545
+YAML                             6             39             30            477
+XML                              5              0              0            136
+Protocol Buffers                 9             46             11            116
+ANTLR Grammar                    2             16             10             93
+SQL                              1              1              1             28
+make                             2              6              2             27
+JSON                             1              0              0              6
+-------------------------------------------------------------------------------
+SUM:                           743          12457           2828          67336
+-------------------------------------------------------------------------------
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p><a class="reference external" href="https://github.com/AlDanial/cloc">cloc</a> 是一个非常实用的工具，有兴趣的同学可以安装用用。</p>
+</div>
+<p>整个 <code class="docutils literal notranslate"><span class="pre">go-zero</span></code> 项目一共有700多个文件，64k 行代码，代码量不大不小，正好适合拿来分析学习。而且 <code class="docutils literal notranslate"><span class="pre">go-zero</span></code> 项目从18年开源到现在，在 Github 上已经超过10k的star量，里面的很多代码都是特别优秀的。</p>
+</section>
+<section id="id5">
+<h2><a class="toc-backref" href="#id11" role="doc-backlink">目录结构</a><a class="headerlink" href="#id5" title="此标题的永久链接">¶</a></h2>
+<section id="id6">
+<h3><a class="toc-backref" href="#id12" role="doc-backlink">一级目录</a><a class="headerlink" href="#id6" title="此标题的永久链接">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>➜ ls
+CONTRIBUTING.md    code-of-conduct.md go.sum             rest
+LICENSE            core               readme-cn.md       tools
+ROADMAP.md         go.mod             readme.md          zrpc
+</pre></div>
+</div>
+<p>文档相关的几个文件:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">CONTRIBUTING</span><span class="o">.</span><span class="n">md</span>
+<span class="n">ROADMAP</span><span class="o">.</span><span class="n">md</span>
+<span class="n">code</span><span class="o">-</span><span class="n">of</span><span class="o">-</span><span class="n">conduct</span><span class="o">.</span><span class="n">md</span>
+<span class="n">readme</span><span class="o">-</span><span class="n">cn</span><span class="o">.</span><span class="n">md</span>
+<span class="n">readme</span><span class="o">.</span><span class="n">md</span>
+
+<span class="n">这几个文件在看源码之前最好先仔细看看</span>
+</pre></div>
+</div>
+<p>各个关键的文件夹:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">core</span><span class="p">:</span> <span class="n">这是最核心的内容</span>
+<span class="n">tools</span><span class="p">:</span> <span class="n">这个是</span> <span class="n">goctl</span> <span class="n">命令</span>
+<span class="n">rest</span><span class="p">:</span> <span class="n">http</span> <span class="n">服务相关</span>
+<span class="n">zrpc</span><span class="p">:</span> <span class="n">grpc</span> <span class="n">服务相关</span>
+</pre></div>
+</div>
+</section>
+<section id="core">
+<h3><a class="toc-backref" href="#id13" role="doc-backlink">core 目录</a><a class="headerlink" href="#core" title="此标题的永久链接">¶</a></h3>
+<p>core 源码规模:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>➜ cloc core
+     388 text files.
+     388 unique files.
+       0 files ignored.
+
+github.com/AlDanial/cloc v 1.86  T=0.31 s (1249.4 files/s, 137478.3 lines/s)
+-------------------------------------------------------------------------------
+Language                     files          blank        comment           code
+-------------------------------------------------------------------------------
+Go                             385           6033           1432          34788
+YAML                             3             22              0            419
+-------------------------------------------------------------------------------
+SUM:                           388           6055           1432          35207
+-------------------------------------------------------------------------------
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>一共34k，占总代码量的一多半，是最核心的部分，里面有很多的类库，未来会一点点的解锁各子目录</p>
+</div>
+<p>子目录列表:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>➜ ls core
+bloom      discov     iox        mapping    prof       stores     utils
+breaker    errorx     jsontype   mathx      prometheus stringx
+cmdline    executors  jsonx      metric     queue      syncx
+codec      filex      lang       mr         rescue     sysx
+collection fs         limit      naming     search     threading
+conf       fx         load       netx       service    timex
+contextx   hash       logx       proc       stat       trace
+</pre></div>
+</div>
+<p>从名字上看，可以猜出很多内容，如:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mr</span><span class="p">:</span> <span class="n">mapreduce</span>
+<span class="n">queue</span><span class="p">:</span> <span class="n">队列</span>
+<span class="n">utils</span><span class="p">:</span> <span class="n">工具库</span>
+<span class="n">breaker</span><span class="p">:</span> <span class="n">断路器</span>
+<span class="n">conf</span><span class="p">:</span> <span class="n">配置文件相关</span>
+<span class="nb">hash</span><span class="p">:</span> <span class="nb">hash</span> <span class="n">算法相关</span>
+<span class="n">threading</span><span class="p">:</span> <span class="n">线程相关</span>
+<span class="n">stat</span><span class="p">:</span> <span class="n">指标相关</span>
+<span class="n">prof</span><span class="p">:</span> <span class="n">优化相关</span>
+<span class="n">prometheus</span><span class="p">:</span> <span class="n">prometheus相关</span>
+
+<span class="n">contextx</span><span class="p">:</span> <span class="n">封装</span> <span class="n">context库</span>
+<span class="n">errorx</span><span class="p">:</span> <span class="n">封装</span> <span class="n">error</span>
+<span class="n">filex</span><span class="p">:</span> <span class="n">封装</span> <span class="n">file</span>
+<span class="n">iox</span><span class="p">:</span> <span class="n">封装</span> <span class="n">io</span>
+<span class="n">jsonx</span><span class="p">:</span> <span class="n">封装</span> <span class="n">json</span>
+<span class="n">logx</span><span class="p">:</span> <span class="n">封装</span> <span class="n">log</span>
+<span class="n">mathx</span><span class="p">:</span> <span class="n">封装</span> <span class="n">math</span>
+<span class="n">netx</span><span class="p">:</span> <span class="n">封装</span> <span class="n">net</span>
+<span class="n">stringx</span><span class="p">:</span> <span class="n">封装</span> <span class="n">string</span>
+<span class="n">sysx</span><span class="p">:</span> <span class="n">封装</span> <span class="n">sys</span>
+<span class="n">timex</span><span class="p">:</span> <span class="n">封装</span> <span class="n">time</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>更多详细内容后面会一点点解锁。</p>
+</div>
+</section>
+<section id="rest">
+<h3><a class="toc-backref" href="#id14" role="doc-backlink">rest 目录</a><a class="headerlink" href="#rest" title="此标题的永久链接">¶</a></h3>
+<p>core 源码规模:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>➜ cloc rest
+      57 text files.
+      57 unique files.
+       0 files ignored.
+
+github.com/AlDanial/cloc v 1.86  T=0.07 s (817.6 files/s, 83625.0 lines/s)
+-------------------------------------------------------------------------------
+Language                     files          blank        comment           code
+-------------------------------------------------------------------------------
+Go                              57            852            147           4831
+-------------------------------------------------------------------------------
+SUM:                            57            852            147           4831
+-------------------------------------------------------------------------------
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>代码量级是4.8k，应该实现了一个类似 gin 的 http server</p>
+</div>
+<p>子目录列表:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>➜ ls rest
+config.go        handlers.go      router           types.go
+engine.go        handlers_test.go server.go
+engine_test.go   httpx            server_test.go
+handler          internal         token
+</pre></div>
+</div>
+</section>
+<section id="zrpc">
+<h3><a class="toc-backref" href="#id15" role="doc-backlink">zrpc 目录</a><a class="headerlink" href="#zrpc" title="此标题的永久链接">¶</a></h3>
+<p>core 源码规模:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>➜ cloc zrpc
+      69 text files.
+      69 unique files.
+       0 files ignored.
+
+github.com/AlDanial/cloc v 1.86  T=0.06 s (1173.6 files/s, 65939.9 lines/s)
+-------------------------------------------------------------------------------
+Language                     files          blank        comment           code
+-------------------------------------------------------------------------------
+Go                              68            533            133           3196
+Protocol Buffers                 1              4              0             11
+-------------------------------------------------------------------------------
+SUM:                            69            537            133           3207
+-------------------------------------------------------------------------------
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>代码量级是3.1k，应该对 grpc 进行了封装，并做了一些工作</p>
+</div>
+<p>子目录列表:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>➜ ls zrpc
+client.go      config.go      internal       proxy_test.go  server_test.go
+client_test.go config_test.go proxy.go       server.go
+</pre></div>
+</div>
+</section>
+<section id="tools">
+<h3><a class="toc-backref" href="#id16" role="doc-backlink">tools 目录</a><a class="headerlink" href="#tools" title="此标题的永久链接">¶</a></h3>
+<p>core 源码规模:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>➜ cloc tools
+     225 text files.
+     225 unique files.
+      15 files ignored.
+
+github.com/AlDanial/cloc v 1.86  T=0.23 s (945.1 files/s, 128296.9 lines/s)
+-------------------------------------------------------------------------------
+Language                     files          blank        comment           code
+-------------------------------------------------------------------------------
+Go                             196           4394           1062          22093
+Markdown                         6            349              0           1076
+Protocol Buffers                 8             42             11            105
+ANTLR Grammar                    2             16             10             93
+SQL                              1              1              1             28
+make                             2              6              2             27
+JSON                             1              0              0              6
+-------------------------------------------------------------------------------
+SUM:                           216           4808           1086          23428
+-------------------------------------------------------------------------------
+</pre></div>
+</div>
+<p>子目录列表:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>➜ ls tools
+goctl
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>这个是占了1/3以上的代码量，只实现了生成 goctl 命令，说明在 go-zero 中 goctl 命令的重要程度。</p>
+</div>
+</section>
+</section>
+<section id="id7">
+<h2><a class="toc-backref" href="#id17" role="doc-backlink">相关链接</a><a class="headerlink" href="#id7" title="此标题的永久链接">¶</a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">go-zero</span></code> 官网: <a class="reference external" href="https://go-zero.dev/cn/">https://go-zero.dev/cn/</a></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">go-zero</span> <span class="pre">GitHub</span></code> 地址: <a class="reference external" href="https://github.com/tal-tech/go-zero">https://github.com/tal-tech/go-zero</a></p></li>
+</ul>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="search.html"><span class="std std-ref">搜索页面</span></a></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="02api-gateway.html" class="btn btn-neutral float-right" title="02对最简单的 api gateway 项目并进行源码分析" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral" title="go-zero 框架源码学习" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+  
+  <div id="gitalk-container"></div>
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2010-2025, 新溪-gordon.
+
+    </p>
+  </div>
+  <div>备案号 <a href="http://www.beian.miit.gov.cn">京ICP备16018553号</a></div><div>Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a></div>. 
+
+
+</footer>
+
+<script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?042289284b8eb33866001347a3e0b129";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>     
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'V2025.06',
+            LANGUAGE:'zh-CN',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/documentation_options.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="_static/sphinx_highlight.js"></script>
+      <script type="text/javascript" src="_static/clipboard.min.js"></script>
+      <script type="text/javascript" src="_static/copybutton.js"></script>
+      <script type="text/javascript" src="_static/translations.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+
+  
+
+  <script type="text/javascript" src="_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+
+
+      // var gitalk = new Gitalk({
+      //         clientID: '565177626b5d46427009',
+      //         clientSecret: 'b2a36e67e1d2a73e43667f46d571c2624f8e1026',
+      //         repo: 'knowledge',
+      //         owner: 'zhaoweiguo',
+      //         admin: ['zhaoweiguo'],
+      //         id: location.pathname,      // Ensure uniqueness and length less than 50
+      //         distractionFreeMode: false  // Facebook-like distraction free mode
+      //       })
+      // gitalk.render('gitalk-container')
+
+  </script>
+
+
+<script type="text/javascript" src="_static/js/table-of-contents-sidebar.js"></script>
+<!-- <script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script> -->
+<script type="text/javascript">
+    window.onload = function(e){
+        TableOfContents.init({
+            basePath: "https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/",
+            querySelector: "body" // or other css querySelector
+        });
+    }
+</script> 
+
+</body>
+</html>

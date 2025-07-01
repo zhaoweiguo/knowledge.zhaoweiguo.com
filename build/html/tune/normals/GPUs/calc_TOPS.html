@@ -1,0 +1,894 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="zh-CN" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="zh-CN" > <!--<![endif]-->
+<head>
+
+
+<!-- start added 2025-04-14   增加对markdown中公式的支持 -->
+<script>
+window.MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+    },
+    options: {
+        ignoreHtmlClass: "tex2jax_ignore|mathjax_ignore",
+        processHtmlClass: "tex2jax_process|mathjax_process|math|output_area"
+    }
+};
+</script>
+<script defer="defer" src="https://fastly.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<!-- end added 2025-04-14   增加对markdown中公式的支持 -->
+
+
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>TOPS计算 &mdash; 新溪-gordon V2025.06 文档</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+    <link rel="index" title="索引" href="../../genindex.html" />
+    <link rel="search" title="搜索" href="../../search.html" />
+    <link rel="next" title="GPU显存计算" href="calc_VRAM.html" />
+    <link rel="prev" title="模型参数计算" href="calc_param.html" /> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+  <script src="../../_static/js/jquery.min.js"></script>
+
+
+<!-- 评论插件 gittalk start -->
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script> -->
+<!-- 评论插件 gittalk end -->
+
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> 新溪-gordon
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                V2025.06
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">性能&amp;调优</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../normal.html">常用</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../indicator.html">常见指标</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../normal.html">常用</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../GPU.html">GPU</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="normal.html">通用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="calc_param.html">模型参数计算</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">TOPS计算</a></li>
+<li class="toctree-l3"><a class="reference internal" href="calc_VRAM.html">GPU显存计算</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../HTTP.html">HTTP</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../sla.html">SLA</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../stress_testing.html">压力测试</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../stress_testings/normal.html">常用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../stress_testings/normals/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../stress_testings/normals/concept.html">压测定义</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../stress_testings/normals/qps.html">QPS</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../system.html">系统级别优化相关</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../systems/tune_file.html">性能相关</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../systems/tune_tool.html">优化工具</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../systems/tools/SystemTap.html">SystemTap</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../systems/tune_tmp.html">优化相关临时</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../tool.html">工具</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../tools/simple.html">简单工具</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/simples/webbench.html">webbench的使用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/simples/ab.html">Apache Bench(ab)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/simples/http_load.html">http_load命令使用方法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/simples/siege.html">siege命令的使用方法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/simples/locust.html">Locust</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/simples/wrk.html">wrk命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/simples/hey.html">hey 命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/simples/ali.html">ali</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/simples/ali.html#vegeta">vegeta</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../tools/tsung.html">Tsung使用文档</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/tsungs/tsung_introduce.html">简单介绍</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/tsungs/tsung_usage.html">简单用法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/tsungs/tsung_advance.html">高级配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/tsungs/tsung_config.html">tsung参考文档说明</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/tsungs/tsung_report.html">tsung参考文档——报告图表含义说明</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/tsungs/tsung_practice.html">Tsung压测实践</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/tsungs/tsung-1.0-dtd.html">tsung-1.0.dtd</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/tsungs/tsung_question.html">常见问题</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/tsungs/tsung_other.html">其他压测工具</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../tools/jmeter.html">Apache JMeter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tools/loadRunner.html">LoadRunner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tools/TCPBurn.html">TCPBurn</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tools/cloudPlatform.html">云平台</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tools/other.html">其他</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/others/k6.html">k6</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../observe.html">性能观察</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../observes/cpu.html">CPU&amp;内存使用情况查看</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">新溪-gordon</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../normal.html">常用</a> &raquo;</li>
+        
+          <li><a href="../GPU.html">GPU</a> &raquo;</li>
+        
+      <li>TOPS计算</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/normals/GPUs/calc_TOPS.md.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            <nav id="local-table-of-contents" role="navigation" aria-labelledby="local-table-of-contents-title">
+              <h4 id="local-table-of-contents-title">On This Page</h4>
+              <ul>
+<li><a class="reference internal" href="#">TOPS计算</a><ul>
+<li><a class="reference internal" href="#id1">计算步骤</a><ul>
+<li><a class="reference internal" href="#id2">计算步骤(估算方法)</a></li>
+<li><a class="reference internal" href="#id3">多模态大模型计算 TOPS</a></li>
+<li><a class="reference internal" href="#id4">语音→语音模型计算 TOPS</a></li>
+<li><a class="reference internal" href="#id5">量化对计算量的影响</a></li>
+<li><a class="reference internal" href="#transformer-flops">一层 Transformer 的 FLOPs</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id6">计算步骤2</a><ul>
+<li><a class="reference internal" href="#mistral-7b">示例-Mistral 7B</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id7">工具</a></li>
+</ul>
+</li>
+</ul>
+
+            </nav>
+  <section class="tex2jax_ignore mathjax_ignore" id="tops">
+<h1>TOPS计算<a class="headerlink" href="#tops" title="此标题的永久链接">¶</a></h1>
+<section id="id1">
+<h2>计算步骤<a class="headerlink" href="#id1" title="此标题的永久链接">¶</a></h2>
+<section id="id2">
+<h3>计算步骤(估算方法)<a class="headerlink" href="#id2" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>步骤1：计算模型的总计算量（MACs）</p>
+<ul>
+<li><p>模型计算量通常以 MACs（乘加操作数）或 FLOPs（浮点运算次数）来衡量。</p>
+<ul>
+<li><p>工具: 对于 CNN 模型，可以使用 ptflops（PyTorch）或 TensorFlow Model Analyzer 等工具来估算。</p></li>
+<li><p>手动计算: <span class="math notranslate nohighlight">\(\text{MACs} = K \times K \times C_{in} \times C_{out} \times H_{out} \times W_{out}\)</span></p>
+<ul>
+<li><p>其中：</p></li>
+<li><p><span class="math notranslate nohighlight">\(K\)</span>: 卷积核大小</p></li>
+<li><p><span class="math notranslate nohighlight">\(C_{in}, C_{out}\)</span>: 输入输出通道数</p></li>
+<li><p><span class="math notranslate nohighlight">\(H_{out}, W_{out}\)</span>: 输出特征图的高和宽</p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>步骤2：考虑运行帧率（推理频率）</p>
+<ul>
+<li><p>假设你要每秒处理 <code class="docutils literal notranslate"><span class="pre">N</span></code> 帧：<code class="docutils literal notranslate"><span class="pre">每秒总运算量（MACs/s）=每帧MACs×N</span></code></p></li>
+<li><p>例如：</p>
+<ul>
+<li><p>一个模型推理一次需要 5 GOPs（5 × 10⁹ ops）</p></li>
+<li><p>想要 30 FPS 的实时处理</p></li>
+<li><p>则：$<span class="math notranslate nohighlight">\(5 × 10⁹ \times 30 = 150 × 10⁹ = 150 GOPs/s = 0.15 TOPS\)</span>$</p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>步骤3：最终得到所需 TOPS: <span class="math notranslate nohighlight">\(\text{所需 TOPS} = \frac{\text{每帧 MACs} \times \text{帧率}}{10^{12}}\)</span></p></li>
+</ul>
+</section>
+<section id="id3">
+<h3>多模态大模型计算 TOPS<a class="headerlink" href="#id3" title="此标题的永久链接">¶</a></h3>
+<p>运行多模态大模型时，比如视觉+语言（V+L）、语音+文本或图文+动作等组合，其 <strong>TOPS 计算方式</strong> 比单一模型更复杂，因为它通常包含多个子模块（如 ViT、Transformer、Q-Former、LLaMA 等）且存在大量 cross-attention。下面我们按步骤系统讲解如何计算多模态大模型所需的 TOPS。</p>
+<ul>
+<li><p>划分模块</p>
+<ul>
+<li><p>明确模型中各个子模块的组成和功能。通常结构如下：</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>模块</p></th>
+<th class="head"><p>类型</p></th>
+<th class="head"><p>示例组件</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>图像编码器</p></td>
+<td><p>CNN / ViT</p></td>
+<td><p>ResNet, Swin, CLIP ViT-B/32</p></td>
+</tr>
+<tr class="row-odd"><td><p>文本编码器</p></td>
+<td><p>Transformer Encoder</p></td>
+<td><p>BERT, Q-Former</p></td>
+</tr>
+<tr class="row-even"><td><p>解码器 / LLM</p></td>
+<td><p>Transformer Decoder</p></td>
+<td><p>LLaMA, GPT, T5</p></td>
+</tr>
+<tr class="row-odd"><td><p>Cross Attention</p></td>
+<td><p>多模态对齐模块</p></td>
+<td><p>用于图文/音文融合</p></td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+</li>
+<li><p>分别估算各子模块 FLOPs 或 MACs</p>
+<ul class="simple">
+<li><p>图像编码器部分（如 ViT-B/16）</p>
+<ul>
+<li><p>ViT 模型 FLOPs 可以通过下面经验值估算：</p>
+<ul>
+<li><p>ViT-B/16 &#64; 224x224 图像，大概需要 <strong>17.6 GFLOPs</strong></p></li>
+<li><p>ViT-L/14 &#64; 224x224，约 <strong>60 GFLOPs</strong></p></li>
+<li><p>说明</p>
+<ul>
+<li><p><strong>ViT-B/16</strong>：</p>
+<ul>
+<li><p>“B”是 <strong>Base</strong> 模型</p></li>
+<li><p>“/16”表示输入图像被划分成 <strong>16×16 的 Patch</strong>；</p></li>
+<li><p>输入分辨率是 <strong>224×224</strong>（常见的 ImageNet 大小）；</p></li>
+<li><p>计算总量大约是 <strong>17.6 GFLOPs</strong>，可以视为一张图像推理时的开销。</p></li>
+</ul>
+</li>
+<li><p><strong>ViT-L/14</strong>：</p>
+<ul>
+<li><p>“L”是 <strong>Large</strong> 模型，参数更多；</p></li>
+<li><p>Patch 大小是 14×14，Patch 更小，意味着 Patch 数更多；</p></li>
+<li><p>分辨率也是 224×224；</p></li>
+<li><p>FLOPs 大幅上升到 <strong>60 GFLOPs</strong></p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>文本处理模块（如 Q-Former、LLaMA）</p>
+<ul>
+<li><p>假设输入文本长度为 32 token</p></li>
+<li><p>Q-Former 为 12 层，LLaMA 7B有32层，每层注意力 + FFN。</p></li>
+<li><p>一层 transformer 的 FLOPs 近似为：<span class="math notranslate nohighlight">\(\text{FLOPs} \approx 2 \cdot L \cdot T^2 \cdot d + 4 \cdot L \cdot T \cdot d^2\)</span></p></li>
+<li><p>其中：</p>
+<ul>
+<li><p><span class="math notranslate nohighlight">\(L\)</span>：层数</p></li>
+<li><p><span class="math notranslate nohighlight">\(T\)</span>：token 长度</p></li>
+<li><p><span class="math notranslate nohighlight">\(d\)</span>：hidden size(如 LLaMA7B 是 4096)</p></li>
+</ul>
+</li>
+<li><p>示例:</p>
+<ul>
+<li><p>LLaMA 7B 推理一个 32 token 输入大约需要 <strong>350~400 GFLOPs</strong></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">2*</span> <span class="pre">32*32^2*4096</span> <span class="pre">+</span> <span class="pre">4*32*32*4096^2</span> <span class="pre">=</span> <span class="pre">16787458</span> <span class="pre">=</span> <span class="pre">16.787GFLOPs</span></code></p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Cross-Attention 计算开销也要考虑</p>
+<ul>
+<li><p>假设有 32 个图像token 和 32 个text token</p></li>
+<li><p>每层 cross-attention 的 FLOPs 为：<span class="math notranslate nohighlight">\(FLOPs = 2 \cdot T_q \cdot T_k \cdot d\)</span></p></li>
+<li><p>若 T_q=32，T_k=32，d=768，总 FLOPs 每层约为 1.5M。</p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>累加 FLOPs 总量，乘以帧率或请求频率</p>
+<ul class="simple">
+<li><p>假设每秒运行 1 次，则：</p>
+<ul>
+<li><p>图像编码器：20 GFLOPs</p></li>
+<li><p>文本模块：300 GFLOPs</p></li>
+<li><p>LLM 解码：100 GFLOPs</p></li>
+<li><p>Cross-Attention：50 GFLOPs</p></li>
+</ul>
+</li>
+<li><p>总推理一次为：<span class="math notranslate nohighlight">\(\text{总计算量} = 20 + 300 + 100 + 50 = 470 GFLOPs = 0.47 TOPs\)</span></p></li>
+<li><p>如每秒运行 2 次，则需要 0.94 TOPs。</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="id4">
+<h3>语音→语音模型计算 TOPS<a class="headerlink" href="#id4" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>常见语音到语音模型的模块如下：</p>
+<ul>
+<li><p>end-to-end模型（如 Translatotron 2），背后仍包含这些组件。</p></li>
+</ul>
+</li>
+</ul>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>模块</p></th>
+<th class="head"><p>功能</p></th>
+<th class="head"><p>示例组件</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1. 语音编码器</p></td>
+<td><p>提取音频特征</p></td>
+<td><p>Wav2Vec2, Whisper Encoder</p></td>
+</tr>
+<tr class="row-odd"><td><p>2. 文本解码器（可选）</p></td>
+<td><p>解码为中间文本（ASR）</p></td>
+<td><p>Transformer Decoder</p></td>
+</tr>
+<tr class="row-even"><td><p>3. LLM/中间理解模块</p></td>
+<td><p>理解+推理+生成回答</p></td>
+<td><p>GPT, BERT, Whisper</p></td>
+</tr>
+<tr class="row-odd"><td><p>4. 文本到语音（TTS）</p></td>
+<td><p>文本生成语音</p></td>
+<td><p>Tacotron2, FastSpeech2, VITS</p></td>
+</tr>
+<tr class="row-even"><td><p>5. 声码器（Vocoder）</p></td>
+<td><p>把mel谱转换为语音信号</p></td>
+<td><p>HiFi-GAN, WaveRNN</p></td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><p>1.语音编码器（ASR Encoder，如 Whisper）</p>
+<ul>
+<li><p>Whisper Base 模型对 30 秒语音处理 FLOPs 大概是：</p>
+<ul class="simple">
+<li><p><strong>Base 模型</strong>：约 1.5 GFLOPs</p></li>
+<li><p>这些是一次推理一次音频片段（30 秒）</p></li>
+</ul>
+</li>
+<li><p>如果你每秒运行一次推理，则：</p>
+<ul class="simple">
+<li><p>Whisper base：约 <strong>0.05 GOPS/s</strong></p></li>
+</ul>
+</li>
+<li><p>OpenAI Whisper 官方 benchmark：</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Model</p></th>
+<th class="head"><p>FLOPs (30s audio)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>tiny</p></td>
+<td><p>1.0 GFLOPs</p></td>
+</tr>
+<tr class="row-odd"><td><p>base</p></td>
+<td><p>1.5 GFLOPs</p></td>
+</tr>
+<tr class="row-even"><td><p>small</p></td>
+<td><p>5.7 GFLOPs</p></td>
+</tr>
+<tr class="row-odd"><td><p>medium</p></td>
+<td><p>24.6 GFLOPs</p></td>
+</tr>
+<tr class="row-even"><td><p>large</p></td>
+<td><p>118 GFLOPs</p></td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+</li>
+<li><p>2.中间理解模块（如 GPT）</p>
+<ul class="simple">
+<li><p>GPT-2 small (117M)：约 <code class="docutils literal notranslate"><span class="pre">20~30</span> <span class="pre">GFLOPs</span> <span class="pre">/</span> <span class="pre">推理</span></code></p></li>
+<li><p>LLaMA 7B：约 <code class="docutils literal notranslate"><span class="pre">350~400</span> <span class="pre">GFLOPs</span> <span class="pre">/</span> <span class="pre">推理（32</span> <span class="pre">token）</span></code></p></li>
+</ul>
+</li>
+<li><p>3.文本到语音模块（TTS）</p>
+<ul class="simple">
+<li><p>例如 FastSpeech2：</p>
+<ul>
+<li><p>FastSpeech2 推理一个句子（30 token）需要 3~5 GFLOPs</p></li>
+<li><p>HiFi-GAN vocoder（生成 1s 语音）约 10~20 GFLOPs（INT8 可以降很多）</p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>4.总 FLOPs 估算（语音→语音，30秒片段）</p>
+<ul class="simple">
+<li><p>若每秒运行一次：<span class="math notranslate nohighlight">\(450 GFLOPs = 0.45 TOPS\)</span></p></li>
+</ul>
+</li>
+</ul>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>模块</p></th>
+<th class="head"><p>估算 FLOPs</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Whisper Large</p></td>
+<td><p>118 GFLOPs</p></td>
+</tr>
+<tr class="row-odd"><td><p>LLM推理</p></td>
+<td><p>300 GFLOPs</p></td>
+</tr>
+<tr class="row-even"><td><p>TTS (FastSpeech2 + HiFiGAN)</p></td>
+<td><p>30 GFLOPs</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>总计</strong></p></td>
+<td><p><strong>约 450 GFLOPs</strong></p></td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li><p>⚠️ 计算注意点</p>
+<ol class="arabic simple">
+<li><p><strong>推理频率影响 TOPS 需求</strong></p>
+<ul>
+<li><p>如果是实时语音（流式识别 + 语音响应），则 TOPS 需求需乘以每秒片段数量。</p></li>
+</ul>
+</li>
+<li><p><strong>不同数据精度（FP32 / FP16 / INT8）差异极大</strong></p>
+<ul>
+<li><p>Whisper large</p>
+<ul>
+<li><p>FP16 模式 &gt; 0.4 TOPS</p></li>
+<li><p>INT8 版 &lt; 0.1 TOPS。</p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+</li>
+</ul>
+</section>
+<section id="id5">
+<h3>量化对计算量的影响<a class="headerlink" href="#id5" title="此标题的永久链接">¶</a></h3>
+<ul>
+<li><p>理论计算加速比</p>
+<ul>
+<li><p>通常我们以 FP32 为基准，几种数据类型的计算/存储压缩比大致如下：</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>精度类型</p></th>
+<th class="head"><p>存储缩小比</p></th>
+<th class="head"><p>计算加速比（理论）</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>FP16</p></td>
+<td><p>2×</p></td>
+<td><p>2×</p></td>
+</tr>
+<tr class="row-odd"><td><p>INT8</p></td>
+<td><p>4×</p></td>
+<td><p>2~4×</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>INT4</strong></p></td>
+<td><p><strong>8×</strong></p></td>
+<td><p><strong>4~8×</strong></p></td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="transformer-flops">
+<h3>一层 Transformer 的 FLOPs<a class="headerlink" href="#transformer-flops" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>对于 decoder-only 的架构（比如 LLaMA、GPT、ChatGPT 等），每一层主要包括以下两部分：</p>
+<ol class="arabic simple">
+<li><p><strong>Self-Attention 部分</strong>（QKV + Attention 计算 + 输出 projection）</p></li>
+<li><p><strong>Feed-Forward Network（FFN）部分</strong></p></li>
+</ol>
+</li>
+<li><p>参数说明</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">L</span></code>：序列长度（例如 2048）</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">H</span></code>：hidden size（例如 4096）</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">n_head</span></code>：head 数量（例如 32）</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">d_head</span></code>：每个 head 的维度 = <code class="docutils literal notranslate"><span class="pre">H</span> <span class="pre">/</span> <span class="pre">n_head</span></code>（例如 128）</p></li>
+</ul>
+</li>
+<li><p>Attention 部分 FLOPs</p>
+<ul>
+<li><p><span class="math notranslate nohighlight">\(\underbrace{3L H^2}_{QKV投影} + \underbrace{2L^2 H}_{打分+输出} + \underbrace{L H^2}_{输出投影}= 4L H^2 + 2L^2 H\)</span></p></li>
+</ul>
+</li>
+<li><p>Feed-Forward Network（FFN）部分 FLOPs</p>
+<ul>
+<li><p><span class="math notranslate nohighlight">\(2 \times L \times H \times D_{ffn} = 2 \times L \times H \times (2.7H) = 5.4L H^2\)</span></p></li>
+</ul>
+</li>
+<li><p>总 FLOPs / Layer</p>
+<ul>
+<li><p><span class="math notranslate nohighlight">\(\boxed{\underbrace{4L H^2 + 2L^2 H}_{Attention} + \underbrace{5.4L H^2}_{FFN}= (9.4L H^2 + 2L^2 H)}\)</span></p></li>
+</ul>
+</li>
+<li><p>示例(LLaMA 7B)</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">L</span> <span class="pre">=</span> <span class="pre">2048</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">H</span> <span class="pre">=</span> <span class="pre">4096</span></code></p></li>
+<li><p>总FLOPs / Layer</p>
+<ul>
+<li><p>= 9.4L H^2 + 2L^2 H</p></li>
+<li><p>= 9.4 * 2048 * 4096<em>4096 + 2 * 2048</em>2048 * 4096</p></li>
+<li><p>= 357*10^9</p></li>
+<li><p>≈ 357 GFLOPs</p></li>
+</ul>
+</li>
+<li><p>总模型 FLOPs</p>
+<ul>
+<li><p>= 层数 × 每层 FLOPs</p></li>
+<li><p>→ LLaMA 7B 有 32 层，所以推理一次约</p></li>
+<li><p>= 357 GFLOPs * 32 = 11.4 TFLOPs</p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</section>
+</section>
+<section id="id6">
+<h2>计算步骤2<a class="headerlink" href="#id6" title="此标题的永久链接">¶</a></h2>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p><strong>FLOP:Byte比</strong> 是衡量「计算 vs 带宽瓶颈」的重要指标；</p>
+</div>
+<ul class="simple">
+<li><p>AMD Ryzen 7950X has</p>
+<ul>
+<li><p>67 GB/s memory bandwidth</p></li>
+<li><p>2735 GFLOPS</p></li>
+<li><p>40:1 FLOP:byte ratio</p>
+<ul>
+<li><p>计算方式: 2735/67 = 40</p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>NVidia GeForce RTX 4090 has</p>
+<ul>
+<li><p>1008 GB/s memory bandwidth</p></li>
+<li><p>83 TFLOPS,</p></li>
+<li><p>82:1 FLOP:byte ratio</p>
+<ul>
+<li><p>计算方式: 83*1000/1008 = 82</p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>NVidia H100 SXM (which is a data-center card) has</p>
+<ul>
+<li><p>3350 GB/s memory bandwidth and</p></li>
+<li><p>67 TFLOPS,</p></li>
+<li><p>20:1 FLOP:byte; however(seemingly more modest),</p>
+<ul>
+<li><p>计算方式: 67*1000/3350 = 20</p></li>
+<li><p>对于像 Transformer 中常见的 矩阵乘法类问题（GEMM），启用专用 Tensor Core后算力激增到 494 TFLOPS</p>
+<ul>
+<li><p>~494 TFLOPS using <strong>tensor cores</strong> without sparsity</p></li>
+<li><p>147:1 FLOP:byte ratio.</p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<section id="mistral-7b">
+<h3>示例-Mistral 7B<a class="headerlink" href="#mistral-7b" title="此标题的永久链接">¶</a></h3>
+<p>4 * 8192 * 4096^2 + 8192^2 * 4096</p>
+<ul class="simple">
+<li><p>参数组成</p>
+<ul>
+<li><p>基本参数</p>
+<ul>
+<li><p>序列长度(<strong>L</strong>): 8192</p></li>
+<li><p>hidden size(<strong>H</strong>): 4096</p></li>
+<li><p>Attention head 数(<strong>n_head</strong>): 32</p></li>
+<li><p>每个 head 的维度(<strong>d_head</strong>): 4096/32=128</p></li>
+<li><p>Transformer层数(<strong>layers</strong>): 32</p></li>
+</ul>
+</li>
+<li><p>嵌入矩阵参数:</p>
+<ul>
+<li><p>4096 * 32000 = 131M</p></li>
+<li><p>此矩阵不用于矩阵向量乘法，因为每个标记仅读取矩阵的一行，因此我们不会将其包含在带宽计算中</p></li>
+</ul>
+</li>
+<li><p>computing attention-related vectors</p>
+<ul>
+<li><p>32 * (4096 * (128 * 32 + 128 * 8 * 2) + 4096 * 128 * 32) = 1342M</p></li>
+</ul>
+</li>
+<li><p>transforming hidden state via a feed-forward network</p>
+<ul>
+<li><p>32 * (4096 * 14336 * 3) = 5637M</p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</section>
+</section>
+<section id="id7">
+<h2>工具<a class="headerlink" href="#id7" title="此标题的永久链接">¶</a></h2>
+<ul class="simple">
+<li><p>PyTorch 模型：</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">ptflops</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_model_complexity_info</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchvision.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">resnet18</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">resnet18</span><span class="p">()</span>
+<span class="n">macs</span><span class="p">,</span> <span class="n">params</span> <span class="o">=</span> <span class="n">get_model_complexity_info</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">224</span><span class="p">),</span> <span class="n">as_strings</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">print_per_layer_stat</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;MACs: </span><span class="si">{</span><span class="n">macs</span><span class="si">}</span><span class="s2">, Params: </span><span class="si">{</span><span class="n">params</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>对 PyTorch 多模态模型进行分析</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">fvcore.nn</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlopCountAnalysis</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">MyMultimodalModel</span><span class="p">()</span>
+<span class="n">inputs</span> <span class="o">=</span> <span class="p">(</span><span class="n">img_tensor</span><span class="p">,</span> <span class="n">text_tensor</span><span class="p">)</span>
+<span class="n">flops</span> <span class="o">=</span> <span class="n">FlopCountAnalysis</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total FLOPs: </span><span class="si">{</span><span class="n">flops</span><span class="o">.</span><span class="n">total</span><span class="p">()</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">}</span><span class="s2"> GFLOPs&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>TensorFlow 模型：</p>
+<ul>
+<li><p>使用 <code class="docutils literal notranslate"><span class="pre">tf.profiler</span></code> 或 Netron 分析计算图。</p></li>
+</ul>
+</li>
+<li><p>ONNX 模型分析</p>
+<ul>
+<li><p>使用 <a class="reference external" href="https://netron.app">Netron</a> 查看结构，或使用 tools like <a class="reference external" href="https://github.com/microsoft/onnxruntime-tools">onnxruntime-tools</a> 的 <code class="docutils literal notranslate"><span class="pre">onnxruntime-tools.flops</span></code>.</p></li>
+</ul>
+</li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="calc_VRAM.html" class="btn btn-neutral float-right" title="GPU显存计算" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="calc_param.html" class="btn btn-neutral" title="模型参数计算" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+  
+  <div id="gitalk-container"></div>
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2010-2025, 新溪-gordon.
+
+    </p>
+  </div>
+  <div>备案号 <a href="http://www.beian.miit.gov.cn">京ICP备16018553号</a></div><div>Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a></div>. 
+
+
+</footer>
+
+<script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?042289284b8eb33866001347a3e0b129";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>     
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'V2025.06',
+            LANGUAGE:'zh-CN',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../_static/sphinx_highlight.js"></script>
+      <script type="text/javascript" src="../../_static/clipboard.min.js"></script>
+      <script type="text/javascript" src="../../_static/copybutton.js"></script>
+      <script type="text/javascript" src="../../_static/translations.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script type="text/javascript" src="../../None"></script>
+      <script type="text/javascript" src="https://fastly.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  
+
+  <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+
+
+      // var gitalk = new Gitalk({
+      //         clientID: '565177626b5d46427009',
+      //         clientSecret: 'b2a36e67e1d2a73e43667f46d571c2624f8e1026',
+      //         repo: 'knowledge',
+      //         owner: 'zhaoweiguo',
+      //         admin: ['zhaoweiguo'],
+      //         id: location.pathname,      // Ensure uniqueness and length less than 50
+      //         distractionFreeMode: false  // Facebook-like distraction free mode
+      //       })
+      // gitalk.render('gitalk-container')
+
+  </script>
+
+
+<script type="text/javascript" src="../../_static/js/table-of-contents-sidebar.js"></script>
+<!-- <script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script> -->
+<script type="text/javascript">
+    window.onload = function(e){
+        TableOfContents.init({
+            basePath: "https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/",
+            querySelector: "body" // or other css querySelector
+        });
+    }
+</script> 
+
+</body>
+</html>

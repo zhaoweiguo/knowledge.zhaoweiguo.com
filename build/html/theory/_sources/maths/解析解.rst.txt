@@ -1,0 +1,150 @@
+解析解(Analytic Solution)
+#########################
+
+* 解析解（Analytic Solution），也称为闭式解（Closed-form Solution），是指通过数学公式或表达式直接给出问题的精确解。
+* 这种解法不需要数值近似或迭代过程，而是利用已知的数学函数、定理和规则来明确地表示结果。
+
+特点
+====
+
+* 精确性：解析解提供了问题的精确答案，而不是近似值
+* 简洁性：解析解往往可以用相对简单的数学表达式来描述
+* 通用性：对于某些类型的方程或问题，解析解可以适用于所有可能的情况，而不仅仅是特定实例
+* 易于分析：由于其形式化的特点，解析解便于进行进一步的数学分析和推导
+
+
+
+应用场景
+========
+
+解析解广泛应用于各种科学和工程领域，特别是在那些能够用数学模型准确描述的问题中。例如：
+
+* 微分方程：一些常微分方程和偏微分方程有解析解，这使得它们可以直接求解而不必依赖数值方法。
+* 线性代数：对于线性系统，如果矩阵是可逆的，那么可以通过矩阵运算直接求得解析解。
+* 优化问题：在某些情况下，可以通过解析方法找到目标函数的最大值或最小值。
+* 概率与统计：许多概率分布（如正态分布）都有解析形式的概率密度函数，这对于理论分析非常重要。
+
+* 方程求解：线性方程组的解；二次方程的求解公式
+* 物理学：牛顿运动方程的解析解；电磁学中的麦克斯韦方程组
+* 微分方程：某些简单微分方程的显式解，如 𝑦′+𝑦=0 的解 𝑦=𝐶𝑒−𝑥 。
+
+
+
+优势与局限
+==========
+
+优势::
+
+    提供了对问题的深刻理解，因为解决方案以清晰的数学形式呈现。
+    可以快速计算出结果，尤其是在计算机辅助下。
+    有助于验证数值方法的正确性和准确性。
+
+局限::
+
+    并不是所有问题都能找到解析解；对于复杂的非线性系统或者高维问题，解析解可能不存在或难以获得。
+    即使存在解析解，有时表达式也可能非常复杂，难以处理或解释。
+
+
+解析解在线性回归中的应用
+========================
+
+在训练线性回归模型时，目标是找到一组参数  :math:`\mathbf{w}`  使得预测值  :math:`\mathbf{X w}`  和真实值  :math:`\mathbf{y}`  之间的误差（通常用平方损失衡量）最小化：
+
+.. math::
+
+    \|\mathbf{y}-\mathbf{X} \mathbf{w}\|^{2}
+
+
+* 通过解析方法，我们可以直接求解出最优解  :math:`\mathbf{w}^{*}`
+
+关键步骤
+--------
+
+* 1.将偏置项合并：将偏置  b  融入权重  :math:`\mathbf{w}`  和设计矩阵  :math:`\mathbf{X}`
+    * 方法是在设计矩阵 ``X`` 的每一行末尾添加一个1，从而将偏置视为权重的一部分。
+
+* 2. 计算梯度：对损失函数的参数  :math:`\mathbf{w}`  求导，并设置梯度为零
+
+.. math::
+
+    \begin{array}{lll}
+    \partial_{\mathbf{w}}\|\mathbf{y}-\mathbf{X} \mathbf{w}\|^{2}=0 \\
+    \\
+    计算过程：\\
+        \|\mathbf{y}-\mathbf{X} \mathbf{w}\|^{2} \\
+    展开为: \\
+        \|\mathbf{y}-\mathbf{X} \mathbf{w}\|^{2}=(\mathbf{y}-\mathbf{X}\mathbf{w})^{\top} (\mathbf{y}-\mathbf{X}\mathbf{w}) \\
+    对参数  \mathbf{w}  求导：\\
+        \frac{\partial}{\partial \mathbf{w}}\|\mathbf{y}-\mathbf{X} \mathbf{w}\|^{2} \\
+    为了简化推导, 首先将损失函数写成矩阵形式:\\
+        L(\mathbf{w}) =\|\mathbf{y}-\mathbf{X} \mathbf{w}\|^{2} =(\mathbf{y}-\mathbf{X} \mathbf{w})^{\top}(\mathbf{y}-\mathbf{X} \mathbf{w}) \\
+    使用导数规则:\\
+        \frac{\partial}{\partial \mathbf{w}} L(\mathbf{w}) =\frac{\partial}{\partial \mathbf{w}}\left(\mathbf{y}^{\top} \mathbf{y}-2 \mathbf{y}^{\top} \mathbf{X} \mathbf{w}+\mathbf{w}^{\top} \mathbf{X}^{\top} \mathbf{X} \mathbf{w}\right) \\
+    对每一项分别求导：\\
+        1.  \frac{\partial}{\partial \mathbf{w}}\left(\mathbf{y}^{\top} \mathbf{y}\right)=0 , 因为这项不依赖于  \mathbf{w} \\
+        2.  \frac{\partial}{\partial \mathbf{w}}\left(-2 \mathbf{y}^{\top} \mathbf{X} \mathbf{w}\right)=-2 \mathbf{X}^{\top} \mathbf{y} \\
+        3.  \frac{\partial}{\partial \mathbf{w}}\left(\mathbf{w}^{\top} \mathbf{X}^{\top} \mathbf{X} \mathbf{w}\right)=2 \mathbf{X}^{\top} \mathbf{X} \mathbf{w} \\
+    将这些合并后得到：\\
+        \frac{\partial}{\partial \mathbf{w}} L(\mathbf{w})=2 \mathbf{X}^{\top} \mathbf{X} \mathbf{w}-2 \mathbf{X}^{\top} \mathbf{y} \\
+    设置梯度为零：\\
+        2 \mathbf{X}^{\top} \mathbf{X} \mathbf{w}-2 \mathbf{X}^{\top} \mathbf{y}=0 \\
+    \end{array}
+
+
+* 3. 解方程：通过简单的代数操作, 得到公式：
+
+.. math::
+
+    \mathbf{w}^{*}=\left(\mathbf{X}^{\top} \mathbf{X}\right)^{-1} \mathbf{X}^{\top} \mathbf{y}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

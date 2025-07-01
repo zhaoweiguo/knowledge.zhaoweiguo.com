@@ -1,0 +1,122 @@
+HTTP
+####
+
+
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/11/Dsmny1.png
+
+	假设北京到美国洛杉矶的 RTT 延迟为 190 毫秒，我们从北京访问美国洛杉矶的一个 HTTP 服务，整个交互过程时延计算是5*190+后端业务延时。其中，"5"代表的是 HTTPS 请求的 5 个环节，每个环节都需要一个 RTT 的时间。
+
+
+
+
+
+
+查看
+====
+
+::
+
+    curl -L -w "time_namelookup: %{time_namelookup}
+        time_connect: %{time_connect}
+        time_appconnect: %{time_appconnect}
+        time_pretransfer: %{time_pretransfer}
+        time_redirect: %{time_redirect}
+        time_starttransfer: %{time_starttransfer}
+        time_total: %{time_total}
+         -o /dev/null -s  " https://example.com/
+    =>
+    time_namelookup: 0.001403
+    time_connect: 0.245464
+    time_appconnect: 0.757656
+    time_pretransfer: 0.757823
+    time_redirect: 0.000000
+    time_starttransfer: 0.982111
+    time_total: 0.982326
+
+
+
+
+
+HTTP 请求优化
+=============
+
+HTTP 请求过程优化的几个方向::
+
+    1. 包体积优化：传输数据的包体大小与传输耗时成正相关，压缩算法是减小包体的最有效手段(没有之一)
+    2. SSL 层优化：升级 TLS 算法以及 HTTPS 证书，降低 SSL 层的性能消耗
+    3. 传输层优化：升级拥塞控制算法（例如由默认的 Cubic 升级为 BBR 算法）提升数据传输效率
+    4. 网络层优化：使用一些商业网络加速服务，在网络层对数据包进行路由优化，实现动态服务加速
+    5. 使用更现代的 HTTP 协议：升级至 HTTP/2，进一步可以使用 QUIC
+
+
+包体积优化方案::
+
+    1. 使用更好的压缩算法
+    2. 使用 Protocol Buffers 序列化数据
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

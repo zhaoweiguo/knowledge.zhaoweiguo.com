@@ -1,0 +1,854 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="zh-CN" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="zh-CN" > <!--<![endif]-->
+<head>
+
+
+<!-- start added 2025-04-14   增加对markdown中公式的支持 -->
+<script>
+window.MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+    },
+    options: {
+        ignoreHtmlClass: "tex2jax_ignore|mathjax_ignore",
+        processHtmlClass: "tex2jax_process|mathjax_process|math|output_area"
+    }
+};
+</script>
+<script defer="defer" src="https://fastly.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<!-- end added 2025-04-14   增加对markdown中公式的支持 -->
+
+
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>高性能负载均衡: 分类&amp;架构&amp;算法 &mdash; 新溪-gordon V2025.06 文档</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+    <link rel="index" title="索引" href="../../../genindex.html" />
+    <link rel="search" title="搜索" href="../../../search.html" />
+    <link rel="next" title="高可用架构模式" href="../availability.html" />
+    <link rel="prev" title="单服务器高性能模式: Reactor&amp;Proactor" href="6Reactor-Proactor.html" /> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+  <script src="../../../_static/js/jquery.min.js"></script>
+
+
+<!-- 评论插件 gittalk start -->
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script> -->
+<!-- 评论插件 gittalk end -->
+
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> 新溪-gordon
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                V2025.06
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">关键知识</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../../010architecture.html">010架构设计</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../normal.html">常用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../normals/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../normals/%E4%BA%92%E8%81%94%E7%BD%91%E4%B8%9A%E5%8A%A1.html">互联网业务</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../normals/tmp.html">临时</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../normals/other.html">其他架构设计</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../normals/others/cqrs.html">CQRS </a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../normals/others/crud.html">CRUD</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../normals/others/ddd.html">领域驱动设计</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../normals/others/api.html">api设计</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../normals/others/SSO.html">单点登录</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../normals/others/event_driver.html">事件驱动架构</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../normals/others/network_agent.html">网络代理</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../normals/others/message_bus.html">消息总线</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../normals/others/mvc_mvp_mvvm.html">MVC MVP MVVM</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../normals/others/other.html">其他</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../history.html">架构的历史</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../historys/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../historys/01origin_distributed_sys.html">原始分布式时代</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../historys/02monolithic_sys.html">单体系统时代</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../historys/03soa_sys.html">SOA架构</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../historys/04microService.html">微服务架构</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../historys/04microServices/normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../historys/04microServices/9feature.html">微服务的九个核心的业务与技术特征</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../historys/04microServices/ServiceMesh.html">ServiceMesh</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../historys/04microServices/collect.html">微服务架构</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../historys/05cloudnative.html">云原生时代——后微服务时代</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../historys/05cloudnatives/collect1.html">云原生</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../historys/05cloudnatives/collect2.html">收集2</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../historys/05cloudnatives/12Factor.html">云原生应用的12要素</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../historys/05cloudnatives/distribute_architecture.html">从分布式架构到云原生架构</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../historys/06serverless.html">无服务时代</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../historys/06serverless/collect1.html">Serverless</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../architecture_design.html">软件架构设计</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../architecture_designs/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../architecture_designs/history_design.html">架构设计的历史</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../architecture_designs/purpose.html">架构设计目的</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../architecture_designs/purposes/1performance.html">复杂度来源-高性能</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../architecture_designs/purposes/2availability.html">复杂度来源-高可用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../architecture_designs/purposes/3expandability.html">复杂度来源-可扩展性</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../architecture_designs/purposes/4lowcost.html">复杂度来源-低成本</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../architecture_designs/purposes/5security.html">复杂度来源-安全</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../architecture_designs/purposes/6scalability.html">复杂度来源-规模</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../architecture_designs/purposes/7other.html">其他</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../architecture_designs/principle.html">架构设计原则</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../architecture_designs/process.html">架构设计流程</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../architecture_designs/process/1recognize.html">识别复杂度</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../architecture_designs/process/2alternative.html">设计备选方案</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../architecture_designs/process/3assess.html">评估&amp;选择备选方案</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../architecture_designs/process/4detailed.html">详细方案设计</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../architecture_pattern.html">架构模式</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../normal.html">常用</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="../performance.html">高性能架构模式</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="1read-write-seperate.html">读写分离</a></li>
+<li class="toctree-l4"><a class="reference internal" href="2split-db-table.html">分库分表</a></li>
+<li class="toctree-l4"><a class="reference internal" href="3NoSQL.html">高性能 NoSQL</a></li>
+<li class="toctree-l4"><a class="reference internal" href="4cache.html">高性能缓存架构</a></li>
+<li class="toctree-l4"><a class="reference internal" href="5PPC-TPC.html">单服务器高性能模式: PPC&amp;TPC</a></li>
+<li class="toctree-l4"><a class="reference internal" href="6Reactor-Proactor.html">单服务器高性能模式: Reactor&amp;Proactor</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">高性能负载均衡: 分类&amp;架构&amp;算法</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../availability.html">高可用架构模式</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../availabilitys/normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../availabilitys/1CAP.html">CAP理论</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../availabilitys/2FMEA.html">FMEA</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../availabilitys/3storage.html">存储高可用架构</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../availabilitys/4computing.html">计算高可用架构</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../availabilitys/5different-live.html">异地多活</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../availabilitys/6api-failure.html">接口级故障&amp;应对</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../expandability.html">可扩展架构模式</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../expandabilitys/normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../expandabilitys/1basic-ideas-and-pattern.html">可扩展架构的基本思想和模式</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../expandabilitys/2hierarchical.html">传统可扩展架构-分层架构</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../expandabilitys/3soa.html">传统可扩展架构-SOA</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../expandabilitys/4microservice.html">微服务架构</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../expandabilitys/5microkernel.html">微内核架构</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../communication_pattern.html">通信模式communication patterns</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../communication_patterns/normal.html">通用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../communication_patterns/SAP.html">SAP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../communication_patterns/theory.html">理论</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../evolution.html">架构演进/重构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../evolutions/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../evolutions/be-microservice.html">对现有系统做微服务化改造</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../evolutions/evolution-graph.html">演进架构图</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../graph.html">架构图</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../graphs/normal.html">常用</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../graphs/normals/normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../graphs/normals/color.html">颜色</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../graphs/normals/other.html">其他</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../graphs/business.html">业务架构图</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../graphs/c4-model.html">软件架构——C4模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../graphs/%E6%9E%B6%E6%9E%84%E5%9B%BE%E6%8A%80%E5%B7%A7.html">架构图技巧</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../EA.html">EA企业级架构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../EAs/TOGAF.html">TOGAF</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../EAs/Zachman.html">Zachman扎克曼框架</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../011distributed.html">011分布式系统</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../011distributeds/normal.html">常用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/normals/normal.html">分布式系统</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/normals/concept.html">并发</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/normals/tmp.html">临时</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../011distributeds/theory.html">并发相关理论</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/theorys/CAP.html">并发相关-CAP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/theorys/PACELC.html">PACELC</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/theorys/FLP.html">并发相关-FLP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/theorys/DLS.html">DLS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/theorys/CSP.html">并发模型-CSP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/theorys/CAS.html">CAS 机制</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/theorys/Actor.html">并发模型-Actor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/theorys/Gossip.html">Gossip协议</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/theorys/BASE.html">BASE</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/theorys/ACID.html">ACID原则</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/theorys/UUID.html">UUID</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/theorys/consistent_hash.html">一致性hash</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../011distributeds/transaction.html">事务</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/transactions/normal.html">通用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/transactions/local.html">本地事务</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/transactions/global.html">全局事务(Global Transactions)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/transactions/share.html">共享事务(Share Transactions)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/transactions/distribute.html">分布式事务</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../011distributeds/transactions/distributes/reliable_event_queue.html">可靠事件队列</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../011distributeds/transactions/distributes/SAGA.html">SAGA 事务</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../011distributeds/transactions/distributes/TCC.html">TCC 事务</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../011distributeds/consensus.html">分布式共识</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/consensus/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/consensus/Paxos.html">Paxos算法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/consensus/zab.html">zab协议</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../011distributeds/consensus/Raft.html">The Raft Consensus Algorithm </a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../012SoftEngineering.html">012软件工程</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../012SoftEngineerings/normal.html">常用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../012SoftEngineerings/normals/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../012SoftEngineerings/normals/methodology.html">编程方法论</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../012SoftEngineerings/normals/code-quality.html">代码质量</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../012SoftEngineerings/normals/complexity.html">复杂度</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../012SoftEngineerings/Programming-Spec.html">编程规范</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../012SoftEngineerings/Refactor.html">重构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../012SoftEngineerings/Refactors/normal.html">通用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../012SoftEngineerings/Refactors/5W2H.html">5W2H 分析法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../012SoftEngineerings/Refactors/approach-unit.html">重构手段-单元测试</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../012SoftEngineerings/Refactors/approach-unit.html#id3">定义</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../012SoftEngineerings/Refactors/approach-unit.html#id4">作用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../012SoftEngineerings/Refactors/approach-unit.html#id5">如何编写单元测试</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../012SoftEngineerings/Refactors/approach-unit.html#id6">为何难落地执行</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../012SoftEngineerings/Refactors/approach-unit.html#anti-patterns">影响可测试性的 Anti-Patterns</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../012SoftEngineerings/Refactors/approach-decoupling.html">重构手段-解耦</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../012SoftEngineerings/Refactors/code-standard.html">改善代码质量的编程规范</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../012SoftEngineerings/document.html">设计文档</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../021microservice.html">021微服务架构</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../021microservices/normal.html">常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../021microservices/discovery.html">服务注册&amp;发现</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../021microservices/api_gateway.html">API网关</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../021microservices/contract.html">对比</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../021microservices/tmp.html">临时</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../022middle-platform.html">022中台</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../031dataanalysis.html">031数据分析</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../031dataanalysis/normal.html">常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../031dataanalysis/data.html">数据</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../031dataanalysis/tmp.html">临时</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../041governance.html">041服务治理</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../041governances/normal.html">常用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../041governances/normals/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../041governances/normals/technical-debt.html">技术债</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../041governances/normals/anti-fragile.html">反脆弱</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../041governances/normals/code-review.html">Code Review</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../041governances/service_protection.html">服务保护</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../051compiler.html">051编译原理</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../051compilers/normal.html">常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../051compilers/tool.html">工具</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../051compilers/%E6%B1%87%E7%BC%96%E8%AF%AD%E8%A8%80.html">汇编语言</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../051compilers/%E8%AF%8D%E6%B3%95%E5%88%86%E6%9E%90.html">词法分析</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../051compilers/%E8%AF%AD%E6%B3%95%E5%88%86%E6%9E%90.html">词法分析, 语法分析</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../051compilers/%E8%AF%AD%E4%B9%89%E5%88%86%E6%9E%90.html">语义分析</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../051compilers/LLVM.html">LLVM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../051compilers/IR.html">编译期后端技术</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../051compilers/other.html">其他</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../052composition-principle.html">052 计算机组成原理</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../052composition-principles/CPU%20%E5%8E%82%E5%95%86.html">CPU 厂商</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../052composition-principles/CPU%20Arch.html">CPU 架构</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../052composition-principles/Arm.html">Arm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../052composition-principles/X86.html">X86</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../052composition-principles/API.html">API</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../053os.html">053操作系统</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../053os/normal.html">常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../053os/signal.html">signal信号</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../053os/other.html">其他</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../054algorithm.html">054算法</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../054algorithms/normal.html">常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../054algorithms/algorithm.html">经典算法</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../054algorithms/algorithms/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../054algorithms/algorithms/nlp.html">NLP相关算法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../054algorithms/algorithms/encrypt.html">加密相关算法</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../054algorithms/tree.html">树结构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../054algorithms/trees/b-tree.html">b-树</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../054algorithms/trees/b%2Btree.html">b+树</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../054algorithms/trees/lsm_tree.html">LSM树</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../054algorithms/trees/balanced_binary_tree.html">平衡二叉树</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../054algorithms/trees/red_black_tree.html">红黑树</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../054algorithms/trees/trie-tree.html">Trie 树</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../054algorithms/trees/merkle-tree.html">Merkle 树</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../054algorithms/example.html">实例</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../054algorithms/website.html">网站</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../054algorithms/iq.html">智力题</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../054algorithms/graph_theory.html">图论</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../054algorithms/other.html">其他算法</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">新溪-gordon</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../010architecture.html">010架构设计</a> &raquo;</li>
+        
+          <li><a href="../../architecture_pattern.html">架构模式</a> &raquo;</li>
+        
+          <li><a href="../performance.html">高性能架构模式</a> &raquo;</li>
+        
+      <li>高性能负载均衡: 分类&amp;架构&amp;算法</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../../_sources/010architectures/architecture_patterns/performances/7slb.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            <nav id="local-table-of-contents" role="navigation" aria-labelledby="local-table-of-contents-title">
+              <h4 id="local-table-of-contents-title">On This Page</h4>
+              <ul>
+<li><a class="reference internal" href="#">高性能负载均衡: 分类&amp;架构&amp;算法</a><ul>
+<li><a class="reference internal" href="#id3">负载均衡分类</a><ul>
+<li><a class="reference internal" href="#dns">DNS 负载均衡</a></li>
+<li><a class="reference internal" href="#id4">硬件负载均衡</a></li>
+<li><a class="reference internal" href="#id5">软件负载均衡</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id6">负载均衡典型架构</a></li>
+<li><a class="reference internal" href="#id7">负载均衡算法</a><ul>
+<li><a class="reference internal" href="#id8">轮询</a></li>
+<li><a class="reference internal" href="#id9">加权轮询</a></li>
+<li><a class="reference internal" href="#id10">负载最低优先</a></li>
+<li><a class="reference internal" href="#id11">性能最优类</a></li>
+<li><a class="reference internal" href="#hash">Hash 类</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id12">思考</a></li>
+</ul>
+</li>
+</ul>
+
+            </nav>
+  <table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="../../../genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../../py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../../search.html"><span class="std std-ref">搜索页面</span></a></p></td>
+</tr>
+</tbody>
+</table>
+<section id="id2">
+<h1>高性能负载均衡: 分类&amp;架构&amp;算法<a class="headerlink" href="#id2" title="此标题的永久链接">¶</a></h1>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>高性能集群的本质很简单，通过增加更多的服务器来提升系统整体的计算能力。由于计算本身存在一个特点：同样的输入数据和逻辑，无论在哪台服务器上执行，都应该得到相同的输出。因此高性能集群设计的复杂度主要体现在任务分配这部分，需要设计合理的任务分配策略，将计算任务分配到多台服务器上执行。</p>
+</div>
+<div class="admonition important">
+<p class="admonition-title">重要</p>
+<p>高性能集群的复杂性主要体现在需要『增加一个任务分配器』，以及为任务『选择一个合适的任务分配算法』。</p>
+</div>
+<p>对于任务分配器，现在更流行的通用叫法是 “负载均衡器”:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>任务分配并不只是考虑计算单元的负载均衡，不同的任务分配算法目标是不一样的
+1. 有的基于负载考虑
+2. 有的基于性能（吞吐量、响应时间）考虑
+3. 有的基于业务考虑
+</pre></div>
+</div>
+<section id="id3">
+<h2>负载均衡分类<a class="headerlink" href="#id3" title="此标题的永久链接">¶</a></h2>
+<p>常见的负载均衡系统包括 3 种:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mf">1.</span> <span class="n">DNS</span> <span class="n">负载均衡</span>
+<span class="mf">2.</span> <span class="n">硬件负载均衡</span>
+<span class="mf">3.</span> <span class="n">软件负载均衡</span>
+</pre></div>
+</div>
+<section id="dns">
+<h3>DNS 负载均衡<a class="headerlink" href="#dns" title="此标题的永久链接">¶</a></h3>
+<p>优点:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 简单、成本低
+    负载均衡工作交给 DNS 服务器处理，无须自己开发或者维护负载均衡设备
+2. 就近访问，提升访问速度
+    DNS 解析时可以根据请求来源 IP，解析成距离用户最近的服务器地址，可以加快访问速度，改善性能
+</pre></div>
+</div>
+<p>缺点:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 更新不及时
+    DNS 缓存的时间比较长，修改 DNS 配置后，由于缓存的原因，还是有很多用户会继续访问修改前的 IP
+    这样的访问会失败，达不到负载均衡的目的，并且也影响用户正常使用业务
+2. 扩展性差
+    DNS 负载均衡的控制权在域名商那里，无法根据业务特点针对其做更多的定制化功能和扩展特性
+3. 分配策略比较简单
+    DNS 负载均衡支持的算法少
+    不能区分服务器的差异（不能根据系统与服务的状态来判断负载）
+    也无法感知后端服务器的状态
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>针对 DNS 负载均衡的一些缺点，对于时延和故障敏感的业务，有一些公司自己实现了 HTTP-DNS 的功能，即使用 HTTP 协议实现一个私有的 DNS 系统。这样的方案和通用的 DNS 优缺点正好相反</p>
+</div>
+</section>
+<section id="id4">
+<h3>硬件负载均衡<a class="headerlink" href="#id4" title="此标题的永久链接">¶</a></h3>
+<p>目前业界典型的硬件负载均衡设备有两款:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">F5</span> <span class="n">和</span> <span class="n">A10</span>
+</pre></div>
+</div>
+<p>优点:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 功能强大
+    全面支持各层级的负载均衡，支持全面的负载均衡算法，支持全局负载均衡。
+2. 性能强大
+    对比一下，软件负载均衡支持到 10 万级并发已经很厉害了，硬件负载均衡可以支持 100 万以上的并发。
+3. 稳定性高
+    商用硬件负载均衡，经过了良好的严格测试，经过大规模使用，稳定性高。
+4. 支持安全防护
+    硬件均衡设备除具备负载均衡功能外，还具备防火墙、防 DDoS 攻击等安全功能。
+</pre></div>
+</div>
+<p>缺点:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 价格昂贵
+2. 扩展能力差
+    硬件设备，可以根据业务进行配置，但无法进行扩展和定制
+</pre></div>
+</div>
+</section>
+<section id="id5">
+<h3>软件负载均衡<a class="headerlink" href="#id5" title="此标题的永久链接">¶</a></h3>
+<p>常见的有 Nginx 和 LVS:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Nginx</span> <span class="n">是软件的</span> <span class="mi">7</span> <span class="n">层负载均衡</span>
+<span class="n">LVS</span> <span class="n">是</span> <span class="n">Linux</span> <span class="n">内核的</span> <span class="mi">4</span> <span class="n">层负载均衡</span>
+</pre></div>
+</div>
+<p>软件和硬件的最主要区别就在于性能:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>硬件负载均衡性能远远高于软件负载均衡性能。
+Nginx 的性能是万级，一般的 Linux 服务器上装一个 Nginx 大概能到 5 万 / 秒；
+LVS 的性能是十万级，据说可达到 80 万 / 秒；
+而 F5 性能是百万级，从 200 万 / 秒到 800 万 / 秒都有
+</pre></div>
+</div>
+<p>优点:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>简单：无论是部署还是维护都比较简单。
+便宜：只要买个 Linux 服务器，装上软件即可。
+灵活：4 层和 7 层负载均衡可以根据业务进行选择；
+    也可以根据业务进行比较方便的扩展，例如，可以通过 Nginx 的插件来实现业务的定制化功能
+</pre></div>
+</div>
+<p>缺点(与硬件负载均衡相比):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>性能一般：一个 Nginx 大约能支撑 5 万并发
+功能没有硬件负载均衡那么强大
+一般不具备防火墙和防 DDoS 攻击等安全功能
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id6">
+<h2>负载均衡典型架构<a class="headerlink" href="#id6" title="此标题的永久链接">¶</a></h2>
+<p>组合的基本原则为:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. DNS 负载均衡用于实现地理级别的负载均衡；
+2. 硬件负载均衡用于实现集群级别的负载均衡；
+3. 软件负载均衡用于实现机器级别的负载均衡。
+</pre></div>
+</div>
+<img alt="https://img.zhaoweiguo.com/knowledge/images/architectures/performances/slb-type1.png" src="https://img.zhaoweiguo.com/knowledge/images/architectures/performances/slb-type1.png" />
+</section>
+<section id="id7">
+<h2>负载均衡算法<a class="headerlink" href="#id7" title="此标题的永久链接">¶</a></h2>
+<p>算法大体上可以分为下面几类:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 任务平分类
+    负载均衡系统将收到的任务平均分配给服务器进行处理
+    这里的 “平均” 可以是绝对数量的平均，也可以是比例或者权重上的平均
+2. 负载均衡类
+    负载均衡系统根据服务器的负载来进行分配
+    这里的负载并不一定是通常意义上我们说的 “CPU 负载”，而是系统当前的压力
+    可以用 CPU 负载来衡量，也可以用连接数、I/O 使用率、网卡吞吐量等来衡量系统的压力
+3. 性能最优类
+    负载均衡系统根据服务器的响应时间来进行任务分配，优先将新任务分配给响应最快的服务器
+4. Hash 类
+    负载均衡系统根据任务中的某些关键信息进行 Hash 运算
+    将相同 Hash 值的请求分配到同一台服务器上
+    常见的有源地址 Hash、目标地址 Hash、session id hash、用户 ID Hash 等
+</pre></div>
+</div>
+<section id="id8">
+<h3>轮询<a class="headerlink" href="#id8" title="此标题的永久链接">¶</a></h3>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>负载均衡系统收到请求后，按照顺序轮流分配到服务器上。只要服务器在运行，运行状态是不关注的。</p>
+</div>
+</section>
+<section id="id9">
+<h3>加权轮询<a class="headerlink" href="#id9" title="此标题的永久链接">¶</a></h3>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>加权轮询是轮询的一种特殊形式，其主要目的就是为了解决不同服务器处理能力有差异的问题。</p>
+</div>
+</section>
+<section id="id10">
+<h3>负载最低优先<a class="headerlink" href="#id10" title="此标题的永久链接">¶</a></h3>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>负载均衡系统将任务分配给当前负载最低的服务器，这里的负载根据不同的任务类型和业务场景，</p>
+</div>
+<p>不同的任务类型和业务场景，可以用不同的指标来衡量:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. LVS 这种 4 层网络负载均衡设备
+    可以以 “连接数” 来判断服务器的状态，服务器连接数越大，表明服务器压力越大。
+2. Nginx 这种 7 层网络负载系统
+    可以以 “HTTP 请求数” 来判断服务器状态
+    （Nginx 内置的负载均衡算法不支持这种方式，需要进行扩展）
+3. 如果我们自己开发负载均衡系统，可以根据业务特点来选择指标衡量系统压力。
+    如果是 CPU 密集型，可以以 “CPU 负载” 来衡量系统压力；
+    如果是 I/O 密集型，可以以 “I/O 负载” 来衡量系统压力。
+</pre></div>
+</div>
+<p>负载最低优先的算法解决了轮询算法中无法感知服务器状态的问题，由此带来的代价是复杂度要增加很多:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 最少连接数优先的算法要求负载均衡系统统计每个服务器当前建立的连接
+    其应用场景仅限于负载均衡接收的任何连接请求都会转发给服务器进行处理，
+    否则如果负载均衡系统和服务器之间是固定的连接池方式，就不适合采取这种算法。
+    例如
+      LVS 可以采取这种算法进行负载均衡
+      而一个通过连接池的方式连接 MySQL 集群的负载均衡系统就不适合
+2. CPU 负载最低优先的算法要求负载均衡系统以某种方式收集每个服务器的 CPU 负载
+    而且要确定是以 1 分钟的负载为标准，还是以 15 分钟的负载为标准
+    不存在 1 分钟肯定比 15 分钟要好或者差。
+    不同业务最优的时间间隔是不一样的，时间间隔太短容易造成频繁波动，
+    时间间隔太长又可能造成峰值来临时响应缓慢。
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>负载最低优先算法基本上能够比较完美地解决轮询算法的缺点，因为采用这种算法后，负载均衡系统需要感知服务器当前的运行状态。当然，其代价是复杂度大幅上升。通俗来讲，轮询可能是 5 行代码就能实现的算法，而负载最低优先算法可能要 1000 行才能实现。负载最低优先算法如果本身没有设计好，或者不适合业务的运行特点，算法本身就可能成为性能的瓶颈，或者引发很多莫名其妙的问题。所以负载最低优先算法虽然效果看起来很美好，但实际上真正应用的场景反而没有轮询（包括加权轮询）那么多。</p>
+</div>
+</section>
+<section id="id11">
+<h3>性能最优类<a class="headerlink" href="#id11" title="此标题的永久链接">¶</a></h3>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>负载最低优先类算法是站在服务器的角度来进行分配的，而性能最优优先类算法则是站在客户端的角度来进行分配的，优先将任务分配给处理速度最快的服务器，通过这种方式达到最快响应客户端的目的。</p>
+</div>
+<p>复杂度很高，主要体现在:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 需收集和分析每个服务器每个任务的响应时间，在大量任务处理的场景下，收集和统计本身也会消耗较多的性能。
+2. 为了减少这种统计上的消耗，可以采取采样的方式来统计
+    即不统计所有任务的响应时间，而是抽样统计部分任务的响应时间来估算整体任务的响应时间。
+    采样统计虽然能够减少性能消耗，但使得复杂度进一步上升，因为要确定合适的采样率，
+    a. 采样率太低会导致结果不准确，
+    b. 采样率太高会导致性能消耗较大，
+    找到合适的采样率也是一件复杂的事情。
+3. 无论是全部统计还是采样统计，都需要选择合适的周期：
+    是 10 秒内性能最优，还是 1 分钟内性能最优，还是 5 分钟内性能最优……
+    没有放之四海而皆准的周期，需要根据实际业务进行判断和选择，
+    这也是一件比较复杂的事情，甚至出现系统上线后需要不断地调优才能达到最优设计。
+</pre></div>
+</div>
+</section>
+<section id="hash">
+<h3>Hash 类<a class="headerlink" href="#hash" title="此标题的永久链接">¶</a></h3>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>负载均衡系统根据任务中的某些关键信息进行 Hash 运算，将相同 Hash 值的请求分配到同一台服务器上</p>
+</div>
+<p>这样做的目的主要是为了满足特定的业务需求。例如:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 源地址 Hash:
+    将来源于同一个源 IP 地址的任务分配给同一个服务器进行处理，适合于存在事务、会话的业务。
+2. ID Hash
+    将某 ID 标识的业务分配到同一服务器中处理，这的 ID 一般是临时性数据的 ID（如 session id）
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id12">
+<h2>思考<a class="headerlink" href="#id12" title="此标题的永久链接">¶</a></h2>
+<p>负载均衡还包括以下处理:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 集群调度平台（PaaS）平台
+    例如 k8s 、docker， 可以实现动态扩容和缩减，根据事实的并发量进行处理
+    当然前提是包括 Nginx、lvs、haproxy 前端负载均衡器不能挂掉
+2. 分布式框架
+  例如：Spring Cloud 的 ribbion、feign 也可以从应用层面实现负载均衡
+</pre></div>
+</div>
+<p>软件负载均衡中的某个机器挂了是怎么发现的呢:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">一看连接是否存在</span>
+<span class="n">二看是否能够发出去</span>
+<span class="n">三看响应是否快速</span>
+</pre></div>
+</div>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="../../../genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../../py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../../search.html"><span class="std std-ref">搜索页面</span></a></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../availability.html" class="btn btn-neutral float-right" title="高可用架构模式" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="6Reactor-Proactor.html" class="btn btn-neutral" title="单服务器高性能模式: Reactor&amp;Proactor" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+  
+  <div id="gitalk-container"></div>
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2010-2025, 新溪-gordon.
+
+    </p>
+  </div>
+  <div>备案号 <a href="http://www.beian.miit.gov.cn">京ICP备16018553号</a></div><div>Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a></div>. 
+
+
+</footer>
+
+<script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?042289284b8eb33866001347a3e0b129";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>     
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'V2025.06',
+            LANGUAGE:'zh-CN',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../../_static/sphinx_highlight.js"></script>
+      <script type="text/javascript" src="../../../_static/clipboard.min.js"></script>
+      <script type="text/javascript" src="../../../_static/copybutton.js"></script>
+      <script type="text/javascript" src="../../../_static/translations.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+
+  
+
+  <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+
+
+      // var gitalk = new Gitalk({
+      //         clientID: '565177626b5d46427009',
+      //         clientSecret: 'b2a36e67e1d2a73e43667f46d571c2624f8e1026',
+      //         repo: 'knowledge',
+      //         owner: 'zhaoweiguo',
+      //         admin: ['zhaoweiguo'],
+      //         id: location.pathname,      // Ensure uniqueness and length less than 50
+      //         distractionFreeMode: false  // Facebook-like distraction free mode
+      //       })
+      // gitalk.render('gitalk-container')
+
+  </script>
+
+
+<script type="text/javascript" src="../../../_static/js/table-of-contents-sidebar.js"></script>
+<!-- <script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script> -->
+<script type="text/javascript">
+    window.onload = function(e){
+        TableOfContents.init({
+            basePath: "https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/",
+            querySelector: "body" // or other css querySelector
+        });
+    }
+</script> 
+
+</body>
+</html>

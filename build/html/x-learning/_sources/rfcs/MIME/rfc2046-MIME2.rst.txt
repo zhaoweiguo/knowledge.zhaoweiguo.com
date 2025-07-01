@@ -1,0 +1,493 @@
+.. _rfc2046:
+
+RFC2046: (MIME) Part Two: Media Types
+#####################################
+
+* Obsoletes: `rfc1521`, `rfc1522`, `rfc1590`
+* Updated by: `rfc2646`, `rfc3798`, `rfc5147`, `rfc6657`, `rfc8098`
+* Category: Standards Track
+* November 1996
+
+
+
+
+
+3. Overview Of The Initial Top-Level Media Types
+================================================
+
+
+The five discrete top-level media types::
+
+	1. text
+		plain
+		richtext    // RFC 1341
+		enriched	// RFC 1896
+	2. image
+		jpeg
+		gif
+	3. audio
+		basic
+	4. video
+		mpeg
+	5. application
+		octet-stream: a body contains arbitrary binary data
+		PostScript: PostScript program
+
+The two composite top-level media types are::
+
+	1. multipart
+		a. mixed: For specifying a generic mixed set of parts
+		b. alternative: For representing the same data in multiple formats,
+        c. parallel: For parts intended to be viewed simultaneously
+        d. digest: for multipart entities in which each part has a default type of "message/rfc822".
+
+	2. message   // an encapsulated message
+		a. RFC822: 
+		b. partial: to permit the fragmented transmission of bodies 
+			that are thought to be too large 
+			to be passed through transport facilities in one piece.
+		c. external-body: specifying large bodies by reference to an external data source.
+
+
+
+
+
+4. Discrete Media Type Values
+=============================
+
+4.1.  Text Media Type
+---------------------
+
+default::
+
+	text/plain; charset=US-ASCII
+
+
+4.2.  Image Media Type
+----------------------
+
+4.3.  Audio Media Type
+----------------------
+
+4.4.  Video Media Type
+----------------------
+
+4.5.  Application Media Type
+----------------------------
+
+
+
+5. Composite Media Type Values
+==============================
+
+
+5.1.  Multipart Media Type
+--------------------------
+
+示例::
+
+     Content-Type: multipart/mixed; boundary=gc0p4Jq0M2Yt08j34c0p
+
+5.1.1 Common Syntax
+^^^^^^^^^^^^^^^^^^^
+
+示例(the following multipart message has two parts, both of them plain text, one of them explicitly typed and one of them implicitly typed)::
+
+     From: Nathaniel Borenstein <nsb@bellcore.com>
+     To: Ned Freed <ned@innosoft.com>
+     Date: Sun, 21 Mar 1993 23:56:48 -0800 (PST)
+     Subject: Sample message
+     MIME-Version: 1.0
+     Content-type: multipart/mixed; boundary="simple boundary"
+
+     This is the preamble.  It is to be ignored, though it
+     is a handy place for composition agents to include an
+     explanatory note to non-MIME conformant readers.
+
+     --simple boundary
+
+     This is implicitly typed plain US-ASCII text.
+     It does NOT end with a linebreak.
+
+     --simple boundary
+     Content-type: text/plain; charset=us-ascii
+
+     This is explicitly typed plain US-ASCII text.
+     It DOES end with a linebreak.
+
+     --simple boundary--
+
+     This is the epilogue.  It is also to be ignored.
+
+
+
+BNF::
+
+     multipart-body := [preamble CRLF]
+                       dash-boundary transport-padding CRLF
+                       body-part *encapsulation
+                       close-delimiter transport-padding
+                       [CRLF epilogue]
+
+     preamble := discard-text
+
+     dash-boundary := "--" boundary
+                      ; boundary taken from the value of
+                      ; boundary parameter of the
+                      ; Content-Type field.
+
+     transport-padding := *LWSP-char
+
+     body-part := MIME-part-headers [CRLF *OCTET]
+                  ; Lines in a body-part must not start
+                  ; with the specified dash-boundary and
+                  ; the delimiter must not appear anywhere
+                  ; in the body part.  Note that the
+                  ; semantics of a body-part differ from
+                  ; the semantics of a message, as
+                  ; described in the text.
+
+     encapsulation := delimiter transport-padding
+                      CRLF body-part
+
+     delimiter := CRLF dash-boundary
+
+     close-delimiter := delimiter "--"
+
+     epilogue := discard-text
+
+     discard-text := *(*text CRLF) *text
+                     ; May be ignored or discarded.
+
+     OCTET := <any 0-255 octet value>
+
+5.1.4.  Alternative Subtype
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* The "multipart/alternative" type is syntactically identical to "multipart/mixed", but the semantics are different.  
+* In particular, each of the body parts is an "alternative" version of the same information.
+
+.. note:: 【区别: multipart/mixed】The multipart/mixed media type is used when a message consists of multiple parts that are unrelated to each other. For example, an email message may contain both a text message and an attached image file. In this case, the message would be sent as a multipart/mixed message with two parts: one part containing the text message and another part containing the image file.【区别: multipart/alternative】On the other hand, the multipart/alternative media type is used when a message contains multiple versions of the same content, but in different formats or encodings. For example, an email message may contain both a plain text version and an HTML version of the same message. In this case, the message would be sent as a multipart/alternative message with two parts: one part containing the plain text version and another part containing the HTML version. The recipient's email client can then choose which version to display based on its capabilities and user preferences.
+
+
+示例::
+
+     From: Nathaniel Borenstein <nsb@bellcore.com>
+     To: Ned Freed <ned@innosoft.com>
+     Date: Mon, 22 Mar 1993 09:41:09 -0800 (PST)
+     Subject: Formatted text mail
+     MIME-Version: 1.0
+     Content-Type: multipart/alternative; boundary=boundary42
+
+     --boundary42
+     Content-Type: text/plain; charset=us-ascii
+
+       ... plain text version of message goes here ...
+
+     --boundary42
+     Content-Type: text/enriched
+
+       ... RFC 1896 text/enriched version of same message
+           goes here ...
+
+     --boundary42
+     Content-Type: application/x-whatever
+
+       ... fanciest version of same message goes here ...
+
+     --boundary42--
+
+
+5.1.5.  Digest Subtype
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. note:: 【区别】The "multipart/mixed" media type is used to combine several entities into a single message, where each entity is considered independent and has its own content type. For example, a multipart/mixed message may contain a plain text message and an attached image, where the plain text message has a content type of "text/plain" and the image has a content type of "image/jpeg". These entities can be displayed or processed independently of each other.
+
+.. note:: 【区别】On the other hand, the "multipart/digest" media type is used to create a single message that contains a collection of messages. The purpose of a digest is to provide a summary of several related messages, which are combined into a single message to make it easier to distribute and read. Each message in a digest is enclosed in a separate "message/rfc822" entity within the multipart/digest message. The multipart/digest message also includes a table of contents, or index, that lists the titles or subjects of the individual messages.
+
+.. note:: In summary, while both "multipart/mixed" and "multipart/digest" are used to combine multiple entities into a single message, "multipart/mixed" is used for independent entities of different types, while "multipart/digest" is used for combining multiple related messages into a single message.
+
+
+
+示例::
+
+     From: Moderator-Address
+     To: Recipient-List
+     Date: Mon, 22 Mar 1994 13:34:51 +0000
+     Subject: Internet Digest, volume 42
+     MIME-Version: 1.0
+     Content-Type: multipart/mixed;
+                   boundary="---- main boundary ----"
+
+     ------ main boundary ----
+
+       ...Introductory text or table of contents...
+
+     ------ main boundary ----
+     Content-Type: multipart/digest;
+                   boundary="---- next message ----"
+
+     ------ next message ----
+
+     From: someone-else
+     Date: Fri, 26 Mar 1993 11:13:32 +0200
+     Subject: my opinion
+
+       ...body goes here ...
+
+     ------ next message ----
+
+     From: someone-else-again
+     Date: Fri, 26 Mar 1993 10:07:13 -0500
+     Subject: my different opinion
+
+       ... another body goes here ...
+
+     ------ next message ------
+
+     ------ main boundary ------
+
+
+5.1.6.  Parallel Subtype
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. note:: This type is syntactically identical to "multipart/mixed", but the semantics are different.In particular, in a parallel entity, the order of body parts is not significant.
+
+
+5.2 Message Media Type
+----------------------
+
+* The "message" media type is used to encapsulate another mail message.
+
+5.2.1.  RFC822 Subtype
+^^^^^^^^^^^^^^^^^^^^^^
+
+* A media type of "message/rfc822" indicates that the body contains an encapsulated message, with the syntax of an RFC 822 message.
+* However, unlike top-level RFC 822 messages, the restriction that each "message/rfc822" body must include a "From", "Date", and at least one destination header is removed and replaced with the requirement that at least one of "From", "Subject", or "Date" must be present.
+
+
+RFC 822是一种电子邮件的格式标准，它定义了邮件的语法、格式和各个部分的含义。以下是RFC 822消息的一些要点::
+
+	RFC 822消息是基于纯文本的格式，由头部和正文两个部分组成。
+	消息头部包含一系列信息，如发件人、收件人、主题、日期等。
+	消息正文可以包含任何形式的文本，如纯文本、HTML、图片、音频、视频等。
+	消息的组成部分可以使用分隔符来进行分割，常用的分隔符包括"----"和"=="等。
+	消息头部和正文之间使用一个空行进行分隔。
+	消息头部中的各个字段名称是不区分大小写的，但是一般会使用大写字母来表示字段名。
+	消息头部可以包含多个同名字段，如多个"to"字段表示消息的多个收件人。
+	消息头部中的一些字段可以使用RFC 2047来进行编码，以支持非ASCII字符的显示。
+	RFC 822消息的一些限制在消息的子类型中进行了定义，
+		如"message/rfc822"表示消息体是一个RFC 822格式的邮件消息。
+
+
+示例(一个简单的RFC 822消息，只包含最基本的头部和正文内容)::
+
+	From: sender@example.com
+	To: recipient@example.com
+	Subject: Example Message
+
+	This is an example message.
+
+示例-一个包含附件的RFC 822消息::
+
+	From: sender@example.com
+	To: recipient@example.com
+	Subject: Example Message
+	Content-Type: multipart/mixed; boundary=boundary-string
+
+	--boundary-string
+	Content-Type: text/plain; charset=us-ascii
+
+	This is the body of the message.
+
+	--boundary-string
+	Content-Type: application/octet-stream
+	Content-Disposition: attachment; filename="example.pdf"
+
+	<base64-encoded binary data>
+
+	--boundary-string--
+
+一个使用RFC 2047编码的RFC 822消息::
+
+	From: =?iso-8859-1?q?Sender_Name?= <sender@example.com>
+	To: =?utf-8?q?=c3=89=C3=A7=C3=B6=C3=B1=C3=AB=C3=AA=C3=BC?= <recipient@example.com>
+	Subject: =?iso-8859-1?q?Example_Message?=
+
+	This is an example message with non-ASCII characters.
+
+包含嵌入式图像的message/rfc822消息::
+
+	From: sender@example.com
+	To: recipient@example.com
+	Subject: Example message with inline image
+	Date: Tue, 23 Mar 2023 15:30:00 -0400
+	Content-Type: multipart/related; boundary=example_boundary
+
+	--example_boundary
+	Content-Type: text/html; charset="utf-8"
+
+	<html>
+	<body>
+	  <p>Hello,</p>
+	  <p>This is an example message with an inline image:</p>
+	  <img src="cid:example_image">
+	  <p>Best regards,</p>
+	  <p>Sender</p>
+	</body>
+	</html>
+
+	--example_boundary
+	Content-Type: image/jpeg
+	Content-Disposition: inline; filename="example.jpg"
+	Content-ID: <example_image>
+
+	[JPG data here]
+
+	--example_boundary--
+
+
+5.2.2.  Partial Subtype
+^^^^^^^^^^^^^^^^^^^^^^^
+
+* The "partial" subtype is defined to allow large entities to be delivered as several separate pieces of mail and automatically reassembled by a receiving user agent.
+* The concept is similar to IP fragmentation and reassembly
+* This mechanism can be used when intermediate transport agents limit the size of individual messages that can be sent.
+* The media type "message/partial" thus indicates that the body contains a fragment of a larger entity.
+
+
+* It is specified that entities of type "message/partial" must always have a content-transfer-encoding of 7bit (the default).
+* This in turn implies that the inner message must not use "8bit" or "binary" encoding.
+
+Three parameters must be specified in the Content-Type field of type "message/partial"::
+
+	1. "id", is a unique identifier
+	2. "number", an integer, is the fragment number, 
+		which indicates where this fragment fits into the sequence of fragments.
+	3. "total", another integer, is the total number of fragments.
+		This third subfield is required on the final fragment, 
+		and is optional (though encouraged) on the earlier fragments.
+
+示例::
+
+     Content-Type: Message/Partial; number=2; total=3;
+                   id="oc=jpbe0M2Yt4s@thumper.bellcore.com"
+
+     Content-Type: Message/Partial;
+                   id="oc=jpbe0M2Yt4s@thumper.bellcore.com";
+                   number=2
+
+     Content-Type: Message/Partial; number=3; total=3;
+                   id="oc=jpbe0M2Yt4s@thumper.bellcore.com"
+
+     注意: 最后一条一定要有total字段
+
+.. note:: Note that fragment numbering begins with 1, not 0.
+
+
+示例
+''''
+
+If an audio message is broken into two pieces, the first piece might look something like this::
+
+	X-Weird-Header-1: Foo
+	From: Bill@host.com
+	To: joe@otherhost.com
+	Date: Fri, 26 Mar 1993 12:59:38 -0500 (EST)
+	Subject: Audio mail (part 1 of 2)
+	Message-ID: <id1@host.com>
+	MIME-Version: 1.0
+	Content-type: message/partial; id="ABC@host.com";
+                   number=1; total=2
+
+     X-Weird-Header-1: Bar
+     X-Weird-Header-2: Hello
+     Message-ID: <anotherid@foo.com>
+     Subject: Audio mail
+     MIME-Version: 1.0
+     Content-type: audio/basic
+     Content-transfer-encoding: base64
+
+       ... first half of encoded audio data goes here ...
+
+and the second half might look something like this::
+
+     From: Bill@host.com
+     To: joe@otherhost.com
+     Date: Fri, 26 Mar 1993 12:59:38 -0500 (EST)
+     Subject: Audio mail (part 2 of 2)
+     MIME-Version: 1.0
+     Message-ID: <id2@host.com>
+     Content-type: message/partial;
+                   id="ABC@host.com"; number=2; total=2
+
+       ... second half of encoded audio data goes here ...
+
+Then, when the fragmented message is reassembled, the resulting message to be displayed to the user should look something like this::
+
+     X-Weird-Header-1: Foo
+     From: Bill@host.com
+     To: joe@otherhost.com
+     Date: Fri, 26 Mar 1993 12:59:38 -0500 (EST)
+     Subject: Audio mail
+     Message-ID: <anotherid@foo.com>
+     MIME-Version: 1.0
+     Content-type: audio/basic
+     Content-transfer-encoding: base64
+
+       ... first half of encoded audio data goes here ...
+       ... second half of encoded audio data goes here ...
+
+
+
+
+5.2.3 External-Body Subtype
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* "External-Body"类型用于表示某个实体的内容并不直接包含在消息体中，而是存储在另外一个位置，如文件或数据库中。该类型的实体包括一个描述实体的URL以及用于获取实体的参数。
+* "External-Body"类型定义了两个子类型： "URL"和"ID". "URL"子类型表示实体可以通过URL访问，而"ID"子类型表示实体可以通过其他机制访问，如数据库查询。
+
+
+::
+
+     Content-type: message/external-body;
+                   access-type=local-file;
+                   name="/u/nsb/Me.jpeg"
+
+     Content-type: image/jpeg
+     Content-ID: <id42@guppylake.bellcore.com>
+     Content-Transfer-Encoding: binary
+
+     THIS IS NOT REALLY THE BODY!
+
+
+5.2.4 Other Message Subtypes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* MIME implementations must in general treat unrecognized subtypes of "message" as being equivalent to "application/octet-stream".
+* Future subtypes of "message" intended for use with email should be restricted to "7bit" encoding
+
+
+6.  Experimental Media Type Values
+==================================
+
+* A media type value beginning with the characters "X-" is a private value, to be used by consenting systems by mutual agreement. 
+* In general, the use of "X-" top-level types is strongly discouraged. Implementors should invent subtypes of the existing types whenever possible. In many cases, a subtype of "application" will be more appropriate than a new top-level type.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

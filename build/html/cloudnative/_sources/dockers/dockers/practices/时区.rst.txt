@@ -1,0 +1,104 @@
+时区
+####
+
+* Docker 时区调整方案: https://blog.csdn.net/qq_41671629/article/details/128176790
+
+
+运行 Docker 容器时调整时区
+==========================
+
+通用 docker 时区修改方案::
+
+	 -v /etc/timezone:/etc/timezone:ro -v /etc/localtime:/etc/localtime:ro
+
+	 示例:
+	 docker run --name test --rm -ti -v /etc/timezone:/etc/timezone:ro -v /etc/localtime:/etc/localtime:ro alpine /bin/sh
+
+
+通过传递环境变量改变容器时区::
+
+	适用于基于 Debian 基础镜像，CentOS 基础镜像 制作的 Docker 镜像
+	不适用于基于 Alpine 基础镜像，Ubuntu 基础镜像 制作的 Docker 镜像
+	成立的前提条件是已经安装tzdata软件包
+
+	$ docker run --name test -e TZ=Asia/Shanghai --rm -ti debian /bin/bash
+
+
+
+
+
+制作 Docker 镜像时调整时区
+==========================
+
+Alpine::
+
+	ENV TZ Asia/Shanghai
+
+	RUN apk add tzdata && cp /usr/share/zoneinfo/${TZ} /etc/localtime \
+	    && echo ${TZ} > /etc/timezone \
+	    && apk del tzdata
+
+Debian(Debian 基础镜像 中已经安装了 tzdata 包)::
+
+	ENV TZ=Asia/Shanghai \
+	    DEBIAN_FRONTEND=noninteractive
+
+	RUN ln -fs /usr/share/zoneinfo/${TZ} /etc/localtime \
+	    && echo ${TZ} > /etc/timezone \
+	    && dpkg-reconfigure --frontend noninteractive tzdata \
+	    && rm -rf /var/lib/apt/lists/*
+
+Ubuntu(基础镜像中没有安装了 tzdata 包，因此我们需要先安装 tzdata 包)::
+
+	ENV TZ=Asia/Shanghai \
+	    DEBIAN_FRONTEND=noninteractive
+
+	RUN apt update \
+	    && apt install -y tzdata \
+	    && ln -fs /usr/share/zoneinfo/${TZ} /etc/localtime \
+	    && echo ${TZ} > /etc/timezone \
+	    && dpkg-reconfigure --frontend noninteractive tzdata \
+	    && rm -rf /var/lib/apt/lists/*
+
+CentOS(CentOS 基础镜像 中已经安装了 tzdata 包)::
+
+	ENV TZ Asia/Shanghai
+
+	RUN ln -fs /usr/share/zoneinfo/${TZ} /etc/localtime \
+	    && echo ${TZ} > /etc/timezone
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

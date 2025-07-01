@@ -1,0 +1,102 @@
+Qwen3
+#####
+
+
+
+* GitHub: https://github.com/QwenLM/Qwen3
+* 模型列表::
+
+    # 预训练基座模型
+    Qwen3-30B-A3B-Base
+
+    # MoE模型
+    Qwen3-235B-A22B
+    Qwen3-30B-A3B
+
+    # 稠密模型
+    Qwen3-32B、Qwen3-14B、Qwen3-8B、Qwen3-4B、Qwen3-1.7B 和 Qwen3-0.6B
+
+
+预训练::
+
+    Qwen2.5是在 18 万亿个 token 上进行预训练的
+    Qwen3 达到了约 36 万亿个 token，涵盖了 119 种语言和方言
+
+    数据集的构建:
+        用 Qwen2.5-VL 从pdf文档中提取文本
+        用 Qwen2.5 改进提取内容的质量
+        用 Qwen2.5-Math 和 Qwen2.5-Coder 这两个数学和代码领域的专家模型合成数据，合成了包括教科书、问答对以及代码片段等多种形式的数据，来增加数学和代码数据的数量
+
+    预训练过程分为三个阶段:
+        S1: 模型在超过 30 万亿个 token 上进行了预训练，上下文长度为 4K token
+            提供了基本的语言技能和通用知识
+        S2: 通过增加知识密集型数据（如 STEM、编程和推理任务）的比例来改进数据集，
+            随后模型又在额外的 5 万亿个 token 上进行了预训练
+        S3: 使用高质量的长上下文数据将上下文长度扩展到 32K token，确保模型能够有效地处理更长的输入
+
+后训练::
+
+    四阶段:
+        1）长思维链冷启动
+            多样的的长思维链数据对模型进行了微调，涵盖了数学、代码、逻辑推理和 STEM 问题等多种任务和领域
+            为模型配备基本的推理能力
+        2）长思维链强化学习
+            重点是大规模强化学习，利用基于规则的奖励来增强模型的探索和钻研能力
+        3）思维模式融合
+            包括长思维链数据和常用的指令微调数据的组合数据上对模型进行微调
+            将非思考模式整合到思考模型中。确保了推理和快速响应能力的无缝结合。
+        4）通用强化学习
+            包括指令遵循、格式遵循和 Agent 能力等在内的 20 多个通用领域的任务上应用了强化学习，以进一步增强模型的通用能力并纠正不良行为
+
+
+
+
+
+
+
+Qwen3-30B-A3B
+=============
+
+Model Overview::
+
+    Type: Causal Language Models
+    Training Stage: Pretraining & Post-training
+    Number of Parameters: 30.5B in total and 3.3B activated
+    Number of Paramaters (Non-Embedding): 29.9B
+    Number of Layers: 48
+    Number of Attention Heads (GQA): 32 for Q and 4 for KV
+    Number of Experts: 128
+    Number of Activated Experts: 8
+    Context Length: 32,768 natively and 131,072 tokens with YaRN.
+
+
+
+
+
+
+使用情况
+========
+
+* 不论是iPhone（0.6B, 4B），还是MacBook（8B, 30B, 3B/30B MoE）、M2/M3 Ultra（22B/235B MoE）消费级设备，均可本地跑。
+* 在M2 Ultra上运行了Qwen3 235B MoE，生成速度高达28 token/s。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

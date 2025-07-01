@@ -1,0 +1,632 @@
+面向对象编程
+############
+
+* OOP: Object Oriented Programming
+* OOPL: Object Oriented Programming Language
+* OOA: Object Oriented Analysis
+* OOD: Object Oriented Design
+
+
+面向对象的2个核心理念::
+
+    1. “Program to an ‘interface’, not an ‘implementation’.”
+    使用者不需要知道数据类型、结构、算法的细节。
+    使用者不需要知道实现细节，只需要知道提供的接口。
+    利于抽象、封装、动态绑定、多态。
+    符合面向对象的特质和理念。
+   
+    2. “Favor ‘object composition’ over ‘class inheritance’.”
+    继承需要给子类暴露一些父类的设计和实现细节。
+    父类实现的改变会造成子类也需要改变。
+    我们以为继承主要是为了代码重用，但实际上在子类中需要重新实现很多父类的方法。
+    继承更多的应该是为了多态。
+
+
+
+面向对象编程 7 个大的知识点::
+
+    1. 面向对象的四大特性：封装、抽象、继承、多态
+    2. 面向对象编程与面向过程编程的区别和联系
+    3. 面向对象分析、面向对象设计、面向对象编程
+    4. 接口和抽象类的区别以及各自的应用场景
+    5. 基于接口而非实现编程的设计思想
+    6. 多用组合少用继承的设计思想
+    7. 面向过程的贫血模型和面向对象的充血模型
+
+
+对象编程的四大特性::
+
+    1. 封装(Encapsulation)
+        如何隐藏信息、保护数据
+        封装也叫作信息隐藏或者数据访问保护。
+        类通过暴露有限的访问接口，授权外部仅能通过类提供的方式（或者叫函数）来访问内部信息或者数据。
+        封装的意义:
+            a. 限制过度灵活性，使之可控
+            b. 提高类的易用性
+    2. 抽象(Abstraction)
+        如何隐藏方法的具体实现
+        让调用者只需要关心方法提供了哪些功能，并不需要知道这些功能是如何实现的
+        抽象的意义:
+            a. 抽象及其前面讲到的封装都是人类处理复杂性的有效手段
+                面对复杂系统时，人脑能承受的信息复杂程度是有限的，所以我们必须忽略掉一些非关键性的实现细节
+                而抽象作为一种只关注功能点不关注实现的设计思路，正好帮我们的大脑过滤掉许多非必要的信息
+            b. 抽象作为一个非常宽泛的设计思想，在代码设计中，起到非常重要的指导作用
+                提高代码的可扩展性、维护性，修改实现不需要改变定义，减少代码的改动范围
+                很多设计原则都体现了抽象这种设计思想，比如:
+                    * 基于接口而非实现编程
+                    * 开闭原则（对扩展开放、对修改关闭）
+                    * 代码解耦（降低代码的耦合性）
+            c. 我们在定义（或者叫命名）类的方法的时候，也要有抽象思维
+                不要在方法定义中，暴露太多的实现细节，以保证在需要改变方法的实现逻辑时，不用去修改其定义
+                比如 getAliyunPictureUrl () 就不是一个具有抽象思维的命名
+                一个比较抽象的函数，比如叫作 getPictureUrl ()
+    3. 继承(Inheritance)
+        编程语言需要提供特殊的语法机制来支持
+            Java 使用 extends 关键字来实现继承，
+            C++ 使用冒号（class B : public A），
+            Python 使用 parentheses ()，
+            Ruby 使用 <。
+        有些编程语言只支持单继承，不支持多重继承
+            Java、PHP、C#、Ruby
+        有些编程语言既支持单重继承，也支持多重继承
+            C++、Python、Perl
+        继承的意义:
+            a. 继承最大的一个好处就是代码复用
+            b. 继承这个特性也是一个非常有争议的特性。很多人觉得继承是一种反模式
+                我们应该尽量少用，甚至不用
+                多用组合少用继承
+    4. 多态(Polymorphism)
+        多态是指，子类可以替换父类，在实际的代码运行过程中，调用子类的方法实现
+        多态特性的实现方式:
+            a. 继承加方法重写
+            b. 利用接口类语法
+            c. duck-typing 语法
+                只要两个类具有相同的方法，就可以实现多态，并不要求两个类之间有任何关系
+                是一些动态语言所特有的语法机制(如 Python)
+        多态的意义:
+            能提高代码的可扩展性和复用性
+            多态也是很多设计模式、设计原则、编程技巧的代码实现基础，比如:
+                策略模式、基于接口而非实现编程、依赖倒置原则、里式替换原则、
+                利用多态去掉冗长的 if-else 语句等等
+
+
+    ## 封装
+    What：隐藏信息，保护数据访问。
+    How：暴露有限接口和属性，需要编程语言提供访问控制的语法。
+    Why：提高代码可维护性；降低接口复杂度，提高类的易用性。
+
+    ## 抽象
+    What: 隐藏具体实现，使用者只需关心功能，无需关心实现。
+    How: 通过接口类或者抽象类实现，特殊语法机制非必须。
+    Why: 提高代码的扩展性、维护性；降低复杂度，减少细节负担。
+
+    ## 继承
+    What: 表示 is-a 关系，分为单继承和多继承。
+    How: 需要编程语言提供特殊语法机制。例如 Java 的 “extends”，C++ 的 “:” 。
+    Why: 解决代码复用问题。
+
+    ## 多态
+    What: 子类替换父类，在运行时调用子类的实现。
+    How: 需要编程语言提供特殊的语法机制。比如继承、接口类、duck-typing。
+    Why: 提高代码扩展性和复用性。
+
+    3W 模型的关键在于 Why，没有 Why，其它两个就没有存在的意义。从四大特性可以看出，面向对象的终极目的只有一个：可维护性。易扩展、易复用，降低复杂度等等都属于可维护性的实现方式。
+
+定义::
+
+    面向对象编程是一种编程范式或编程风格。
+        它以类或对象作为组织代码的基本单元，并将封装、抽象、继承、多态四个特性，作为代码设计和实现的基石。
+    面向对象编程语言是支持类或对象的语法机制，
+        并有现成的语法机制，能方便地实现面向对象编程四大特性（封装、抽象、继承、多态）的编程语言。
+
+    一般来讲，面向对象编程都是通过使用面向对象编程语言来进行的，
+        但是，不用面向对象编程语言，我们照样可以进行面向对象编程。
+    反过来讲，即便我们使用面向对象编程语言，写出来的代码也不一定是面向对象编程风格的，
+        也有可能是面向过程编程风格的。
+
+
+::
+
+    面向对象分析就是要搞清楚做什么
+    面向对象设计就是要搞清楚怎么做
+    面向对象编程就是将分析和设计的的结果翻译成代码的过程
+
+    “面向对象编程” 一词多义，不同的场景、语境下，解释不同:
+        1. 前面「面向对象编程」指的是一种编程风格或者范式
+        2. 这儿和 OOA, OOD 一起谈时「面向对象编程」是一种行为
+
+抽象类和接口
+============
+
+并不是所有的面向对象编程语言都支持这两个语法概念::
+
+    C++ 这种编程语言只支持抽象类，不支持接口
+    Python 这样的动态编程语言，既不支持抽象类，也不支持接口
+
+
+抽象类
+------
+
+抽象类3个特性::
+
+    1. 抽象类不允许被实例化，只能被继承
+        也就是说，你不能 new 一个抽象类的对象出来
+        Logger logger = new Logger (...); 会报编译错误
+    2. 抽象类可以包含属性和方法
+        方法:
+        既可以包含代码实现（比如 Logger 中的 log () 方法）
+        也可以不包含代码实现（比如 Logger 中的 doLog () 方法）
+            不包含代码实现的方法叫作抽象方法
+    3. 子类继承抽象类，必须实现抽象类中的所有抽象方法
+        对应到例子代码中就是，所有继承 Logger 抽象类的子类，都必须重写 doLog () 方法
+
+实例::
+
+    // 抽象类
+    public abstract class Logger {
+      private String name;
+      private boolean enabled;
+      private Level minPermittedLevel;
+
+      public Logger(String name, boolean enabled, Level minPermittedLevel) {
+        this.name = name;
+        this.enabled = enabled;
+        this.minPermittedLevel = minPermittedLevel;
+      }
+      
+      public void log(Level level, String message) {
+        boolean loggable = enabled && (minPermittedLevel.intValue() <= level.intValue());
+        if (!loggable) return;
+        doLog(level, message);
+      }
+      
+      protected abstract void doLog(Level level, String message);
+    }
+
+    // 抽象类的子类：输出日志到文件
+    public class FileLogger extends Logger {
+      private Writer fileWriter;
+
+      public FileLogger(String name, boolean enabled,
+        Level minPermittedLevel, String filepath) {
+        super(name, enabled, minPermittedLevel);
+        this.fileWriter = new FileWriter(filepath); 
+      }
+      
+      @Override
+      public void doLog(Level level, String mesage) {
+        // 格式化level和message,输出到日志文件
+        fileWriter.write(...);
+      }
+    }
+
+    // 抽象类的子类: 输出日志到消息中间件(比如kafka)
+    public class MessageQueueLogger extends Logger {
+      private MessageQueueClient msgQueueClient;
+      
+      public MessageQueueLogger(String name, boolean enabled,
+        Level minPermittedLevel, MessageQueueClient msgQueueClient) {
+        super(name, enabled, minPermittedLevel);
+        this.msgQueueClient = msgQueueClient;
+      }
+      
+      @Override
+      protected void doLog(Level level, String mesage) {
+        // 格式化level和message,输出到消息中间件
+        msgQueueClient.send(...);
+      }
+    }
+
+
+抽象类解决的问题::
+
+    抽象类也是类，也解决「代码复用」问题
+    接合下例可以看出「抽象类」与「普通类」的区别
+
+
+例-使用普通类实现::
+
+    // 父类：非抽象类，就是普通的类. 删除了log(),doLog()，新增了isLoggable().
+    public class Logger {
+      private String name;
+      private boolean enabled;
+      private Level minPermittedLevel;
+
+      public Logger(String name, boolean enabled, Level minPermittedLevel) {
+        //...构造函数不变，代码省略...
+      }
+
+      protected boolean isLoggable() {
+        boolean loggable = enabled && (minPermittedLevel.intValue() <= level.intValue());
+        return loggable;
+      }
+    }
+    // 子类：输出日志到文件
+    public class FileLogger extends Logger {
+      private Writer fileWriter;
+
+      public FileLogger(String name, boolean enabled,
+        Level minPermittedLevel, String filepath) {
+        //...构造函数不变，代码省略...
+      }
+      
+      public void log(Level level, String mesage) {
+        if (!isLoggable()) return;
+        // 格式化level和message,输出到日志文件
+        fileWriter.write(...);
+      }
+    }
+    // 子类: 输出日志到消息中间件(比如kafka)
+    public class MessageQueueLogger extends Logger {
+      private MessageQueueClient msgQueueClient;
+      
+      public MessageQueueLogger(String name, boolean enabled,
+        Level minPermittedLevel, MessageQueueClient msgQueueClient) {
+        //...构造函数不变，代码省略...
+      }
+      
+      public void log(Level level, String mesage) {
+        if (!isLoggable()) return;
+        // 格式化level和message,输出到消息中间件
+        msgQueueClient.send(...);
+      }
+    }
+
+说明::
+
+    虽然达到了代码复用的目的，但是无法使用多态特性了
+    像下面这样编写代码，就会出现编译错误，因为 Logger 中并没有定义 log () 方法:
+    Logger logger = new FileLogger("log", true, Level.WARN, "/tmp/access.log");
+    logger.log(Level.ERROR, "This is a test log message.");
+
+例-父类实现 log 方法::
+
+    public class Logger {
+      // ...省略部分代码...
+      public void log(Level level, String mesage) { // do nothing... }
+    }
+    public class FileLogger extends Logger {
+      // ...省略部分代码...
+      @Override
+      public void log(Level level, String mesage) {
+        if (!isLoggable()) return;
+        // 格式化level和message,输出到日志文件
+        fileWriter.write(...);
+      }
+    }
+    public class MessageQueueLogger extends Logger {
+      // ...省略部分代码...
+      @Override
+      public void log(Level level, String mesage) {
+        if (!isLoggable()) return;
+        // 格式化level和message,输出到消息中间件
+        msgQueueClient.send(...);
+      }
+    }
+
+说明::
+
+    1. 在 Logger 中定义一个空的方法，会影响代码的可读性
+        如果我们不熟悉 Logger 背后的设计思想，代码注释又不怎么给力，
+        我们在阅读 Logger 代码的时候，就会对为什么定义一个空的 log () 方法而感到疑惑
+        需要查看 Logger、FileLogger、MessageQueueLogger 之间的继承关系，才能弄明白其设计意图
+    2. 当创建一个新的子类继承 Logger 父类的时候，我们有可能会忘记重新实现 log () 方法
+        之前基于抽象类的设计思路，编译器会强制要求子类重写 log () 方法，否则会报编译错误。
+        这儿举的例子比较简单，Logger 中的方法不多，代码行数也很少。
+        而如果 Logger 很复杂，除非熟悉 Logger 的设计，否则很容易忘记重新实现 log () 方法
+    3. Logger 可以被实例化
+        换句话说，我们可以 new 一个 Logger 出来，并且调用空的 log () 方法
+        这也增加了类被误用的风险
+        这个问题可以通过设置私有的构造函数的方式来解决。但显然没有通过抽象类来的优雅
+
+
+
+
+接口
+----
+
+接口的3个特性::
+
+    1. 接口不能包含属性（也就是成员变量）
+    2. 接口只能声明方法，方法不能包含代码实现
+    3. 类实现接口的时候，必须实现接口中声明的所有方法
+
+实例::
+
+
+    // 接口
+    public interface Filter {
+      void doFilter(RpcRequest req) throws RpcException;
+    }
+    // 接口实现类：鉴权过滤器
+    public class AuthencationFilter implements Filter {
+      @Override
+      public void doFilter(RpcRequest req) throws RpcException {
+        //...鉴权逻辑..
+      }
+    }
+    // 接口实现类：限流过滤器
+    public class RateLimitFilter implements Filter {
+      @Override
+      public void doFilter(RpcRequest req) throws RpcException {
+        //...限流逻辑...
+      }
+    }
+    // 过滤器使用Demo
+    public class Application {
+      // filters.add(new AuthencationFilter());
+      // filters.add(new RateLimitFilter());
+      private List<Filter> filters = new ArrayList<>();
+      
+      public void handleRpcRequest(RpcRequest req) {
+        try {
+          for (Filter filter : filters) {
+            filter.doFilter(req);
+          }
+        } catch(RpcException e) {
+          // ...处理过滤结果...
+        }
+        // ...省略其他处理逻辑...
+      }
+    }
+
+C++通过抽象类来模拟接口::
+
+    class Strategy { // 用抽象类模拟接口
+      public:
+        ~Strategy();
+        virtual void algorithm()=0;
+      protected:
+        Strategy();
+    };
+
+    1. 抽象类 Strategy 没有定义任何属性
+    2. 所有的方法都声明为 virtual 类型，这样，所有的方法都不能有代码实现
+    3. 所有继承这个抽象类的子类，都要实现这些方法
+    从语法特性上来看，这个抽象类就相当于一个接口
+
+动态语言(Python/Ruby)用普通类来模拟接口::
+
+    public class MockInteface {
+      protected MockInteface() {}
+      public void funcA() {
+        throw new MethodUnSupportedException();
+      }
+    }
+
+    1. 抛出异常来模拟不包含实现的接口，并且能强迫子类在继承这个父类的时候，都去主动实现父类的方法
+    2. 构造函数设置成 protected 属性的，这样就能避免非同包下的类去实例化
+    3. 避免同包中的类去实例化方案
+        Google Guava 中 @VisibleForTesting 注解方案，自定义一个注解，人为表明不可实例化
+
+动态编程语言用duck-typing模拟接口::
+
+    动态编程语言还有一种对接口支持的策略，那就是 duck-typing
+
+
+两者对比
+--------
+
+.. note:: 从语法特性上对比，这两者有比较大的区别。比如抽象类中可以定义属性、方法的实现，而接口中不能定义属性，方法也不能包含代码实现等等。
+
+.. note:: 从设计的角度，两者也有比较大的区别。抽象类是一种特殊的类，这种类不能被实例化为对象，只能被子类继承。继承关系是一种 is-a 的关系，接口表示一种 has-a 关系，表示具有某些功能。对于接口，有一个更加形象的叫法，那就是协议（contract）
+
+.. note:: 抽象类更多的是为了代码复用，而接口就更侧重于解耦。接口是对行为的一种抽象，相当于一组协议或者契约。类比一下 API 接口。调用者只需要关注抽象的接口，不需要了解具体的实现，具体的实现代码对调用者透明。接口实现了约定和实现相分离，可以降低代码间的耦合性，提高代码的可扩展性。
+
+
+
+
+
+设计思想
+========
+
+基于接口而非实现编程
+--------------------
+
+.. note:: 基于接口而非实现编程: Program to an interface, not an implementation. 这条原则的另一个表述方式，是 “基于抽象而非实现编程”
+
+.. note:: 这条原则的设计初衷是，将接口和实现相分离，封装不稳定的实现，暴露稳定的接口。上游系统面向接口而非实现编程，不依赖不稳定的实现细节，这样当实现发生变化的时候，上游系统的代码基本上不需要做改动，以此来降低代码间的耦合性，提高代码的扩展性。
+
+因此::
+
+    从这个设计初衷上来看，
+    如果在我们的业务场景中，某个功能只有一种实现方式，未来也不可能被其他实现方式替换，
+    那我们就没有必要为其设计接口，也没有必要基于接口编程，直接使用实现类就可以了。
+
+    越是不稳定的系统，我们越是要在代码的扩展性、维护性上下功夫
+    相反，如果某个系统特别稳定，在开发完之后，基本上不需要做维护，
+    那我们就没有必要为其扩展性，投入不必要的开发时间。
+
+.. note:: 在软件开发中，最大的挑战之一就是需求的不断变化，这也是考验代码设计好坏的一个标准。越抽象、越顶层、越脱离具体某一实现的设计，越能提高代码的灵活性，越能应对未来的需求变化。好的代码设计，不仅能应对当下的需求，而且在将来需求发生变化的时候，仍然能够在不破坏原有代码设计的情况下灵活应对。而抽象就是提高代码扩展性、灵活性、可维护性最有效的手段之一。
+
+
+多用组合少用继承
+----------------
+
+.. note:: 继承最大的问题就在于：继承层次过深、继承关系过于复杂会影响到代码的可读性和可维护性。
+
+实例::
+
+    基类: 鸟
+    2级: 会飞的鸟类 AbstractFlyableBird 和不会飞的鸟类 AbstractUnFlyableBird
+    3级: 会飞会叫、不会飞会叫、会飞不会叫、不会飞不会叫
+    4级: 增加下蛋属性
+    ... ...
+
+.. note:: 可以利用组合（composition）、接口、委托（delegation）三个技术手段，一块儿来解决刚刚继承存在的问题。
+
+实例1::
+
+    public interface Flyable {
+      void fly();
+    }
+    public interface Tweetable {
+      void tweet();
+    }
+    public interface EggLayable {
+      void layEgg();
+    }
+    public class Ostrich implements Tweetable, EggLayable {//鸵鸟
+      //... 省略其他属性和方法...
+      @Override
+      public void tweet() { //... }
+      @Override
+      public void layEgg() { //... }
+    }
+    public class Sparrow impelents Flyable, Tweetable, EggLayable {//麻雀
+      //... 省略其他属性和方法...
+      @Override
+      public void fly() { //... }
+      @Override
+      public void tweet() { //... }
+      @Override
+      public void layEgg() { //... }
+    }
+
+问题::
+
+    接口只声明方法，不定义实现。
+    也就是说，每个会下蛋的鸟都要实现一遍 layEgg () 方法，并且实现逻辑是一样的，
+    这就会导致代码重复的问题。
+
+可以针对三个接口再定义三个实现类::
+
+    实现了 fly () 方法的 FlyAbility 类
+    实现了 tweet () 方法的 TweetAbility 类
+    实现了 layEgg () 方法的 EggLayAbility 类
+    然后，通过组合和委托技术来消除代码重复
+
+实例2::
+
+    public interface Flyable {
+      void fly()；
+    }
+    public class FlyAbility implements Flyable {
+      @Override
+      public void fly() { //... }
+    }
+    //省略Tweetable/TweetAbility/EggLayable/EggLayAbility
+
+    public class Ostrich implements Tweetable, EggLayable {//鸵鸟
+      private TweetAbility tweetAbility = new TweetAbility(); //组合
+      private EggLayAbility eggLayAbility = new EggLayAbility(); //组合
+      //... 省略其他属性和方法...
+      @Override
+      public void tweet() {
+        tweetAbility.tweet(); // 委托
+      }
+      @Override
+      public void layEgg() {
+        eggLayAbility.layEgg(); // 委托
+      }
+    }
+
+该用组合还是继承::
+
+    如果类之间的继承结构稳定（不会轻易改变），继承层次比较浅（比如，最多有两层继承关系），继承关系不复杂，
+        我们就可以大胆地使用继承。
+    反之，系统越不稳定，继承层次很深，继承关系复杂，我们就尽量使用组合来替代继承。
+
+    一些设计模式会固定使用继承或者组合:
+        使用了组合关系:
+            装饰者模式（decorator pattern）
+            策略模式（strategy pattern）
+            组合模式（composite pattern）
+        使用了继承关系:
+            而模板模式（template pattern）
+
+
+面向对象设计
+============
+
+1. 划分职责进而识别出有哪些类::
+
+    a. 类是现实世界中事物的一个建模
+        一些抽象的概念，我们是无法通过映射现实世界中的事物的方式来定义类
+    b. 把需求描述中的名词罗列出来，作为可能的候选类，然后再进行筛选
+        这个方法比较简单、明确，适合初学者
+    c. 根据需求描述，把其中涉及的功能点，一个一个罗列出来
+        然后再去看哪些功能点职责相近，操作同样的属性，是否应该归为同一个类
+
+2. 定义类及其属性和方法::
+
+    我们识别出需求描述中的动词，作为候选的方法，
+    再进一步过滤筛选出真正的方法，把功能点中涉及的名词，作为候选属性，然后同样再进行过滤筛选
+
+3. 定义类与类之间的交互关系::
+
+    UML 统一建模语言中定义了六种类之间的关系
+    优化为四个关系：泛化、实现、组合、依赖
+
+4. 将类组装起来并提供执行入口::
+   
+    我们要将所有的类组装在一起，提供一个执行入口
+
+
+UML 统一建模语言
+================
+
+定义了六种类之间的关系::
+
+    1. 泛化（Generalization）可以简单理解为继承关系
+    2. 实现（Realization）一般是指接口和实现类之间的关系
+    3. 聚合（Aggregation）是一种包含关系
+        A 类对象包含 B 类对象，B 类对象的生命周期可以不依赖 A 类对象的生命周期，
+        也就是说可以单独销毁 A 类对象而不影响 B 对象，比如课程与学生之间的关系
+        public class A {
+          private B b;
+          public A(B b) {
+            this.b = b;
+          }
+        }
+    4. 组合（Composition）也是一种包含关系
+        A 类对象包含 B 类对象，B 类对象的生命周期依赖 A 类对象的生命周期，
+        B 类对象不可单独存在，比如鸟与翅膀之间的关系
+        public class A {
+          private B b;
+          public A() {
+            this.b = new B();
+          }
+        }
+    5. 关联（Association）是一种非常弱的关系，包含聚合、组合两种关系
+        具体到代码层面，如果 B 类对象是 A 类的成员变量，那 B 类和 A 类就是关联关系
+        例: 上面实例3、4都是关联关系
+    6. 依赖（Dependency）是一种比关联关系更加弱的关系，包含关联关系
+        不管是 B 类对象是 A 类对象的成员变量，
+        还是 A 类的方法使用 B 类对象作为参数或者返回值、局部变量，
+        只要 B 类对象和 A 类对象有任何使用关系，我们都称它们有依赖关系
+        例: 上面实例3、4都是依赖关系，下面这个也是
+        public class A { public void func(B b) { ... }}
+
+简化版::
+
+    1. 泛化
+    2. 实现
+    3. 组合
+    4. 依赖
+
+面向对象的优缺点
+================
+
+优点::
+
+    1. 能和真实的世界交相辉映，符合人的直觉。
+    2. 面向对象和数据库模型设计类型，更多地关注对象间的模型设计。
+    3. 强调于“名词”而不是“动词”，更多地关注对象和对象间的接口。
+    4. 根据业务的特征形成一个个高内聚的对象，有效地分离了抽象和具体实现，增强了可重用性和可扩展性。
+    5. 拥有大量非常优秀的设计原则和设计模式。
+    6. S.O.L.I.D（单一功能、开闭原则、里氏替换、接口隔离以及依赖反转，是面向对象设计的五个基本原则）
+
+缺点::
+
+    1. 代码都需要附着在一个类上，从一侧面上说，其鼓励了类型
+    2. 代码需要通过对象来达到抽象的效果，导致了相当厚重的“代码粘合层”
+    3. 因为太多的封装以及对状态的鼓励，导致了大量不透明并在并发下出现很多问题
+
+
+
+
+
+
+
+

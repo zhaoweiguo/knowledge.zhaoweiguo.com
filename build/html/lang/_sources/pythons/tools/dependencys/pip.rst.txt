@@ -1,0 +1,416 @@
+pip的使用
+#########
+
+安装Pip
+=======
+
+
+* ``Pip`` 是安装python包的工具, 提供了安装包, 列出已经安装的包, 升级包以及卸载包的功能
+
+python命令安装::
+
+    python -m ensurepip --default-pip
+
+系统包管理器安装::
+
+    sudo apt install python-pip
+
+    sudo yum install python-pip
+
+    brew install pip
+
+* get_pip.py 脚本安装::
+
+    $ curl -0 https://raw.github.com/pypa/pip/master/contrib/get-pip.py
+    $ sudo python get-pip.py
+
+* 通过源文件来安装::
+
+    $ wget http://pypi.python.org/packages/source/p/pip/<pip-0.7.2>.tar.gz  # 替换为最新的包
+    $ tar xzf pip-0.7.2.tar.gz
+    $ cd pip-0.7.2
+    $ python setup.py install
+
+* 通过easy_install来安装::
+
+    $ easy_install pip
+
+
+
+pip install命令
+===============
+
+安装最新版本的包::
+
+    $ pip install Markdown
+
+安装特定版本的package::
+
+    通过使用==, >=, <=, >, <来指定一个版本号
+    $ pip install 'Markdown<2.0'
+    $ pip install 'Markdown>2.0,<2.0.3'
+    $ pip install applicationName==version
+
+
+-U
+----
+
+升级已安装的包::
+
+    升级包到当前最新的版本，可以使用-U 或者 --upgrade
+    $ pip install -U Markdown
+
+-i(--index-url)
+---------------
+
+指定安装源 ``-i(--index-url)`` ::
+
+    pip install package_name -i <URL>
+    示例:
+    pip install requests -i https://mirrors.aliyun.com/pypi/simple/
+
+-e(--editable)
+--------------
+
+安装开发版本（开发者模式） ``-e(--editable)`` ::
+
+    # 以“开发模式”安装包。
+    # 在这种模式下，包的源代码文件会被链接到 Python 环境中，而不是复制。
+    # 这意味着对源代码的任何更改都会立即反映在已安装的包中。
+    pip install -e .
+    or
+    pip install --editable .
+
+    # 示例
+    pip install -e ".[torch,metrics]"
+    # 说明
+    # [torch,metrics]：这些是额外的依赖项名称
+    # 你的 setup.py 文件中可能有类似以下的定义
+    # extras_require={
+    #     'torch': ['torch>=1.8.0'],
+    #     'metrics': ['some-metrics-library']
+    # }
+
+--no-deps
+---------
+
+``--no-deps`` 参数的作用::
+
+    在安装指定的 Python 包时忽略其依赖项
+    具体来说，--no-deps 参数会阻止 pip 自动安装该包所需的其他依赖包，仅安装用户指定的包本身
+
+    示例:
+    pip install torch --nodeps
+
+    使用场景:
+        1. 避免依赖冲突(可能已经手动安装了特定版本的依赖包，而自动安装的依赖可能会导致版本冲突)
+        2. 加快安装速度(如果依赖包不是必需的，忽略依赖可以加快安装过程)
+        3. 开发和调试(开发环境中，如果你只需测试某个包的核心功能而不需要依赖项)
+
+
+--no-cache-dir
+--------------
+
+直接指定 whl 文件安装::
+
+    pip install --no-cache-dir https://github.com/NetEase-FuXi/EETQ/releases/download/v1.0.0/EETQ-1.0.0+cu121+torch2.1.2-cp310-cp310-linux_x86_64.whl
+
+
+使用github库安装
+----------------
+
+基本语法::
+
+    pip install git+https://github.com/huggingface/transformers.git[#subdirectory][extras]
+    示例:
+    pip install git+https://github.com/huggingface/transformers.git transformers[torch]
+    or
+    pip install "git+https://github.com/huggingface/transformers.git#egg=transformers[torch]"
+
+
+指定分支、tag 或 commit::
+
+    # 主分支（默认）
+    pip install "git+https://github.com/huggingface/transformers.git@main#egg=transformers[torch]"
+
+    # 特定 tag（版本）
+    pip install "git+https://github.com/huggingface/transformers.git@v4.30.0#egg=transformers[torch]"
+
+    # 特定 commit
+    pip install "git+https://github.com/huggingface/transformers.git@abc1234567890#egg=transformers[torch]"
+
+
+
+
+Installing from local archives
+------------------------------
+
+Install a particular source archive file::
+
+    pip install ./downloads/SomeProject-1.0.4.tar.gz
+
+Install from a local directory containing archives (and don’t check PyPI)::
+
+    python3 -m pip install --no-index --find-links=file:///local/dir/ SomeProject
+    python3 -m pip install --no-index --find-links=/local/dir/ SomeProject
+    python3 -m pip install --no-index --find-links=relative/dir/ SomeProject
+
+Installing “Extras”
+-------------------
+
+Extras 是软件包的可选 “变体”，其中可能包括额外的依赖项，从而启用软件包中的其他功能::
+
+    pip install 'SomePackage[PDF]'
+    pip install 'SomePackage[PDF]==3.0'
+    pip install -e '.[PDF]'  # editable project in current directory
+
+
+指定额外的依赖项::
+
+    pip install package_name[extra]
+    示例: 安装 requests 以及其额外的 security 依赖项
+    pip install requests[security]
+
+
+
+direct_url.json
+---------------
+
+下面这些命令执行时会生成 direct_url.json 文件::
+
+    pip install https://example.com/app-1.0.tgz
+    pip install https://example.com/app-1.0.whl
+    pip install "app @ git+https://example.com/repo/app.git#subdirectory=setup"
+    pip install ./app
+    pip install file:///home/user/app
+    pip install --editable "app @ git+https://example.com/repo/app.git#subdirectory=setup"
+    pip install -e ./app
+
+
+下面这些命令执行时不会生成 direct_url.json 文件::
+
+    pip install app
+    pip install app --no-index --find-links https://example.com/
+
+
+
+
+
+
+
+查询pip包
+=========
+
+* 列出安装的packages::
+
+    $ pip freeze > requirements.txt
+    or
+    $ pip list
+
+    # 查看过时的包：
+    pip list --outdated
+
+
+* 查询包::
+
+    $ pip search "Markdown"     ⛔️
+
+    $ pip list | grep Markdown  ✅
+
+.. warning:: PyPI 停止支持 pip search 命令的日期是在 2018 年 4 月。这个决定是由于 XML-RPC search 在性能和安全性方面存在问题，因此被弃用。在 PyPI 的更新和升级过程中，许多旧的或不安全的功能都被移除或替代。如果你想查找 Python 包，现在推荐使用 https://pypi.org/search 网站上的搜索功能
+
+
+* 查看包的详细信息(包括其安装路径)::
+
+   pip show package_name
+
+
+其他
+====
+
+* 卸载包::
+
+    $ pip uninstall Markdown
+
+清理缓存::
+
+    pip cache purge
+
+
+
+
+
+查询路径
+========
+
+* 增加查询路径::
+
+    sys.path.insert(0, '/usr/local/lib')
+
+    sys.path.append('/usr/local/lib')
+
+
+* 默认路径优先级::
+
+    1. 当前工作目录(可以通过导入的包名直接使用)
+    2. PYTHONPATH目录(环境变量指定的目录)
+    3. 标准库目录(Python安装目录里的Lib)
+    4. site-packages目录(第三方模块安装目录)
+    5. 用户目录(主目录下的.local/lib/pythonX.X/site-packages)
+    6. /usr/local/lib/pythonX.X/dist-packages
+    7. /usr/lib/pythonX.X/dist-packages
+
+
+
+
+
+环境变量
+========
+
+* 包安装后的py文件路径: Linux/macOS:venv/lib/pythonX.X/site-packages
+
+修改安装目录::
+
+    方法1:
+    pip install -t /content/notebooks numpy
+
+    方法2:
+    export PYTHONUSERBASE=/content/notebooks
+    pip install numpy
+
+
+
+
+
+镜像源
+========
+
+::
+
+    https://pypi.douban.com/simple/ 豆瓣
+    https://mirrors.aliyun.com/pypi/simple/ 阿里
+    https://pypi.hustunique.com/simple/ 华中理工大学
+    https://pypi.sdutlinux.org/simple/ 山东理工大学
+    https://pypi.mirrors.ustc.edu.cn/simple/ 中国科学技术大学
+    https://pypi.tuna.tsinghua.edu.cn/simple 清华
+    http://mirrors.cloud.tencent.com/pypi/simple 腾讯
+
+选项::
+
+    -i,--index-url <url>
+          Base URL of Python Package Index (default https://pypi.python.org/simple/).
+
+使用示例::
+
+    // -i 就是选择镜像源
+    pip install --upgrade jupyterhub -i https://pypi.douban.com/simple/
+
+
+
+全部配置::
+
+    # 配置清华PyPI镜像（如无法运行，将pip版本升级到>=10.0.0）
+    $ pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+    Writing to /Users/zhaoweiguo/.config/pip/pip.conf
+
+    # 重置
+    $ pip config unset global.index-url
+
+
+使用不同镜像源示例::
+
+    // cuda 11.7
+    pip3 install torch torchvision torchaudio
+
+    // cuda 11.8
+    pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
+    // cpu
+    pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+
+
+
+常见问题
+========
+
+较老版本的pip 中括号[]在 pip 安装命令中有特殊含义::
+
+    $ pip install huggingface-hub[cli]
+    zsh: no matches found: huggingface-hub[cli]
+
+    正确的做法:
+    $ pip install 'huggingface-hub[cli]'
+
+
+
+requirements.txt
+================
+
+生成requirements.txt的方法::
+
+    1. 适用于「单虚拟环境」
+    pip freeze > requirements.txt
+    说明: 会将环境中的依赖包全都加入，所以只适合「单虚拟环境」
+    2. 推荐用法: 使用pipreqs
+    pip install pipreqs
+    pipreqs . --encoding=utf8 --force
+
+使用requirements.txt安装依赖的方法::
+
+    $ pip install -r requirements.txt
+
+
+
+实战
+====
+
+::
+
+    ### 安装/升级 pip
+    python -m pip install --trusted-host=mirrors.aliyun.com -i https://mirrors.aliyun.com/pypi/simple/ --upgrade pip
+    ### 基于pip依次安装第三方包和aos-cube
+    pip install --trusted-host=mirrors.aliyun.com -i https://mirrors.aliyun.com/pypi/simple/   setuptools
+    pip install --trusted-host=mirrors.aliyun.com -i https://mirrors.aliyun.com/pypi/simple/   wheel
+    pip install --trusted-host=mirrors.aliyun.com -i https://mirrors.aliyun.com/pypi/simple/   aos-cube
+
+
+
+对比
+====
+
+* ``Pip`` 是对 ``easy_install`` 的取代, 提供了和easy_install相同的查找包的功能, 因此可以使用easy_install安装的包也同样可以使用pip进行安装
+
+
+site-packages和dist-packages的区别::
+
+    site-packages目录更适合本地编译安装的Python库。
+    dist-packages目录更适合系统包管理工具(如apt、yum等)全局安装的库。
+
+
+    site-packages目录需要当前用户有写入权限。
+    dist-packages目录需要root/管理员权限才能写入。
+
+    导入模块时,Python会先搜索site-packages目录,然后是dist-packages目录。
+
+
+    一些Linux发行版默认使用dist-packages,如Ubuntu。
+    一些使用site-packages,如CentOS。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

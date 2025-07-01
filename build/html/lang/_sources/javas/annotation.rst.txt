@@ -1,0 +1,187 @@
+Java注解
+############
+
+
+
+自带
+====
+
+
+@PostConstruct
+--------------
+
+* 用于标记一个方法，在实例化对象后执行。具体来说，被 @PostConstruct 注解标记的方法会在依赖注入完成后、在任何自动装配（如 @Autowired）和配置注解（如 @Value）完成后立即执行。
+* 通常情况下，@PostConstruct 注解用于在对象实例化后进行一些初始化操作，例如初始化数据、建立连接等。这个注解在 Java EE 和 Spring 框架中广泛使用。
+
+
+@EnableScheduling
+-----------------
+
+::
+
+    使@Schedule注解功能可用的注解
+
+
+@Scheduled定时
+--------------
+
+::
+
+    @Scheduled(fixedRate = 6000) ：上一次开始执行时间点之后6秒再执行
+    @Scheduled(fixedDelay = 6000) ：上一次执行完毕时间点之后6秒再执行
+    @Scheduled(initialDelay=1000, fixedRate=6000) :第一次延迟1秒后执行，之后按fixedRate的规则每6秒执行一次
+
+@Order
+------
+
+::
+
+    设定执行顺序，由小到大依次执行
+    例: @Order(value=1)
+
+
+
+
+
+Spring 注解配置
+===============
+
+@SpringBootApplication
+----------------------
+
+::
+
+    用来标注项目入口，以及完成一些基本的自动自动配置
+
+
+
+@Autowired
+----------
+
+
+说明::
+
+    自动装配:
+    可以对类成员变量、方法及构造函数进行标注，完成自动装配的工作
+    通过 @Autowired的使用来消除 set ，get方法
+    在Spring 2.5 引入了 @Autowired 注释
+    当Spring发现@Autowired注解时，将自动在代码上下文中找到和其匹配（默认是类型匹配）的Bean，并自动注入到相应的地方去  
+
+
+@Resource
+---------
+
+说明::
+
+  类似@Autowired
+  @Autowired和@Resource两个注解的区别:
+  1、@Autowired默认按照byType方式进行bean匹配, @Resource默认按照byName方式进行bean匹配
+  2、@Autowired是Spring的注解，@Resource是J2EE的注解
+
+实例::
+
+    @Resource(name = "tiger")
+    private Tiger tiger;
+    
+    @Resource(type = Monkey.class)
+    private Monkey monkey;
+
+@Service
+--------
+
+
+说明::
+
+    @Service: 声明是个Service,声明是一个bean
+
+
+@Qualifier
+----------
+
+
+说明::
+
+    使用@Autowired时，如果指定类有2个实现，可使用@Qualifier("xxx")指定具体哪个实现类
+
+
+* Spring 框架中的一个注解，用于指定特定的 Bean 实例。在一个 Spring 应用程序中，可能会存在多个类型相同的 Bean，而 @Qualifier 注解可以用来明确指定需要注入的具体 Bean。
+* 当一个类需要注入某个特定的 Bean 实例时，如果存在多个符合条件的 Bean，Spring 将会因为不知道选择哪一个而产生歧义。这时，可以使用 @Qualifier 注解来消除歧义，告诉 Spring 应该注入哪个具体的 Bean。
+
+
+
+
+@Configuration
+--------------
+
+
+说明::
+
+    用于定义配置类，可替换xml配置文件，被注解的类内部包含有一个或多个被@Bean注解的方法
+    这些方法将会被扫描，并用于构建bean定义，初始化Spring容器
+
+注意::
+
+    1. @Configuration不可以是final类型
+    2. @Configuration不可以是匿名类
+    3. 嵌套的configuration必须是静态类
+
+
+MyBatis-Plus
+============
+
+@TableName/1
+------------
+
+* 用于标记实体类对应的数据库表名。当实体类与数据库表的表名不一致时，可以使用该注解来显式指定对应的表名。
+* 实体类与数据库表之间的映射是通过实体类的属性与数据库表的字段进行匹配的。但是有时候数据库表的表名可能与实体类的类名不同，这时就需要使用 @TableName 注解来指定数据库表的表名，以确保正确的映射关系。这样 MyBatis-Plus 在进行实体类与数据库表的映射时会将该实体类与指定的数据库表进行匹配。
+
+示例::
+
+    @TableName("aiml_config")
+    public class AimlConfig {
+        ...
+    }
+
+Lombok
+======
+
+
+@RequiredArgsConstructor 是 Lombok 提供的一个注解，用于自动生成一个包含所有未初始化 final 和 @NonNull 字段的构造函数。
+
+在 Java 中，当一个类的字段被声明为 final 或者使用了 @NonNull 注解时，这些字段必须在构造对象时被初始化。使用 @RequiredArgsConstructor 注解，可以让 Lombok 自动生成一个构造函数，该构造函数接收所有未初始化的 final 和 @NonNull 字段作为参数，并将它们赋值给对应的字段。
+
+@UtilityClass 注解可以让 Lombok 自动生成一个无参私有构造函数，并将类中的所有方法都设置为静态方法。
+
+
+Swagger
+=======
+
+
+@ApiOperation(value = "语义理解") 是 Swagger 框架中的一个注解，用于描述接口的操作，包括接口的功能、作用等信息。
+
+具体来说，@ApiOperation 注解用于描述一个接口的作用或功能，并提供了一个 value 属性，用于指定接口的简要描述或标题。在这里，"语义理解" 是对该接口功能的描述，表示该接口用于进行语义理解操作。
+
+
+
+
+
+参考
+====
+
+* Spring 注解配置: https://www.cnblogs.com/szlbm/p/5512931.html
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

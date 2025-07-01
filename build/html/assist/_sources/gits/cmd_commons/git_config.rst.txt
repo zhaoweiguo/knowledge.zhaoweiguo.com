@@ -1,0 +1,256 @@
+git config命令
+######################
+
+
+查看配置::
+
+    // 查看全部
+    git config --list
+
+    // 查看指定配置
+    git config --get user.name
+
+设置Git的默认编辑器::
+
+    1. 设置VSCode为默认编辑器
+        git config --global core.editor "code --wait"
+
+    2. 设置Notepad为默认编辑器
+        git config --global core.editor "notepad"
+
+    3. 设置其他编辑器
+        git config --global core.editor "vim"
+
+
+
+
+
+
+修改设置::
+
+  $ git config --global user.name "Scott Chacon"
+  $ git config --global user.email "schacon@gmail.com"
+  $ git config --global core.editor 'emacs'
+  $ git config core.ignorecase false //不忽略文件名的大小写
+  $ git config core.filemode false //忽略权限修改
+
+其他::
+
+  git commit --amend --author='Your Name <you@example.com>'
+
+
+  //将master的远程版本库设置为别名叫做origin版本库
+  $git config branch.master.remote origin
+
+
+
+配置文件::
+
+  // 1. /etc/gitconfig
+  // 2. ~/.gitconfig
+  // 3. .git/config'
+
+  [user]
+      name = Gordon
+      email = zhaoweiguo@maxvox.com.cn
+  [core]
+      editor = emacs
+
+gitconfig文件
+=============
+
+* 主要是两个文件：一是全局文件 ``~/.gitconfig`` 另一个是每个项目的 ``.git/config`` 文件
+
+示例::
+
+    # Core variables
+    [core]
+      ; Don't trust file modes
+      filemode = false
+
+    # Our diff algorithm
+    [diff]
+      external = /usr/local/bin/diff-wrapper
+      renames = true
+
+    [branch "devel"]
+      remote = origin
+      merge = refs/heads/devel
+
+    # Proxy settings
+    [core]
+      gitProxy="ssh" for "kernel.org"
+      gitProxy=default-proxy ; for the rest
+
+    [include]
+      path = /path/to/foo.inc ; include by absolute path
+      path = foo.inc ; find "foo.inc" relative to the current file
+      path = ~/foo.inc ; find "foo.inc" in your `$HOME` directory
+
+
+修改配置文件的方法::
+
+    1. 直接改文件
+    2. 使用 git config 命令
+
+
+示例::
+
+    // 修改全局文件 ~/.gitconfig
+    $ git config --global user.name "Gordon"
+
+    // 修改本项目文件 <pro>/.git/config
+    $ git config user.name "localname"
+
+
+示例::
+
+    $ git config aaa.xxx.key hello
+    上面命令会在 config 文件中增加
+    [aaa "xxx"]
+        key = hello
+    $ git config aaa.xxx.yyy.key hello
+    上面命令会在 config 文件中增加
+    [aaa "xxx.yyy"]
+        key = hello
+
+
+
+Conditional includes
+====================
+
+.. note:: 有两个代码托管平台: gitlab.com 和 github.com，我想使用 gitlab.com 平台上的仓库时 user.name=name1， 使用 github.com 平台上的仓库时 user.name=name2，每个平台都有很多个仓库， 我想只设置一次，应该怎么办？
+
+* 解决方案: https://git-scm.com/docs/git-config#_conditional_includes
+
+.. note:: 从 git 2.13.0 开始，git 配置文件开始支持 Conditional Includes 的配置。通过设置 includeIf.<condition>.path，可以向命中 condition 的 git 仓库引入 path 指向的一个 git 配置文件中配置。
+
+.. warning:: 从 git 2.36.0 开始, 才开始支持 ``hasconfig:remote.*.url:<data>`` 这种类别
+
+
+``[includeIf]`` 的语法::
+
+    [includeIf "<keyword>:<data>"]
+        path = path/to/gitconfig
+
+    keyword包括:
+        1. gitdir:<data>
+            <data> is used as a glob pattern
+            a. If the pattern starts with ~/
+                ~ will be substituted with the content of the environment variable HOME.
+            b. If the pattern starts with ./
+                it is replaced with the directory containing the current config file.
+            c. If the pattern does not start with either ~/, ./ or /
+                **/ will be automatically prepended.
+                For example, the pattern foo/bar becomes **/foo/bar and would match /any/path/to/foo/bar.
+            d. If the pattern ends with /
+                ** will be automatically added. 
+                For example, the pattern foo/ becomes foo/**.
+                In other words, it matches "foo" and everything inside, recursively.
+
+
+        2. gitdir/i:<data>
+            the same as gitdir except that matching is done case-insensitively 
+
+        3. onbranch:<data>
+            <data> patterns with standard globbing wildcards and two additional ones, **/ and /**, that can match multiple path components. 
+
+        4. hasconfig:remote.*.url:<data>
+            <data> patterns with standard globbing wildcards and two additional ones, **/ and /**, that can match multiple path components. 
+            说明:
+                remote.*.url 中的 * 是通配符，表示匹配任意远程仓库的名称
+                    例如，remote.origin.url 或 remote.upstream.url
+
+示例-使用gitlab.com托管平台和使用github.com托管平台使用不同的用户名和email::
+
+    [includeIf "hasconfig:remote.*.url:**://gitlab.com/**"]
+          path = .gitconfig_gitlab
+    [includeIf "hasconfig:remote.*.url:**://github.com/**"]
+          path = .gitconfig_github
+
+    增加两个文件:
+    >>> cat .gitconfig_gitlab
+    [user]
+        name = zhaoweiguo
+        email = zhaoweiguo@gitlab.com
+    >>> cat .gitconfig_github
+    [user]
+        name = zhaoweiguo
+        email = zhaoweiguo@github.com
+
+
+示例-全::
+
+    ; include if $GIT_DIR is /path/to/foo/.git
+    [includeIf "gitdir:/path/to/foo/.git"]
+      path = /path/to/foo.inc
+
+    ; include for all repositories inside /path/to/group
+    [includeIf "gitdir:/path/to/group/"]
+      path = /path/to/foo.inc
+
+    ; include for all repositories inside $HOME/to/group
+    [includeIf "gitdir:~/to/group/"]
+      path = /path/to/foo.inc
+
+    ; relative paths are always relative to the including
+    ; file (if the condition is true); their location is not
+    ; affected by the condition
+    [includeIf "gitdir:/path/to/group/"]
+      path = foo.inc
+
+    ; include only if we are in a worktree where foo-branch is
+    ; currently checked out
+    [includeIf "onbranch:foo-branch"]
+      path = foo.inc
+
+    ; include only if a remote with the given URL exists (note
+    ; that such a URL may be provided later in a file or in a
+    ; file read after this file is read, as seen in this example)
+    [includeIf "hasconfig:remote.*.url:https://example.com/**"]
+      path = foo.inc
+    [remote "origin"]
+      url = https://example.com/git
+
+
+windows示例::
+
+    [includeIf "hasconfig:remote.*.url:git@wei.com:path*"]
+      path = C:/Users/Username/.custom_gitconfig
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

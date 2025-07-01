@@ -1,0 +1,106 @@
+# 实践：快速搭建一个可运行的docker gpu环境
+
+
+
+## 安装Docker和NVIDIA Docker
+
+安装
+```
+sudo apt-get update
+sudo apt-get install docker.io
+```
+验证
+```
+- docker info
+```
+
+
+## 检查GPU驱动程序
+
+nvidia-smi
+
+```
+2.1. Verify You Have a CUDA-Capable GPU
+lspci | grep -i nvidia
+00:09.0 3D controller: NVIDIA Corporation GP104GL [Tesla P4] (rev a1)
+
+2.2. Verify You Have a Supported Version of Linux
+```
+uname -m && cat /etc/*release
+```
+
+2.3. Verify the System Has gcc Installed
+gcc --version
+```
+
+
+
+## 安装NVIDIA Container Toolkit
+
+检查是否安装 nvidia-container-toolkit 软件包：
+```
+$ dpkg -l | grep nvidia-container-toolkit
+ii  nvidia-container-toolkit               1.13.5-1                                amd64        NVIDIA Container toolkit
+ii  nvidia-container-toolkit-base          1.13.5-1                                amd64        NVIDIA Container Toolkit Base
+```
+
+添加 NVIDIA Container Toolkit APT 仓库
+```
+distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
+curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker-$distribution.list
+
+
+curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
+  && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+    sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+    sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+```
+
+### 备选安装
+
+Configure the production repository:
+```
+curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
+  && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+    sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+    sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+
+Optionally, configure the repository to use experimental packages:
+sed -i -e '/experimental/ s/^#//g' /etc/apt/sources.list.d/nvidia-container-toolkit.list
+```
+
+### 安装
+
+更新 APT 软件包索引:
+
+```
+sudo apt-get update
+```
+
+安装 NVIDIA Container Toolkit 软件包
+```
+sudo apt-get install -y nvidia-container-toolkit
+```
+
+重新启动 Docker 服务：
+```
+sudo systemctl restart docker
+```
+
+验证安装：
+```
+sudo docker run --rm --gpus all nvidia/cuda:11.4-base nvidia-smi
+```
+
+
+
+
+
+
+
+
+
+
+
+

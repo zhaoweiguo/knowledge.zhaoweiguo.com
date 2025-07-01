@@ -1,0 +1,209 @@
+依赖反转原则/依赖抽象-DIP
+#########################
+
+
+.. note:: High-level modules shouldn’t depend on low-level modules. Both modules should depend on abstractions. In addition, abstractions shouldn’t depend on details. Details depend on abstractions.
+
+.. note:: 翻译: 高层模块（high-level modules）不要依赖低层模块（low-level）。高层模块和低层模块应该通过抽象（abstractions）来互相依赖。除此之外，抽象（abstractions）不要依赖具体实现细节（details），具体实现细节（details）依赖抽象（abstractions）。
+
+.. note:: 通过一种标准来让业务更为规范。
+
+
+
+依赖反转原则-DIP
+================
+
+* Dependency Inversion Principle
+
+.. note:: 这条原则主要还是用来指导框架层面的设计,在平时的业务代码开发中，高层模块依赖底层模块是没有任何问题的。
+
+
+
+
+
+控制反转-IOC
+============
+
+* Inversion Of Control
+
+.. note:: 框架提供了一个可扩展的代码骨架，用来组装对象、管理整个执行流程。程序员利用框架进行开发的时候，只需要往预留的扩展点上，添加跟自己业务相关的代码，就可以利用框架来驱动整个程序流程的执行。
+
+这里的 “控制” 指的是对程序执行流程的控制，而 “反转” 指的是在没有使用框架之前，程序员自己控制整个程序的执行。在使用框架之后，整个程序的执行流程可以通过框架来控制。流程的控制权从程序员 “反转” 到了框架。
+
+.. note:: 控制反转并不是一种具体的实现技巧，而是一个比较笼统的设计思想，一般用来指导框架层面的设计。
+
+
+实例
+----
+
+正常逻辑顺序-所有的流程都由程序员来控制::
+
+    public class UserServiceTest {
+      public static boolean doTest() {
+        // ... 
+      }
+      
+      public static void main(String[] args) {// 这部分逻辑可以放到框架中
+        if (doTest()) {
+          System.out.println("Test succeed.");
+        } else {
+          System.out.println("Test failed.");
+        }
+      }
+    }
+
+抽象出一个框架来实现同样的功能::
+
+    public abstract class TestCase {
+      public void run() {
+        if (doTest()) {
+          System.out.println("Test succeed.");
+        } else {
+          System.out.println("Test failed.");
+        }
+      }
+      
+      public abstract boolean doTest();
+    }
+    public class JunitApplication {
+      private static final List<TestCase> testCases = new ArrayList<>();
+      
+      public static void register(TestCase testCase) {
+        testCases.add(testCase);
+      }
+      
+      public static final void main(String[] args) {
+        for (TestCase case: testCases) {
+          case.run();
+        }
+      }
+    }
+
+在框架预留的扩展点填充测试代码(不需要写负责执行流程的 main () 函数了)::
+
+    public class UserServiceTest extends TestCase {
+      @Override
+      public boolean doTest() {
+        // ... 
+      }
+    }
+    // 注册操作还可以通过配置的方式来实现，不需要程序员显示调用 register ()
+    JunitApplication.register(new UserServiceTest();
+
+
+依赖注入-DI
+===========
+
+.. note:: 依赖注入跟控制反转恰恰相反，它是一种具体的编码技巧。这个概念听起来很 “高大上”，实际上，理解、应用起来非常简单。
+
+定义::
+
+    不通过 new () 的方式在类内部创建依赖类对象，
+    而是将依赖的类对象在外部创建好之后，通过构造函数、函数参数等方式传递（或注入）给类使用
+
+实例1-非依赖注入实现方式::
+
+    public class Notification {
+      private MessageSender messageSender;
+      
+      public Notification() {
+        this.messageSender = new MessageSender(); // 此处有点像 hardcode
+      }
+      
+      public void sendMessage(String cellphone, String message) {
+        //... 省略校验逻辑等...
+        this.messageSender.send(cellphone, message);
+      }
+    }
+    public class MessageSender {
+      public void send(String cellphone, String message) {
+        //....
+      }
+    }
+
+实例2-依赖注入的实现方式::
+
+    public class Notification {
+      private MessageSender messageSender;
+      
+      // 通过构造函数将 messageSender 传递进来
+      public Notification(MessageSender messageSender) {
+        this.messageSender = messageSender;
+      }
+      
+      public void sendMessage(String cellphone, String message) {
+        //... 省略校验逻辑等...
+        this.messageSender.send(cellphone, message);
+      }
+    }
+    // 使用 Notification
+    MessageSender messageSender = new MessageSender();
+    Notification notification = new Notification(messageSender);
+
+
+.. note:: 通过依赖注入的方式来将依赖的类对象传递进来，这样就提高了代码的扩展性，我们可以灵活地替换依赖的类。 “开闭原则” 也有类似的要求。
+
+实例3-继续优化的空间，我们还可以把 MessageSender 定义成接口，基于接口而非实现编程::
+
+    public class Notification {
+      private MessageSender messageSender;
+      
+      public Notification(MessageSender messageSender) {
+        this.messageSender = messageSender;
+      }
+      
+      public void sendMessage(String cellphone, String message) {
+        this.messageSender.send(cellphone, message);
+      }
+    }
+    public interface MessageSender {
+      void send(String cellphone, String message);
+    }
+    // 短信发送类
+    public class SmsSender implements MessageSender {
+      @Override
+      public void send(String cellphone, String message) {
+        //....
+      }
+    }
+    // 站内信发送类
+    public class InboxSender implements MessageSender {
+      @Override
+      public void send(String cellphone, String message) {
+        //....
+      }
+    }
+    // 使用 Notification
+    MessageSender messageSender = new SmsSender();
+    Notification notification = new Notification(messageSender);
+
+.. note:: 依赖注入非常简单，但却非常有用，它是编写可测试性代码最有效的手段。
+
+依赖注入框架-DI Framework
+=========================
+
+使用 DI 虽然提高了的发展性，但还需要程序员手工写代码。而在实际的软件开发中，一些项目可能会涉及几十、上百、甚至几百个类，类对象的创建和依赖注入会变得非常复杂。如果这部分工作都是靠程序员自己写代码来完成，容易出错且开发成本也比较高。而对象创建和依赖注入的工作，本身跟具体的业务无关，我们完全可以抽象成框架来自动完成。
+
+定义-依赖注入框架::
+
+    我们只需要通过依赖注入框架提供的扩展点，
+    简单配置一下所有需要创建的类对象、类与类之间的依赖关系，
+    就可以实现由框架来自动创建对象、管理对象的生命周期、依赖注入等原本需要程序员来做的事情
+
+依赖注入框架有很多，比如::
+
+    Google Guice
+    Java Spring
+    Pico Container
+    Butterfly Container
+
+
+
+
+
+
+
+
+
+
+

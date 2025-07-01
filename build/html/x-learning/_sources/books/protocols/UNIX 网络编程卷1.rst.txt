@@ -1,0 +1,2216 @@
+UNIX 网络编程卷1
+################
+
+简介::
+
+  原作: UNIX Network Programming
+  时间: 1990.
+
+  原作名: UNIX Network Programming, Volume 1
+      Second Edition: Networking APIs: Sockets and XTI
+  时间: 1998
+
+  原作名: Unix Network Programming, Volume 1
+      The Sockets Networking API (3rd Edition)
+  时间: 2009
+  作者: [美国] W・Richard Stevens
+
+  出版年: 2010-06
+  译者: 杨继张
+
+* W. Richard Stevens（1951—1999） 国际知名的 UNIX 和网络专家，备受赞誉的技术作家。生前著有《TCP/IP 详解》（三卷）、《UNIX 环境高级编程》和《UNIX 网络编程》（两卷），均为不朽的经典著作。
+
+* Bill Fenner AT&T 实验室的主要技术人员，专攻 IP 多播、网络管理和测量，他是 IETF 路由的领域主管之一，负责审批作为 RFC 出版的所有路由相关文档。
+
+* Andrew M. Rudoff Sun 公司的资深软件工程师，专攻网络、操作系统内核、文件系统和高可用性软件体系结构。
+
+* 豆瓣: https://book.douban.com/subject/4859464/
+
+
+
+.. raw:: html
+
+   <details>
+   <summary>目录</summary>
+
+.. sidebar:: 目录
+
+    .. contents::
+
+.. raw:: html
+
+   </details>
+
+
+第1章 简介
+==========
+
+* 包裹函数（wrapper function）：约定包裹函数名是实际函数名的首字母大写形式，包裹函数完成实际的函数调用，检查返回值，并在发生错误时终止进程
+
+
+
+第2章 传输层: TCP, UDP和SCTP
+============================
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/04/gOogNx.png
+
+   TCP/IP协议概况
+
+建立TCP连接就好比一个电话系统［Nemeth 1997］。socket函数等同于有电话可用。bind函数是在告诉别人你的电话号码，这样他们可以呼叫你。listen函数是打开电话振铃，这样当有一个外来呼叫到达时，你就可以听到。connect函数要求我们知道对方的电话号码并拨打它。accept函数发生在被呼叫的人应答电话
+
+TCP选项
+-------
+
+* MSS选项。发送SYN的TCP一端使用本选项通告对端它的最大分节大小（maximum segment size）即MSS，也就是它在本连接的每个TCP分节中愿意接受的最大数据量。发送端TCP使用接收端的MSS值作为所发送分节的最大大小。
+* 窗口规模选项
+* 时间戳选项
+
+TCP状态转换图
+-------------
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/04/j8NULE.png
+
+   用粗实线表示通常的客户状态转换，用粗虚线表示通常的服务器状态转换。
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/04/tsiQtS.jpg
+
+   一个完整的TCP连接所发生的实际分组交换情况，包括连接建立、数据传送和连接终止3个阶段。图中还展示了每个端点所历经的TCP状态。客户通告一个值为536的MSS（表明该客户只实现了最小重组缓冲区大小），服务器通告一个值为1460的MSS（以太网上IPv4的典型值）。注意，服务器对客户请求的确认是伴随其应答发送的。这种做法称为捎带（piggybacking），它通常在服务器处理请求并产生应答的时间少于200 ms时发生。如果服务器耗用更长时间，譬如说1 s，那么我们将看到先是确认后是应答。
+
+SCTP的四路握手
+--------------
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/E6S8Jl.jpg
+
+   SCTP的四路握手
+
+
+
+
+SCTP状态转换图
+--------------
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/LsCc1O.jpg
+
+   SCTP状态转换图
+
+
+端口号
+------
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/goLytm.jpg
+
+   端口号的分配
+
+
+
+常见因特网应用的协议
+--------------------
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/FZSJOl.jpg
+
+   各种常见因特网应用的协议使用情况
+
+
+第3章 套接字编程简介
+====================
+
+
+套接字地址结构
+--------------
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/18zPrW.png
+
+   不同套接字地址结构的比较：长度字段是随着4.3BSD Reno版本增加到所有套接字地址结构中的。要是长度字段随套接字API的原始版本提供了，那么所有套接字函数就不再需要长度参数——例如bind和connect函数的第三个参数。
+
+
+值—结果参数
+-----------
+
+从进程到内核传递套接字地址结构的函数有3个::
+
+      bind、connect和sendto
+
+从内核到进程传递套接字地址结构的函数有4个::
+
+      accept、recvfrom、getsockname和getpeername
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/AHPiXw.png
+
+   把套接字地址结构大小这个参数从一个整数改为指向某个整数变量的指针，其原因在于：当函数被调用时，结构大小是一个值（value），它告诉内核该结构的大小，这样内核在写该结构时不至于越界；当函数返回时，结构大小又是一个结果（result），它告诉进程内核在该结构中究竟存储了多少信息。这种类型的参数称为值—结果（value-result）参数。
+
+
+
+
+
+字节排序函数
+------------
+
+一个16位整数，它由2个字节组成。内存中存储这两个字节有两种方法::
+
+   一种是将低序字节存储在起始地址，这称为小端（little-endian）字节序；
+   另一种方法是将高序字节存储在起始地址，这称为大端（big-endian）字节序。
+
+   * 最高有效位（most significant bit，MSB）是这个16位值最左边一位
+   * 最低有效位（least significant bit，LSB）是这个16位值最右边一位
+
+* 主机字节序（host byte order）
+* 网络字节序（network byte order）
+
+::
+
+   均返回：网络字节序的值
+   uint16_t htons(uint16_t host16bitvalue);
+   uint32_t htonl(uint32_t host32bitvalue);
+
+   均返回：主机字节序的值
+   uint16_t ntohs(uint16_t net16bitvalue);
+   uint32_t ntohl(uint32_t net32bitvalue);
+
+
+字节操纵函数
+------------
+
+源自Berkeley的函数::
+
+      #include <strings.h>
+      void bzero(void *dest, size_t nbytes);
+      void bcopy(const void *src, void *dest, size_t nbytes);
+      int bcmp(const void *ptr1, const void *ptr2, size_t nbytes);
+
+ANSI C函数::
+
+      #include <string.h>
+      void *memset(void *dest, int c, size_t len);
+      void *memcpy(void *dest, const void *src, size_t nbytes);
+      int memcmp(const void *ptr1, const void *ptr2, size_t nbytes);
+
+地址转换函数
+------------
+
+.. note:: a: address, n: net(网络字节序二进制值), p和n分别代表表达（presentation）和数值（numeric）
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/rZH9WD.png
+
+   caption
+
+
+
+在点分十进制数串（例如“206.168.112.96”）与它长度为32位的网络字节序二进制值间转换IPv4地址::
+
+      #include <arpa/inet.h>
+
+      int inet_aton(const char *strptr, struct in_addr *addrptr);
+      将strptr所指C字符串转换成一个32位的网络字节序二进制值，并通过指针addrptr来存储
+      返回：若字符串有效则为1，否则为0
+
+      in_addr_t inet_addr(const char *strptr);
+      返回：若字符串有效则为32位二进制网络字节序的IPv4地址，否则为INADDR_NONE
+      注意：已被废弃
+
+      char *inet_ntoa(struct in_addr inaddr);
+      将一个32位的网络字节序二进制IPv4地址转换成相应的点分十进制数串
+      返回：指向一个点分十进制数串的指针
+
+
+随IPv6出现的新函数，对于IPv4地址和IPv6地址都适用::
+
+      #include <arpa/inet.h>
+
+      int inet_pton(int family, const char *strptr, void *addrptr);
+      返回：若成功则为1，若输入不是有效的表达格式则为0，若出错则为-1
+
+      const char *inet_ntop(int family, const void *addrptr, char *strptr, size_t len);
+      返回：若成功则为指向结果的指针，若出错则为NULL
+
+      说明:
+      family参数既可以是AF_INET，也可以是AF_INET6
+
+<netinet/in.h>头文件中有如下定义::
+
+      #define INET_ADDRSTRLEN    16    /* for IPv4 dotted-decimal */
+      #define INET6_ADDRSTRLEN    46    /* for IPv6 hex string */
+
+
+ipv4相关的函数替换::
+
+      inet_pton(AF_INET, cp, &foo.sin_addr);
+      可替代
+      foo.sin_addr.s_addr = inet_addr(cp);
+
+      char str[INET_ADDRSTRLEN];
+      ptr = inet_ntop(AF_INET, &foo.sin_addr, str, sizeof(str));
+      可替代
+      ptr = inet_ntoa(foo.sin_addr);
+
+readn writen和readline函数
+--------------------------
+
+字节流套接字（例如TCP套接字）上的read和write函数所表现的行为不同于通常的文件I/O。字节流套接字上调用read或write输入或输出的字节数可能比请求的数量少，然而这不是出错的状态。这个现象的原因在于内核中用于套接字的缓冲区可能已达到了极限。此时所需的是调用者再次调用read或write函数，以输入或输出剩余的字节。
+
+
+
+第4章 基本TCP套接字编程
+=======================
+
+socket函数
+----------
+
+::
+
+   #include <sys/socket.h>
+   int socket(int family, int type, int protocol);
+
+参数说明::
+
+    1. family 就是指:
+        AF_INET: IPv4协议
+        AF_INET6: IPv6协议
+        AF_LOCAL: Unix域协议
+            AF_UNIX(历史上的Unix域名称)
+            AF_FILE
+        AF_ROUTE: 路由套接字(内核中路由表的接口)
+        AF_KEY: 密钥套接字(支持基于加密的安全性)
+        AF_NS: Xerox NS协议，常称为XNS
+        AF__ISO: OSI协议
+        AF_UNSPEC: UDP断开套接字用
+
+    2. type 可用的值是：
+      SOCK_STREAM: 表示的是字节流，对应 TCP
+      SOCK_DGRAM: 表示的是数据报，对应 UDP
+      SOCK_SEQPACKET: 有序分组套接字
+      SOCK_PACKET: Linux 支持
+      SOCK_RAW: 表示的是原始套接字
+
+    3. protocol 原本是用来指定通信协议的，但现在基本废弃。
+      因为协议已经通过前面两个参数指定完成。
+      protocol 目前一般写成 0 即可(SOCK_RAW除外)
+      实例参考:
+      IPPROTO_TCP: TCP 传输协议
+      IPPROTO_UDP: UDP 传输协议
+      IPPROTO_SCTP: SCTP 传输协议
+      IPPROTO_IGMP: 
+      IPPROTO_EGP: 
+
+.. note:: 【family 小历史】
+    * ``AF_`` 表示的含义是 Address Family
+    * ``PF_`` 表示的含义是 Protocol Family
+    * 这两个值本身就是一一对应的
+    * 历史上曾有这样的想法：单个协议族可以支持多个地址族，PF_值用来创建套接字，而AF_值用于套接字地址结构。但实际上，支持多个地址族的协议族从来就未实现过，而且头文件<sys/socket.h>中为一给定协议定义的PF_值总是与此协议的AF_值相等。尽管这种相等关系并不一定永远成立，但若有人试图给已有的协议改变这种约定，则许多现存代码都将崩溃。查看BSD/OS 2.1版中调用socket的137个程序，可以发现，有143个调用指定AF_值，仅有8个调用指定PF_值。
+
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/bsFNJs.png
+
+   socket函数中family和type参数的组合
+
+
+返回值::
+
+   成功时返回一个小的非负整数值
+   它与文件描述符类似，我们把它称为套接字描述符（socket descriptor），简称sockfd
+
+
+connect函数
+-----------
+
+.. note:: 客户在调用函数connect前不必非得调用bind函数，因为如果需要的话，内核会确定源IP地址，并选择一个临时端口作为源端口。如果是 TCP 套接字，那么调用 connect 函数将激发 TCP 的三次握手过程，而且仅在连接建立成功或出错时才返回。
+
+::
+
+      #include <sys/socket.h>
+      int connect(int sockfd, const struct sockaddr *servaddr, socklen_t addrlen);
+
+参数说明::
+
+    1. sockfd:
+         socket函数返回的套接字描述符
+    2. servaddr:
+         套接字地址结构的指针(包含ip+port)
+    3. addrlen:
+         该结构的大小
+
+返回值::
+
+   若成功则为0，若出错则为-1
+
+出错返回可能有以下几种情况::
+
+    1. 若TCP客户没有收到SYN分节的响应，则返回ETIMEDOUT错误。
+         举例来说，调用connect函数时，4.4BSD内核发送一个SYN，
+         若无响应则等待6s后再发送一个，
+         若仍无响应则等待24s后再发送一个（TCPv2第828页）。
+         若总共等了75s后仍未收到响应则返回本错误。
+    2. 若对客户的SYN的响应是RST（表示复位）
+         则表明该服务器在指定的端口上没有进程在等待与之连接（如服务器进程没在运行）
+         这是一种硬错误（hard error），客户一接收到RST就马上返回ECONNREFUSED错误。
+         RST是TCP在发生错误时发送的一种TCP分节。
+         产生 RST 的三个条件是：
+            a. 目的地为某端口的 SYN 到达，然而该端口上没有正在监听的服务器（如前所述）
+            b. TCP 想取消一个已有连接
+            c. TCP 接收到一个根本不存在的连接上的分节
+            （TCPv1第246～250页有更详细的信息。）
+    3. 客户发出的 SYN 包在网络上引起 "destination unreachable"(目的不可达)ICMP错误
+         则认为是一种软错误（soft error）。
+         客户主机内核保存该消息，并按第一种情况中所述的时间间隔继续发送SYN。
+         若在某个规定的时间（4.4BSD规定75s）后仍未收到响应，
+         则把保存的消息（即ICMP错误）作为EHOSTUNREACH或ENETUNREACH错误返回给进程。
+         注：这种情况比较常见的原因是客户端和服务器端路由不通
+
+bind函数
+--------
+
+.. note:: 捆绑（binding）操作涉及三个对象：套接字（在XTI API中为端点）、地址及端口。其中套接字是捆绑的主体，地址和端口是捆绑在套接字上的客体。历史上讲述bind函数的手册页面曾说“bind assigns a name to an unnamed socket（bind函数为一个无名的套接字命名）”。使用“name”（名字）一词易于让人混淆，因为它具有诸如foo.bar.com之类域名的涵义。bind函数其实与名字没有任何关系。它只是把一个协议地址赋予一个套接字，至于协议地址的含义则取决于协议本身。
+
+::
+
+   #include <sys/socket.h>
+   int bind(int sockfd, const struct sockaddr *myaddr, socklen_t addrlen);
+
+
+返回值::
+
+   若成功则为0，若出错则为-1
+
+通配地址::
+
+   struct sockaddr_in  servaddr;
+   servaddr.sin_addr.s_addr = htonl(INADDR_ANY);    /* wildcard */
+
+   struct sockaddr_in6    serv;
+   serv.sin6_addr = in6addr_any;  /* wildcard */
+   // 系统预先分配in6addr_any变量并将其初始化为常值IN6ADDR_ANY_INIT。
+   // 头文件<netinet/in.h>中含有in6addr_any的extern声明。
+
+
+.. note:: 无论是网络字节序还是主机字节序，INADDR_ANY的值（为0）都一样，因此使用htonl并非必需。不过既然头文件<netinet/in.h>中定义的所有INADDR_常值都是按照主机字节序定义的，我们应该对任何这些常值都使用htonl。
+
+
+到达（arriving）和接收（received）这两个修饰词，它们具有相同的含义，只是视角不同而已。譬如说一个分组的到达接口和接收接口指的是同一个接口，前者在接收主机以外看待这个接口，后者在接收主机以内看待这个接口。
+
+listen函数
+----------
+
+.. note:: 仅由TCP服务器调用：当socket函数创建一个套接字时，它被假设为一个主动套接字，也就是说，它是一个将调用connect发起连接的客户套接字。listen函数把一个未连接的套接字转换成一个被动套接字，指示内核应接受指向该套接字的连接请求。
+
+
+::
+
+      #include <sys/socket.h>
+      int listen(int sockfd, int backlog);
+
+参数::
+
+   backlog: 内核应该为相应套接字排队的最大连接个数
+
+
+
+返回值::
+
+   若成功则为0，若出错则为-1
+
+
+
+内核为任何一个给定的监听套接字维护两个队列::
+
+   1) 未完成连接队列（incomplete connection queue）
+      每个这样的SYN分节对应其中一项：已由某个客户发出并到达服务器，而服务器正在等待完成相应的TCP三路握手过程。
+      这些套接字处于SYN_RCVD状态
+
+   2) 已完成连接队列（completed connection queue）
+      每个已完成TCP三路握手过程的客户对应其中一项。
+      这些套接字处于ESTABLISHED状态
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/9TRCZ4.png
+
+   TCP为监听套接字维护的两个队列。每当在未完成连接队列中创建一项时，来自监听套接字的参数就复制到即将建立的连接中。连接的创建机制是完全自动的，无需服务器进程插手。
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/39owW8.png
+
+   当来自客户的SYN到达时，TCP在未完成连接队列中创建一个新项，然后响应以三路握手的第二个分节：服务器的SYN响应，其中捎带对客户SYN的ACK。这一项一直保留在未完成连接队列中，直到三路握手的第三个分节（客户对服务器SYN的ACK）到达或者该项超时为止。（源自Berkeley的实现为这些未完成连接的项设置的超时值为75 s。）如果三路握手正常完成，该项就从未完成连接队列移到已完成连接队列的队尾。当进程调用accept时（该函数在下一节讲解），已完成连接队列中的队头项将返回给进程，或者如果该队列为空，那么进程将被投入睡眠，直到TCP在该队列中放入一项才唤醒它。
+
+
+* 以伪造的SYN装填未完成连接队列，使合法的SYN排不上队，导致针对合法客户的服务被拒绝（denial of service）
+
+
+accept函数
+----------
+
+.. note:: accept函数由TCP服务器调用，用于从已完成连接队列队头返回下一个已完成连接。如果已完成连接队列为空，那么进程被投入睡眠（假定套接字为默认的阻塞方式）
+
+::
+
+   #include <sys/socket.h>
+   int accept(int sockfd, struct sockaddr *cliaddr, socklen_t *addrlen);
+
+返回值::
+
+   若成功则为非负描述符，若出错则为-1
+   即：已连接套接字（connected socket）描述符
+
+参数::
+
+   sockfd:
+      监听套接字（listening socket）描述符
+   cliaddr: 
+      返回时，新套接字描述符也可能是:
+         出错指示的整数、
+         客户进程的协议地址
+   addrlen: 值—结果参数
+      调用前，引用的整数值置为由cliaddr所指的套接字地址结构的长度
+      返回时，引用的整数值即为由内核存放在该套接字地址结构内的确切字节数
+
+fork和exec函数
+--------------
+
+fork 函数
+^^^^^^^^^
+
+.. note:: fork函数是Unix中派生新进程的唯一方法。理解fork最困难之处在于调用它一次，它却返回两次。它在调用进程（称为父进程）中返回一次，返回值是新派生进程（称为子进程）的进程ID号；在子进程又返回一次，返回值为0。因此，返回值本身告知当前进程是子进程还是父进程。
+
+::
+
+   #include <unistd.h>
+
+   pid_t fork(void);
+
+返回值::
+
+   1. 在子进程中为0
+   2. 在父进程中为子进程ID
+   3. 出错则为-1
+
+
+父进程中调用fork之前打开的所有描述符在fork返回之后由子进程分享。我们将看到网络服务器利用了这个特性：父进程调用accept之后调用fork。所接受的已连接套接字随后就在父进程与子进程之间共享。通常情况下，子进程接着读写这个已连接套接字，父进程则关闭这个已连接套接字。
+
+fork有两个典型用法::
+
+   1. 网络服务器的典型用法:
+      一个进程创建一个自身的副本，这样每个副本都可以在另一个副本执行其他任务的同时处理各自的某个操作。
+
+   2. 诸如shell之类程序的典型用法:
+      一个进程想要执行另一个程序。
+      既然创建新进程的唯一办法是调用fork，该进程于是首先调用fork创建一个自身的副本，
+      然后其中一个副本（通常为子进程）调用exec把自身替换成新的程序。
+
+exec 函数
+^^^^^^^^^
+
+.. note:: 函数只在出错时才返回到调用者。否则，控制将被传递给新程序的起始点，通常就是main函数。
+
+
+
+6个exec函数::
+
+   #include <unistd.h>
+
+   int execl(const char *pathname, const char *arg0, ... /* (char *) 0 */ );
+
+   int execv(const char *pathname, char *const *argv[]);
+
+   int execle(const char *pathname, const char *arg0, ... /* (char *) 0, char *const envp[] */ );
+
+   int execve(const char *pathname, char *const argv[], char *const envp[]);
+
+   int execlp(const char *filename, const char *arg0, ... /* (char *) 0 */ );
+
+   int execvp(const char *filename, char *const argv[]);
+
+
+返回值::
+
+   若成功则不返回，若出错则为-1
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/DiJcsJ.png
+
+   6个exec函数的关系
+
+
+并发服务器
+----------
+
+典型的并发服务器程序框架::
+
+   pid_t pid;
+   int listenfd, connfd;
+   listenfd = Socket(...);
+   Bind(listenfd, ...);
+   Listen(listenfd, LISTENQ);
+   for(; ;) {
+      connfd = Accept(listenfd, ...);
+      if( (pid == Fork()) == 0 ) {
+         Close(listenfd);     // 子进制关闭listenfd
+         doit(connfd);        // 做具体的工作
+         Close(connfd);       // 做完关闭 connfd
+         exit(0);
+      }
+      Close(connfd);          // 父进程关闭connected socket
+   }
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/s9j5Pj.png
+
+   把上面代码展示的套接字和连接用图示直观地表现出来：每个文件或套接字都有一个引用计数。引用计数在文件表项中维护，它是当前打开着的引用该文件或套接字的描述符的个数。其引用计数值到达0时才发生清理和资源释放，所以"父进程关闭connected socket"不会终止TCP连接。
+
+
+close函数
+---------
+
+.. note:: 通常的Unix close函数也用来关闭套接字，并终止TCP连接。
+
+::
+
+   #include <unistd.h>
+   int close(int sockfd);
+
+
+返回值::
+
+   若成功则为0，若出错则为-1
+
+getsockname和getpeername函数
+----------------------------
+
+.. note:: 这两个函数或者返回与某个套接字关联的本地协议地址（getsockname），或者返回与某个套接字关联的外地协议地址（getpeername）。
+
+::
+
+   #include <sys/socket.h>
+   int getsockname(int sockfd, struct sockaddr *localaddr, socklen_t *addrlen);
+   int getpeername(int sockfd, struct sockaddr *peeraddr, socklen_t *addrlen);
+
+返回值::
+
+   若成功则为0，若出错则为-1
+
+
+
+第5章 TCP客户/服务器程序示例
+============================
+
+实例展示
+--------
+
+实例说明::
+
+   1) 客户端函数将阻塞于fgets函数
+   2) 服务器子进程阻塞于read函数
+   3) 服务器父进程阻塞于accept函数
+
+   说明: 服务器和客户端在同一机器上
+
+% netstat -a::
+
+   Active Internet connections (servers and established)
+   Proto Recv-Q Send-Q Local Address      Foreign Address     State
+   tcp     0   0 localhost:9877     localhost:42758     ESTABLISHED
+   tcp     0   0 localhost:42758     localhost:9877      ESTABLISHED
+   tcp     0   0 *:9877          *:*            LISTEN
+
+   上面三个分别是:
+      服务器子进程、客户端进程、服务器父进程
+
+% ps -t pts/6 -o pid,ppid,tty,stat,args,wchan::
+
+    PID  PPID    TT    STAT    COMMAND          WCHAN
+   22038 22036 pts/6    S     -bash             wait4
+   17870 22038 pts/6    S     ./tcpserv01       wait_for_connect
+   19315 17870 pts/6    S     ./tcpserv01       tcp_data_wait
+   19314 22038 pts/6    S     ./tcpcli01 127.0  read_chan
+
+   说明:进程处于睡眠状态时WCHAN列:
+      1. Linux在进程阻塞于accept或connect时，输出wait_for_connect
+      2. 在进程阻塞于套接字输入或输出时，输出tcp_data_wait
+      3. 在进程阻塞于终端I/O时，输出read_chan
+
+
+POSIX信号处理
+-------------
+
+.. note:: 信号（signal）就是告知某个进程发生了某个事件的通知，有时也称为软件中断（software interrupt）。信号通常是异步发生的，也就是说进程预先不知道信号的准确发生时刻。每个信号都有一个与之关联的处置（disposition），也称为行为（action）。
+
+信号可以::
+
+   1. 由一个进程发给另一个进程（或自身）
+   2. 由内核发给某个进程
+
+
+信号的三种处置选择::
+
+   1. 提供一个函数，只要有特定信号发生它就被调用。
+      这样的函数称为信号处理函数（signal handler），这种行为称为捕获（catching）信号。
+         信号处理函数也称为信号处理程序，这是相对于main函数所在的主程序而言的
+      函数原型因此如下：
+         void handler(int signo);
+   2. 设定为SIG_IGN来忽略（ignore）它
+   3. 把某个信号的处置设定为SIG_DFL来启用它的默认（default）处置
+
+
+.. note:: SIGKILL和SIGSTOP这两个信号不能被捕获、不能被忽略。信号默认处置通常是在收到信号后终止进程，其中某些信号还在当前工作目录产生一个进程的核心映像（core image，也称为内存影像）。另有个别信号(SIGCHLD和SIGURG)的默认处置是忽略。
+
+用typedef简化signal函数原型::
+
+   函数signal的正常函数原型因层次太多而变得很复杂：
+   void (*signal(int signo, void (*func)(int)))(int);
+
+   简化:在头文件unp.h中定义了如下的Sigfunc类型：
+   typedef void Sigfunc(int);
+
+   简化后:
+   Sigfunc *signal(int signo, Sigfunc *func);
+
+
+
+处理SIGCHLD信号
+---------------
+
+子进程在终止后会进入僵死（zombie）状态，并向父进行发送SIGCHLD信号。设置僵死（zombie）状态的目的是维护子进程的信息，以便父进程在以后某个时候获取。无论何时我们fork子进程都得wait它们，以防它们变成僵死进程。
+
+使用 signal 函数监听SIGCHLD信号::
+
+      Signal(SIGCHLD, sig_chld);
+
+定义 sig_chld 函数处理SIGCHLD信号::
+
+      void sig_chld(int signo) {
+         pid_t pid;
+         int stat;
+
+         pid = wait(&stat);
+         printf("child %d terminated\n", pid);
+         return;
+      }
+
+适用于慢系统调用的基本规则是：当阻塞于某个慢系统调用的一个进程捕获某个信号且相应信号处理函数返回时，该系统调用可能返回一个EINTR错误。
+
+所以需要处理 ``EINTR错误`` 重启被中断的系统调用(这儿是 accept 函数)::
+
+   for ( ; ; ) {
+     clilen = sizeof(cliaddr);
+     if ( (connfd = accept(listenfd, (SA *) &cliaddr, &clilen)) < 0) {
+       if (errno == EINTR)
+         continue;     /* back to for() */
+       else
+         err_sys("accept error");
+     }
+   }
+
+
+
+wait和waitpid函数
+-----------------
+
+::
+
+   #include <sys/wait.h>
+   pid_t wait(int *statloc);
+   pid_t waitpid(pid_t pid, int *statloc, int options);
+
+   说明:
+      waitpid函数就等待哪个进程以及是否阻塞等，给了我们更多的控制
+
+返回::
+
+   若成功则为进程ID，若出错则为0或-1
+
+在网络编程时注意的3点::
+
+   1) 当fork子进程时，必须捕获SIGCHLD信号
+   2) 当捕获信号时，必须处理被中断的系统调用
+   3) SIGCHLD的信号处理函数必须正确编写，应使用waitpid函数以免留下僵死进程
+
+
+各种异常情况
+------------
+
+* 服务器终止后，2次收到客户端发来的消息，引发SIGPIPE信号：服务器终止后，客户端第一次写操作引发RST，第二次写引发SIGPIPE信号。写一个已接收了FIN的套接字不成问题，但是写一个已接收了RST的套接字则是一个错误。
+* 服务器主机崩溃（或网络中断）：已有的网络连接上不发出任何东西。在客户发送数据时，会发现，客户TCP持续重传数据分节，试图从服务器上接收一个ACK。当客户TCP最后终于放弃时，给客户进程返回一个错误。假设服务器主机已崩溃，从而对客户的数据分节根本没有响应，那么所返回的错误是ETIMEDOUT。然而如果某个中间路由器判定服务器主机已不可达，从而响应以一个“destination unreachable”（目的地不可达）ICMP消息，那么所返回的错误是EHOSTUNREACH或ENETUNREACH。
+   * TCP重传一个典型模式：源自Berkeley的实现重传该数据分节12次，共等待约9分钟才放弃重传。
+* 服务器主机崩溃后重启：它的TCP丢失了崩溃前的所有连接信息，因此服务器TCP对于所收到的来自客户的数据分节响应以一个RST。
+* 服务器主机关机：Unix系统关机时，init进程通常先给所有进程发送SIGTERM信号（该信号可被捕获），等待一段固定的时间（往往在5～20秒），然后给所有仍在运行的进程发送SIGKILL信号（该信号不能被捕获）。这么做留给所有运行的进程一小段时间来清除和终止。如果我们不捕获SIGTERM信号并终止，我们的服务器将由SIGKILL信号终止。
+
+
+第6章 I/O复用: select和poll函数
+===============================
+
+I/O模型
+-------
+
+Unix下可用的5种I/O模型::
+
+      1. 阻塞式I/O
+      2. 非阻塞式I/O
+      3. I/O复用（select和poll）
+      4. 信号驱动式I/O（SIGIO）
+      5. 异步I/O（POSIX的aio_系列函数）
+
+一个输入操作通常包括两个不同的阶段::
+
+   1) 等待数据准备好
+   2) 从内核向进程复制数据
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/qpUMt0.png
+
+   5种I/O模型的比较
+
+
+
+
+阻塞式I/O
+^^^^^^^^^
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/Z7Xsux.png
+
+   阻塞式I/O模型
+
+
+
+非阻塞式I/O
+^^^^^^^^^^^
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/cOkpSN.png
+
+   非阻塞式I/O模型
+
+
+
+I/O复用
+^^^^^^^
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/OBqSne.png
+
+   I/O复用模型
+
+
+
+信号驱动式I/O
+^^^^^^^^^^^^^
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/yoQApS.png
+
+   信号驱动式I/O模型
+
+
+
+异步I/O
+^^^^^^^
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/GaR6GD.png
+
+   异步I/O模型
+
+
+select函数
+----------
+
+.. note:: 调用select告知内核对哪些描述符（读、写或异常条件）感兴趣以及等待多长时间。
+
+::
+
+   #include <sys/select.h>
+   #include <sys/time.h>
+   
+   int select(int maxfdp1, fd_set *readset, fd_set *writeset, 
+      fd_set *exceptset, const struct timeval *timeout);
+
+返回::
+
+   若有就绪描述符则为其数目，若超时则为0，若出错则为-1
+
+四个宏::
+
+    void FD_ZERO(fd_set *fdset);
+    void FD_SET(int fd, fd_set *fdset);
+    void FD_CLR(int fd, fd_set *fdset);
+    int  FD_ISSET(int fd, fd_set *fdset);
+
+    1. FD_ZERO 用来将这个向量的所有元素都设置成 0
+    2. FD_SET 用来把对应套接字 fd 的元素，a[fd]设置成 1
+    3. FD_CLR 用来把对应套接字 fd 的元素，a[fd]设置成 0
+    4. FD_ISSET 对这个向量进行检测，判断对应套接字的元素 a[fd]是 0 还是 1
+
+shutdown函数
+------------
+
+::
+
+   #include <sys/socket.h>
+
+   int shutdown(int sockfd, int howto);
+
+返回::
+
+   若成功则为0，若出错则为-1
+
+参数howto的值::
+
+   1. SHUT_RD 关闭连接的读这一半
+   2. SHUT_WR 关闭连接的写这一半
+   3. SHUT_RDWR 连接的读半部和写半部都关闭
+
+pselect函数
+-----------
+
+::
+
+   #include <sys/select.h>
+   #include <signal.h>
+   #include <time.h>
+
+   int pselect(int maxfdp1, 
+      fd_set *readset, fd_set *writeset, fd_set *exceptset, 
+      const struct timespec *timeout, const sigset_t *sigmask); 
+
+返回::
+
+   若有就绪描述符则为其数目，若超时则为0，若出错则为-1
+
+poll函数
+--------
+
+::
+
+   #include <poll.h>
+   int poll(struct pollfd *fdarray, unsigned long nfds, int timeout); 
+
+   struct pollfd {
+     int    fd;
+     short  events;     /* events of interest on fd */
+     short  revents;    /* events that occurred on fd */
+   };
+
+
+返回::
+
+   若有就绪描述符则为其数目，若超时则为0，若出错则为-1
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/zItSM9.png
+
+   poll函数的输入events和返回revents
+
+poll识别三类数据::
+
+   1. 普通（normal）
+   2. 优先级带（priority band）
+   3. 高优先级（high priority）
+
+.. note:: [历史]POLLIN可被定义为POLLRDNORM和POLLRDBAND的逻辑或。POLLIN自SVR3实现就存在，早于SVR4中的优先级带，为了向后兼容，该常值继续保留。类似地，POLLOUT等同于POLLWRNORM，前者早于后者。
+
+.. note:: 历史上这个参数曾被定义为无符号长整数（unsigned long），似乎过分大了。定义为无符号整数（unsigned int）可能就足够了。Unix 98为该参数定义了名为nfds_t的新的数据类型。
+
+
+第7章 套接字选项
+================
+
+获取和设置影响套接字的选项::
+
+   1. getsockopt和setsockopt函数
+   2. fcntl函数
+   3. ioctl函数
+
+getsockopt和setsockopt函数
+--------------------------
+
+.. note:: 这两个函数仅用于套接字
+
+::
+
+   #include <sys/socket.h>
+
+   int getsockopt(int sockfd, int level, int optname, 
+      void *optval, socklen_t *optlen);
+
+   int setsockopt(int sockfd, int level, int optname, 
+      const void *optval, socklen_t optlen);
+
+返回::
+
+   若成功则为0，若出错则为-1
+
+参数说明::
+
+   sockfd: 打开的套接字描述符
+   level: 指定系统中解释选项的代码
+      或为通用套接字代码，
+      或为某个特定于协议的代码（例如IPv4、IPv6、TCP或SCTP）
+   optval:
+      setsockopt 从 *optval 中取得选项待设置的新值
+      getsockopt 则把已获取的选项当前值存放到 *optval 中
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/Smfdou.jpg
+
+   套接字层套接字选项
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/8x0w6X.jpg
+
+   IP层的套接字选项
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/M9WXoy.jpg
+
+   IP6层的套接字选项
+
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/zaRq5H.jpg
+
+   传输层的套接字选项
+
+套接字选项粗分为两大基本类型::
+
+   1. 一是启用或禁止某个特性的二元选项（称为标志选项）
+   2. 二是取得并返回我们可以设置或检查的特定值的选项（称为值选项）
+
+最常用的套接字选项
+------------------
+
+SO_KEEPALIVE
+^^^^^^^^^^^^
+
+给一个TCP套接字设置保持存活（keep-alive）选项后，如果2小时内在该套接字的任一方向上都没有数据交换，TCP就自动给对端发送一个保持存活探测分节（keep-alive probe）。
+
+这是一个对端必须响应的TCP分节，它会导致以下三种情况之一::
+
+   1) 对端以期望的ACK响应。
+      应用进程得不到通知（因为一切正常）
+   2) 对端以RST响应，它告知本端TCP：对端已崩溃且已重新启动。
+      该套接字的待处理错误被置为ECONNRESET，套接字本身则被关闭。
+   3) 对端对保持存活探测分节没有任何响应。
+      源自Berkeley的TCP将另外发送8个探测分节，两两相隔75秒，试图得到一个响应。
+      TCP在发出第一个探测分节后11分15秒内若没有得到任何响应则放弃。
+
+
+
+
+SO_RCVBUF & SO_SNDBUF
+---------------------
+
+每个TCP套接字和SCTP套接字都有一个发送缓冲区和一个接收缓冲区，每个UDP套接字都有一个接收缓冲区。SO_SNDBUF和SO_RCVBUF套接字选项允许我们改变这些缓冲区的大小。这两个选项最常见的用途是长胖管道上的批量数据传送。
+
+SO_REUSEADDR
+^^^^^^^^^^^^
+
+SO_REUSEADDR套接字选项能起到以下4个不同的功用::
+
+   1) 允许启动一个监听服务器并捆绑其众所周知端口，
+      即使以前建立的将该端口用作它们的本地端口的连接仍存在
+   2) 允许在同一端口、同一服务器启动多个实例
+      只要每个实例捆绑一个不同的本地IP地址即可
+   3) 允许单个进程捆绑同一端口到多个套接字上
+      只要每次捆绑指定不同的本地IP地址即可
+   4) SO_REUSEADDR允许完全重复的捆绑
+      一般来说，本特性仅支持UDP套接字
+
+
+SO_LINGER
+^^^^^^^^^
+
+使得我们能够更好地控制close函数返回的时机，而且允许我们强制发送RST而不是TCP的四分组连接终止序列。我们必须小心发送RST，因为这么做回避了TCP的TIME_WAIT状态。本套接字选项许多时候无法提供我们所需的信息，这种情况下应用级ACK变得必要。
+
+
+
+fcntl函数
+---------
+
+fc代表“file control”（文件控制），fcntl函数可执行各种描述符控制操作。
+
+::
+
+   #include <fcntl.h>
+   
+   int fcntl(int fd, int cmd, ... /* int arg */ ); 
+
+返回::
+
+   若成功则取决于cmd，若出错则为-1
+
+
+第8章 基本UDP套接字编程
+=======================
+
+
+recvfrom和sendto函数
+--------------------
+
+::
+
+      #include <sys/socket.h>
+
+      ssize_t recvfrom(int sockfd, void *buff, size_t nbytes, 
+         int flags, struct sockaddr *from, socklen_t *addrlen); 
+
+      ssize_t sendto(int sockfd, const void *buff, size_t nbytes, 
+         int flags, const struct sockaddr *to, socklen_t *addrlen); 
+
+返回::
+
+   若成功则为读或写的字节数，若出错则为-1
+
+UDP的connect函数
+----------------
+
+.. note:: 给connect函数重载（overload）UDP套接字的这种能力容易让人混淆。如果使用约定，sockname是本地协议地址，peername是外地协议地址，那么更好的名字本该是setpeername。类似地，bind函数更好的名字本该是setsockname。
+
+UDP客户进程或服务器进程只在使用自己的UDP套接字与确定的唯一对端进行通信时，才可以调用connect。调用connect的通常是UDP客户，不过有些网络应用中的UDP服务器会与单个客户长时间通信（如TFTP），这种情况下，客户和服务器都可能调用connect。
+
+对于已连接UDP套接字，与默认的未连接UDP套接字相比，发生了三个变化::
+
+   1. 不能给输出操作指定目的IP地址和端口号，不使用sendto，而改用write或send
+   2. 不必使用recvfrom以获悉数据报的发送者，而改用read、recv或recvmsg
+   3. 由已连接UDP套接字引发的异步错误会返回给它们所在的进程
+
+
+在未连接的UDP套接字上调用2次sendto函数涉及内核下列6个步骤::
+
+   1. 连接套接字
+   2. 输出第一个数据报
+   3. 断开套接字连接
+   1. 连接套接字
+   2. 输出第二个数据报
+   3. 断开套接字连接
+
+.. note:: 当应用进程知道自己要给同一目的地址发送多个数据报时，显式连接套接字效率更高。临时连接未连接的UDP套接字大约会耗费每个UDP传输三分之一的开销。
+
+调用connect后调用两次write涉及内核执行如下步骤::
+
+   1. 连接套接字
+   2. 输出第一个数据报
+   3. 输出第二个数据报
+
+
+第9章 基本SCTP套接字编程
+========================
+
+SCTP是一个较新的传输协议，于2000年在IETF得到标准化（而TCP是在1981年标准化的）。它最初是为满足不断增长的IP电话市场设计的，具体地说就是穿越因特网传输电话信令。它设计实现的需求在RFC 2719［Ong et al. 1999］中说明。SCTP是一个可靠的面向消息的协议，在端点之间提供多个流，并为多宿提供传输级支持。
+
+
+旧的名称：一到一套接字原本称为TCP风格（TCP-style）套接字，一到多套接字原本称为UDP风格套接字。这些风格称谓后来被取消了，因为它们易于造成混淆，即SCTP可能被误解成其行为更像TCP或UDP。目前的称谓（一到一与一到多）集中体现了这两种套接字形式之间的关键差异。
+
+第11章 名字与地址转换
+=====================
+
+
+gethostbyname函数
+-----------------
+
+这个函数的局限是只能返回IPv4地址，POSIX规范预警可能会在将来的某个版本中撤销gethostbyname函数，鼓励在新的程序中改用getaddrinfo函数。
+
+::
+
+   #include <netdb.h>
+
+   struct hostent *gethostbyname(const char * hostname ); 
+
+返回::
+
+   若成功则为非空指针，若出错则为NULL且设置h_errno 
+
+   struct hostent {
+    char *h_name;    // official (canonical) name of host
+    char **h_aliases;  // pointer to array of pointers to alias name
+    int  h_addrtype;  // host address type: AF_INET
+    int  h_length;   // length of address: 4
+    char **h_addr_list; // ptr to array of ptrs with IPv4 addrs
+   };
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/FTFxsp.jpg
+
+   hostent 结构和它所包含的信息
+
+.. note:: 当发生错误时，它不设置errno变量，而是将全局整数变量h_errno设置为在头文件<netdb.h>中定义的常值之一。可以使用hstrerror的函数返回相应错误的说明。
+
+
+
+gethostbyaddr函数
+-----------------
+
+::
+
+   #include <netdb.h>
+
+   struct hostent *gethostbyaddr(const char * addr , 
+         socklen_t len, int family);
+
+返回::
+
+   若成功则为非空指针，若出错则为NULL且设置h_errno
+
+getservbyname函数
+-----------------
+
+.. note:: 从名字到端口号的映射关系保存在一个文件中（通常是/etc/services）
+
+根据给定名字查找相应服务::
+
+   #include <netdb.h>
+   struct servent *getservbyname(const char * servname, 
+      const char * protoname );
+
+返回::
+
+   若成功则为非空指针，若出错则为NULL
+
+   struct servent {
+    char *s_name;     /* official service name */
+    char **s_aliases;   /* alias list */
+    int  s_port;     /* port number, network byte order */
+    char *s_proto;    /* protocol to use */
+   };
+
+getservbyport函数
+-----------------
+
+根据给定端口号和可选协议查找相应服务::
+
+   #include <netdb.h>
+
+   struct servent *getservbyport(int port, const char *protoname); 
+
+返回::
+
+   若成功则为非空指针，若出错则为NULL
+
+
+getaddrinfo函数
+---------------
+
+.. note:: 可解析IPv4和IPv6。返回的是一个sockaddr结构。这个sockaddr结构随后可由套接字函数直接使用。如此一来，getaddrinfo函数把协议相关性完全隐藏在这个库函数内部。
+
+
+getnameinfo函数
+---------------
+
+.. note:: getnameinfo是getaddrinfo的互补函数，它以一个套接字地址为参数，返回描述其中的主机的一个字符串和描述其中的服务的另一个字符串。
+
+
+第12章 IPv4与IPv6的互操作性
+===========================
+
+IPv4客户与IPv6服务器
+--------------------
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/qnMkha.jpg
+
+   双栈主机上的IPv6服务器为IPv4和IPv6客户服务。注意：这儿假设是双栈服务器主机既有一个IPv4地址，又有一个IPv6地址。
+
+允许一个IPv4的TCP客户和一个IPv6的TCP服务器进行通信的步骤::
+
+   1) IPv6服务器启动后创建一个IPv6的监听套接字
+   2) IPv4客户调用gethostbyname找到服务器主机的一个A记录
+   3) 客户调用connect，导致客户主机发送一个IPv4 SYN到服务器主机
+   4) 服务器接收这个IPv4 SYN，设置标志指示本连接应使用IPv4映射的IPv6地址
+      然后响应以一个IPv4 SYN/ACK。
+      该连接建立后，由accept返回给服务器的地址就是这个IPv4映射的IPv6地址
+   5) 当服务器往IPv4映射的IPv6地址发送TCP分节时，
+      其IP栈产生目的地址为所映射IPv4地址的IPv4载送数据报。
+      因此，客户和服务器之间的所有通信都使用IPv4的载送数据报。
+   6) 除非服务器显式检查，否则它永远不知道自己是在与一个IPv4客户通信。
+      这个细节由双协议栈处理。
+      同样，IPv4客户也不知道自己是在与一个IPv6服务器通信。
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/iD2lnr.png
+
+   根据接收套接字类型处理收到的IPv4数据报或IPv6数据报
+
+上图包含3种情况::
+
+   1. 收到一个目的地为某个IPv4套接字的IPv4数据报：无需转换
+   2. 收到一个目的地为某个IPv6套接字的IPv6数据报：无需转换
+   3. 收到一个目的地为某个IPv6套接字的IPv4数据报：
+      内核把与该数据报的源IPv4地址映射为IPv6地址
+   注意：不能反过来把 IPv6映射成 IPv4
+
+IPv6客户与IPv4服务器
+--------------------
+
+在 ``双栈主机上的IPv6的TCP客户端`` 请求 ``只支持IPv4的主机上创建的IPv4的监听套接字`` ::
+
+   1. IPv6客户端启动后调用getaddrinfo查找IPv6地址得到一个IPv4映射的IPv6地址
+   2. IPv6客户端调用connect，内核检测到映射地址后自动发送一个IPv4 SYN到服务器
+   3. 服务器响应以一个IPv4 SYN/ACK，连接于是通过使用IPv4数据报建立
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/Mx1HrL.png
+
+   根据地址类型和套接字类型处理客户请求
+
+上图包含3种情况::
+
+   1. 一个IPv4的TCP客户指定一个IPv4地址：无需处理
+   2. 一个IPv6的TCP客户指定一个IPv6地址：无需处理
+   3. 一个IPv6的TCP客户指定一个IPv4映射的IPv6地址：
+      内核检测到这个映射地址后改为发送一个IPv4数据报而不是IPv6数据报
+
+
+.. note:: 【总结】本质很简单，一句话：IPv6兼容 IPv4，而 IPv4不兼容 IPv6
+
+源代码可移植性
+--------------
+
+典型处理办法是在代码中到处使用#ifdef伪代码，以尽可能使用IPv6。这种办法的问题是：代码将被杂乱无章地迅速插入许多#ifdef伪代码，在代码理解和维护上造成困难。
+
+.. note:: 更好的办法是把这种向IPv6的转换视为促成程序变得协议无关的一个机会。当然这些函数中含有#ifdef伪代码以处理IPv4和IPv6，但是把所有的协议相关内容隐蔽在若干个库函数中将简化我们的代码。
+
+第13章 守护进程和inetd超级服务器
+================================
+
+守护进程（daemon）是在后台运行且不与任何控制终端关联的进程。
+
+syslog函数
+----------
+
+::
+
+   #include <syslog.h>
+   void syslog(int priority, const char *message, ... );
+
+参数::
+
+   priority是级别（level）和设施（facility）两者的组合
+
+
+实例::
+
+   syslog(LOG_INFO|LOG_LOCAL2, "rename(%s, %s): %m", file1, file2);
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/yL2dOh.png
+
+   日志消息的level
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/P6r9OE.png
+
+   日志消息的facility
+
+
+daemon_init函数
+---------------
+
+通过调用它，我们能够把一个普通进程转变为守护进程。
+
+* setsid是一个POSIX函数，用于创建一个新的会话（session）
+
+inetd守护进程
+-------------
+
+典型的Unix系统可能存在许多服务器，它们只是等待客户请求的到达，例如FTP、Telnet、Rlogin、TFTP等等。4.3BSD面世之前的系统中，所有这些服务都有一个进程与之关联。这些进程都是在系统自举阶段从/etc/rc文件中启动，而且每个进程执行几乎相同的启动任务：创建一个套接字，把本服务器的众所周知端口捆绑到该套接字，等待一个连接（若是TCP）或一个数据报（若是UDP），然后派生子进程。子进程为客户提供服务，父进程则继续等待下一个客户请求。
+
+
+这个模型存在两个问题::
+
+   1) 所有这些守护进程含有几乎相同的启动代码
+      既表现在创建套接字上，也表现在演变成守护进程上（类似我们的daemon_init函数）
+   2) 每个守护进程在进程表中占据一个表项，然而它们大部分时间处于睡眠状态
+
+.. note:: 4.3BSD版本通过提供一个因特网超级服务器（即inetd守护进程）使上述问题得到简化。基于TCP或UDP的服务器都可以使用这个守护进程。
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/9Zw981.png
+
+   inetd.conf文件中的字段
+
+实例::
+
+   ftp    stream  tcp  nowait  root   /usr/bin/ftpd     ftpd -l
+   telnet stream  tcp  nowait  root   /usr/bin/telnetd  telnetd
+   login  stream  tcp  nowait  root   /usr/bin/rlogind  rlogind -s
+   tftp   dgram   udp  wait   nobody  /usr/bin/tftpd    tftpd -s /tftpboot
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/G0LnSC.png
+
+   inetd的工作流程
+
+
+第14章 高级I/O函数
+==================
+
+套接字超时
+----------
+
+在涉及套接字的I/O操作上设置超时的方法有以下3种::
+
+   1) 调用alarm，它在指定超时期满时产生SIGALRM信号
+   2) 在select阻塞等待I/O（select有内置时间限制），代替直接阻塞在read或write上
+   3) 使用较新的SO_RCVTIMEO和SO_SNDTIMEO套接字选项
+
+recv和send函数
+--------------
+
+::
+
+   #include <sys/socket.h>
+   ssize_t recv(int sockfd, void *buff, size_t nbytes, int flags);
+   ssize_t send(int sockfd, const void *buff, size_t nbytes, int flags);
+
+返回::
+
+   S若成功则为读入或写出的字节数，若出错则为-1
+
+参数::
+
+   前3个参数等同于read和write的3个参数
+   flags参数的值或为0，或为图14-6列出的一个或多个常值的逻辑或
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/KF4wQf.png
+
+   I/O函数的flags参数
+
+
+readv和writev函数
+-----------------
+
+.. note:: 这两个函数类似read和write，不过readv和writev允许单个系统调用读入到或写出自一个或多个缓冲区。这些操作分别称为分散读（scatter read）和集中写（gather write），因为来自读操作的输入数据被分散到多个应用缓冲区中，而来自多个应用缓冲区的输出数据则被集中提供给单个写操作。
+
+::
+
+   #include <sys/uio.h>
+   ssize_t readv(int filedes, const struct iovec *iov, int iovcnt);
+   ssize_t writev(int filedes, const struct iovec *iov, int iovcnt);
+
+   struct iovec {
+      void  *iov_base;    /* starting address of buffer */
+      size_t iov_len;     /* size of buffer */
+   };
+
+返回::
+
+   若成功则为读入或写出的字节数，若出错则为-1
+
+.. note:: readv和writev这两个函数可用于任何描述符，而不仅限于套接字。另外writev是一个原子操作，意味着对于一个基于记录的协议（例如UDP）而言，一次writev调用只产生单个UDP数据报。
+
+recvmsg和sendmsg函数
+--------------------
+
+.. note:: 这两个函数是最通用的I/O函数。
+
+::
+
+   #include <sys/socket.h>
+   ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags);
+   ssize_t sendmsg(int sockfd, struct msghdr *msg, int flags);
+
+返回::
+
+   若成功则为读入或写出的字节数，若出错则为-1
+
+大部分参数封装到一个msghdr结构中::
+
+   struct msghdr {
+      void           *msg_name;      /* protocol address */
+      socklen_t      msg_namelen;    /* size of protocol address */
+      struct iovec   *msg_iov;       /* scatter/gather array */
+      int            msg_iovlen;     /* # elements in msg_iov */
+      void           *msg_control;   /* ancillary data (cmsghdr struct) */
+      socklen_t      msg_controllen; /* length of ancillary data */
+      int            msg_flags;      /* flags returned by recvmsg() */
+   };
+
+辅助数据
+--------
+
+辅助数据（ancillary data）的另一个称谓是控制信息（control information）
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/gpOWmg.png
+
+   辅助数据用途的总结
+
+
+第15章 Unix域协议
+=================
+
+使用Unix域套接字有以下3个理由::
+
+   1. 在Berkeley的实现中，Unix域套接字比通信两端位于同一个主机的TCP套接字快出一倍
+   2. Unix域套接字可用于在同一个主机上的不同进程之间传递描述符
+   3. Unix域套接字把客户的凭证（用户ID和组ID）提供给服务器，以能提供额外安全检查措施
+
+Unix域套接字地址结构
+--------------------
+
+::
+
+   <sys/un.h>
+   struct sockaddr_un {
+      sa_family_t sun_family;    // AF_LOCAL
+      char        sun_path[104]; // null-terminated pathname
+   }
+
+socketpair函数
+--------------
+
+::
+
+   #include <sys/socket.h>
+   int socketpair(int family, int type, int protocol, int sockfd[2]);
+
+返回::
+
+   若成功则为非0，若出错则为-1
+
+.. note:: 本函数类似Unix的pipe函数，会返回两个彼此连接的描述符。指定type参数为SOCK_STRAEM调用socketpair得到的结果称为流管道（stream pipe）。它与调用pipe创建的普通Unix管道类似，差别在于流管道是全双工的，即两个描述符都是既可读又可写。
+
+
+第16章 非阻塞式I/O
+==================
+
+对于非阻塞的套接字，调用将立即返回一个EWOULDBLOCK错误。
+
+
+第17章 ioctl操作
+================
+
+.. note:: 本函数影响由fd参数引用的一个打开的文件。
+
+::
+
+   #include <unistd.h>
+   int ioctl(int fd, int request, ... /* void *arg */ );
+
+返回::
+
+   若成功则为0，若出错则为-1
+
+
+和网络相关的请求（request）划分为6类::
+
+   1. 套接字操作（是否位于带外标记等）
+   2. 文件操作（设置或清除非阻塞标志等）
+   3. 接口操作（返回接口列表，获取广播地址等）
+   4. ARP表操作（创建、修改、获取或删除）
+   5. 路由表操作（增加或删除）
+   6. 流系统
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/M4kQuf.png
+
+   网络相关ioctl请求的request参数及arg地址必须指向的数据类型。
+
+
+
+第18章 路由套接字
+=================
+
+
+sysctl操作
+----------
+
+对路由套接字的主要兴趣点在于使用sysctl函数检查路由表和接口列表。创建路由套接字（一个AF_ROUTE域的原始套接字）需要超级用户权限，然而使用sysctl检查路由表和接口列表的进程却不限用户权限。
+
+::
+
+   #include <sys/param.h>
+   #include <sys/sysctl.h>
+
+   int sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+   　　　　　  void *newp, size_t newlen);
+
+返回::
+
+   若成功则为0，若出错则为-1
+
+
+第19章 密钥管理套接字
+=====================
+
+随着IP安全体系结构（IPsec，见RFC 2401［Kent and Atkinson ］）的引入，私钥体系加密和认证密钥的管理越来越需要一套标准的机制。RFC 2367［McDonald, Metz, and Phan 1998］介绍了一个通用密钥管理API，可用于IPsec和其他网络安全服务。
+
+
+第20章 广播
+===========
+
+概述
+----
+
+* 单播（unicasting）
+* 广播（broadcasting）
+* 多播（multicasting）
+* 任播（anycasting）
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/V9I45x.png
+
+   不同类型的寻址方式：IPv6往寻址体系结构中增加了任播（anycasting）方式
+
+上图要点有::
+
+   1. 多播支持在IPv4中是可选的，在IPv6中却是必需的；
+   2. IPv6不支持广播。使用广播的任何IPv4应用程序一旦移植到IPv6就必须改用多播重新编写；
+   3. 广播和多播要求用于UDP或原始IP，它们不能用于TCP。
+
+广播的用途::
+
+   1. 在本地子网定位一个服务器主机，这种操作也称为资源发现（resource discovery）。
+      前提是已知或认定这个服务器主机位于本地子网，但是不知道它的单播IP地址。
+   2. 在有多个客户主机与单个服务器主机通信的局域网环境中尽量减少分组流通。
+
+* ARP（Address Resolution Protocol，地址解析协议）。ARP并不是一个用户应用，而是IPv4的基本组成部分之一。ARP在本地子网上广播一个请求说“IP地址为a.b.c.d的系统亮明身份，告诉我你的硬件地址”。ARP使用链路层广播而不是IP层广播。
+* DHCP（Dynamic Host Configration Protocol，动态主机配置协议）。在认定本地子网上有一个DHCP服务器主机或中继主机的前提下，DHCP客户主机向广播地址（通常是255.255.255.255，因为客户还不知道自己的IP地址、子网掩码以及本子网的受限广播地址）发送自己的请求。
+* NTP（Network Time Protocol，网络时间协议）。NTP的一种常见使用情形是客户主机配置上待使用的一个或多个服务器主机的IP地址，然后以某个频度（每隔64秒钟或更长时间一次）轮询这些服务器主机。根据由服务器返送的当前时间和到达服务器主机的RTT，客户使用精妙的算法更新本地时钟。然而在一个广播局域网上，服务器主机却可以为本地子网上的所有客户主机每隔64秒钟广播一次当前时间，免得每个客户主机各自轮询这个服务器主机，从而减少网络分组流通量。
+* 路由守护进程。routed是最早实现且最常用的路由守护进程之一，它在一个局域网上广播自己的路由表。这么一来连接到该局域网上的所有其他路由器都可以接收这些路由通告，而无须事先为每个路由器配置其邻居路由器的IP地址。这个特性也能被该局域网上的主机用于监听这些路由通告，并相应地更新各自的路由表。RIP第2版既允许使用多播，也允许使用广播。
+
+
+广播地址
+--------
+
+1) 子网定向广播地址：{子网ID，-1}
+2) 受限广播地址：{-1，-1}或255.255.255.255
+
+
+第21章 多播
+===========
+
+
+多播数据报只应该由对它感兴趣的接口接收，也就是说由运行相应多播会话应用系统的主机上的接口接收。另外，广播一般局限于局域网内使用，而多播则既可用于局域网，也可跨广域网使用。
+
+多播地址
+--------
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/YC0K6Z.png
+
+   IPv4和IPv6多播地址到以太网地址的映射
+
+IPv4多播地址
+^^^^^^^^^^^^
+
+* IPv4的D类地址（从224.0.0.0到239.255.255.255）是IPv4多播地址。
+* 224: 1110 0000
+* 239: 1110 1111
+* D类地址的低序28位构成多播组ID（group ID）
+* 整个32位地址则称为组地址（group address）
+* 特殊的IPv4多播地址：224.0.0.1是所有主机（all-hosts）组
+* 特殊的IPv4多播地址：224.0.0.2是所有路由器（all-routers）组
+* 224.0.0.0/24 称为链路局部的（link local）多播地址。这些地址是为低级拓扑发现和维护协议保留的
+
+IPv4多播以太网地址
+^^^^^^^^^^^^^^^^^^
+
+* 以太网地址（MAC 地址）一共6字节，48 位
+* IPv4映射的以太网地址的高序3字节(24位)总是01:00:5e。以太网地址的高序24位由IEEE分配，首字节的低序2位标明该地址是统一管理的组地址（即：首字节0000 0001中的01）
+* 下一位总是0
+* 低序23位复制自多播组ID的低序23位，IPv4的多播组ID的高序5位在映射过程中被忽略。这一点意谓着32个多播地址映射成单个以太网地址，因此这个映射关系不是一对一的。
+
+
+IPv6多播地址
+^^^^^^^^^^^^
+
+* IPv6多播地址的高序字节值为ff
+* IPv6有16字节，其中14字节(112位)代表组ID
+* 特殊的IPv6多播地址：ff01::1和ff02::1是所有节点（all-nodes）组
+* 特殊的IPv6多播地址：ff01::2、ff02::2和ff05::2是所有路由器（all-routers）组
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/PSqdaj.png
+
+   IPv6多播地址定义有两种格式：1.当P标志为0时，T标志区分众所周知多播组（其值为0）还是临时（transient）多播组（其值为1）。2.P标志值为1表示多播地址是基于某个单播前缀赋予的，当P标志为1时，T标志必须也为1（也就是说基于单播的多播地址总是临时的），plen和prefix这两个字段分别设置为前缀长度和单播前缀的值。4位标志字段的高2位是被保留的。
+
+
+IPv6多播以太网地址
+^^^^^^^^^^^^^^^^^^
+
+* 16字节IPv6多播地址映射成6字节以太网地址的方法
+* 14字节(112位)组ID的低序4字节(32位)复制到以太网地址的低序4字节(32位)
+* 以太网地址的高序2字节(16位)为33:33。首字节的低序2位标明该地址是一个局部管理的组地址。
+
+说明
+^^^^
+
+* IPv4：统一管理（universally administered）属性位意味着以太网地址的高序24位由IEEE分配，组地址属性位由接收接口识别并进行特殊处理。
+* IPv6：局部管理（locally administered）属性位意味着不能保证该地址对于IPv6的唯一性。可能有IPv6以外的其他协议族共享同一网络并使用同样的以太网地址高序2字节值。
+
+.. note:: 让一个进程接收某个多播数据报的先决条件是该进程加入相应多播组并绑定相应端口。
+
+
+多播套接字选项
+--------------
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/G9ujTg.png
+
+   组成员无关多播套接字选项
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/FADlG3.png
+
+   组成员相关多播套接字选项
+
+
+第22章 高级UDP套接字编程
+========================
+
+UDP的优势
+---------
+
+* UDP支持广播和多播
+* 对于简单的请求—应答应用程序可以使用UDP，不过错误检测功能必须加到应用程序内部。错误检测至少涉及确认、超时和重传。流量控制是可选项
+* 对于海量数据传输（如文件传输）不应该使用UDP。因为这么做除了上一点要求的特性外，还要求把窗口式流量控制、拥塞避免和慢启动这些特性也加到应用程序中，意味着我们是在应用程序中再造TCP
+
+* 例外：TFTP就用UDP传送海量数据。TFTP选用UDP的原因在于，在系统自举引导代码中使用UDP比使用TCP易于实现（如TCPv2中使用UDP的C代码约为800行，而使用TCP则约为4500行），而且TFTP只用于在局域网上引导系统，而不是跨广域网传送海量数据。不过这样一来就要求TFTP自含用于确认的序列号字段，并具备超时和重传能力。
+* 例外：NFS 也用UDP传送海量数据。这样的选择部分出于历史原因，因为在20世纪80年代中期设计NFS的时候，UDP的实现要比TCP的快，而且NFS仅仅用于局域网，那里分组丢失率往往比在广域网上少几个数量级。然而随着NFS从20世纪90年代早期开始被用于跨广域网范围，并且TCP的实现在海量数据传送性能上开始超过UDP的实现，NFS第3版被设计成支持TCP，大多数厂商现已改为同时在UDP和TCP上提供NFS。
+* 同样的理由（20世纪80年代中期UDP要比TCP快且局域网上的使用远远超过广域网）导致DCE远程过程调用（remote procedure call，RPC）的前身软件包（Apollo NCS软件包）也选择UDP而不是TCP，不过如今的实现同时支持UDP和TCP。
+
+
+给UDP应用增加可靠性
+-------------------
+
+必须在客户程序中增加以下两个特性::
+
+   1) 超时和重传：用于处理丢失的数据报
+   2) 序列号：供客户验证一个应答是否匹配相应的请求
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/iap1wF.png
+
+   重传定时器期满时的3种情形：1.请求丢失了；2.应答丢失了；3.RTO太小
+
+* Karn的算法［Karn and Partridge 1987］可以解决重传二义性问题，即一旦收到重传过的某个请求的一个应答，就应用以下规则
+* 这个办法来自TCP用于应对“长胖管道”（有较高带宽或有较长RTT，抑或两者都有的网络）的扩展。本办法除了为每个请求冠以一个服务器必须回射的序列号外，还为每个请求冠以一个服务器同样必须回射的客户端时间戳（timestamp）
+
+
+并发UDP服务器
+-------------
+
+大多数UDP服务器程序是迭代运行的，服务器等待一个客户请求，读入这个请求，处理这个请求，送回其应答，接着等待下一个客户请求。然而当客户请求的处理需耗用过长时间时，我们期望UDP服务器程序具有某种形式的并发性。
+
+1) 第一种并发UDP服务器比较简单，读入一个客户请求并发送一个应答后，与这个客户就不再相关了。这种情形下，读入客户请求的服务器可以fork一个子进程并让子进程去处理该请求。该“请求”（即请求数据报的内容以及含有客户协议地址的套接字地址结构）通过由fork复制的内存映像传递给子进程。然后子进程把它的应答直接发送给客户。
+2) 第二种UDP服务器与客户交换多个数据报。问题是客户知道的服务器端口号只有服务器的一个众所周知端口。一个客户发送其请求的第一个数据报到这个端口，但是服务器如何区分这是来自该客户同一个请求的后续数据报还是来自其他客户请求的数据报呢？这个问题典型的解决办法是让服务器为每个客户创建一个新的套接字，在其上bind一个临时端口，然后使用该套接字发送对该客户的所有应答。这个办法要求客户查看服务器第一个应答中的源端口号，并把本请求的后续数据报发送到该端口。
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/wzCF9S.png
+
+   独立运行的UDP并发服务器所涉及步骤(TFTP就是第二种类型UDP服务器的一个例子)
+
+第23章 高级SCTP套接字编程
+=========================
+
+何时改用SCTP代替TCP
+-------------------
+
+不能从SCTP中真正获益的是那些确实必须使用面向字节流传输服务的应用，如telnet、rlogin、rsh、ssh等。对于这样的应用，TCP能够比SCTP更高效地把字节流分割分装到TCP分节中。SCTP忠实地保持消息边界，当每个消息的长度仅仅是一个字节时，SCTP封装消息到数据块中的效率非常之低，导致过多的开销。
+
+.. note:: 许多应用可以考虑改用SCTP重新实现，前提是SCTP能够在Unix平台上得以普及。
+
+第24章 带外数据
+===============
+
+许多传输层有带外数据（out-of-band data）的概念，它有时也称为经加速数据（expedited data）。其想法是一个连接的某端发生了重要的事情，而且该端希望迅速通告其对端。这里“迅速”意味着这种通知应该在已经排队等待发送的任何“普通”（有时称为“带内”）数据之前发送。也就是说，带外数据被认为具有比普通数据更高的优先级。带外数据并不要求在客户和服务器之间再使用一个连接，而是被映射到已有的连接中。
+
+
+几乎每个传输层都各自有不同的带外数据实现。而UDP作为一个极端的例子，没有实现带外数据。对于TCP的带外数据模型，telnet、rlogin和FTP等应用都是使用带外数据的。除了这样的远程非活跃应用之外，几乎很少有使用到带外数据的地方。
+
+实例::
+
+   write(sockfd, "data", 4);              // 普通数据
+   send(sockfd, "oob data", 8, MSG_OOB);  // 带外数据
+
+
+TCP带外数据
+-----------
+
+TCP并没有真正的带外数据，不过提供了紧急模式（urgent mode）。
+
+从发送端的角度看
+^^^^^^^^^^^^^^^^
+
+假设一个进程已经往一个TCP套接字写出N字节数据，而且TCP把这些数据排队在该套接字的发送缓冲区中，等着发送到对端。接着以MSG_OOB标志调用send函数发送带外数据(``如: send(fd, "a", 1, MSG_OOB);``)。TCP把这个数据放置在该套接字发送缓冲区的下一个可用位置，并把该连接的TCP紧急指针（urgent pointer）设置成再下一个可用位置。把带外字节标记为“OOB”。
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/AkPCEG.png
+
+   应用进程写入1字节带外数据后的套接字发送缓冲区。这是一个历史性的决断，现在被所有实现所模仿。只要发送端TCP和接收端TCP在TCP紧急指针的解释上达成一致，就不会有问题。
+
+从接收端的角度看
+^^^^^^^^^^^^^^^^
+
+1) 当收到一个设置了URG标志的分节时，接收端TCP检查紧急指针，确定它是否指向新的带外数据
+2) 当有新的紧急指针到达时，接收进程被通知到。首先，内核给接收套接字的属主进程发送SIGURG信号；其次，如果接收进程阻塞在select调用中以等待这个套接字描述符出现一个异常条件，select调用就返回。
+3) 当由紧急指针指向的实际数据字节到达接收端TCP时，该数据字节既可能被拉出带外，也可能被留在带内，即在线（inline）留存。
+
+
+sockatmark函数
+--------------
+
+每当收到一个带外数据时，就有一个与之关联的带外标记（out-of-band mark）。这是发送进程发送带外字节时该字节在发送端普通数据流中的位置。在从套接字读入期间，接收进程通过调用sockatmark函数确定是否处于带外标记。
+
+::
+
+   #include <sys/socket.h>
+   int sockatmark(int sockfd);
+
+返回::
+
+   若处于带外标记则为1，
+   若不处于带外标记则为0，
+   若出错则为-1
+
+小结
+----
+
+带外数据概念实际上向接收端传达三个不同的信息::
+
+   1) 发送端进入紧急模式这个事实
+      手段：SIGURG信号或select调用
+   2) 带外字节的位置，也就是它相对于来自发送端的其余数据的发送位置：带外标记
+   3) 带外字节的实际值
+
+带外数据概念相关的问题::
+
+   a) 每个连接只有一个TCP紧急指针
+   b) 每个连接只有一个带外标记
+   c) 每个连接只有一个单字节的带外缓冲区
+
+
+带外数据的一个常见用途体现在rlogin程序中。当客户中断运行在服务器主机上的程序时，服务器需要告知客户丢弃所有已在服务器排队的输出，因为已经排队等着从服务器发送到客户的输出最多有一个窗口的大小。服务器向客户发送一个特殊字节，告知后者清刷所有这些输出（在客户看来是输入），这个特殊字节就作为带外数据发送。客户收到由带外数据引发的SIGURG信号后，就从套接字中读入直到碰到带外标记，并丢弃到标记之前的所有数据。
+
+
+第25章 信号驱动式I/O
+====================
+
+.. note:: 信号驱动式I/O就是让内核在套接字上发生“某事”时使用SIGIO信号通知进程。
+
+
+
+信号驱动式I/O是指进程预先告知内核，使得当某个描述符上发生某事时，内核使用信号通知相关进程。它在历史上曾被称为异步I/O（asynchronous I/O），不过信号驱动式I/O不是真正的异步I/O。
+
+* 源自Berkeley的实现使用SIGIO信号支持套接字和终端设备上的信号驱动式I/O
+* SVR4 使用SIGPOLL信号支持流设备上的信号驱动式I/O，SIGPOLL因而等价于SIGIO
+
+能够找到的信号驱动式I/O对于套接字的唯一现实用途是基于UDP的NTP服务器程序。服务器主循环接收来自客户的一个请求数据报并发送回一个应答数据报。然而对于每个客户请求，其处理工作量并非可以忽略（远比我们简单地回射服务器多）。对服务器而言，重要的是为每个收取的数据报记录精确的时间戳，因为该值将返送给客户，由客户用于计算到服务器的RTT。
+
+
+第26章 线程
+===========
+
+概述
+----
+
+* fork是昂贵的。fork要把父进程的内存映像复制到子进程，并在子进程中复制所有描述符。当今的实现使用称为写时复制（copy-on-write）的技术，用以避免在子进程切实需要自己的副本之前把父进程的数据空间复制到子进程。然而即便有这样的优化措施，fork仍然是昂贵的。
+* fork返回之后父子进程之间信息的传递需要进程间通信（IPC）机制。调用fork之前父进程向尚未存在的子进程传递信息相当容易，因为子进程将从父进程数据空间及所有描述符的一个副本开始运行。然而从子进程往父进程返回信息却比较费力。
+
+.. note:: 线程有助于解决这两个问题。线程有时称为轻权进程（lightweight process），因为线程比进程“权重轻些”。也就是说，线程的创建可能比进程的创建快10～100倍。同一进程内的所有线程共享相同的全局内存。这使得线程之间易于共享信息，然而伴随这种简易性而来的却是同步（synchronization）问题。
+
+同一进程内的所有线程除了共享全局变量外还共享::
+
+   1. 进程指令
+   2. 大多数数据
+   3. 打开的文件（即描述符）
+   4. 信号处理函数和信号处置
+   5. 当前工作目录
+   6. 用户ID和组ID
+
+每个线程有各自的::
+
+   1. 线程ID
+   2. 寄存器集合，包括程序计数器和栈指针
+   3. 栈（用于存放局部变量和返回地址）
+   4. errno
+   5. 信号掩码
+   6. 优先级
+
+POSIX线程，也称为Pthread。POSIX线程作为POSIX标准的一部分在1995年得到标准化，大多数UNIX版本将来会支持这类线程。我们将看到所有Pthread函数都以pthread_打头。
+
+
+信号处理函数可以类比作某种线程。这就是说在传统的UNIX模型中，我们有主执行流（也称为主控制流，即一个线程）和某个信号处理函数（另一个线程）。
+
+
+基本线程函数
+------------
+
+pthread_create函数
+^^^^^^^^^^^^^^^^^^
+
+当一个程序由exec启动执行时，称为初始线程（initial thread）或主线程（main thread）的单个线程就创建了。其余线程则由pthread_create函数创建。
+
+::
+
+   #include <pthread.h>
+
+   int pthread_create(pthread_t *tid, const pthread_attr_t *attr,
+   　　　void *(*func)(void *), void *arg);
+
+返回::
+
+   若成功则为0
+   若出错则为正的Exxx值
+
+参数::
+
+   tid: 线程ID（thread ID）标识
+      如果新的线程成功创建，其ID就通过tid指针返回。
+   attr: 属性（attribute）：优先级、初始栈大小、是否成为一个守护线程等
+      默认是一个空指针
+   func: 该线程执行的函数
+      作为参数接受一个通用指针（void *），
+      作为返回值返回一个通用指针（void *）
+   arg: 该线程执行的函数对应的参数
+      线程通过调用这个函数开始执行
+
+pthread_join函数
+----------------
+
+通过调用pthread_join等待一个给定线程终止。对比线程和UNIX进程，pthread_create类似于fork，pthread_join类似于waitpid。
+
+::
+
+   #include <pthread.h>
+
+   int pthread_join(pthread_t *tid, void **status);
+
+返回::
+
+   若成功则为0
+   若出错则为正的Exxx值
+
+参数::
+
+   如果 status指针非空，
+      来自所等待线程的返回值（一个指向某个对象的指针）将存入由status指向的位置。
+
+pthread_self函数
+----------------
+
+使用pthread_self获取自身的线程ID。
+
+::
+
+   #include <pthread.h>
+
+   pthread_t pthread_self(void);
+
+pthread_detach函数
+------------------
+
+一个线程或者是可汇合的（joinable，默认值），或者是脱离的（detached）。当一个可汇合的线程终止时，它的线程ID和退出状态将留存到另一个线程对它调用pthread_join。脱离的线程却像守护进程，当它们终止时，所有相关资源都被释放，我们不能等待它们终止。
+
+pthread_detach函数把指定的线程转变为脱离状态::
+
+   #include <pthread.h>
+
+   int pthread_detach(pthread_t tid);
+
+返回::
+
+   若成功则为0
+   若出错则为正的Exxx值
+
+pthread_exit函数
+----------------
+
+让一个线程终止
+
+::
+
+   #include <pthread.h>
+   void pthread_exit(void *status);
+
+参数::
+
+   status: 不能指向局部于调用线程的对象，因为线程终止时这样的对象也消失
+
+让一个线程终止的另外两个方法::
+
+   1. 启动线程的函数（即pthread_create的第三个参数）可以返回
+      既然该函数必须声明成返回一个void指针，它的返回值就是相应线程的终止状态。
+   2. 如果进程的main函数返回或者任何线程调用了exit，
+      整个进程就终止，其中包括它的任何线程
+
+互斥锁
+------
+
+::
+
+   #include <pthread.h>
+   int pthread_mutex_lock(pthread_mutex_t *mptr);
+   int pthread_mutex_unlock(pthread_mutex_t *mptr);
+
+初始值::
+
+   pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+示例::
+
+   for (i = 0; i < NLOOP; i++) {
+      Pthread_mutex_lock(&counter_mutex);
+
+      val = counter;
+      printf("%d: %d\n", pthread_self(), val + 1);
+      counter = val + 1;
+
+      Pthread_mutex_unlock(&counter_mutex);
+   }
+
+.. note:: 上例中不使用互斥锁和使用互斥锁之间的CPU时间差别是10%。这个结果告诉我们互斥锁上锁并没有太大开销。
+
+条件变量
+--------
+
+::
+
+   #include <pthread.h>
+   int pthread_cond_wait(pthread_cond_t *cptr, pthread_mutex_t *mptr);
+   int pthread_cond_signal(pthread_cond_t *cptr);
+
+初使值::
+
+   pthread_cond_t cond　= PTHREAD_COND_INITIALIZER;
+
+.. note:: pthread_cond_wait 函数把调用线程投入睡眠并释放调用线程持有的互斥锁。此外，当调用线程后来从pthread_cond_wait返回时（其他某个线程发送信号到与ndone关联的条件变量之后），该线程再次持有该互斥锁。
+
+
+调用pthread_cond_broadcast唤醒等在相应条件变量上的所有线程::
+
+   #include <pthread.h>
+   int pthread_cond_broadcast(pthread_cond_t *cptr);
+
+pthread_cond_timedwait允许线程设置一个阻塞时间的限制::
+
+   #include <pthread.h>
+   int pthread_cond_timedwait(pthread_cond_t *cptr, 
+      pthread_mutex_t *mptr, const struct timespec *abstime);
+
+小结
+----
+
+* 创建线程通常比使用fork派生一个进程快得多，要注意线程编程是一个新的编程范式
+* 同一进程内的所有线程共享全局变量和描述符，从而允许不同线程之间共享这些信息。然而这种共享却引入了同步问题，我们必须使用的Pthread同步原语是互斥锁和条件变量。共享数据的同步几乎是每个线程化应用程序必不可少的部分。
+* 编写能够被线程化应用程序调用的函数时，这些函数必须做到线程安全
+
+
+第27章 IP选项
+=============
+
+IPv4选项
+--------
+
+IPv4定义了10种不同的选项::
+
+   1) NOP：no-operation。单字节选项，典型用途是为某个后续选项落在4字节边界上提供填充。
+   2) EOL：end-of-list。单字节选项，终止选项的处理。既然各个IP选项的总长度必须为4字节的倍数，因此最后一个有效选项之后可能跟以0～3个EOL字节。
+   3) LSRR：loose source and record route（TCPv1的8.5节）
+   4) SSRR：strict source and record route（TCPv1的8.5节）
+   5) Timestamp
+   6) Record route（TCPv1的7.3节）
+   7) Basic security（已作废）
+   8) Extended security（已作废）
+   9) Stream identifier（已作废）
+   10) Router alert。这是在RFC 2113［Katz 1997］中叙述的一种选项。包含该选项的IP数据报要求所有转发路由器都查看其内容
+
+IPv4源路径选项
+--------------
+
+IPv4的源路由是有争议的。尽管它可能对网络排障非常有用，却也可能被用于“源地址欺骗”等攻击之中。［Cheswick, Bellovin, and Rubin 2003］倡议在所有路由器上禁用该特性，许多组织机构和服务提供商也这么做了。源路由的合理用途之一是使用traceroute程序检测非对称的路径，就像TCPv1第108～109页展示的那样，然而随着因特网上有越来越多的路由器禁用源路由，这个用途也将消失。
+
+* 源路径（source route）是由IP数据报的发送者指定的一个IP地址列表。如果源路径是严格的（strict），那么数据报必须且只能逐一经过所列的节点。也就是说列在源路径中的所有节点必须前后互为邻居。如果源路径是宽松的（loose），那么数据报必须逐一经过所列的节点，不过也可以经过未列在源路径中的其他节点。
+
+* IPv4源路径称为源和记录路径（source and record routes，SRR，其中LSRR表示宽松的选项，SSRR表示严格的选项），因为随着数据报逐一经过所列的节点，每个节点都把列在源路径中的自己的地址替换为外出接口的地址
+
+第28章 原始套接字
+=================
+
+概述
+----
+
+原始套接字提供普通的TCP和UDP套接字所不提供的以下3个能力::
+
+   1. 有了原始套接字，进程可以读与写ICMPv4、IGMPv4和ICMPv6等分组
+      举例来说，ping程序就使用原始套接字发送ICMP回射请求并接收ICMP回射应答
+      多播路由守护程序mrouted也使用原始套接字发送和接收IGMPv4分组
+   2. 有了原始套接字，进程可以读写内核不处理其协议字段的IPv4数据报
+      多数内核仅处理字段值为1（ICMP）、2（IGMP）、6（TCP）和17（UDP）的数据报
+      而协议字段定义的值还有不少：IANA的“Protocol Numbers”注册处列出了所有值
+      举例来说，OSPF路由协议既不使用TCP也不使用UDP，
+         而是通过收发协议字段为89的IP数据报而直接使用IP。
+         实现OSPF的gated守护程序必须使用原始套接字读与写这些IP数据报，
+         因为内核不知道如何处理协议字段值为89的IPv4数据报。
+         这个能力还延续到IPv6。
+   3. 有了原始套接字，进程还可以使用IP_HDRINCL套接字选项自行构造IPv4首部
+      这个能力可用于构造譬如说TCP或UDP分组
+
+
+原始套接字创建
+--------------
+
+::
+
+   sockfd = socket(AF_INET, SOCK_RAW, protocol);
+
+.. note:: 只有超级用户才能创建原始套接字，这么做可防止普通用户往网络写出它们自行构造的IP数据报。
+
+
+
+小结
+----
+
+原始套接字提供以下3个能力::
+
+   1. 进程可以读写ICMPv4、IGMPv4和ICMPv6等分组
+   2. 进程可以读写内核不处理其协议字段的IP数据报
+   3. 进程可以自行构造IPv4首部，通常用于诊断目的（亦或不幸地被黑客们利用）
+
+第29章 数据链路访问
+===================
+
+概述
+----
+
+大多数操作系统都为应用程序提供访问数据链路层的强大功能。这种功能可以提供如下能力::
+
+   1. 能够监视由数据链路层接收的分组
+      使得如tcpdump之类的程序能在普通电脑上运行，无需用专门的硬件设备来监视分组
+   2. 能够作为普遍应用进程而不是内核的一部分运行某些程序
+      RARP服务器的大多数Unix版本是普通的应用进程，
+      它们从数据链路读入RARP请求，又往数据链路写出RARP应答
+
+访问数据链路层的3个常用方法是::
+
+   1. BSD的分组过滤器BPF
+   2. SVR4的数据链路提供者接口DLPI
+   3. Linux的SOCK_PACKET接口
+
+   libpcap 函数库适用于所有这3个接口
+   使用它可以编写独立于操作系统提供的实际数据链路访问接口的程序
+
+BPF: BSD分组过滤器
+------------------
+
+在支持BPF的系统上，每个数据链路驱动程序都在发送一个分组之前或在接收一个分组之后调用BPF。BPF实现一个基于寄存器的过滤器机器，特定于应用进程的过滤器就通过过滤器机器应用于每个接收分组。
+
+
+DLPI: 数据链路提供者接口
+------------------------
+
+* SVR4通过数据链路提供者接口（Datalink Provider Interface，DLPI）提供数据链路访问。
+* DLPI是一个由AT&T设计的独立于协议的访问数据链路层所提供服务的接口［Unix International 1991］。其访问通过发送和接收流消息（STREAMS message）实施。
+
+DLPI有两种打开方式::
+
+   1. 应用进程先打开一个统一的伪设备，再使用DLPI的DL_ATTACH_REQ往其上附接某个数据链路（即网络接口）
+   2. 应用进程直接打开某个网络接口设备（例如le0）
+
+Linux: SOCK_PACKET和PF_PACKET
+-----------------------------
+
+* 较旧的方法是创建类型为SOCK_PACKET的套接字，此方法可用面较宽，但缺乏灵活性::
+
+   fd = socket(AF_INET, SOCK_PACKET, htons(ETH_P_ALL));
+
+   例: 只想捕获IPv4帧
+   fd = socket(AF_INET, SOCK_PACKET, htons(ETH_P_IP));
+
+* 较新的方法创建协议族为PF_PACKET的套接字，这个方法引入了更多的过滤和性能特性::
+
+   fd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
+
+   调用socket的第二个参数:
+   既可以是SOCK_DGRAM，表示扣除链路层首部的“煮熟”（cooked）分组
+   也可以是SOCK_RAW，表示完整的链路层分组（以太网帧）
+
+   例: 只想捕获IPv4帧
+   fd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_IP));
+
+
+.. note:: 第三个参数的常值有ETH_P_ALL、ETH_P_IP、ETH_P_ARP、ETH_P_IPV6
+
+libpcap: 分组捕获函数库
+-----------------------
+
+.. note:: 不同操作系统有不同的数据链路层访问方法。有Berkeley的BPF、SVR4的DLPI和Linux的SOCK_PACKET。不过如果使用公开可得的分组捕获函数库libpcap，我们就可以忽略所有这些区别，依然编写出可移植的代码。
+
+libpcap是访问操作系统所提供的分组捕获机制的分组捕获函数库，它是与实现无关的，可以编写出跨 OS 可移植的代码。目前它只支持分组的读入（当然只需往该函数库中增加一些代码行就可以让调用者写出数据链路分组）
+
+* 所有库函数均以pcap_前缀打头
+* 该函数库可以从: http://www.tcpdump.org/
+
+libnet: 分组构造与输出函数库
+----------------------------
+
+.. note:: 在不同系统上编写原始数据报可能各不相同。公开可得的libnet函数库隐藏了这些差异，所提供的输出接口既可以通过原始套接字访问，也可以在数据链路上直接访问。
+
+* libnet函数库提供构造任意协议的分组并将其输出到网络中的接口。它以与实现无关的方式提供原始套接字访问方式和数据链路访问方式。
+* libnet隐藏了构造IP、UDP和TCP首部的许多细节，并提供简单且便于移植的数据链路和原始套接字写出访问接口。
+* libnet的所有库函数均以libnet_前缀打头
+* libnet函数库可以从: http://www.packetfactory.net/libnet/
+* 在线手册是: http://www.packetfactory.net/libnet/manual/
+
+
+分组捕获设备
+------------
+
+从分组捕获设备读入与从普通套接字读入的差别之一就体现在此：使用套接字的话我们可以通配本地地址，从而允许我们接收到达任意接口的分组；然而如果使用分组捕获设备，我们就只能在单个接口上接收到达的分组。
+
+小结
+----
+
+原始套接字使得我们有能力读写内核不理解的IP数据报，数据链路层访问则把这个能力进一步扩展成读与写任何类型的数据链路帧，而不仅仅是IP数据报。tcpdump也许是直接访问数据链路层的最常用程序。
+
+第30章 客户/服务器程序设计范式
+==============================
+
+概述
+----
+
+* 迭代服务器（iterative server）
+* 并发服务器（concurrent server）
+* select处理任意多个客户的单个进程
+* 并发服务器中「创建一个线程」取代「派生一个进程」
+* 预先派生子进程（preforking）：在启动阶段创建一个子进程池
+* 预先创建线程（prethreading）：在启动阶段创建一个线程池
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/05/J0lDPq.png
+
+   本图中的时间测量的是仅仅用于进程控制所需的CPU时间，而迭代服务器是我们的基准，从其他服务器的实际CPU时间中减去迭代服务器的实际CPU时间就得到相应服务器用于进程控制所需的CPU时间，因为迭代服务器没有进程控制开销。
+
+惊群thundering herd
+-------------------
+
+.. note:: 惊群（thundering herd）问题：尽管只有一个子进程将获得连接，所有N个子进程却都被唤醒了。注意：每当仅有一个连接准备好被接受时却唤醒太多进程的做法会导致性能受损。
+
+说明：主进程 listen 之后 fork N 个子进程，分别调用 accept。服务器进程在程序启动阶段派生N个子进程，它们各自调用accept并因而均被内核投入睡眠。当第一个客户连接到达时，所有N个子进程均被唤醒。这是因为所有N个子进程所用的监听描述符（它们有相同的值）指向同一个socket结构，致使它们在同一个等待通道（wait channel）即这个socket结构的so_timeo成员上进入睡眠。尽管所有N个子进程均被唤醒，其中只有最先运行的子进程获得那个客户连接，其余N-1个子进程继续回复睡眠，因为当它们执行到TCPv2第458页135行时，将发现队列长度为0（因为最先运行的连接早已取走了本就只有一个的连接）
+
+
+
+
+
+
+
+附录A IPv4, IPv6, ICMPv4和ICMPv6
+================================
+
+IPv4首部
+--------
+
+* IP层最重要的功能之一是路由（routing）
+
+
+
+
+
+
+其他
+====
+
+* 有些Unix系统在ps命令输出的COMMAND栏以<defunct>指明僵死进程。
+* 服务器所能处理的最大客户数目的限制是以下两个值中的较小者：FD_SETSIZE和内核允许本进程打开的最大描述符数
+* 所谓的拒绝服务（denial of service）型攻击。它就是针对服务器做些动作，导致服务器不再能为其他合法客户提供服务。
+* 长胖管道是或高带宽或长延时的TCP连接，通常使用RFC 1323中为高性能定义的扩展。
+* NTP时间戳从1900年开始计秒数，而Unix时间戳从1970年开始计秒数。JAN_1970（1900～1970共70年的秒数）
+
+
+* SYN泛滥（SYN flooding）
+* IP欺骗（IP spoofing）
+* I/O复用（I/O multiplexing）
+* 同步I/O操作（synchronous I/O opetation）
+* 异步I/O操作（asynchronous I/O opetation）
+* 保持存活探测分节（keep-alive probe）
+* 迭代服务器（iterative server）
+* 异步错误（asynchronous error）
+* 双栈（dual stacks）
+* 辅助数据（ancillary data）
+* 单播（unicasting）、广播（broadcasting）和多播（multicasting）、任播（anycasting）
+* 广播风暴（broadcast storm）
+* 重传二义性问题（retransmission ambiguity problem）
+* 带外数据（out-of-band data）、经加速数据（expedited data）
+
+
+
+
+
+
+

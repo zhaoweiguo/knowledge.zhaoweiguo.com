@@ -1,0 +1,956 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="zh-CN" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="zh-CN" > <!--<![endif]-->
+<head>
+
+
+<!-- start added 2025-04-14   增加对markdown中公式的支持 -->
+<script>
+window.MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+    },
+    options: {
+        ignoreHtmlClass: "tex2jax_ignore|mathjax_ignore",
+        processHtmlClass: "tex2jax_process|mathjax_process|math|output_area"
+    }
+};
+</script>
+<script defer="defer" src="https://fastly.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<!-- end added 2025-04-14   增加对markdown中公式的支持 -->
+
+
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>2.1.8. skopeo &mdash; 新溪-gordon V2025.06 文档</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+    <link rel="index" title="索引" href="../../genindex.html" />
+    <link rel="search" title="搜索" href="../../search.html" />
+    <link rel="next" title="2.1.9. 临时" href="tmp.html" />
+    <link rel="prev" title="2.1.7. podman" href="podman.html" /> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+  <script src="../../_static/js/jquery.min.js"></script>
+
+
+<!-- 评论插件 gittalk start -->
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script> -->
+<!-- 评论插件 gittalk end -->
+
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> 新溪-gordon
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                V2025.06
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">云原生</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../normal.html">1. 常用</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/tmp.html">1.1. 临时</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/OCI.html">1.2. OCI-Open Container Initiative</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../docker.html">2. Docker相关</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../normal.html">2.1. 常用</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="normal.html">2.1.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="nomad.html">2.1.2. nomad</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rancher.html">2.1.3. Rancher</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cri.html">2.1.4. 容器运行时(Container Runtime)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="image-build.html">2.1.5. Image Build</a></li>
+<li class="toctree-l3"><a class="reference internal" href="openstack.html">2.1.6. openstack</a></li>
+<li class="toctree-l3"><a class="reference internal" href="podman.html">2.1.7. podman</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">2.1.8. skopeo</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tmp.html">2.1.9. 临时</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../docker.html">2.2. Docker相关</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../dockers/normal.html">2.2.1. docker基本</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/normals/history.html">历史</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/normals/normal.html">基本</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/normals/mac.html">mac路径相关</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/normals/introduce.html">介绍</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../dockers/docker_hub.html">2.2.2. 常用Docker镜像</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dockers/docker_Dockerfile.html">2.2.3. Dockerfile</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/Dockerfiles/normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/Dockerfiles/param.html">Dockerfile命令说明 </a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/Dockerfiles/pub.html">常用的Docker镜像</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/Dockerfiles/entrypoint.html">ENTRYPOINT场景</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/Dockerfiles/multistage-build.html">多阶段构建</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../dockers/net.html">2.2.4. 网络相关</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/nets/normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/nets/practice.html">实践</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/nets/cross-host.html">跨主机容器通信</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/nets/cross-container.html">容器间通信方式</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/nets/tmp.html">临时</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../dockers/docker_cmd.html">2.2.5. docker命令</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_cmds/0help.html">帮助</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_cmds/0topology.html">拓扑图</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_cmds/manages/config.html">docker config</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_cmds/manages/container.html">docker container</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_cmds/manages/image.html">docker image</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_cmds/manages/service.html">docker service</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_cmds/manages/network.html">docker network</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_cmds/manages/volume.html">docker volume</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_cmds/watchs/top.html">docker top</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_cmds/watchs/search.html">docker search</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_cmds/watchs/inspect.html">docker inspect</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_cmds/watchs/images.html">docker images</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_cmds/watchs/history.html">docker history</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_cmds/containers/run.html">docker run</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_cmds/containers/exec.html">docker exec</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_cmds/containers/attach.html">docker attach</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_cmds/containers/logs.html">docker logs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_cmds/containers/port.html">docker port</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_cmds/containers/ps.html">docker ps</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_cmds/containers/rm.html">docker rm</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_cmds/containers/start.html">docker start</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_cmds/containers/stop.html">docker stop</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_cmds/dockerimages/build.html">docker build</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_cmds/dockerimages/login.html">docker login</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_cmds/dockerimages/pull.html">docker pull</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_cmds/dockerimages/push.html">docker push</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_cmds/dockerimages/rmi.html">docker rmi</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_cmds/dockerimages/tag.html">docker tag命令</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_cmds/dockerimages/diff.html">docker diff命令</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_cmds/dockerimages/commit.html">docker commit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_cmds/dockerimages/import.html">docker import</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_cmds/dockerimages/export.html">docker export</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_cmds/dockerimages/save.html">docker save</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_cmds/dockerimages/load.html">docker load</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_cmds/cmds/cp.html">docker cp命令</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../dockers/gpu.html">2.2.6. GPU专用</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/gpus/normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/gpus/question.html">常见问题</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../dockers/docker_compose.html">2.2.7. docker-compose命令</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_composes/0help.html">帮助</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_composes/0config.html">配置实例</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_composes/0install.html">安装与卸载</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_composes/0normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_composes/profile.html">profiles 声明</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_composes/env.html">env环境变量</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_composes/compose_file.html">Compose 模板文件</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/docker_composes/question.html">常见问题</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../dockers/docker_machine.html">2.2.8. docker-machine命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dockers/docker_swarm.html">2.2.9. Docker Swarm</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dockers/question.html">2.2.10. 常见问题</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dockers/practice.html">2.2.11. docker实战</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/practices/registry.html">运行自己的Docker私有镜像仓库 Registry</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/practices/%E6%97%B6%E5%8C%BA.html">时区</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../dockers/example.html">2.2.12. compose实例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/examples/normal.html">Dockerfile文件实例</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dockers/examples/examples.html">compose实例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../language.html">2.3. 云原生编程语言</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../languages/pulumi.html">2.3.1. Pulumi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../languages/ballerina.html">2.3.2. Ballerina</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../tool.html">2.4. 工具</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../vm.html">2.5. 虚拟机</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../vms/virtualbox.html">2.5.1. VirtualBox</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../vms/vmware.html">2.5.2. VMware</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../vms/PD.html">2.5.3. Parallels Desktop</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../vms/vagrant.html">2.5.4. vagrant命令</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../k8s.html">3. k8s相关</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../k8s/normal.html">3.1. kube基本</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/normals/install.html">3.1.1. 安装配置kubectl </a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/normals/volume.html">3.1.2. 卷-磁盘挂载</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/normals/concept.html">3.1.3. 定义</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/normals/principle.html">3.1.4. 原理</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/normals/cluster_testing.html">3.1.5. 集群测试</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/normals/introduce.html">3.1.6. 介绍</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/normals/svc_catalog.html">3.1.7. Catalog服务</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/normals/export_port.html">3.1.8. 暴露端口的方式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/normals/cAdvisor.html">3.1.9. cAdvisor</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../k8s/cmd.html">3.2. kubectl命令</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/cmds/0help.html">3.2.1. 帮助</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/cmds/1create.html">3.2.2. kubectl create</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/cmds/1expose.html">3.2.3. kubectl expose</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/cmds/1run.html">3.2.4. kubect run</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/cmds/2explain.html">3.2.5. kubectl explain</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/cmds/2get.html">3.2.6. kubectl get</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/cmds/2delete.html">3.2.7. kubectl delete</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/cmds/2edit.html">3.2.8. kubectl edit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/cmds/3scale.html">3.2.9. kubectl scale</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/cmds/3rollout.html">3.2.10. kubectl rollout</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/cmds/4cluster-info.html">3.2.11. kubectl cluster-info</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/cmds/4cordon.html">3.2.12. kubectl cordon</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/cmds/4drain.html">3.2.13. kubectl drain</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/cmds/4top.html">3.2.14. kubectl top</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/cmds/5describe.html">3.2.15. kubectl describe</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/cmds/5logs.html">3.2.16. kubectl logs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/cmds/5port-forward.html">3.2.17. kubectl port-forward</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/cmds/5attach.html">3.2.18. kubectl attach</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/cmds/5exec.html">3.2.19. kubectl exec</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/cmds/5cp.html">3.2.20. kubectl cp</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/cmds/5proxy.html">3.2.21. kubectl proxy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/cmds/6apply.html">3.2.22. kubectl apply</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/cmds/6patch.html">3.2.23. kubectl patch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/cmds/6convert.html">3.2.24. kubectl convert</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/cmds/7label.html">3.2.25. kubectl label</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/cmds/7annotate.html">3.2.26. kubectl annotate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/cmds/8config.html">3.2.27. kubectl config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/cmds/8api-versions.html">3.2.28. kubectl api-versions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/cmds/8version.html">3.2.29. kubectl version</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/cmds/8api-resources.html">3.2.30. kubectl api-resources</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../k8s/principle.html">3.3. k8s 原理</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/principles/normal.html">3.3.1. 整体</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/principles/api-server.html">3.3.2. API Server</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/principles/scheduler.html">3.3.3. scheduler</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/principles/client-go.html">3.3.4. client-go</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/principles/controller.html">3.3.5. controller manager</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/principles/operator.html">3.3.6. Operator</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../k8s/yaml.html">3.4. kubectl yaml文件</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/yamls/Pod.yml.html">3.4.1. Pod.yaml</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/yamls/Deployment.yml.html">3.4.2. Deployment.yml</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/yamls/Job.yml.html">3.4.3. Job.yml</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/yamls/CronJob.yml.html">3.4.4. CronJob.yaml</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/yamls/Secret.yml.html">3.4.5. Secret.yml</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/yamls/Service.yml.html">3.4.6. Service.yml</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/yamls/Ingress.yml.html">3.4.7. Ingress.yml</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/yamls/PersistentVolume.yml.html">3.4.8. PersistentVolume</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/yamls/StatefulSet.yml.html">3.4.9. StatefulSet</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/yamls/DaemonSet.yml.html">3.4.10. DaemonSet</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/yamls/ConfigMap.yml.html">3.4.11. ConfigMap.yaml</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/yamls/Role.yml.html">3.4.12. Role.yml</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/yamls/NetworkPolicy.yml.html">3.4.13. NetworkPolicy.yaml</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/yamls/PodSecurityPolicy.yml.html">3.4.14. PodSecurityPolicy.yaml</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/yamls/LimitRange.yml.html">3.4.15. LimitRange.yml</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/yamls/ResourceQuota.yml.html">3.4.16. ResourceQuota.yaml</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/yamls/ServiceAccount.yml.html">3.4.17. ServiceAccount.yaml</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/yamls/CustomResourceDefinition.yml.html">3.4.18. CustomResourceDefinition.yaml</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/yamls/StorageClasses.yml.html">3.4.19. StorageClasses.yaml</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/yamls/option_securityContext.html">3.4.20. securityContext选项</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/yamls/option_hostNetwork.html">3.4.21. hostNetwork选项</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/yamls/option_hostPort.html">3.4.22. hostPort选项</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/yamls/option_lifecycle.html">3.4.23. lifecycle选项</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../k8s/practice.html">3.5. k8s实战</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/practices/cluster_setup.html">3.5.1. Kubernetes集群组建</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/practices/cluster_rebuild.html">3.5.2. Kubernetes集群重建</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/practices/cluster_node_upgrade.html">3.5.3. 集群结点升级</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/practices/plugin_dashboard.html">3.5.4. dashboard服务安装</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/practices/plugin_ingress.html">3.5.5. Ingress(服务暴露) </a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/practices/custom_API_objects.html">3.5.6. Defining custom API objects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/practices/git-sync.html">3.5.7. git-sync</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/practices/secret_dockerpull.html">3.5.8. 私有仓库拉取镜像 </a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/practices/skill_docker_load.html">3.5.9. 小技巧-翻墙才能用的镜像使用方法</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../k8s/future.html">3.6. 未来</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../k8s/tool.html">3.7. 工具</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/tools/kt-connect.html">3.7.1. kt-connect工具</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/tools/kubedog.html">3.7.2. kubedog</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/tools/kustomize.html">3.7.3. Kustomize</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/tools/kubecm.html">3.7.4. kubecm</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/tools/kubewatch.html">3.7.5. kubewatch命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/tools/kubeevent.html">3.7.6. kube-eventer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/tools/kubebuilder.html">3.7.7. kubebuilder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/tools/kubeflow.html">3.7.8. kubeflow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/tools/k3s.html">3.7.9. k3s&amp;k3d</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/tools/k9s.html">3.7.10. k9s</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/tools/fleet.html">3.7.11. fleet</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/tools/ksonnet.html">3.7.12. ksonnet命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/tools/icePanel.html">3.7.13. IcePanel</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/tools/ingress_controller.html">3.7.14. Ingress Controllers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/tools/minikube.html">3.7.15. Minikube相关</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../k8s/helm.html">3.8. Helm Chart</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../k8s/history.html">3.9. 历史版本</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/historys/v1.14.html">3.9.1. 1.14版本</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/historys/v1.16.html">3.9.2. v1.16版本</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/historys/v1.18.html">3.9.3. 1.18版本</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../k8s/historys/v1.20.html">3.9.4. v1.20版本</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../k8s/question.html">3.10. 常见问题</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../prometheus.html">4. Prometheus</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../prometheus/normal.html">4.1. 常用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../prometheus/normals/normal.html">4.1.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../prometheus/normals/history.html">4.1.2. 历史</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../prometheus/prometheus.html">4.2. prometheus</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../prometheus/exporter.html">4.3. exporter </a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../prometheus/exporters/normal.html">4.3.1. 基本</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../prometheus/exporters/sample_exporter.html">4.3.2. 一个简单的 exporter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../prometheus/exporters/node_exporter.html">4.3.3. node_exporter</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../prometheus/alertmanager.html">4.4. alertmanager </a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../prometheus/metrics.html">4.5. 指标</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../prometheus/metrics/kubernetes-apiservers.html">4.5.1. kubernetes-apiservers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../prometheus/metrics/kubernetes-cadvisor.html">4.5.2. kubernetes-cadvisor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../prometheus/metrics/kubernetes-nodes.html">4.5.3. kubernetes-nodes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../prometheus/metrics/kubernetes-pods.html">4.5.4. kubernetes-pods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../prometheus/metrics/kubernetes-service-endpoints.html">4.5.5. kubernetes-service-endpoints</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../prometheus/thanos.html">4.6. Thanos</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../prometheus/port.html">4.7. 端口 </a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../prometheus/practice.html">4.8. 实战</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../prometheus/practices/prometheus_cluster.html">4.8.1. Prometheus集群版</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../prometheus/promql.html">4.9. PromQL</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../servicemesh.html">5. 服务网格</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../servicemeshes/normal.html">5.1. 常用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../servicemeshes/normals/history.html">5.1.1. 历史</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../servicemeshes/normals/concept.html">5.1.2. 定义</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../servicemeshes/istio.html">5.2. Istio</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../servicemeshes/istios/normal.html">5.2.1. 常用</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../servicemeshes/istios/normals/install.html">安装</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../servicemeshes/istios/normals/normal.html">常用</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">新溪-gordon</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../docker.html"><span class="section-number">2. </span>Docker相关</a> &raquo;</li>
+        
+          <li><a href="../normal.html"><span class="section-number">2.1. </span>常用</a> &raquo;</li>
+        
+      <li><span class="section-number">2.1.8. </span>skopeo</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/dockers/normals/skopeo.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            <nav id="local-table-of-contents" role="navigation" aria-labelledby="local-table-of-contents-title">
+              <h4 id="local-table-of-contents-title">On This Page</h4>
+              <ul>
+<li><a class="reference internal" href="#">2.1.8. skopeo</a><ul>
+<li><a class="reference internal" href="#id2">特点</a></li>
+<li><a class="reference internal" href="#image">IMAGE 镜像格式</a><ul>
+<li><a class="reference internal" href="#containers-storage">containers-storage:</a></li>
+<li><a class="reference internal" href="#dir">dir:</a></li>
+<li><a class="reference internal" href="#docker">docker://</a></li>
+<li><a class="reference internal" href="#docker-archive">docker-archive:</a></li>
+<li><a class="reference internal" href="#docker-daemon">docker-daemon:</a></li>
+<li><a class="reference internal" href="#oci">oci:</a></li>
+<li><a class="reference internal" href="#oci-archive">oci-archive:</a></li>
+<li><a class="reference internal" href="#id3">其他</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id4">核心功能</a><ul>
+<li><a class="reference internal" href="#inspect">1. 镜像查看(Inspect)</a></li>
+<li><a class="reference internal" href="#copy">2. 镜像复制(Copy)</a><ul>
+<li><a class="reference internal" href="#encryption-key">参数 <code class="docutils literal notranslate"><span class="pre">--encryption-key</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id5">3. 镜像签名和验证</a></li>
+<li><a class="reference internal" href="#id6">4. 删除远程镜像</a></li>
+<li><a class="reference internal" href="#sync">5. 镜像同步(Sync)</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ocicrypt-keyprovider-config">宏-OCICRYPT_KEYPROVIDER_CONFIG</a><ul>
+<li><a class="reference internal" href="#id7">文件格式</a></li>
+<li><a class="reference internal" href="#id8">模拟调用</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#authenticating">Authenticating</a><ul>
+<li><a class="reference internal" href="#id9">认证文件</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            </nav>
+  <table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="../../genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../search.html"><span class="std std-ref">搜索页面</span></a></p></td>
+</tr>
+</tbody>
+</table>
+<section id="skopeo">
+<h1><span class="section-number">2.1.8. </span>skopeo<a class="headerlink" href="#skopeo" title="此标题的永久链接">¶</a></h1>
+<ul class="simple">
+<li><p>轻量级的命令行工具，用于检查和管理容器镜像。</p></li>
+<li><p>它支持直接与各种容器镜像仓库（如 Docker Hub、Quay.io、OCI 仓库等）交互，无需运行 Docker 守护进程。这使得 Skopeo 特别适合在 CI/CD 流水线、容器安全扫描、镜像同步和分发中使用。</p></li>
+<li><p>GitHub: <a class="reference external" href="https://github.com/containers/skopeo.git">https://github.com/containers/skopeo.git</a></p></li>
+<li><p>docker 镜像: quay.io/skopeo/stable</p></li>
+</ul>
+<section id="id2">
+<h2>特点<a class="headerlink" href="#id2" title="此标题的永久链接">¶</a></h2>
+<ul>
+<li><p>无需 Docker 守护进程</p></li>
+<li><p>支持多种镜像格式:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Docker 镜像（如 docker://）
+OCI 镜像（如 oci:）
+本地文件（如 .tar 文件）
+</pre></div>
+</div>
+</li>
+</ul>
+</section>
+<section id="image">
+<h2>IMAGE 镜像格式<a class="headerlink" href="#image" title="此标题的永久链接">¶</a></h2>
+<section id="containers-storage">
+<h3>containers-storage:<a class="headerlink" href="#containers-storage" title="此标题的永久链接">¶</a></h3>
+<p>&lt;docker-reference&gt; An image located in a local containers/storage image store. Both the location and image store are specified in /etc/containers/storage.conf. (Backend for Podman, CRI-O, Buildah and friends)</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">containers</span><span class="o">-</span><span class="n">storage</span><span class="p">:</span><span class="n">docker</span><span class="o">-</span><span class="n">reference</span>
+</pre></div>
+</div>
+</section>
+<section id="dir">
+<h3>dir:<a class="headerlink" href="#dir" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p><strong>dir:</strong> &lt;path&gt; An existing local directory path storing the manifest, layer tarballs and signatures as individual files. This is a non-standardized format, primarily useful for debugging or noninvasive container inspection.</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">dir</span><span class="p">:</span><span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="nb">dir</span>
+</pre></div>
+</div>
+</section>
+<section id="docker">
+<h3>docker://<a class="headerlink" href="#docker" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p><strong>docker://</strong> &lt;docker-reference&gt; An image in a registry implementing the “Docker Registry HTTP API V2”. By default, uses the authorization state in either $XDG_RUNTIME_DIR/containers/auth.json, which is set using (skopeo login). If the authorization state is not found there, $HOME/.docker/config.json is checked, which is set using (docker login).</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">docker</span><span class="p">:</span><span class="o">//</span><span class="n">registry</span><span class="o">.</span><span class="n">example</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">image</span><span class="p">:</span><span class="n">tag</span>
+</pre></div>
+</div>
+</section>
+<section id="docker-archive">
+<h3>docker-archive:<a class="headerlink" href="#docker-archive" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p><strong>docker-archive:</strong> &lt;path&gt;  An image is stored in the docker save formatted file. docker-reference is only used when creating such a file, and it must not contain a digest.</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">docker</span><span class="o">-</span><span class="n">archive</span><span class="p">:</span><span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">file</span><span class="o">.</span><span class="n">tar</span><span class="p">[:</span><span class="n">tag</span><span class="p">]</span>
+
+<span class="n">本格式可以使用</span><span class="p">:</span> <span class="n">docker</span>  <span class="n">load</span> <span class="o">&lt;</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">demo</span><span class="o">.</span><span class="n">tar</span> <span class="n">命令导入</span>
+</pre></div>
+</div>
+</section>
+<section id="docker-daemon">
+<h3>docker-daemon:<a class="headerlink" href="#docker-daemon" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p><strong>docker-daemon:</strong> docker-reference An image docker-reference stored in the docker daemon internal storage. docker-reference must contain either a tag or a digest. Alternatively, when reading images, the format can be docker-daemon:algo:digest (an image ID).</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">docker</span><span class="o">-</span><span class="n">daemon</span><span class="p">:</span><span class="n">image</span><span class="p">:</span><span class="n">tag</span>
+<span class="n">docker</span><span class="o">-</span><span class="n">daemon</span><span class="p">:</span><span class="n">algo</span><span class="p">:</span><span class="n">digest</span>
+</pre></div>
+</div>
+</section>
+<section id="oci">
+<h3>oci:<a class="headerlink" href="#oci" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p><strong>oci:path:</strong> tag An image tag in a directory compliant with “Open Container Image Layout Specification” at path.</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">oci</span><span class="p">:</span><span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="nb">dir</span><span class="p">:</span><span class="n">tag</span>
+</pre></div>
+</div>
+</section>
+<section id="oci-archive">
+<h3>oci-archive:<a class="headerlink" href="#oci-archive" title="此标题的永久链接">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">oci</span><span class="o">-</span><span class="n">archive</span><span class="p">:</span><span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">file</span><span class="o">.</span><span class="n">tar</span><span class="p">[:</span><span class="n">tag</span><span class="p">]</span>
+</pre></div>
+</div>
+</section>
+<section id="id3">
+<h3>其他<a class="headerlink" href="#id3" title="此标题的永久链接">¶</a></h3>
+<p>剩下都是比较少见的:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">atomic</span><span class="p">:</span>
+<span class="n">tarball</span><span class="p">:</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id4">
+<h2>核心功能<a class="headerlink" href="#id4" title="此标题的永久链接">¶</a></h2>
+<section id="inspect">
+<h3>1. 镜像查看(Inspect)<a class="headerlink" href="#inspect" title="此标题的永久链接">¶</a></h3>
+<p>基本:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ skopeo inspect docker://alpine:latest
+# 输出
+{
+  &quot;Name&quot;: &quot;docker.io/library/alpine&quot;,
+  &quot;Tag&quot;: &quot;latest&quot;,
+  &quot;Digest&quot;: &quot;sha256:58e1c1f4...&quot;,
+  &quot;Created&quot;: &quot;2023-01-01T00:00:00Z&quot;,
+  &quot;Layers&quot;: [
+    &quot;sha256:abc123...&quot;,
+    &quot;sha256:def456...&quot;
+  ]
+}
+</pre></div>
+</div>
+<p>查看 docker 本地存储中的一个镜像的 image config 文件:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ skopeo inspect docker-daemon:alpine:latest
+</pre></div>
+</div>
+<p>查看 registry 中一个镜像的 manifests 文件，可以通过这种方式来判断镜像是否存在:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ skopeo inspect docker://alpine:latest --raw | jq &#39;.&#39;
+</pre></div>
+</div>
+</section>
+<section id="copy">
+<h3>2. 镜像复制(Copy)<a class="headerlink" href="#copy" title="此标题的永久链接">¶</a></h3>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>基于上面镜像格式应该有 <code class="docutils literal notranslate"><span class="pre">7*7</span></code> 种可能</p>
+</div>
+<p>示例-docker复制为其他格式:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>下载到本地 OCI 格式:
+
+    $ skopeo copy docker://alpine:latest oci:alpine-oci
+
+下载到本地目录:
+
+    $ skopeo copy docker://alpine:latest dir:/path/to/alpine
+
+下载为 tar 文件:
+
+    $ skopeo copy docker://alpine:latest docker-archive:/path/to/alpine.tar
+
+
+下载为 oci-archive 文件:
+
+    $ skopeo copy docker://alpine:latest oci-archive:/tmp/alpine.oci
+
+下载到 docker 守护进程:
+
+    $ skopeo copy docker://alpine:latest docker-daemon:alpine:latest
+    # 基本等同于 docker pull
+</pre></div>
+</div>
+<p>示例-其他格式复制docker格式:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>从本地 Docker 守护进程（dockerd）写入到指定仓库:
+    $ skopeo copy docker-daemon:alpine:3.12 docker://alpine:3.12
+    # 基本等同于 docker push
+</pre></div>
+</div>
+<section id="encryption-key">
+<h4>参数 <code class="docutils literal notranslate"><span class="pre">--encryption-key</span></code><a class="headerlink" href="#encryption-key" title="此标题的永久链接">¶</a></h4>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>*Experimental* key with the encryption protocol to use needed to encrypt the image (e.g. jwe:/path/to/key.pem)
+
+一个加密密钥，用于加密镜像的所有或部分层（layers）
+
+skopeo copy --encryption-key &lt;key&gt; docker://&lt;source_image&gt; docker://&lt;destination_image&gt;
+    &lt;key&gt;：加密密钥，可以是公钥（如 PGP 密钥）或对称密钥。
+
+支持的密钥类型:
+    1. PGP 密钥：
+        skopeo copy --encryption-key &quot;pgp:recipient@example.com&quot; docker://source docker://destination
+    2. JSON Web Key (JWK)：
+        skopeo copy --encryption-key &quot;jwk:{\&quot;kty\&quot;:\&quot;oct\&quot;,\&quot;k\&quot;:\&quot;base64url-encoded-key\&quot;}&quot; docker://source docker://destination
+    3. 对称密钥：
+        skopeo copy --encryption-key &quot;base64url-encoded-symmetric-key&quot; docker://source docker://destination
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>【注意】与 <code class="docutils literal notranslate"><span class="pre">宏---encryption-key</span></code> 配合时，使用命令格式如 <code class="docutils literal notranslate"><span class="pre">skopeo</span> <span class="pre">copy</span> <span class="pre">--encryption-key</span> <span class="pre">provider:my-kms-provider</span> <span class="pre">docker://source</span> <span class="pre">docker://destination</span></code> 。具体参见 <code class="docutils literal notranslate"><span class="pre">宏---encryption-key</span></code></p>
+</div>
+</section>
+</section>
+<section id="id5">
+<h3>3. 镜像签名和验证<a class="headerlink" href="#id5" title="此标题的永久链接">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ skopeo standalone-sign docker://alpine:latest my-signature
+</pre></div>
+</div>
+</section>
+<section id="id6">
+<h3>4. 删除远程镜像<a class="headerlink" href="#id6" title="此标题的永久链接">¶</a></h3>
+<blockquote>
+<div><p>$ skopeo delete docker://myregistry.example.com/myimage:tag</p>
+</div></blockquote>
+</section>
+<section id="sync">
+<h3>5. 镜像同步(Sync)<a class="headerlink" href="#sync" title="此标题的永久链接">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span># 从docker镜像同步到目录
+$ skopeo sync --src docker --dest dir registry.example.com/busybox /media/usb
+</pre></div>
+</div>
+</section>
+</section>
+<section id="ocicrypt-keyprovider-config">
+<h2>宏-OCICRYPT_KEYPROVIDER_CONFIG<a class="headerlink" href="#ocicrypt-keyprovider-config" title="此标题的永久链接">¶</a></h2>
+<ul>
+<li><p>指定密钥提供者配置文件：密钥提供者是加密/解密过程中用于管理密钥的外部工具或服务，例如基于云的 KMS（Key Management Service， 如：AWS KMS、Azure Key Vault 或 Google Cloud KMS）或本地的 HSM（Hardware Security Module）。</p></li>
+<li><p>与 OCI (Open Container Initiative) 镜像加密相关的配置环境变量。</p></li>
+<li><p>当涉及到使用加密的容器镜像时，这个环境变量用来指定一个密钥提供者（key provider）的配置文件路径，该文件定义了如何获取用于解密镜像的密钥。</p></li>
+<li><p>使用:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">export</span> <span class="n">OCICRYPT_KEYPROVIDER_CONFIG</span><span class="o">=/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">keyprovider</span><span class="o">/</span><span class="n">config</span><span class="o">.</span><span class="n">json</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<section id="id7">
+<h3>文件格式<a class="headerlink" href="#id7" title="此标题的永久链接">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;key-providers&quot;</span><span class="p">:</span> <span class="p">{</span>        <span class="c1"># 关键词</span>
+    <span class="s2">&quot;my-kms-provider&quot;</span><span class="p">:</span> <span class="p">{</span>    <span class="c1"># 唯一标识</span>
+        <span class="s2">&quot;cmd&quot;</span><span class="p">:</span> <span class="p">{</span>
+              <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;/usr/local/bin/my-kms-binary&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;args&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;--region=us-west-1&quot;</span><span class="p">,</span> <span class="s2">&quot;--key-id=1234abcd&quot;</span><span class="p">]</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>配合 skopeo 使用:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># 加密</span>
+<span class="n">skopeo</span> <span class="n">copy</span> <span class="o">--</span><span class="n">encryption</span><span class="o">-</span><span class="n">key</span> <span class="n">provider</span><span class="p">:</span><span class="n">my</span><span class="o">-</span><span class="n">kms</span><span class="o">-</span><span class="n">provider</span> <span class="n">docker</span><span class="p">:</span><span class="o">//</span><span class="n">source</span> <span class="n">docker</span><span class="p">:</span><span class="o">//</span><span class="n">destination</span>
+<span class="c1"># 解密</span>
+<span class="n">skopeo</span> <span class="n">copy</span> <span class="o">--</span><span class="n">decryption</span><span class="o">-</span><span class="n">key</span> <span class="n">provider</span><span class="p">:</span><span class="n">my</span><span class="o">-</span><span class="n">kms</span><span class="o">-</span><span class="n">provider</span> <span class="n">docker</span><span class="p">:</span><span class="o">//</span><span class="n">encrypted</span><span class="o">-</span><span class="n">image</span> <span class="n">docker</span><span class="p">:</span><span class="o">//</span><span class="n">local</span><span class="o">-</span><span class="nb">dir</span>
+</pre></div>
+</div>
+</section>
+<section id="id8">
+<h3>模拟调用<a class="headerlink" href="#id8" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>OCI 加密密钥提供者协议：密钥提供者需要遵循 OCI 定义的加密和解密协议。它的输入通常是以标准输入（stdin）形式传入的 JSON 格式请求，而不是通过命令行直接传递参数。</p></li>
+</ul>
+<p>构造一个符合 OCI 标准的 JSON 请求:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;op&quot;</span><span class="p">:</span> <span class="s2">&quot;encrypt&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;keywrapparams&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;region&quot;</span><span class="p">:</span> <span class="s2">&quot;us-west-1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;key-id&quot;</span><span class="p">:</span> <span class="s2">&quot;1234abcd&quot;</span>
+  <span class="p">},</span>
+  <span class="s2">&quot;annotations&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;example&quot;</span><span class="p">:</span> <span class="s2">&quot;annotation-data&quot;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>执行:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">echo</span> <span class="s1">&#39;{&quot;op&quot;:&quot;encrypt&quot;,&quot;keywrapparams&quot;:{&quot;region&quot;:&quot;us-west-1&quot;,&quot;key-id&quot;:&quot;1234abcd&quot;},&quot;annotations&quot;:{&quot;example&quot;:&quot;annotation-data&quot;}}&#39;</span> \
+<span class="o">|</span> <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">local</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">my</span><span class="o">-</span><span class="n">kms</span><span class="o">-</span><span class="n">binary</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="authenticating">
+<h2>Authenticating<a class="headerlink" href="#authenticating" title="此标题的永久链接">¶</a></h2>
+<p>基本:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ skopeo login --username USER myregistrydomain.com:5000
+Password:
+$ skopeo inspect docker://myregistrydomain.com:5000/busybox
+{...}
+$ skopeo logout myregistrydomain.com:5000
+</pre></div>
+</div>
+<p>Using <code class="docutils literal notranslate"><span class="pre">--creds</span></code> directly:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ skopeo inspect --creds=&lt;testuser&gt;:&lt;testpassword&gt; docker://myregistrydomain.com:5000/busybox
+{...}
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">--src-creds</span></code> 、 <code class="docutils literal notranslate"><span class="pre">--dest-creds</span></code></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">skopeo</span> <span class="n">copy</span> <span class="n">oci</span><span class="p">:</span><span class="n">image</span><span class="o">-</span><span class="n">encrypted</span> <span class="n">docker</span><span class="p">:</span><span class="o">//</span><span class="n">hub</span><span class="o">.</span><span class="n">zhaoweiguo</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">ns</span><span class="o">/</span><span class="n">demo</span> \
+    <span class="o">--</span><span class="n">dest</span><span class="o">-</span><span class="n">username</span><span class="o">=&lt;</span><span class="n">name</span><span class="o">&gt;</span> <span class="o">--</span><span class="n">dest</span><span class="o">-</span><span class="n">password</span><span class="o">=&lt;</span><span class="n">passwd</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">--dest-authfile</span></code></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ skopeo copy docker://a.io/abc:v1.17.5 docker://b.io/demo:v1.17.5 --dest-authfile /root/.docker/config.json
+</pre></div>
+</div>
+<section id="id9">
+<h3>认证文件<a class="headerlink" href="#id9" title="此标题的永久链接">¶</a></h3>
+<ul>
+<li><p>认证文件默认存放在 <code class="docutils literal notranslate"><span class="pre">$HOME/.docker/config.json</span></code></p></li>
+<li><p>文件内容:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+ <span class="s2">&quot;auths&quot;</span><span class="p">:</span> <span class="p">{</span>
+  <span class="s2">&quot;registry.redhat.io&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;auth&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt;username:password in base64&gt;&quot;</span>
+  <span class="p">},</span>
+  <span class="s2">&quot;quay.io&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;auth&quot;</span><span class="p">:</span> <span class="s2">&quot;bXl1c2VyOm15c2VjcmV0&quot;</span>
+  <span class="p">}</span>
+ <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="../../genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../search.html"><span class="std std-ref">搜索页面</span></a></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="tmp.html" class="btn btn-neutral float-right" title="2.1.9. 临时" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="podman.html" class="btn btn-neutral" title="2.1.7. podman" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+  
+  <div id="gitalk-container"></div>
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2010-2025, 新溪-gordon.
+
+    </p>
+  </div>
+  <div>备案号 <a href="http://www.beian.miit.gov.cn">京ICP备16018553号</a></div><div>Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a></div>. 
+
+
+</footer>
+
+<script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?042289284b8eb33866001347a3e0b129";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>     
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'V2025.06',
+            LANGUAGE:'zh-CN',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../_static/sphinx_highlight.js"></script>
+      <script type="text/javascript" src="../../_static/clipboard.min.js"></script>
+      <script type="text/javascript" src="../../_static/copybutton.js"></script>
+      <script type="text/javascript" src="../../_static/translations.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+
+  
+
+  <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+
+
+      // var gitalk = new Gitalk({
+      //         clientID: '565177626b5d46427009',
+      //         clientSecret: 'b2a36e67e1d2a73e43667f46d571c2624f8e1026',
+      //         repo: 'knowledge',
+      //         owner: 'zhaoweiguo',
+      //         admin: ['zhaoweiguo'],
+      //         id: location.pathname,      // Ensure uniqueness and length less than 50
+      //         distractionFreeMode: false  // Facebook-like distraction free mode
+      //       })
+      // gitalk.render('gitalk-container')
+
+  </script>
+
+
+<script type="text/javascript" src="../../_static/js/table-of-contents-sidebar.js"></script>
+<!-- <script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script> -->
+<script type="text/javascript">
+    window.onload = function(e){
+        TableOfContents.init({
+            basePath: "https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/",
+            querySelector: "body" // or other css querySelector
+        });
+    }
+</script> 
+
+</body>
+</html>

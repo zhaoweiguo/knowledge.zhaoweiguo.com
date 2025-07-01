@@ -1,0 +1,133 @@
+NFS
+###
+
+基本命令
+========
+
+安装
+----
+
+nfs 安装&启动::
+
+    // 安装
+    yum -y install nfs-utils
+
+    // 启动
+    systemctl start rpcbind nfs-server
+
+
+查看
+----
+
+shoumount 命令测试 NFS 服务器的输出目录状态::
+
+    // 语法：showmount [选项] [NFS 服务器名称或地址]
+
+    // 常用的选项有：
+    -a // 显示指定 NFS 服务器的所有客户端主机及其所连接的目录
+    -d // 显示指定的 NFS 服务器中已被客户端连接的所有输出目录
+    -e // 显示指定的 NFS 服务器上所有输出的共享目录
+
+
+
+
+挂载
+----
+
+在客户端挂载 NFS 文件系统::
+
+    $ mount -t nfs SERVER:/path/to/sharedfs /path/to/mount_point
+
+在客户端设置开机自动挂载 nfs：编辑 /etc/fstab 文件，添加::
+
+    SERVER:/PATH/TO/EXPORTED_FS /mnt_point nfs defaults,_netdev 0 0
+
+
+
+nfs 工作机制
+============
+
+NFS 四个进程
+------------
+
+NFS 服务器端运行着四个进程::
+
+    1. nfsd: nfs 的守护进程，监听在 2049/tcp 和 2049/udp 端口上
+        不负责文件存储（由 NFS 服务器本地内核负责调度存储），
+        用于理解客户端发起的 rpc 请求，并将其转交给本地内核，而后存储在指定的文件系统上
+    2. mountd: 用于验证客户端是否在允许访问此 NFS 文件系统的客户端列表中，在则允许访问（发放一个令牌，持令牌去找 nfsd），否则拒绝访问
+        mountd 的服务端口是随机的，由 rpc 服务（portmapper）提供随机端口号
+    3. idmapd: 实现用户帐号的集中映射，把所有的帐号都映射为 NFSNOBODY，但是在访问时却能以本地用户的身份去访问
+    4. portmapper: NFS 服务器的 rpc 服务，其监听于 111/TCP 和 111/UDP 套接字上，用于管理远程过程调用（RPC）
+
+工作流程
+--------
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/04/C87Fdo.jpg
+
+   NFS 的简单工作流程
+
+步骤-查看 file 文件的信息
+-------------------------
+
+1. 客户端发起查看 file 信息的指令（ls file）给内核，内核通过 NFS 模块得知此文件并不是本地文件系统中的文件，而是在远程 NFS 主机上的一个文件
+2. 客户端主机的内核通过 RPC 协议把查看 file 信息的指令（系统调用）封装成 rpc 请求通过 TCP 的 111 端口发送给 NFS 服务端主机的 portmapper
+3. NFS 服务端主机的 portmapper（RPC 服务进程）告诉客户端说 NFS 服务端的 mountd 服务在某某端口上，你去找它验证
+4. 客户端得知服务端的 mountd 进程端口号后，通过已知的服务端 mountd 端口号请求验证
+5. mountd 收到验证请求后验证发起请求的客户端是否在允许访问此 NFS 文件系统的客户端列表中，在则允许访问（发放一个令牌，持令牌去找 nfsd），否则拒绝访问
+6. 验证通过后客户端持 mountd 发放的令牌去找服务端的 nfsd 进程，请求查看某文件
+7. 服务端的 nfsd 进程发起本地系统调用，向内核请求查看客户端要查看的文件的信息
+8. 服务端的内核执行 nfsd 请求的系统调用，并将结果返回给 nfsd 服务
+9. nfsd 进程收到内核返回的结果后将其封装成 rpc 请求报文并通过 tcp/ip 协议返回给客户端
+
+配置文件 /etc/exports
+=====================
+
+nfs 的主配置文件是 /etc/exports，在此文件中，可以定义 NFS 系统的输出目录（即共享目录）、访问权限和允许访问的主机等参数。该文件默认为空，没有配置输出任何共享目录，这是基于安全性的考虑，如此即使系统启动了 NFS 服务也不会输出任何共享资源。
+
+
+命令格式为::
+
+    <输出目录> [客户端 1 (选项 1, 选项 2,...)] [客户端 2 (选项 1, 选项 2,...)]
+
+
+
+
+
+Differentiate between CIFS and NFS
+==================================
+
+CIFS
+----
+
+CIFS stands for Common Internet File System. It is also known as Server Message Block. It is a network protocol whose most general use is sharing documents on a Local Area Network (LAN). The protocol allows a user to manipulate files just as if they were on the local computer.
+
+Operations such as read, write, create, delete, and rename are all supported. The only difference is that the files are not on the local computer and are actually on a remote server.
+
+NFS
+---
+
+NFS stands for Network File System. It is a type of file system mechanism that enables data storage and retrieval from multiple disks and directories across a shared network. Network File System is a protocol that operates on all the networks of IP-based.
+
+It is implemented in that client/server application in which the server of NFS manages the authorization, authentication, and clients.
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/11/QCCxli.png
+
+   The major differences between CIFS and NFS
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

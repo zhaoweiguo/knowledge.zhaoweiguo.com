@@ -1,0 +1,1394 @@
+快手·音视频技术入门课
+#####################
+
+* 刘歧
+* 2022-07-25
+
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/03/rPjLMr.jpg
+
+::
+
+    1. 音视频基础概念
+    2. 流媒体技术速成
+    3. FFmpeg API 应用
+    4. FFmpeg 社区“玩法”
+
+
+开篇基础 (4讲)
+==============
+
+
+01 | 如何从色彩格式,帧率等参数角度看视频图像
+--------------------------------------------
+
+常见的色彩格式::
+
+    •  GRAY 色彩空间
+    •  YUV 色彩空间
+    •  RGB 色彩空间
+    •  HSL 和 HSV 色彩空间
+
+
+GRAY 灰度模式表示
+^^^^^^^^^^^^^^^^^
+
+* 8 位展示的灰度，取值 0 至 255，表示明暗程度，0 为最黑暗的模式，255 为最亮的模式
+* 由于每个像素点是用 8 位深展示的，所以一个像素点等于占用一个字节，一张图像占用的存储空间大小计算方式也比较简单::
+
+    图像占用空间=图像宽度(W) * 图像高度(H) * 1
+    例:
+        如果图像为 352x288 的分辨率，那么一张图像占用的存储空间应该是 352x288，也就是 101376 个字节大小
+
+
+YUV 色彩表示
+^^^^^^^^^^^^
+
+*  Y 表示视频的灰阶值，也可以理解为亮度值，而 UV 表示色彩度
+*  如果忽略 UV 值的话，我们看到的图像与前面提到的 GRAY 相同，为黑白灰阶形式的图像
+*  YUV 最大的优点在于每个像素点的色彩表示值占用的带宽或者存储空间非常少
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/03/zpAzEt.jpg
+
+    原图与 YUV 的 Y 通道、U 通道和 V 通道的图像示例
+
+* 为节省带宽起见，大多数 YUV 格式平均使用的每像素位数都少于 24 位。
+* YUV 的表示法也称为 A：B：C 表示法。主要的色彩采样格式有::
+
+    YCbCr 4：2：0
+    YCbCr 4：2：2
+    YCbCr 4：1：1 
+    YCbCr 4：4：4
+
+YUV 4:4:4 格式
+''''''''''''''
+
+* yuv444表示 4 比 4 比 4 的 yuv 取样
+* 水平每 1 个像素（即 1x1 的 1 个像素）中 y 取样 1 个，u 取样 1 个，v 取样 1 个，所以每 1x1 个像素 y 占有 1 个字节，u 占有 1 个字节，v 占有 1 个字节
+* 平均 yuv444 每个像素所占位数为::
+
+    (1+1+1) * 8bit ÷ 1pix = 24bpp
+
+那么 352x288 分辨率的一帧图像占用的存储空间为::
+
+    352 x 288 x 24(bit) ÷ 8(bit) = 304128(byte)
+
+YUV 4:2:2 格式
+''''''''''''''
+
+* yuv422表示 4 比 2 比 2 的 yuv 取样
+* 水平每 2 个像素（即 2x1 的 2 个像素）中 y 取样 2 个，u 取样 1 个，v 取样 1 个，所以每 2x1 个像素 y 占有 2 个字节，u 占有 1 个字节，v 占有 1 个字节
+* 平均 yuv422 每个像素所占位数为::
+
+    (2+1+1) * 8bit ÷ 2pix = 16bpp
+
+YUV 4:1:1 格式
+''''''''''''''
+
+* yuv411表示 4 比 1 比 1 的 yuv 取样
+* 水平每 4 个像素（即 4x1 的 4 个像素）中 y 取样 4 个，u 取样 1 个，v 取样 1 个，所以每 4x1 个像素 y 占有 4 个字节，u 占有 1 个字节，v 占有 1 个字节
+* 平均 yuv411 每个像素所占位数为::
+
+    (4+1+1) * 8bit ÷ 4pix = 12bpp
+
+
+YUV 4:2:0 格式
+''''''''''''''
+
+* yuv420 表示 4 比 2 比 0 的 yuv 取样
+* 水平每 2 个像素与垂直每 2 个像素（即 2x2 的 2 个像素）中 y 取样 4 个，u 取样 1 个，v 取样 1 个
+* 平均 yuv420 每个像素所占位数为::
+
+    (4+1+1) * 8bit ÷ 4pix = 12bpp
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/03/xTMeVI.jpg
+
+    yuv420格式图像的读取和存储方式：为了方便理解 YUV 在内存中的存储方式，我们以宽度为 6、高度为 4 的 yuv420 格式为例，一帧图像读取和存储在内存中的方式
+
+.. note:: 4:2:0并不意味着只有Y，Cb而没有Cr分量。它指得是对每行扫描线来说，只有一种色度分量以2:1的抽样率存储。相邻的扫描行存储不同的色度分量，也就是说，如果一行是4:2:0的话，下一行就是4:0:2，再下一行是4:2:0以此类推。对每个色度分量来说，水平方向和竖直方向的抽样率都是2:1，所以可以说色度的抽样率是4:1。对非压缩的8比特量化的来说，每个由2x2个2行2列相邻的像素组成的宏像素需要占用6字节内存。
+
+
+RGB 色彩表示
+^^^^^^^^^^^^
+
+* 三原色光模式（RGB color model），又称 RGB 颜色模型或红绿蓝颜色模型，是一种加色模型，将红（Red）、绿（Green）、蓝（Blue）三原色的色光按照不同的比例相加，来合成各种色彩光。
+* 每象素 24 位编码的 RGB 值：使用三个 8 位无符号整数（0 到 255）表示红色、绿色和蓝色的强度。这是当前主流的标准表示方法，用于交换真彩色和 JPEG 或者 TIFF 等图像文件格式里的通用颜色。它可以产生一千六百万种颜色组合，对人类的眼睛来说，其中有许多颜色已经无法确切地分辨了。
+
+* 典型使用上，数字视频的 RGB 不是全值域的。视频 RGB 有比例和偏移量的约定，即 （16, 16, 16）是黑色，（235, 235, 235）是白色。
+
+* RGB 常见的展现方式分为 16 位模式和 32 位模式（32 位模式中主要用其中 24 位来表示 RGB）。
+* 16 位模式（RGB565、BGR565、ARGB1555、ABGR1555）分配给每种原色各为 5 位，其中绿色为 6 位，因为人眼对绿色分辨的色调更敏感。但某些情况下每种原色各占 5 位，余下的 1 位不使用或者表示 Alpha 通道透明度。
+* 32 位模式（ARGB8888），实际就是 24 位模式，余下的 8 位不分配到象素中，这种模式是为了提高数据处理的速度。同样在一些特殊情况下，在有些设备中或者图像色彩处理内存中，余下的 8 位用来表示象素的透明度（Alpha 通道透明度）。
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/03/BZ3vGO.jpg
+
+    RGB 色彩分布直方图
+
+
+HSL 与 HSV 色彩表示
+^^^^^^^^^^^^^^^^^^^
+
+* HSL 和 HSV 是将 RGB 色彩模型中的点放在圆柱坐标系中的表示法，在视觉上会比 RGB 模型更加直观。
+* HSL，就是色相（Hue）、饱和度（ Saturation）、亮度（ Lightness）
+* 色相（H）是色彩的基本属性，就是平常我们所说的颜色名称，如红色、黄色等；
+* 饱和度（S）是指色彩的纯度，越高色彩越纯，低则逐渐变灰，取 0～100% 的数值；
+* 明度（V）和亮度（L），同样取 0～100% 的数值。
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/03/hBcpu6.jpg
+
+    HSL和HSV圆柱坐标系表示法：HSL 和 HSV 二者都把颜色描述在圆柱坐标系里的点内，这个圆柱的中心轴取值为自底部的黑色到顶部的白色，而在它们中间的是灰色，绕这个轴的角度对应于“色相”，到这个轴的距离对应于“饱和度”，而沿着这个轴的高度对应于“亮度”、“色调”或“明度”。
+
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/03/eCV9xr.jpg
+
+    HSL和HSV圆锥体表示法：HSV 色彩空间还可以表示为类似于上述圆柱体的圆锥体，色相沿着圆柱体的外圆周变化，饱和度沿着从横截面的圆心的距离变化，明度沿着横截面到底面和顶面的距离而变化。这种用圆锥体来表示 HSV 色彩空间的方式可能更加精确，有些图像在 RGB 或者 YUV 的色彩模型中处理起来并不精准，我们可以将图像转换为 HSV 色彩空间，再进行处理，效果会更好。例如图像的抠像处理，用圆锥体表示在多数情况下更实用、更精准。
+
+图像的色彩空间
+^^^^^^^^^^^^^^
+
+* 用相同的数据格式也不一定能输出颜色完全一样的图像，还受图像的色彩空间影响
+* 这里说的色彩空间也叫色域，指某种表色模式用所能表达的颜色构成的范围区域。而这个范围，不同的标准支持的范围则不同
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/03/AasXVW.jpg
+
+    不同的标准支持的范围不同，从左到右依次是基于 CIE 模型的 BT.601、BT.709和BT.2020
+
+视频逐行/隔行扫描与帧率
+^^^^^^^^^^^^^^^^^^^^^^^
+
+隔行扫描与逐行扫描
+''''''''''''''''''
+
+* 隔行扫描（Interlaced）是一种将图像隔行显示在扫描式显示设备上的方法，例如早期的 CRT 电脑显示器。
+* 非隔行扫描的扫描方法，即逐行扫描（Progressive），通常从上到下地扫描每帧图像，这个过程消耗的时间比较长，占用的频宽比较大，所以在频宽不够时，很容易因为阴极射线的荧光衰减在视觉上产生闪烁的效应。
+* 隔行扫描的扫描设备会交换扫描偶数行和奇数行，同一张图像要刷两次，所以就产生了下图显示的条纹。
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/03/q9rQQZ.jpg
+
+    隔行扫描效果
+
+* 早期的显示器设备刷新率比较低，所以不太适合使用逐行扫描，一般都使用隔行扫描。
+* 隔行扫描：常见的分辨率描述是 720i、1080i，“i”就是: 隔行扫描”interlaced scan
+* 逐行扫描：常见到的 720p、1080p，"p"就是: 逐行扫描”progressive scan
+
+
+
+帧率
+''''
+
+* 帧率（FrameRate），指一秒钟刷新的视频图像帧数（Frames Per Second）
+
+不同时代的设备，不同场景的视频显示设备，刷新的能力也不同，所以针对不同的场景也出现了很多种标准::
+
+    1. NTSC 标准的帧率是 30000/1001，大约为 29.97 fps
+    2. PAL 标准的帧率是 25/1，为 25 fps
+    3. QNTSC 标准的帧率是 30000/1001，大约为 29.97 fps
+    4. QPAL 标准的帧率是 25/1，为 25 fps
+    5. SNTSC 标准的帧率是 30000/1001，大约为 29.97 fps
+    6. SPAL 标准的帧率是 25/1，为 25 fps
+    7. FILM 标准的帧率是 24/1，为 24 fps
+    8. NTSC-FILM 标准的帧率是 24000/1001，大约为 23.976 fps
+
+
+.. note:: NTSC 标准的分辨率都不是整除的帧率，分母都是 1001。NTSC 制式的标准为了解决因为色度和亮度频率不同引起失真色差的问题，将频率降低千分之一，于是就看到了有零有整的帧率。
+
+* 关于视频刷新帧率背后更详细的知识，《The Black Art of Video Game Console Design》
+
+
+
+图像分辨率与比例
+^^^^^^^^^^^^^^^^
+
+* 分辨率通常由宽、高与像素点占用的位数组成，计算方式为图像的宽乘以高
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/03/PY5KGL.jpg
+
+    DAR 是显示宽高比率（display aspect ratio），表示不同分辨率的图像的差别。
+
+* 而分辨率在我们日常的应用中各家的档位定义均有不同，但是在国际的标准中还是有一个参考定义的，并且分辨率都有定义名称。
+* 经常听到人们提到 1080p、4K，其实它们还有更标准的称呼或者叫法，例如 1080p 我们又叫 Full-HD，通常接近 4K 的分辨率我们叫 4K 也没太大问题，像有更标准的叫法，比如 3840x2160 的分辨率应该是 UHD-1。
+
+
+
+02 | 音频从采集到输出涉及哪些关键参数
+-------------------------------------
+
+* 声音的频率一般会以赫兹（Hz）表示，指每秒钟周期性振动的次数。
+* 声音的强度单位则用分贝（dB）来表示。
+
+音频采样数据格式
+^^^^^^^^^^^^^^^^
+
+* 先采集到模拟信号，然后通过 ADC（模数转换）将模拟信号转换成数字信号以后，再通过 PCM（Pulse Code Modulation）脉冲编码调制对连续变化的模拟信号进行采样、量化和编码转换成离散的数字信号，从而实现音频信号的采集。另外，也可以将采集的音频信号输出到扬声器、耳机之类的设备。
+
+* PCM 文件就是未经封装的音频原始文件，或者叫做音频“裸数据”
+* 不同的扬声器、耳机设备，甚至是声卡输出设备，对音频的裸数据支持的情况不一样，有的设备支持单精度浮点型数据、有的设备支持双精度浮点型数据、有的设备支持无符号型数据、有的设备支持有符号型数据。因为输出的数据类型的支持不同，所以 PCM 采样数据的格式在输出之前，需要转换一下。这些数据的格式我们通常称之为``采样数据格式``。
+
+音频采样频率
+^^^^^^^^^^^^
+
+* 人耳能够听到的频率范围是在 20Hz～20kHz 之间
+* 为了保证音频不失真，音频的采样频率通常应该在 40kHz 以上，而理论上采样率大于 40kHz 的音频格式都可以称之为无损格式。现在一般的专业设备的采样频率为 44100Hz（也称之为 44.1kHz）。并且 44.1kHz 是专业音频中的最低采样率。
+
+使用场景::
+
+    1. 8000 Hz 主要是电话通信时用的采样率，对于传达人们说话时的声音已经足够了
+    2. 11025 Hz、22050 Hz 主要是无线电广播用的采样率
+    3. 44100 Hz 常用于音频 CD，MP3 音乐播放等场景
+    4. 48000 Hz 常用于 miniDV、数字电视、DVD、电影和专业音频等设备中
+
+
+音频声道及其布局
+^^^^^^^^^^^^^^^^
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/04/qcMrHQ.jpg
+
+    采集不同方位的声源，然后通过不同方位的扬声器播放出来就产生了不同的声道。常见的声道内容除了左声道、右声道，还有立体声等，当我们听到的音频声道比较多，比如听交响乐的时候，立体感会尤为明显
+
+音频采样位深度
+^^^^^^^^^^^^^^
+
+* 采样的位深度，也叫采样位深，它决定了声音的动态范围。平时，我们常见的 16 位（16bit）可以记录大概 96 分贝（96dB）的动态范围
+* 也可以理解为每一个比特大约可以记录 6dB 的声音。同理，20bit 可记录的动态范围大概是 120dB，24bit 就大概是 144dB。
+
+计算公式::
+
+    20×math.log10(65535)
+
+.. note:: 位深度并不是越大越好，也不是越小越好，不同的场景有不同的应用
+
+* 44dB 属于人类可以接受的程度，55dB 会使人感觉到烦躁，60dB 会让人没有睡意，70dB 会令人精神紧张，85dB 长时间听会让人感觉刺耳，100dB 会使人暂时失去听觉，120dB 可以瞬间刺穿你的耳膜，160dB 会通过空气振波震碎玻璃，200dB 可以使人死亡。
+
+
+音频的码率
+^^^^^^^^^^
+
+* 所谓码率，我们通常可以理解为按照某种频率计算一定数据量的单位，重点体现在“率”上面，我们常用的码率统计时间单位为秒，所以码率也就是一秒钟的数据量，通常我们用 bps（bits per second）来表示，也就是每秒钟有多少位数据。
+* 音频的码率可以间接地表示音频的质量，一般高清格式的码率更高。
+
+音频的码率::
+
+    例:
+        双声道立体声、采样率是 48000、采样位深是 16 位、时长为 1 分钟的音频
+    存储空间占用计算:
+        声道数×采样率×采样位深×时长=2×48000×16×60=92160000b=11520000B=11.52MB
+    码率应该是 ：
+        92160000b÷60s=1536000bps=1536kbps=1.536Mbps
+
+音频的编解码
+^^^^^^^^^^^^
+
+互联网上常见的音频编码有::
+
+    AAC、MP3、AC-3、OPUS
+    个别地方还可能会使用 WMA
+
+.. note:: 从兼容性来看，AAC 和 OPUS 更出众一些。目前 AAC 应用于众多音乐播放器和音乐格式封装中，OPUS 常见于语音通信中。
+
+* 做音频通话的话可以考虑使用 OPUS，因为基于 OPUS 的音频，处理语音更方便一些，例如回声消除，降噪等。
+* 如果是做音乐压缩，我们可以考虑 AAC，因为 AAC 支持的音质与硬件兼容性更好一些。
+* 如果还要效果更好，但不太要求兼容性的话，AC-3 是一个不错的选择，因为杜比之类的音频，尤其是在全景声音乐压缩的场景下，使用 AC-3 做音频压缩效果更好，能够听到的细节会比 AAC 压缩的音频更多一些。
+* MP3 的音频编码压缩方式相对于 AAC 来说，性价比低了一些。对比二者的高音质，AAC HEv2 无论是从码率、清晰度还是音频的还原度来说，都比 MP3 更优秀。
+
+
+03 | 如何做音视频的封装与转码
+-----------------------------
+
+文件格式::
+
+    RMVB、AVI、WMV、MP4、FLV
+
+视频转码主要涉及::
+
+    1. 编码压缩算法（Encoding）
+    2. 格式封装操作 (Muxing)
+    3. 数据传输 (例如 RTMP、RTP)
+    4. 格式解封装（Demuxing）
+    5. 解码解压缩算法（Decoding）
+
+.. note:: 在我们将视频流、音频流写入到一个封装容器中之前，需要先弄清楚这个容器是否支持我们当前的视频流、音频流数据。
+
+
+音视频编解码
+^^^^^^^^^^^^
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/04/dbXuR5.jpg
+
+    例：有一个 6 帧的连续视频图像，每一帧都是宽 100、高 100 的画幅，在每一帧的正中央都有一个字母在变化。遇到这种情况时，如果我们每一帧图像全都做传输或存储操作的话，占用的带宽或空间都会很大。使用「局部更新」方案，只需要逐步更新 A、B、C、D、E、F 的区域就可以了，这样在传输内容的时候既节省带宽，又能在存储内容的时候节省画幅的数据存储空间。
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/04/TSCaVW.jpg
+
+    I 帧作为关键帧，仅由帧内预测的宏块组成。而 P 帧代表预测帧，通过使用已经编码的帧进行运动估计，B 帧则可以参考自己前后出现的帧。如图表示： I帧、P帧和B帧的显示顺序。解码顺序是 1423756，但是显示顺序却是 1234567。
+
+* 当编码中存在 B 帧的时候，因为解码需要双向参考帧，所以需要多缓存几帧作为参考数据，从而也就带来了一定的显示延迟。所以在实时直播场景下，参考标准中推荐的做法通常是不带 B 帧。
+
+
+视频封装
+^^^^^^^^
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/04/OVAcSo.jpg
+
+    我们常说的音乐格式（如mp4格式）可以粗略地认为他们说的是封装格式，也就是常说的容器格式。在容器格式的内部会存储音频、视频的数据，这些数据我们可以称之为视频流、音频流。音视频流在容器中的存储形式有两种，既可以交错式存储，也可以是不同类型的流单独存储在自己的连续区域。（这两种方式都比较常见，也都各有利弊：如果是顺序读取音视频数据的话，当然就是音视频数据交错存储比较好，这样会给内存、硬盘或者网络节省很多开销。如果音视频分开，单独存放在各自的区域的话，为了更好地做音视频同步，通常会读取一段视频帧数据，再读取一段音频采样数据，这样势必会不断跳跃式地读取硬盘中的数据，或者不断地发起网络请求，如果是 http 请求的话，我们会看到大量的 http range 请求，给网络开销与服务器并发造成很大的压力。）
+
+
+.. note:: 音视频编码数据流与封装的关系：一帧视频数据，例如 H.264；一个音频采样，例如 AAC。把两者整合成一个整体叫做音视频封装容器格式，例如 MP4、FLV。
+
+
+封装容器格式: MP4
+^^^^^^^^^^^^^^^^^
+
+* MP4 格式是最常见的多媒体文件格式
+* MP4 格式标准为::
+
+    ISO-14496 Part 12
+    ISO-14496 Part 14
+
+
+MP4 的格式信息，我们首先要清楚几个概念::
+
+    1. MP4 文件由许多个 `Box` 与 `FullBox` 组成
+    2. 每个 Box 由 `Header` 和 `Data` 两部分组成
+    3. FullBox 则是 Box 的扩展，
+        在 Box 结构的基础上，在 Header 中增加 8bit 位 version 标志和 24bit 位的 flags 标志
+    4. Header 包含了整个 Box 的长度的大小（Size）和类型（Type）
+        当 Size 等于 0 时，代表这个 Box 是文件中的最后一个 Box
+        当 Size 等于 1 时说明 Box 长度需要更多的 bits 位来描述，在后面会定义一个 64bits 位的 largesize 用来描述 Box 的长度
+        当 Type 为 uuid 时，说明这个 Box 中的数据是用户自定义扩展类型
+    5. Data 为 Box 的实际数据，可以是纯数据，也可以是更多的子 Box
+    6. 当一个 Box 中 Data 是一系列的子 Box 时，这个 Box 又可以称为 Container Box
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/04/G640kd.jpg
+
+    存储音频与视频数据的索引信息，就是存在 moov box 中，音频和视频的索引信息在 moov 中分别存储在不同的 trak 里面，trak 里面会保存对应的数据采样相关的索引信息，通过获得 moov 中的索引信息之后，根据索引信息我们才能从 mdat 中读取音视频数据，所以 MP4 文件中必不可少的是 moov 信息，如果缺少 moov 信息的话，这个点播文件将无法被成功打开。
+
+
+* 普通的MP4有一个“索引表”，是对全局视频信息的描述，直播流是一个开放式的流媒体，所以没有办法做到事先拿到所有音视频流数据，所以MP4不能用于视频直播。不过使用扩展的格式fragment mp4，支持动态的类似moov索引flv这种支持流式解析的封装格式可以支持直播
+
+.. note:: 在音视频技术领域，编解码、封装格式都有对应的参考标准，并且都是开放标准
+
+
+
+
+04 | 直播行业的发展概况与技术迭代
+---------------------------------
+
+* 我们在做直播播放的时候常见的是 fragment mp4 格式，或者 cmaf 格式
+
+行业的演变
+^^^^^^^^^^
+
+* 2010 年之前，直播技术的应用主要还集中在广播电视、广电 IPTV、安防视频监控、视频会议以及个人媒体中心等领域，使用的传输协议主要为 MMS、RTSP、DVB-C、DVB-T、DVB-S 等。除了这些领域与协议，偶尔还会用 RTMP 与 HTTP+FLV 的方式做直播服务应用，例如一些广电领域的客户，还有像优酷这样的平台会在重大活动的直播中使用这种方式。当时 RTMP 与 HTTP+FLV 直播并未像后来这么火热，FMS、Wowza 等流媒体服务器当时还是主流。
+* 2010 年之后，随着 Adobe 开放了 RTMP 协议，像 CRtmpServer、libRTMP、Red5 等支持 RTMP 协议的开源框架如雨后春笋般大量涌出，但是这些流媒体服务器还需要再做一部分开发才能真正建立起服务端的能力。2012 年夏天，NginxRTMP 的出现打破了这场僵局，它通过大幅降低 RTMP 服务器的建设门槛，将 RTMP 协议的直播发展带入快车道。
+* 2013 年秋天，SimpleRtmpServer（SRS）的出现为 RTMP 服务器的建设带来了革命性的改变，SRS 发展至今已经发布了 4.0 版本，它采用了比较前卫的协程方式（用 StateThread 做基础库）做任务控制，也可以理解为单进程单线程的工作方式，不需要考虑信号量和锁操作相关的问题，而如果需要提升更高的并发时，需要扩展多进程的方式，就可以借助第三方的能力来处理，例如 Docker，自己启动多进程来控制多任务。SRS 原生支持的功能比较全，例如 RTMP 转 HTTP+FLV、转 HLS、转 WebRTC 等常用功能，运维操作方面支持 Reload，项目文档健全。在互联网娱乐直播领域，由于 RTMP 可以保证从画面采集端至播放器端的整体延迟在 3s 左右，所以这个协议被广泛应用。
+* 与此同时，支持动态多码率的解决方案 HLS（HTTP Live Streaming ）与 DASH（Dynamic Adaptive Streaming over HTTP）目前还在以草案的方式向前迭代，并未发布正式的参考标准。FFmpeg、Gstreamer 等工具软件，也在跟随草案的更新进行功能迭代。当时，HLS 主要用于移动端与电视盒中，DASH 也开始逐步被一些服务商采用，比如 YouTube、Vimeo、Akamai 等。
+* 同期动态多码率的解决方案除了 HLS 与 DASH 外，还有 Adobe 的 HDS（HTTP Dynamic Streaming）。由于 HDS 的参考标准并不像 HLS 和 DASH 那样，由 RFC 或者 ITU 两个开放标准定制、组织、维护，而是 Adobe 自己在维护，所以推动起来并不是很顺畅，应用的客户也并不多。
+* 从 2013 年开始，基于 RTMP 的直播平台开始逐渐发迹，呈现形式也主要是互联网的 Web 浏览器。
+
+基于 RTMP 协议的直播成为主流选择的原因如下::
+
+    1. Flash Player 能够直接播放基于 RTMP 协议传输的音视频数据；
+    2. Web 浏览器已经默认内置 Flash Player 插件，不需要额外安装插件；
+    3. RTMP 推流、播放有很多开源实现，能够快速搭建起端到端的解决方案。
+
+
+* 2015 年，一个名为“17”的移动端 App 毫无征兆地成为了当时的爆款，但又迅速被 App Store 下架。自此事件开始，直播领域拉开了千播大战的序幕。各色各样的直播 App 开始被大力推广，其底层的技术原理大同小异，推流协议也仍然是 RTMP，拉流协议均以 RTMP 或 HTTP+FLV 为主，各家 App 主要的差别在于起播时间，视频清晰度以及直播卡顿率。
+
+
+直播应用主要集中在以下四大领域::
+
+    1. 广电单向发布直播流，如 IPTV、电视盒、
+        常用 HLS、DASH、HDS 这类端到端且画面延迟 10s 左右的直播流媒体协议
+    2. 安防监控采集直播流，如海康、大华、水滴摄像头等，
+        常用 H.323/SIP+RTP 等延迟 50ms～500ms 左右的协议
+    3. 互联网 / 移动互联网互娱直播流，如秀场直播、游戏电竞直播、户外活动直播、街拍直播等，
+        常用 RTMP、HTTP+FLV 等延迟 3s 左右的直播协议
+    4. 视频会议直播流，如 Polycom、Cisco 等
+        常用 H.323/SIP+RTP 等协议
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/04/twLgg8.jpg
+
+    四个领域的主要特点
+
+
+* 2016 年，大量互娱直播平台逐渐增加了视频会议功能，也就是常说的“连麦”功能，使用场景也变得更复杂。实际上连麦采用的技术与视频会议几乎相同，但要兼顾互娱直播原有的场景，也就是一个直播间里，用户通过连麦进行实时交流，其他观众依然可以以原方式观看视频，例如歌曲合唱、实时采访、表演节目 PK 等。主播间也可以通过这种方式导入粉丝进行创收。当然，创新并没有止步于此，移动直播平台数量激增导致的“千播大战”让 2016 年被称为“直播元年”。
+* 2017，大量的互娱直播平台又创新地增加了主播与观众互动的能力，例如冲顶大会、在线答题等功能。另一方面，直播创业的热潮开始消退，主要是由于用户流量再次向巨头靠拢，头部直播平台马太效应开始显现，随着流量的增加巨头也不断进行技术迭代和升级，进一步提升了用户的直播观看体验，从而加深了自己的护城河。
+* 2018，PC 互联网和移动互联网直播开始逐渐从单纯的秀场、游戏、户外直播演变出直播带货场景。而当年的互联网直播巨头快手发布了实时交互性更强的直播 PK 功能，直播的形态从单纯的观看转为互动，又从互动转为挖掘用户需求。
+* 从 2019 年至今，尤其是在疫情期间直播电商的市场规模达到了近万亿，在巨大的音视频互联网体量下，直播电商市场规模还能达到 100% 以上的增长，说明音视频已经成为了互联网行业非常重要的一项基础设施。
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/04/29cs6H.jpg
+
+    从 2008 年起 PC 互联网 / 移动互联网环境直播的发展概况
+
+
+
+技术迭代
+^^^^^^^^
+
+* 发展过程中有关技术部分的迭代包含了 5 个维度：音视频编码的迭代、音视频传输协议的迭代、音视频封装的迭代、音视频传输质量优化策略的迭代以及平台功能的迭代。
+
+音视频编码的迭代
+''''''''''''''''
+
+* 自 2008FLV 正式支持 H.264 开始，H.264 编码逐步被广泛应用，同期 VP6、VC-1、H.263、mpeg4video、mpeg2video 等编码方式一样比较火热，但只有 H.264 编码因为码率较低、图像质量高、容错和网络适应性更强，后续在国内脱颖而出。
+* 2013 年，PPLive 和迅雷率先宣布采用 H.265（即 HEVC）进行视频压缩，在实现同等清晰度的前提下视频码率比 H.264 更低，这引起了直播行业的普遍关注。随后各大平台开始相继引入 HEVC 编码的视频直播流，但因为 HEVC 专利池问题的复杂性，又出现了一个比较诡异的情况：只有 Safari 浏览器支持 HEVC 的解码，而 Chrome 等浏览器不支持，这就导致时至今日依然有大量直播平台还在使用 H.264 的视频编码。
+* 除了 HEVC 在发展，谷歌同期还推出并迭代了 VP8、VP9 视频编码，主要应用于 YouTube 等海外视频平台，在国内并未被大规模采用。在谷歌的 WebRTC 被大规模推广后，因为 WebRTC 最初对 H.264 的支持不太友好，VP9 才勉强得到了一些发展。
+* 2018 年之后，谷歌联合一众巨头共同组建了开放媒体联盟（Alliance for Open Media）并推出了 AV1 视频编解码标准，同样在 WebRTC 中被大范围应用。
+* 直到今天，视频编码标准中应用最广泛的依然是 H.264、HEVC 以及 AV1，下一代视频编解码标准 VVC 已经正式发布，而 AV2 也在紧锣密鼓地制订中，业界很多企业也在用 AI 技术进行视频编解码方面的相关研究。相信在不久的将来，会出现更多优秀的视频编码标准。
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/04/O9yJOX.jpg
+
+
+.. note:: 相对于视频编码，音频编码标准从十年前单向直播领域的 MP3 发展为现在大范围应用的复杂音乐内容压缩编码标准的 AAC。会议直播从 G.711、G.729 音频编码标准发展到更优秀的语音通话实时编码与处理标准 Opus，再到谷歌刚刚发布的 Lyra，音频编码也随着时代的发展与应用场景的演变在不断迭代。
+
+
+音视频传输协议的迭代
+''''''''''''''''''''
+
+
+低延时直播场景: 延迟 3s 左右
+............................
+
+* 2010 年前，直播多采用 RTSP 传输协议，用户想要在浏览器中观看视频需要额外安装插件，所以多数用户选择在客户端观看直播。
+* 当 Adobe 的 RTMP 传输协议开放后，涌现出很多基于 RTMP 协议的框架，例如 librtmp、crtmpd、nginx-rtmp、simple-realtime-server 等，加上 OBS、FFmpeg 等客户端开源套件的出现，在 PC Web 浏览器中可以直接使用默认安装的 Flash Player 插件来播放 RTMP 协议的直播内容，因而基于 RTMP 的应用开始广泛了起来，直播延迟也缩短至可以满足主播与观众的交流需求。
+* 随着用户数量的增多，他们对直播回看的需求也随之增加，同时对首屏指标的要求也提高了，平台逐渐将播放协议从 RTMP 协议转变为 HTTP 协议，在建立连接时会节省很多 Handshake 相关操作，缩短首画显示的时间。
+* 直播延迟的影响因素有很多，如果只考虑合适的传输协议，通常只能勉强达到秒开的效果，但速度依然较慢，加之个别地区会出现域名劫持等现象，低延迟直播场景的需求仍然无法被满足。于是在域名解析方面，业界又做了一些优化，主要分为三种：DNS、HTTPDNS、私有化协议预解析域名，可以预先将用户调度至直播所属的服务节点，无须在用户发起请求时再进行域名解析，从而节省了域名解析时间，进一步降低直播延迟。
+
+
+.. note:: 整体来看，国内直播目前还是以 RTMP、HTTP 传输协议为主，为了降低延迟，主要采用 DNS 协议调度，并额外增加了 HTTPDNS 与私有化的协议解析域名进行调度，从而解决运营商的内容和流量劫持问题。之所以 RTMP 和 HTTP 会成为主流选择，主要还是因为传输协议比较通用，CDN 厂商支持比较健全。除 RTMP 与 HTTP 外，还有一些介于封装和传输协议之间较为模糊的标准，如 HLS 和 DASH。
+
+
+
+
+视频会议场景: 延迟 50ms~500ms
+'''''''''''''''''''''''''''''
+
+* 在谷歌的 WebRTC 大规模应用之前，很多直播会议采用的是类似 RTSP+RTCP+RTP 或者 H.323/SIP+RTP 的方案，视频采集与播放均需要客户端开发解决，无法直接在 Web 浏览器中使用，因而门槛较高。
+* 在互动直播出现前，大多数直播以秀场、竞技、体育等场景为主，主播与观众的交流方式主要是留言或者发送弹幕。而在互动直播出现后，诞生了在线抓娃娃、主播与观众连麦交流等全新的互动方式，后来火爆全球的 Clubhouse 也采用了同样的技术。
+
+
+视频封装的迭代
+''''''''''''''
+
+* 2010 年之前，直播流传输的通常是音视频的裸流，或者是常用的 mpegts 直播流。在 Adobe 开放 RTMP 后，FLV 随即成为了主流的直播流封装格式，该格式常见于秀场直播、游戏竞技类直播，在移动端直播也比较常见。
+* 在 PC 直播平台与移动端直播出现的早期，HLS 与 DASH 是同时存在的。HLS 与 DASH 采用的是 mpegts 与 fragment mp4 的子封装格式，虽然 HLS 与 DASH 也支持动态多码率切换，但是延迟较高。近期推出的 LLDASH 与 LLHLS 都改善了延迟的状况，但由于依然需要在关键帧处切片，高延时问题并没有得到很好地解决，反而还会带来额外的协议方面的开销。
+* 时至今日，FLV 封装格式在国内依然被大范围应用，随着 Flash Player 播放器在浏览器中停止更新，PC 直播平台也开始逐渐转向 HLS 与 DASH。但是 FLV 格式因为可以自行开发移动客户端的特性，在移动端仍有很大的用武之地。
+* 2020年，快手自研了一套动态多码率自适应切换清晰度的技术 LAS（Live Adaptive Streaming）并开源。开源前该技术已经在快手大规模平稳运行多年，解决了 HLS 的高延迟问题，同时也解决了 RTMP 和 HTTP+FLV 的直播过程因网络质量变化，不能自动动态切换清晰度，导致直播卡顿率高等问题。
+
+* 由于环境差异，国内外侧重使用的封装技术略有差别，国内还是以 FLV 为主，其次是 HLS/DASH 及其衍生的封装格式，还有已经形成实际使用标准且有数亿用户的 LAS。
+
+
+音视频传输质量优化策略的迭代
+''''''''''''''''''''''''''''
+
+* 在移动网络处于 2.5G 向 3G 升级的年代，移动端直播主要还是以 HLS、RTSP 传输为主，由于当时的网络基础建设并不太适合高清视频传输，再加上视频采集与编码设备能力较弱，所以直播清晰度普遍较低，且直播链路会出现卡顿。
+* 在 3G 向 4G 升级的时代，主要是以自研 TCP 优化或者采用 AppEx 的 TCP 优化，来保证视频内容传输质量。
+* 2016 年，谷歌公布 BBR 网络传输优化算法并提供源代码以后，做 TCP 传输优化的专家越来越多，大量更优的网络传输质量优化算法随之出现。
+* 基于 UDP 在不断地做一些直播传输质量优化的尝试：使用 KCP 替代 TCP，用 QUIC 替代 TCP 传输
+* 为了降低直播卡顿率，各直播平台还在不断地优化传输协议，从 AppEx 到 BBR、KCP，再到 QUIC，整个行业投入了大量的精力对网络进行针对性地优化，专门处理丢包、拥塞、抖动、慢启动等常见的网络问题，也有越来越多的链路传输优化专家开始着手进行更多的探索与深入研究。
+
+
+
+
+小结
+^^^^
+
+* 每个阶段音视频技术的发展，都会有一个公共的参考标准，而过去的几十年中，直播相关的参考标准一直在不断迭代和演进，我们可以通过 RFC、ITU、MPEG 等工作组中找到这些标准。
+
+
+
+评论
+^^^^
+
+* 常规秀场直播用RTC其实问题也不大，不过最后一公里用RTC的话，QoE和带宽消耗平衡方面还是值得商榷的。
+
+
+
+流媒体技术速成 (5讲)
+====================
+
+05 | 如何使用 FFmpeg 与 OBS 进行直播推流
+----------------------------------------
+
+
+FFmpeg 推流
+^^^^^^^^^^^
+
+完整的命令行::
+
+    ffmpeg -re -f lavfi -i testsrc=s=1280x720:r=25 -pix_fmt yuv420p -vcodec libx264 -f flv rtmp://publish.x.com/live/stream
+
+    输入部分:
+        -re -f lavfi -i testsrc=s=1280x720:r=25
+        =>
+            -re 这个参数是控制获得图像频率的参数，用来控制输入包的读取速度，
+            使用 FFmpeg 的 lavfi 输入格式，也可以说输入的是 lavfi 设备
+            输入内容是 testsrc(除了 testsrc，还可以创建 testsrc2、color、yuvall 等图像内容)
+            图像的宽是 1280 像素，高是 720 像素
+            输入的图像是 25fps，也就是每秒钟会得到 25 帧图像
+    输出部分
+        -pix_fmt yuv420p -vcodec libx264 -f flv rtmp://publish.x.com/live/stream
+        =>
+            先把读取的图像像素点的颜色格式转成 yuv420p 格式( yuv420p 在视频图像格式中是兼容性最好的，使用起来会比较稳定)
+            视频编码器为 libx264(libx264 的 FFmpeg 用的是GPL开源协议)
+            -f flv 规定我们输出的封装格式为 FLV
+            最后输出的文件是一个 RTMP 协议特征字符开头的 URL
+
+带界面的推流神器 OBS
+^^^^^^^^^^^^^^^^^^^^
+
+* 使用界面直播推流神器 OBS，这种工具不用命令行，也可以帮你轻松搞定推流。
+
+
+
+06 | 如何使用 ffprobe 分析音视频参数与内容
+------------------------------------------
+
+* 视频信息分析神器——ffprobe是 FFmpeg 提供的一个工具，能够用来分析音视频容器格式、音视频流信息、音视频包以及音视频帧等信息，在我们做音视频转码、故障分析时，这个工具能提供很大的帮助。
+
+.. image:: https://img.zhaoweiguo.com/uPic/2023/04/Qi13U1.jpg
+
+
+音视频容器格式分析
+^^^^^^^^^^^^^^^^^^
+
+使用 ffprobe 的 -show_format 参数::
+
+    [FORMAT]
+    filename=/Users/liuqi/Movies/Test/ToS-4k-1920.mov
+    nb_streams=2
+    nb_programs=0
+    format_name=mov,mp4,m4a,3gp,3g2,mj2
+    format_long_name=QuickTime / MOV
+    start_time=0.000000
+    duration=734.167000
+    size=738876331
+    bit_rate=8051316
+    probe_score=100
+    TAG:major_brand=qt
+    TAG:minor_version=512
+    TAG:compatible_brands=qt
+    TAG:encoder=Lavf54.29.104
+    [/FORMAT]
+
+    说明:
+        nb_streams 显示的是 2，也就是说这个容器格式里有两个流；
+        nb_programs 是 0，表示这里面不存在 program 信息，这个 program 信息常见于广电用的 mpegts 流里，比如某个卫视频道的节目；
+        start_time 是这个容器里正常的显示开始的时间 0.00000；
+        duration 是这个容器文件的总时长 734.167 秒；
+        size 表示这个 mov 文件大小；
+        bit_rate 是这个文件的码率
+
+
+
+
+
+音视频流分析
+^^^^^^^^^^^^
+
+使用 ffprobe 的 -show_streams::
+
+    [STREAM]
+    index=0 //流的索引号
+    codec_name=h264 //流的编码名
+    codec_long_name=H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10 //流的编码详细描述
+    profile=High //流的profile
+    codec_type=video //流的codec类型
+    codec_tag_string=avc1 // 流的codec tag 字符串
+    codec_tag=0x31637661 // 流的codec tag，也是字符串，只不过以16进制方式存储
+    width=1920 //视频的宽，流内容部分
+    height=800 //视频的高，流内容部分
+    coded_width=1920 // 编码视频的宽，编解码时的部分，对齐的数据，显示时不用
+    coded_height=800 // 编码视频的高，编解码时的部分，对齐的数据，显示时不用
+    has_b_frames=2 // IPB 帧排列时两个P之间包含两个B
+    sample_aspect_ratio=1:1 //像素点采样比例
+    display_aspect_ratio=12:5 // 显示图像比例
+    pix_fmt=yuv420p // 像素点格式
+    level=40 // 与profile一起出现，对应的是参考标准中有对应的参数描述
+    color_range=unknown //调色必备参数
+    color_space=unknown //调色必备参数
+    color_transfer=unknown  //调色必备参数
+    color_primaries=unknown //调色必备参数
+    field_order=progressive // 隔行扫描逐行扫描标识
+    r_frame_rate=24/1  // 实际帧率
+    avg_frame_rate=24/1 // 平均帧率
+    time_base=1/24 //时间基，通常和帧率有对应关系
+    start_pts=0 // 开始时间戳
+    start_time=0.000000 // 开始时间
+    duration_ts=17620 //duration 时间戳
+    duration=734.166667 // duration 时间
+    bit_rate=7862427 // 码率
+    max_bit_rate=N/A // 最大码率
+    bits_per_raw_sample=8 // 原始数据每个采样占位
+    nb_frames=17620 // 总帧数
+    extradata_size=42 // extradata 大小
+    TAG:language=eng // 这个是TAG，主要是展示语种
+    TAG:handler_name=VideoHandle // 句柄名
+    TAG:vendor_id=FFMP // 生成MP4文件的工具
+    TAG:encoder=libx264 // 视频编码器标识
+    [/STREAM]
+
+
+音视频包分析
+^^^^^^^^^^^^
+
+ffprobe 的 -show_packets 参数::
+
+    使用 select_streams v 来只读取视频流的包
+    使用 -of 来定制输出的信息格式，例如 xml
+
+packet 信息格式::
+
+    <packets>
+        <packet codec_type="video" stream_index="0" pts="0" pts_time="0.000000" dts="-2" dts_time="-0.083333" duration="1" duration_time="0.041667" size="5264" pos="36" flags="K_"/>
+        <packet codec_type="video" stream_index="0" pts="4" pts_time="0.166667" dts="-1" dts_time="-0.041667" duration="1" duration_time="0.041667" size="13" pos="5300" flags="__"/>
+        <packet codec_type="video" stream_index="0" pts="2" pts_time="0.083333" dts="0" dts_time="0.000000" duration="1" duration_time="0.041667" size="13" pos="5313" flags="__"/>
+        <packet codec_type="video" stream_index="0" pts="1" pts_time="0.041667" dts="1" dts_time="0.041667" duration="1" duration_time="0.041667" size="13" pos="6382" flags="__"/>
+
+
+音视频帧分析
+^^^^^^^^^^^^
+
+ffprobe 的 -show_frames 来看一下拿到的帧信息::
+
+     <frames>
+            <frame media_type="video" stream_index="0" key_frame="1" pts="0" pts_time="0.000000" pkt_dts="0" pkt_dts_time="0.000000" best_effort_timestamp="0" best_effort_timestamp_time="0.000000" pkt_duration="1" pkt_duration_time="0.041667" pkt_pos="36" pkt_size="5264" width="1920" height="800" pix_fmt="yuv420p" sample_aspect_ratio="1:1" pict_type="I" coded_picture_number="0" display_picture_number="0" interlaced_frame="0" top_field_first="0" repeat_pict="0" chroma_location="left">
+                <side_data_list>
+                    <side_data side_data_type="H.26[45] User Data Unregistered SEI message"/>
+                </side_data_list>
+            </frame>
+            <frame media_type="video" stream_index="0" key_frame="0" pts="1" pts_time="0.041667" pkt_dts="1" pkt_dts_time="0.041667" best_effort_timestamp="1" best_effort_timestamp_time="0.041667" pkt_duration="1" pkt_duration_time="0.041667" pkt_pos="6382" pkt_size="13" width="1920" height="800" pix_fmt="yuv420p" sample_aspect_ratio="1:1" pict_type="B" coded_picture_number="3" display_picture_number="0" interlaced_frame="0" top_field_first="0" repeat_pict="0" chroma_location="left"/>
+            <frame media_type="video" stream_index="0" key_frame="0" pts="2" pts_time="0.083333" pkt_dts="2" pkt_dts_time="0.083333" best_effort_timestamp="2" best_effort_timestamp_time="0.083333" pkt_duration="1" pkt_duration_time="0.041667" pkt_pos="5313" pkt_size="13" width="1920" height="800" pix_fmt="yuv420p" sample_aspect_ratio="1:1" pict_type="B" coded_picture_number="2" display_picture_number="0" interlaced_frame="0" top_field_first="0" repeat_pict="0" chroma_location="left"/>
+            <frame media_type="video" stream_index="0" key_frame="0" pts="3" pts_time="0.125000" pkt_dts="3" pkt_dts_time="0.125000" best_effort_timestamp="3" best_effort_timestamp_time="0.125000" pkt_duration="1" pkt_duration_time="0.041667" pkt_pos="7417" pkt_size="13" width="1920" height="800" pix_fmt="yuv420p" sample_aspect_ratio="1:1" pict_type="B" coded_picture_number="4" display_picture_number="0" interlaced_frame="0" top_field_first="0" repeat_pict="0" chroma_location="left"/>
+            <frame media_type="video" stream_index="0" key_frame="0" pts="4" pts_time="0.166667" pkt_dts="4" pkt_dts_time="0.166667" best_effort_timestamp="4" best_effort_timestamp_time="0.166667" pkt_duration="1" pkt_duration_time="0.041667" pkt_pos="5300" pkt_size="13" width="1920" height="800" pix_fmt="yuv420p" sample_aspect_ratio="1:1" pict_type="P" coded_picture_number="1" display_picture_number="0" interlaced_frame="0" top_field_first="0" repeat_pict="0" chroma_location="left"/>
+            <frame media_type="video" stream_index="0" key_frame="0" pts="5" pts_time="0.208333" pkt_dts="5" pkt_dts_time="0.208333" best_effort_timestamp="5" best_effort_timestamp_time="0.208333" pkt_duration="1" pkt_duration_time="0.041667" pkt_pos="9933" pkt_size="13" width="1920" height="800" pix_fmt="yuv420p" sample_aspect_ratio="1:1" pict_type="B" coded_picture_number="7" display_picture_number="0" interlaced_frame="0" top_field_first="0" repeat_pict="0" chroma_location="left"/>
+            <frame media_type="video" stream_index="0" key_frame="0" pts="6" pts_time="0.250000" pkt_dts="6" pkt_dts_time="0.250000" best_effort_timestamp="6" best_effort_timestamp_time="0.250000" pkt_duration="1" pkt_duration_time="0.041667" pkt_pos="9407" pkt_size="15" width="1920" height="800" pix_fmt="yuv420p" sample_aspect_ratio="1:1" pict_type="B" coded_picture_number="6" display_picture_number="0" interlaced_frame="0" top_field_first="0" repeat_pict="0" chroma_location="left"/>
+
+
+精准地获得自己需要的字段，我们可以使用 ffprobe 中的 -show_entries 来指定自己想要的字段::
+
+    例：配合 show_packet，我想拿到 packet 的 pts_time、dts_time 和 flags
+    $ ffprobe -show_packets -select_streams v -of xml -show_entries packet=pts_time,dts_time,flags  ~/M/ToS-4k-1920.mov
+
+    <packets>
+        <packet pts_time="0.000000" dts_time="-0.083333" flags="K_"/>
+        <packet pts_time="0.166667" dts_time="-0.041667" flags="__"/>
+        <packet pts_time="0.083333" dts_time="0.000000" flags="__"/>
+        <packet pts_time="0.041667" dts_time="0.041667" flags="__"/>
+        <packet pts_time="0.125000" dts_time="0.083333" flags="__"/>
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/04/8Iv99h.jpg
+
+    音视频封装容器、音视频流、音视频包、音视频帧之间对应的关系。以 MPEGTS 封装为例，封装里面包含 3 个流，分别是视频流，音频流，字幕流，视频流中需要存储对应的视频编码参数信息，用来在解码器解码时使用，而视频、音频和字幕流在存储或者传输的时候是一一对应的，如果偏差太大的话会造成音视频不同步问题。
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/04/vSiHaH.jpg
+
+    音视频包和音视频帧之间的对应关系，你可以理解为一个 AVPacket 对应一个 AVFrame
+
+
+
+
+07 | 如何高效查找并使用FFmpeg常用参数
+-------------------------------------
+
+FFmpeg 输入输出组成
+^^^^^^^^^^^^^^^^^^^
+
+这段命令会输出两个文件，分别是 a.mp4 和 b.mp4::
+
+    $ ffmpeg -i i.mp4 a.mp4 -vcodec mpeg4 b.mp4
+
+    =>
+        b.mp4 的视频编码采用的是 mpeg4
+        a.mp4 使用的是 mp4 格式默认的视频编码，也就是 H.264 编码
+
+
+FFmpeg 的输入可以是多个，输出也可以是多个，但是每一个输出都会根据输入的信息做一个参数复制::
+
+    Output #0, mp4, to 'a.mp4':
+      Metadata:
+        major_brand     : mp42
+        minor_version   : 512
+        compatible_brands: mp42iso2avc1mp41
+        encoder         : Lavf59.25.100
+      Stream #0:0(und): Video: h264 (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 1920x800 [SAR 1:1 DAR 12:5], q=2-31, 24 fps, 12288 tbn (default)
+        Metadata:
+          creation_time   : 2022-04-01T09:59:10.000000Z
+          handler_name    : VideoHandler
+          vendor_id       : [0][0][0][0]
+          encoder         : Lavc59.33.100 libx264
+        Side data:
+          cpb: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
+      Stream #0:1(eng): Audio: aac (LC) (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 128 kb/s (default)
+        Metadata:
+          creation_time   : 2022-04-01T09:59:10.000000Z
+          handler_name    : Stereo
+          vendor_id       : [0][0][0][0]
+          encoder         : Lavc59.33.100 aac
+    Output #1, mp4, to 'b.mp4':
+      Metadata:
+        major_brand     : mp42
+        minor_version   : 512
+        compatible_brands: mp42iso2avc1mp41
+        encoder         : Lavf59.25.100
+      Stream #1:0(und): Video: mpeg4 (mp4v / 0x7634706D), yuv420p(tv, bt709, progressive), 1920x800 [SAR 1:1 DAR 12:5], q=2-31, 200 kb/s, 24 fps, 12288 tbn (default)
+        Metadata:
+          creation_time   : 2022-04-01T09:59:10.000000Z
+          handler_name    : VideoHandler
+          vendor_id       : [0][0][0][0]
+          encoder         : Lavc59.33.100 mpeg4
+        Side data:
+          cpb: bitrate max/min/avg: 0/0/200000 buffer size: 0 vbv_delay: N/A
+      Stream #1:1(eng): Audio: aac (LC) (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 128 kb/s (default)
+        Metadata:
+          creation_time   : 2022-04-01T09:59:10.000000Z
+          handler_name    : Stereo
+          vendor_id       : [0][0][0][0]
+          encoder         : Lavc59.33.100 aac
+    frame=  116 fps= 73 q=28.0 q=2.0 size=       0kB time=00:00:05.22 bitrate=   0.1kbits/s speed=3.28x
+
+
+命令行参数分布::
+
+    ffmpeg [第一个输入文件对应的解析参数] -i 第一个输入文件名 
+           [第二个输入文件对应的解析参数] -i 第二个输入文件名 
+           [如果有第三个文件输入] [-i] [如果有第三个文件] 
+           [第一个输出文件对应的参数] [第一个输出文件名] 
+           [第二个输出文件对应的参数] [第二个输出文件名] 
+           [第三个输出文件对应的参数] [第三个输出文件名]
+
+
+如何查找各个模块参数的帮助信息
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+::
+
+    $ ffmpeg --help
+
+
+.. note:: FFmpeg 是包含了封装与解封装、编码与解码、滤镜以及传输协议模块的，所以我们可以通过 type=name 来过滤掉我们不需要的信息，只查看我们会用到的模块
+
+查看 FLV 的封装(按type: muxer过滤)::
+
+    $ ffmpeg -h muxer=flv
+    Muxer flv [FLV (Flash Video)]:
+        Common extensions: flv.
+        Mime type: video/x-flv.
+        Default video codec: flv1.
+        Default audio codec: adpcm_swf.
+    flv muxer AVOptions:
+      -flvflags          <flags>      E.......... FLV muxer flags (default 0)
+         aac_seq_header_detect        E.......... Put AAC sequence header based on stream data
+         no_sequence_end              E.......... disable sequence end for FLV
+         no_metadata                  E.......... disable metadata for FLV
+         no_duration_filesize         E.......... disable duration and filesize zero value metadata for FLV
+         add_keyframe_index           E.......... Add keyframe index metadata
+
+按type: encoder过滤::
+
+    $ ffmpeg -h encoder=libx264
+
+
+通过参数 ffmpeg -encoders 来确认机器上当前安装的 FFmpeg 中是否涵盖了 nvidia 的 H.264 编码器::
+
+    $ ffmpeg -encoders|grep H.264
+
+FFmpeg 公共基础参数
+^^^^^^^^^^^^^^^^^^^
+
+公共操作部分
+''''''''''''
+
+::
+
+    -report: 输出日志文件名的格式是 ffmpeg-20220703-170736.log
+    -v 参数来设置日志的级别，主要分为:
+        quiet、panic、fatal、error、warning、info、verbose、debug、trace9 个级别
+
+
+每个文件主要操作部分
+''''''''''''''''''''
+
+::
+
+
+    -ss 来定位文件的开始时间
+    -t 来规定输出文件时间长度
+        想做分片转码的话，可以使用 -ss 和 -t 两个参数分隔视频文件
+    -codec:v copy -an 去掉音频，从而达到分离音视频的目的
+    -metadata 参数来设置 metadata
+
+
+实例::
+
+    // 设置 metadata
+    $ ffmpeg -f lavfi -i testsrc=s=176x144 -metadata title="This Is A Test" -t 2 out.mp4
+
+
+    // 确认一下输出的 out.mp4 文件是否包含了我们设定的 Title“This Is A Test.”
+    $ ffmpeg -i out.mp4
+    Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'out.mp4':
+      Metadata:
+        major_brand     : isom
+        minor_version   : 512
+        compatible_brands: isomiso2avc1mp41
+        title           : This Is A Test
+        encoder         : Lavf58.77.100
+      Duration: 00:00:02.00, start: 0.000000, bitrate: 49 kb/s
+      Stream #0:0(und): Video: h264 (High 4:4:4 Predictive) (avc1 / 0x31637661), yuv444p, 176x144 [SAR 1:1 DAR 11:9], 44 kb/s, 25 fps, 25 tbr, 12800 tbn, 50 tbc (default)
+        Metadata:
+          handler_name    : VideoHandler
+          vendor_id       : [0][0][0][0]
+
+视频操作部分
+''''''''''''
+
+视频操作公共部分的参数::
+
+    -r:v 设置视频的帧率；
+    -vb 设置视频码率；
+    -vframes 设置视频输出的帧数；
+    -aspect 设置视频的宽高比；
+    -vn 关闭视频流处理操作，也就是屏蔽视频流；
+    -vf 给视频做简单滤镜处理，简单滤镜处理一般不支持多图层、多输入、多输出的滤镜。
+
+音频操作部分
+''''''''''''
+
+音频操作公共部分的参数::
+
+    -ar 设置音频采样率；
+    -ab 设置音频码率；
+    -aframes 设置音频输出的帧数；
+    -ac 设置音频的声道数量
+    -an 关闭音频流处理操作，也就是屏蔽音频流
+    -af 给音频做简单滤镜处理，简单滤镜处理一般不支持多图层、多输入、多输出的滤镜；
+    -vol 设置音频的音量。
+
+FFmpeg 公共高级参数
+^^^^^^^^^^^^^^^^^^^
+
+::
+
+    -filter_complex 参数可以将音视频混合在一条参数字符串里进行操作，也可以输入、输出多个视频流和音频流
+    -copytb 参数设定 timebase 与输入的相同，确保时间戳不会跳变
+
+
+
+08 | FFmpeg 和它的朋友们是怎么处理 MP4 的
+-----------------------------------------
+
+* 因为 MP4 标准非常灵活，可扩展性比较好，有很多常见的格式是基于 MP4 做了一些扩展，然后被应用到比较广的范围，比如 CMAF、DASH、HLS。
+* MP4 的参考标准是一个开放的标准，我们通常以编号为 ISO-14496-12 来查找标准文档
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/04/B1EIEa.jpg
+
+    MP4扩展出来的格式
+
+* 除了给你介绍 FFmpeg 对 MP4 的 mux 与 demux（封装与解封装）之外，我还会介绍一些其他的 MP4 相关的工具，例如 MP4Box、Shaka-Packager。
+* 【工具】mp4info
+
+
+用 FFmpeg 生成 MP4 文件
+^^^^^^^^^^^^^^^^^^^^^^^
+
+查询帮助::
+
+    $ ffmpeg -h muxer=mp4
+
+    MP4 的文件扩展名.mp4
+    视频默认用 H.264 编码
+    音频默认用 AAC 编码
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/04/rHkRGY.jpg
+
+    FFmpeg 封装 MP4 常用的参数
+
+
+faststart 参数
+''''''''''''''
+
+正常情况下，FFmpeg 生成 moov 是在 mdat 写完成之后::
+
+    $ ffmpeg -i input.flv -c copy -f mp4 output.mp4
+
+可以通过参数 faststart 把 moov 容器移动到 mdat 前面::
+
+    $ ffmpeg -i input.flv -c copy -f mp4 -movflags faststart output.mp4
+
+* 【说明】moov在mdat后面的话，主要在http点播场景中会显现出比较突出的问题，基本上就是文件末尾了，差一点的播放器会先下载完成moov以后才开始播放，好一点的可能会多一个http的range请求拿到moov信息后开始播放。如果moov在文件的开头的话，也就是mdat前面的话，会比moov放在mdat后面快很多。
+
+DASH 参数
+'''''''''
+
+生成 DASH 格式(里面有一种特殊的 MP4 格式)::
+
+    $ ffmpeg -i input.flv -c copy -f mp4 -movflags dash output.mp4
+
+用 FFmpeg 解析 MP4 文件
+^^^^^^^^^^^^^^^^^^^^^^^
+
+.. warning:: FFmpeg 在解析 MP4 文件格式的时候，可能会因为 MP4 的内容生成得不标准产生一些奇奇怪怪的问题，例如前面我们提到的音视频不同步或者视频抖动等问题。
+
+* FFmpeg 针对出现的这类问题也做了格式上的兼容，但用户可能需要自己手动设置一些参数，定制一下，才可以解决这些问题。
+* FFmpeg 这么做的主要原因是之前大部分用户使用时是正常的，异常素材只有少部分用户才会遇到。为了尽量不改变原有用户的使用习惯，只能通过新用户自己设置参数的形式来避免出现异常情况。
+
+
+如何用 GPAC 生成 MP4
+^^^^^^^^^^^^^^^^^^^^
+
+.. note:: 生成 MP4 更接近参考标准的是 GPAC
+
+GPAC 里的 MP4Box 工具::
+
+    $ MP4Box --help
+
+查看一下 MP4 文件信息::
+
+    $ MP4Box -info ~/Movies/Test/ToS-4k-1920.mov
+
+
+
+Shaka-Packager 的 HLS 与 DASH
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Shaka-Packager 是 Google 的一个开源项目
+* Shaka-Packager 也是一个很大的项目
+
+
+例，用 Shaka-Packager 做一个 HLS 视频流加密操作::
+
+    packager 'input=../in.mp4,stream=video,segment_template=output$Number$.m4s,playlist_name=video_playlist.m3u8,init_segment=init.mp4'
+    --hls_master_playlist_output="master_playlist.m3u8"
+    --hls_base_url="http://127.0.0.1/" --enable_raw_key_encryption
+    --protection_scheme cbcs --keys
+    key=61616161616161616161616161616161:key_id=61616161616161616161616161616161
+    --clear_lead 0
+
+
+思考题
+^^^^^^
+
+用 FFmpeg 对视频流内容做加密, 加密之后用 FFmpeg 解密并顺利地播放出来::
+
+    加密视频
+    ffmpeg -i test.mkv -vcodec copy -acodec copy -t 5 -encryption_scheme cenc-aes-ctr -encryption_key 76a6c65c5ea762046bd749a2e632ccbb -encryption_kid a7e61c373e219033c21091fa607bf3b8 test.mp4
+
+    解密播放：
+    ffplay SampleVideo_1280x720_1mb_encrypted.mp4 -decryption_key 76a6c65c5ea762046bd749a2e632ccbb
+
+
+* 如果你安装了H.264编码器的话，缺省视频编码是H.264
+* 如果没有H.264编码器的话，默认编译ffmpeg的话通常是带mpeg4的编码器的，默认就是mpeg4
+
+
+
+09 | 如何使用 FFmpeg 与 Handbrake 做转码
+----------------------------------------
+
+
+用 CPU 转码
+^^^^^^^^^^^
+
+.. note:: 如果是 CPU 特别富裕的话，使用软编码是一个不错的选择。因为软编码对画质相关调优的参数自主可控性更高一些，硬编码因硬件设计比较固定，所以有些时候画质调优方面比较受限，例如对不同视频应用场景的高清低码率相关的调优，使用硬转码效果会比软转码差一些。同时因可控性受限，硬转码的码率普遍会比软转码的视频码率高。
+
+编码器编码(软编码)::
+
+    libx264
+    libx265
+    librav1e
+
+转码的基本操作流程::
+
+    解封装
+        解码
+            原始数据(YUV 数据或者 PCM 数据)
+        编码
+    封装
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/04/Re2LE7.jpg
+
+    调优类型的模板 tune
+
+使用 FFmpeg 命令行来做转码::
+
+    $ ffmpeg -i ~/M/ToS-4k-1920.mov -pix_fmt yuv420p -vcodec libx264 -nal-hrd cbr -tune zerolatency 
+        -preset superfast -maxrate 900k -minrate 890k -bufsize 300k -x264opts "open-gop=1" output.ts
+
+
+用 GPU 转码
+^^^^^^^^^^^
+
+FFmpeg 支持的硬件加速方案，按照各 OS 厂商、Chip 厂商特定方案，还有行业联盟定义的标准来分的话，大致可以分成 3 类::
+
+    1. 操作系统：包括 Windows、Linux、macOS /iOS、Android
+    2. Chip 厂商的特定方案：包括 Intel、AMD、Nvidia
+    3. 行业标准或事实标准：包括 OpenMAX 和 OpenCL、Vulkan、OpenGL 还有 cuda
+
+.. note:: 这只是一个粗略的分类，很多时候，这几者之间纵横交错，联系密切，之间的关系并非像列出的这般泾渭分明。
+
+* 下面就是 Windows 环境下，在 AMD、Intel、Nvidia 的 GPU 上用 dxva2 和 d3d11va 来解码，再使用厂商提供的编码器编码的例子。
+
+AMD AMF::
+
+    $ ffmpeg -hwaccel dxva2 -hwaccel_output_format dxva2_vld -i <video> -c:v h264_amf -b:v 2M -y out.mp4
+    $ ffmpeg -hwaccel d3d11va -hwaccel_output_format d3d11 -i <video> -c:v h264_amf -b:v 2M -y out.mp4
+
+
+Intel QSV::
+
+    ffmpeg -hwaccel dxva2 -hwaccel_output_format dxva2_vld -i <video> -c:v h264_qsv -vf hwmap=derive_device=qsv,format=qsv -b:v 2M -y out.mp4
+    ffmpeg -hwaccel d3d11va -hwaccel_output_format d3d11 -i <video> -c:v h264_qsv -vf hwmap=derive_device=qsv,format=qsv -b:v 2M -y out.mp4
+
+
+Nvidia NVENC::
+
+    ffmpeg -hwaccel d3d11va -hwaccel_output_format d3d11 -i <video> -c:v h264_nvenc -b:v 2M -y out.mp4
+
+
+苹果电脑，使用 videotoolbox 做转码::
+
+    ffmpeg -vcodec h264_vda -i input.mp4 -vcodec h264_videotoolbox -b:v 2000k output.mp4
+
+使用 Handbrake 转码
+^^^^^^^^^^^^^^^^^^^
+
+.. image:: https://img.zhaoweiguo.com/uPic/2023/04/m1NEXx.jpg
+
+
+思考题
+^^^^^^
+
+分析一下 x264 的编码参数，按照这样的参数输出视频编码::
+
+    1. 每秒钟 30fps 的 720p 的视频
+    2. 2 秒钟一个关键帧（GOP）
+    3. 每两个 P 帧（包括 I 帧）之间两个 B 帧
+
+
+示例::
+
+    $ ffmpeg -i input.mkv -x264opts "bframes=2:b-adapt=0" -r:v 30 -g 60 -sc_threshold 0 -vf "scale=1280:720" output.mkv
+
+
+FFmpeg API 应用 (4讲)
+=====================
+
+10 | FFmpeg 基础模块一: 容器相关的 API 操作
+-------------------------------------------
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/04/Sk4A4R.jpg
+
+    关于 AVFormat 模块中 API 接口更多的使用方式，比如说参数相关的内容，你还需要多看一看 avformat.h 头文件中的注释和参数说明。如果你还是掌握不住这些接口的使用方式的话，也可以根据我的建议，先把源代码下来，去看一下 API 里实现的过程来加深理解。
+
+* 很多工作是 FFmpeg 命令行操作起来不太方便的，这时就需要API了
+
+FFmpeg 中的重要模块::
+
+    1. AVFormat 模块
+    2. AVcodec 模块
+    3. AVfilter 模块
+    4. swscale 模块
+    5. swresample 模块
+
+源码下载::
+
+    $ git clone git://source.ffmpeg.org/ffmpeg.git 
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/04/kfuHTc.jpg
+
+    FFmpeg 目录中包含了 FFmpeg 库代码目录、构建工程目录、自测子系统目录等
+
+AVFormat 模块
+^^^^^^^^^^^^^
+
+* 从 FFmpeg 的目录结构中可以看出，libavformat 主要是用来做封装格式处理的模块，如果不做转码，只做切片或者封装格式转换的话，基本上用 AVFormat 模块就可以
+
+这三个接口都是用来调试的::
+
+    1. avformat_version
+    2. avformat_configuration
+    3. avformat_license
+
+.. warning:: 如果引入了 libx264 这样的编码器，FFmpeg 会自动切换成 GPL 的 License，这个时候如果你想要基于 FFmpeg 做定制或者开发，就需要注意 GPL 的 License 法律风险
+
+AVFormat 前处理部分
+^^^^^^^^^^^^^^^^^^^
+
+* 做音视频内容处理的时候，首先接触到的应该是 AVFormatContext 模块相关的操作，也就是我们这里说的 AVFormat 部分，但是操作 AVFormat 的时候，会有一个前处理部分，主要包含网络初始化、模块遍历、申请上下文空间、打开文件，还有分析音视频流等操作。
+
+AVFormat 前处理部分的接口与作用::
+
+    avformat_network_init
+    avformat_network_deinit
+        这两个接口，是网络相关模块的初始化和撤销网络相关模块初始化。
+    av_muxer_iterate
+    av_demuxer_iterate
+        这两个接口，是 muxer 和 demuxer 的遍历接口
+    avformat_alloc_context
+    avformat_free_context
+        这两个接口可以用来申请与释放 AVFormatContext 上下文结构
+    avformat_new_stream
+        用来创建新的 AVStream
+    av_stream_add_side_data
+        用来向 AVStream 中添加新的 side data 信息，
+        例如视频旋转信息，通常是可以存储在 side data 里面的
+    av_stream_new_side_data
+        用来申请新的 side data
+    av_stream_get_side_data
+        用来获取 side data
+    avformat_alloc_output_context2
+        用来申请将要输出的文件的 AVFormatContext
+        可以通过 avformat_free_context 释放申请的 AVFormatContext
+    av_find_input_format
+        根据传入的 short_name 来获得对应的 AVFormat 模块，例如 MP4
+    avformat_open_input
+        主要用处是打开一个 AVInputFormat，并挂在 AVFormatContext 模块上，这个接口里面会调用 avformat_alloc_context，可以通过接口 avformat_close_input 来关闭和释放 avformat_open_input 里对应的 alloc 操作
+    av_find_best_stream
+        用来找到多个视频流或多个音频流中最优的那个流
+    avformat_find_stream_info
+        主要用来建立 AVStream 的信息，获得的信息大多数情况下是比较准确的。使用 avformat_find_stream_info 接口来获得 AVStream 信息的话，会比较消耗时间。因为里面需要通过 try_decode 进行解码操作，来获得更精准的 AVStream 信息，所以有些固定场景不使用 avformat_find_stream_info，是为了节省时间方面的开销。
+
+* 我们可以通过 probesize、analyzeduration 来设置读取的音视频数据的阈值，avformat_find_stream_info 里面也会遍历这个阈值，所以通过设置 probesize 和 analyzeduration 也可以节省一些时间。
+* 如果有多个类似 AAC 或者 H264 这样的 codec 的话，avformat_find_stream_info 内部会使用最先遍历到的 codec，其实我们可以在使用 avformat_find_stream_info 之前指定解码器，预期的结果会更准确一些。
+
+
+
+AVFormat 读写处理部分
+^^^^^^^^^^^^^^^^^^^^^
+
+AVFormat 读写处理的部分::
+
+    av_read_frame:
+        从 AVFormatContext 中读取 AVPacket
+    avformat_seek_file(旧版是 av_seek_frame): 
+        seek 到自己想要指定的位置，但前提是对应的封装格式得支持精确 seek
+        当拖动进度条的时候使用
+    avformat_flush
+        主要是用来清空当前 AVFormatContext 中的 buffer
+    avformat_write_header
+        主要用在“写”操作的开头部分，通常指传输协议的开始，写封装格式头部。avformat_write_header 里会调用到 avformat_init_output，通常 avformat_write_header 函数的最后一个参数可以传入 Option
+    avformat_init_output
+        主要用来做容器格式初始化部分的操作，例如打开文件，或者有一些容器格式内部的信息需要初始化的时候
+    av_interleaved_write_frame
+        支持在写入 AVPacket 的时候，根据 dts 时间戳交错写入数据。使用这个接口有一个需要注意的地方，就是数据会先写入到 buffer 里用来交错存储数据，这个 buffer 会不断变大，如果有必要的话，可以考虑自己调用 avio_flush 或者写 NULL 把 buffer 写到磁盘
+    av_write_frame
+        不按照交错的形式存储 AVPacket，不过在写入文件的时候是直接写入到磁盘，不会有 buffer，所以可以考虑自己先做交错再用这个接口，不过我一般选择使用 av_interleaved_write_frame，因为比较方便，不需要自己做数据交错排列的操作。
+    av_write_trailer
+        写数据到封装容器的收尾部分。可以关闭和释放在此之前申请的内存，另外，MP4 文件如果需要把 moov 移动到 MP4 文件头部，也是在这个接口里面完成的。
+
+
+
+seek 支持以下四种模式::
+
+    AVSEEK_FLAG_BACKWARD //往回seek
+    AVSEEK_FLAG_BYTE //以字节数的方式seek
+    AVSEEK_FLAG_ANY //可seek到任意帧
+    AVSEEK_FLAG_FRAME //以帧数量的方式seek
+
+
+
+11 | FFmpeg 基础模块二: AVIO, AVDictionary 与 AVOption
+------------------------------------------------------
+
+* 遇到需要从自己定义的内存或文件中读写数据，然后套用在 AVFormat 中的场景，这时使用 AVIO 就可以做到。
+
+AVIO
+^^^^
+
+* avio_find_protocol_name 接口就能得到协议的名称，例如 http、rtmp、rtsp 等
+* avio_alloc_context 接口主要用来申请 AVIOContext 句柄，并且可以在申请的时候注册 read_packet、write_packet 与 seek 回调，然后可以将 AVIOContext 句柄挂载到 AVFormatContext 的 pb 上面。
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/04/2HanRD.jpg
+
+    AVIO 常见接口
+
+
+AVDictionary 与 AVOption
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+opt 接口列表::
+
+    av_opt_set_int 只接受整数
+    av_opt_set_double 只接受浮点数
+    av_opt_set_q 只接受分子与分母，例如{1, 25}这样
+    av_opt_set_bin 只接受二进制数据
+    av_opt_set_image_size 只接受图像宽与高，例如1920，1080这样
+    av_opt_set_video_rate 只接受分子与分母，例如{1, 25}这样
+    av_opt_set_pixel_fmt 只接受枚举类型，例如AV_PIX_FMT_YUV420P
+    av_opt_set_sample_fmt 只接受采样数据格式枚举类型，例如AV_SAMPLE_FMT_S16
+    av_opt_set_channel_layout 只接受音频通道布局枚举类型，例如AV_CHANNEL_LAYOUT_5POINT0
+    av_opt_set_dict_val 接受AVDictionary类型，例如设置metadata时候可以使用
+    av_opt_set_chlayout 只接受音频通道布局枚举类型，例如AV_CHANNEL_LAYOUT_5POINT0
+    av_opt_set_defaults 设置对象的默认值，例如hlsenc有自己对应的操作选项的默认值，全部设置对应的默认值
+    av_opt_set_defaults2 设置对象的默认值，例如hlsenc有自己对应的操作选项的默认值，全部设置对应的默认值
+    av_opt_set_from_string 解析key=value格式的字符串并设置对应的参数与值
+    av_opt_next 获得opt操作的对象的下一个参数
+    av_opt_get_int 获得对象参数的值为整数
+    av_opt_get_double 获得对象参数的值为双精度浮点数
+    av_opt_get_q 获得对象参数为分子分母数，例如{1, 25}这样
+    av_opt_get_image_size 获得图像的宽和高，例如1920，1080这样
+    av_opt_get_video_rate 获得视频的帧率，例如{1, 25}这样
+    av_opt_get_pixel_fmt 获得视频的像素点格式枚举类型，例如AV_PIX_FMT_YUV420P
+    av_opt_get_sample_fmt 获得音频的采样格式枚举类型，例如AV_SAMPLE_FMT_S16
+    av_opt_get_channel_layout 获得音频的采样布局枚举类型，例如AV_CHANNEL_LAYOUT_5POINT0
+    av_opt_get_dict_val 获得AVDictionary类型，通常是key-value方式
+    av_opt_get_key_value 获得key=value类型
+
+dirt 接口列表::
+
+    av_dict_count 获得dict参数的数量整数
+    av_dict_parse_string 一次性解析多组key=value格式的字符串为dict
+    av_dict_free 释放因设置dict申请的内存空间
+    av_dict_copy 复制dict参数与值
+    av_dict_get_string 获得dict的参数值为字符串，用key=value格式字符串获得到value
+    av_dict_set_int 设置dict参数的值为整数
+
+思考题
+^^^^^^
+
+* 播放器不用ffmpeg应该比较少，转码系统不用ffmpeg也比较少
+* 基于FFmpeg的开源应用: ijkplayer，mpv，mplayer，blender,mltframework
+* 音视频处理是采用FFmpeg, OpenGL, AI框架
+
+
+
+12 | FFmpeg基础模块三: AVCodec
+------------------------------
+
+AVCodec 接口
+^^^^^^^^^^^^
+
+找到编码器和解码器有两种方式::
+
+    一种是通过 AVCodecID 来查找
+    一种是通过字符串来查找，字符串就是编码器或解码器的名称，例如 libx264
+
+
+编码和解码的操作接口
+^^^^^^^^^^^^^^^^^^^^
+
+编码和解码的操作接口::
+
+    int avcodec_send_packet(AVCodecContext *avctx, const AVPacket *avpkt);
+    int avcodec_receive_frame(AVCodecContext *avctx, AVFrame *frame);
+    int avcodec_send_frame(AVCodecContext *avctx, const AVFrame *frame);
+    int avcodec_receive_packet(AVCodecContext *avctx, AVPacket *avpkt);
+
+关键参数 AVPacket
+^^^^^^^^^^^^^^^^^
+
+* 在 AVFormat 和 AVCodec 之间有一个关键的参数，就是我们这几节课频繁见到的 AVPacket。
+* AVPacket，贯穿 Codec 与 Format 模块的始终，无论是处理已有的内存数据，还是按照 FFmpeg 内部框架流程建立的数据，都可以应对自如。
+
+
+13 | FFmpeg 有哪些常见的应用场景
+--------------------------------
+
+* FFmpeg 源代码里面的例子，主要是 ``不转码只转封装`` 、 ``转码转封装`` 和 ``直播推流`` 三个场景
+
+Remuxing
+^^^^^^^^
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/04/jfnePj.jpg
+
+    要做 Remuxing 的话都需要用到哪些结构体与模块，看一下基本的流程
+
+
+* 使用 avformat_open_input、avformat_find_stream_info 来打开输入文件，并根据输入文件中的音视频流信息建立音视频流，也就是 AVStreams。
+* 使用 avformat_alloc_output_context2、avformat_new_stream 和 avformat_write_header 来打开输出文件，并建立音视频流，输出文件会用到 AVOutputFormat，并建立封装格式操作的 AVFormatContext，作为操作上下文的结构体，并且会尝试写入输出文件的封装格式头部信息。
+* 从输入文件中读取音视频数据包，将音视频数据包写入输出文件会使用 av_read_frame 函数，从输入文件中读取 AVPacket 音视频数据包，还会使用 av_interleaved_write_frame 函数，将读取到的音视频数据包写入输出文件。
+* 然后是关闭输出文件和输入文件，使用 av_write_trailer 函数，在关闭输出文件之前做写封装收尾工作。使用 avformat_free_context 函数关闭输出文件，并释放因操作输出文件封装格式申请的资源。最后使用 avformat_close_input 关闭输入文件并释放相关的资源。
+
+
+Transcoding
+^^^^^^^^^^^
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/04/9tk8N2.jpg
+
+    转码操作与转封装操作类似，就是多了解码和编码步骤，并且大多数情况下需要自己制定输出的编码参数与编码规格。
+
+
+推流
+^^^^
+
+* 做推流的话也比较简单，可以任选 Remuxing 或者 Transcoding 里的任何一个例子。
+* 设置输出文件的时候，有一个 avformat_alloc_output_context2 操作，最后一个字段是输出文件名，这里可以改成 RTMP 的 URL 地址
+
+
+
+FFmpeg 社区“玩法” (2讲)
+=======================
+
+14 | 如何在FFmpeg中定制一个自己专属的模块
+-----------------------------------------
+
+* 如果你想只有你的播放器能够播放你自己的私有化音视频数据的话，这种操作是比较常见的。
+* 其实操作比较简单，主要是添加 AVOutputFormat、AVIntputFormat、AVCodec 这样的结构体，给结构体填充自己指定的内容即可。
+
+
+15 | 如何参与到FFmpeg社区交流中
+-------------------------------
+
+
+* FFmpeg 社区中有 3 种主要角色：贡献者、维护者和委员会。
+* 常用的交流工具是邮件列表和即时聊天室 IRC，其中邮件列表更通用一些。
+* 遇到 Bug 时需要通过trac反馈，解决了 Bug 以后可以用邮件列表发送 patch 的方式来反馈。
+* 想要成为官方维护者，我们需要在社区保持一定的活跃度，多贡献代码，提交 patch。除此之外还要搭建本地验证环境，在本地验证代码和 patch 的代码风格。
+
+
+
+结束语 | 音视频技术更宠爱脚踏实地的人
+=====================================
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/04/UL5yDL.jpg
+
+    大纲
+
+* 除了 FFmpeg 之外，还我们还有很多软件可以参考，例如 gstreamer、mediainfo、vlc 等
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

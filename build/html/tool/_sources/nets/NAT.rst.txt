@@ -1,0 +1,72 @@
+NAT
+###
+
+关键词::
+
+    NAT type
+    NAT网络检测
+    P2P打洞
+
+NAT type有::
+
+    1. Full Cone NAT（NAT1，开放, Open）
+    全锥形 NAT，这是最宽松的网络环境，IP 和端口通常都不会受限
+
+    2. Address Restricted Cone NAT（NAT2，中等, Moderate）
+    受限锥型 NAT，相比 NAT1 IP 会受限，而端口不受限
+
+    3. Port Restricted Cone NAT（NAT3，严格, Strict）
+    端口受限锥型 NAT，相比 NAT2，NAT3 又增加了端口限制，也就是说 IP、端口都会受限
+
+    4. Symmetric NAT(NAT4，不可用)
+    对称型 NAT
+    具有端口受限锥型的受限特性，内部地址每一次请求一个特定的外部地址，都可能会绑定到一个新的端口号
+    也就是从同一个内网 (IP, Port) 请求不同的外部地址会有不同的 NAT 映射表项
+        即映射的端口号是可能不同的。这种类型基本上就告别 P2P
+
+
+相互打洞::
+
+    1. Moderate/Type 2 NATs can only connect with Moderate/Type 2 or Open/Type 1 NAT
+        IP限制可以和IP限制/开放类型打通
+        IP 打通 IP 步骤:
+            a. 两个 host: h1, h2, 一个 server
+            b. h1, h2 先请求 server, server 记录 h1, h2对应的 ip:port
+            c. h1请求 h2对应的 ip:port, 由于ip 限制, h2 Nat上没有 h1对应 ip 的数据，请求失败
+            d. h2再请求h1，由于刚 h1请求了h2, h1 Nat上有 h2对应的 ip，请求成功
+    2. Strict/Type 3 NATs can only connect with Open/Type 1 NAT
+
+
+
+
+
+工具
+====
+
+pystun
+------
+
+* https://github.com/jtriley/pystun
+
+命令::
+
+    安装:
+    $ pip install pystun
+
+    执行:
+    $ pystun
+    NAT Type: Full Cone
+    External IP: <your-ip-here>
+    External Port: 54320
+
+注意::
+
+    python 要使用2.x 版本
+
+    小技巧:
+      1. conda创建虚拟环境
+      ➜ conda create -n python2 python=2
+      2. docker 使用 host 网络模式
+      ➜ docker run -it --net=host --rm python:2.7 bash
+
+

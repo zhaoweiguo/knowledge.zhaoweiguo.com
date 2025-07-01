@@ -1,0 +1,187 @@
+IPsec VPN Server
+################
+
+* Scripts to build your own IPsec VPN server, with IPsec/L2TP, Cisco IPsec and IKEv2: https://github.com/hwdsl2/setup-ipsec-vpn
+* 使用 `Libreswan <https://libreswan.org/>` 作为 IPsec 服务器，以及 `xl2tpd <https://github.com/xelerance/xl2tpd>` 作为 L2TP 提供者
+
+* Optional: Install `WireGuard <https://github.com/hwdsl2/wireguard-install>` and/or `OpenVPN <https://github.com/hwdsl2/openvpn-install>` on the same server.
+
+
+
+
+Server
+======
+
+安装
+----
+
+.. note:: 请为 VPN 打开 UDP 端口 500 和 4500
+
+快速搭建 IPsec VPN 服务器::
+
+	wget https://get.vpnsetup.net -O vpn.sh && sudo sh vpn.sh
+
+	说明: Your VPN login details will be randomly generated, and displayed when finished.
+
+Client configuration is available at::
+
+	/home/ubuntu/vpnclient.p12 (for Windows & Linux)
+	/home/ubuntu/vpnclient.sswan (for Android)
+	/home/ubuntu/vpnclient.mobileconfig (for iOS & macOS)
+
+::
+
+	docker run \
+	    --name ipsec-vpn-server \
+	    --restart=always \
+	    -v ikev2-vpn-data:/etc/ipsec.d \
+	    -v /lib/modules:/lib/modules:ro \
+	    -p 500:500/udp \
+	    -p 4500:4500/udp \
+	    -d --privileged \
+	    hwdsl2/ipsec-vpn-server
+
+
+
+
+卸载 VPN
+--------
+
+警告： 此辅助脚本将从你的服务器中删除 IPsec VPN。所有的 VPN 配置将被永久删除，并且 Libreswan 和 xl2tpd 将被移除。此操作不可撤销::
+
+	wget https://get.vpnsetup.net/unst -O unst.sh && sudo bash unst.sh
+
+
+
+
+Client
+======
+
+Ubuntu
+------
+
+
+安装::
+
+	sudo apt-get update
+	sudo apt-get install network-manager-strongswan
+
+基于p12生成证书::
+
+	openssl pkcs12 -in vpnclient.p12 -cacerts -nokeys -out ca.cer
+	openssl pkcs12 -in vpnclient.p12 -clcerts -nokeys -out client.cer
+	openssl pkcs12 -in vpnclient.p12 -nocerts -nodes  -out client.key
+
+	sudo chown root.root ca.cer client.cer client.key
+	sudo chmod 600 ca.cer client.cer client.key
+
+
+You can then set up and enable the VPN connection::
+
+	01. Go to Settings -> Network -> VPN. Click the + button.
+	02. Select IPsec/IKEv2 (strongswan).
+	03. Enter anything you like in the Name field.
+	04. In the Gateway (Server) section, enter Your VPN Server IP (or DNS name) for the Address.
+	05. Select the ca.cer file for the Certificate.
+	06. In the Client section, select Certificate(/private key) in the Authentication drop-down menu.
+	07. Select Certificate/private key in the Certificate drop-down menu (if exists).
+	08. Select the client.cer file for the Certificate (file).
+	09. Select the client.key file for the Private key.
+	10. In the Options section, check the Request an inner IP address checkbox.
+	11. In the Cipher proposals (Algorithms) section, check the Enable custom proposals checkbox.
+	12. Leave the IKE field blank.
+	13. Enter aes128gcm16 in the ESP field.
+	14. Click Add to save the VPN connection information.
+	15. Turn the VPN switch ON.
+
+
+
+OS X
+----
+
+::
+
+	01. 打开系统偏好设置并转到网络部分。
+	02. 在窗口左下角单击 + 按钮。
+	03. 从 接口 下拉菜单选择 VPN。
+	04. 从 VPN 类型 下拉菜单选择 IPSec 上的 L2TP。
+	05. 在 服务名称 字段中输入任意内容。
+	06. 单击 创建。
+	07. 在 服务器地址 字段中输入你的 VPN 服务器 IP。
+	08. 在 帐户名称 字段中输入你的 VPN 用户名。
+	09. 单击 认证设置 按钮。
+	10. 在 用户认证 部分，选择 密码 单选按钮，然后输入你的 VPN 密码。
+	11. 在 机器认证 部分，选择 共享的密钥 单选按钮，然后输入你的 VPN IPsec PSK。
+	12. 保持 群组名称 字段空白。
+	13. 单击 好。
+	14. 选中 在菜单栏中显示 VPN 状态 复选框。
+	15. （重要） 单击 高级 按钮，并选中 通过 VPN 连接发送所有通信 复选框。
+	16. （重要） 单击 TCP/IP 选项卡，并在 配置 IPv6 部分中选择 仅本地链接。
+	17. 单击 好 关闭高级设置，然后单击 应用 保存 VPN 连接信息。
+
+
+
+
+
+
+
+
+检查日志及 VPN 状态
+===================
+
+
+重启 VPN 服务器上的相关服务::
+
+	sudo service ipsec restart
+	sudo service xl2tpd restart
+
+检查 Libreswan (IPsec) 和 xl2tpd 日志是否有错误::
+
+	# Ubuntu & Debian
+	grep pluto /var/log/auth.log
+	grep xl2tpd /var/log/syslog
+	=>
+	tail -f /var/log/auth.log | grep pluto
+
+
+
+	# CentOS/RHEL, Rocky Linux, AlmaLinux, Oracle Linux & Amazon Linux 2
+	grep pluto /var/log/secure
+	grep xl2tpd /var/log/messages
+
+
+检查服务状态::
+
+	检查 IPsec VPN 服务器状态：
+	sudo ipsec status
+
+	查看当前已建立的 VPN 连接：
+	sudo ipsec trafficstatus
+
+
+
+.. literalinclude:: ./files/setup-ipsec-vpn.sh
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

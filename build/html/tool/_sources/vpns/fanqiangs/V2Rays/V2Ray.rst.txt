@@ -1,0 +1,174 @@
+V2Ray
+#####
+
+
+V2ray是继Shadowsocks(R)后又一个体验很棒、功能非常强大的科学上网工具，近年来受到网友的广泛关注和喜爱。
+
+V2Ray是近几年十分流行的网络工具，其功能强大，用途不限于突破防火墙，但因其能有效翻墙而广为人知。V2Ray有如下大放异彩的特点::
+
+    开源。V2Ray是Project V的核心工具，源代码开源；
+    多协议支持。传输层支持TCP、mKCP、WebSocket等，上层协议支持Socks、Shadowsocks、以及自定义的VMess等；
+    多入口和多出口。V2Ray可同时支持多个入站和出站协议，每个协议独立工作；
+    多平台支持。原生支持Windows、Linux、MacOS三大常用平台，安卓、iOS两大移动平台有丰富的第三方工具；
+    隐蔽性。V2Ray流量可伪装成网页流量，更难被检测和干扰。
+
+与另一个知名的翻墙工具Shadowsocks(R)相比，V2ray和SSR区别在于::
+
+    V2Ray是一个框架/平台，而Shadowsocks(R)是一个代理工具；
+    V2Ray功能强大配置复杂，Shadowsocks(R)简单易用；
+    V2Ray性能更好，协议支持更完善。
+
+.. note:: 一句话总结：V2Ray更好更强大，但更难上手和用好。
+
+Project V
+=========
+
+* Project V is a set of network tools that helps you to build your own computer network. It secures your network connections and thus protects your privacy.
+
+
+
+
+v2ray-core
+==========
+
+* Github Release: github.com/v2ray/v2ray-core
+* => https://github.com/v2fly/v2ray-core
+* A platform for building proxies to bypass network restrictions.
+* https://www.v2ray.com/
+
+
+* Github 分流: github.com/v2ray/dist
+* Homebrew: github.com/v2ray/homebrew-v2ray
+* Arch Linux: packages/community/x86_64/v2ray/
+* Snapcraft: snapcraft.io/v2ray-core
+
+
+
+V2rayU
+======
+
+* github: https://github.com/yanue/V2rayU
+* V2rayU, 基于 v2ray 核心的 mac 版客户端，用于科学上网，使用 swift 编写，支持 vmess,shadowsocks,socks5 等服务协议，支持订阅，支持二维码，剪贴板导入，手动配置，二维码分享等
+
+相关文件::
+
+    v2ray-core文件: /Applications/V2rayU.app/Contents/Resources/v2ray-core
+    v2ray-core启动: ~/Library/LaunchAgents/yanue.v2rayu.v2ray-core.plist
+    v2ray-core日志: ~/Library/Logs/V2rayU.log
+
+    当前启动服务配置: /Applications/V2rayU.app/Contents/Resources/config.json
+    其他服务配置信息: ~/Library/Preferences/net.yanue.V2rayU.plist
+
+
+如果启动无反应可以尝试从命令行手动启动,查看原因::
+
+    cd /Applications/V2rayU.app/Contents/Resources/
+    ./v2ray-core/v2ray -config ./config.json
+
+
+
+
+
+v2ray 服务器
+============
+
+* v2ray 配置指南: https://toutyrater.github.io/
+* Caddy+h2 脚本: https://github.com/dylanbai8/V2Ray_h2-tls_Website_onekey.git
+* v2ray 模板: https://github.com/KiriKira/vTemplate
+
+
+安装::
+
+    $ bash <(curl -L https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-release.sh)
+      % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                     Dload  Upload   Total   Spent    Left  Speed
+    100 22454  100 22454    0     0   190k      0 --:--:-- --:--:-- --:--:--  192k
+    info: Installing V2Ray v5.7.0 for x86_64
+    Downloading V2Ray archive: https://github.com/v2fly/v2ray-core/releases/download/v5.7.0/v2ray-linux-64.zip
+      % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                     Dload  Upload   Total   Spent    Left  Speed
+      0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+    100 11.4M  100 11.4M    0     0  18.0M      0 --:--:-- --:--:-- --:--:-- 49.1M
+    Downloading verification file for V2Ray archive: https://github.com/v2fly/v2ray-core/releases/download/v5.7.0/v2ray-linux-64.zip.dgst
+    info: Extract the V2Ray package to /tmp/tmp.5uKxjoBPoD and prepare it for installation.
+    info: Systemd service files have been installed successfully!
+    warning: The following are the actual parameters for the v2ray service startup.
+    warning: Please make sure the configuration file path is correctly set.
+    # /etc/systemd/system/v2ray.service
+    [Unit]
+    Description=V2Ray Service
+    Documentation=https://www.v2fly.org/
+    After=network.target nss-lookup.target
+
+    [Service]
+    User=nobody
+    CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE
+    AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE
+    NoNewPrivileges=true
+    ExecStart=/usr/local/bin/v2ray run -config /usr/local/etc/v2ray/config.json
+    Restart=on-failure
+    RestartPreventExitStatus=23
+
+    [Install]
+    WantedBy=multi-user.target
+
+    # /etc/systemd/system/v2ray.service.d/10-donot_touch_single_conf.conf
+    # In case you have a good reason to do so, duplicate this file in the same directory and make your customizes there.
+    # Or all changes you made will be lost!  # Refer: https://www.freedesktop.org/software/systemd/man/systemd.unit.html
+    [Service]
+    ExecStart=
+    ExecStart=/usr/local/bin/v2ray run -config /usr/local/etc/v2ray/config.json
+
+    installed: /usr/local/bin/v2ray
+    installed: /usr/local/share/v2ray/geoip.dat
+    installed: /usr/local/share/v2ray/geosite.dat
+    installed: /usr/local/etc/v2ray/config.json
+    installed: /var/log/v2ray/
+    installed: /var/log/v2ray/access.log
+    installed: /var/log/v2ray/error.log
+    installed: /etc/systemd/system/v2ray.service
+    installed: /etc/systemd/system/v2ray@.service
+    removed: /tmp/tmp.5uKxjoBPoD
+    info: V2Ray v5.7.0 is installed.
+    You may need to execute a command to remove dependent software: apt purge curl unzip
+    Please execute the command: systemctl enable v2ray; systemctl start v2ray
+    root@ip-172-31-8-176:/home/ubuntu# systemctl enable v2ray; systemctl start v2ray
+    Created symlink /etc/systemd/system/multi-user.target.wants/v2ray.service → /etc/systemd/system/v2ray.service.
+
+
+启动服务::
+
+    $ systemctl status v2ray.service
+    ● v2ray.service - V2Ray Service
+         Loaded: loaded (/etc/systemd/system/v2ray.service; enabled; vendor preset: enabled)
+        Drop-In: /etc/systemd/system/v2ray.service.d
+                 └─10-donot_touch_single_conf.conf
+         Active: active (running) since Sun 2023-08-06 09:05:17 UTC; 11min ago
+           Docs: https://www.v2fly.org/
+       Main PID: 2386 (v2ray)
+          Tasks: 6 (limit: 1130)
+         Memory: 6.2M
+            CPU: 31ms
+         CGroup: /system.slice/v2ray.service
+                 └─2386 /usr/local/bin/v2ray run -config /usr/local/etc/v2ray/config.json
+
+    Aug 06 09:05:17 ip-172-31-8-176 systemd[1]: Started V2Ray Service.
+    Aug 06 09:05:17 ip-172-31-8-176 v2ray[2386]: V2Ray 5.7.0 (V2Fly, a community-driven edition of V2Ray.) Custom (go1.20.4 linux/amd64)
+    Aug 06 09:05:17 ip-172-31-8-176 v2ray[2386]: A unified platform for anti-censorship.
+    Aug 06 09:05:17 ip-172-31-8-176 v2ray[2386]: 2023/08/06 09:05:17 [Warning] V2Ray 5.7.0 started
+
+
+
+
+
+
+
+参考
+====
+
+* https://tlanyan.me/v2ray-tutorial/
+
+
+
+
+

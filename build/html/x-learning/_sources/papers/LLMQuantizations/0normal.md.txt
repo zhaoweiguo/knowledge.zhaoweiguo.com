@@ -1,0 +1,214 @@
+# 通用
+
+
+## 混合精度
+
+* 作用
+    * 更快的推理速度（尤其在支持低精度指令集的硬件上，如 NVIDIA Tensor Core）
+    * 更低的内存/显存占用（模型权重和中间值占空间更少）
+    * 更高的吞吐量（每秒处理更多样本）
+* 场景
+    * NVIDIA TensorRT：支持 INT8 + FP16 的混合精度推理
+    * ONNX Runtime：可以开启 FP16 或 INT8 优化模式
+    * Transformers 推理：如使用 bitsandbytes、ggml 等库进行量化
+* ⚠️ 注意事项
+    * 混合精度可能会带来 精度损失，需通过 校准（Calibration） 或 量化感知训练（QAT） 保证精度可接受
+    * 需要硬件支持（如 GPU 支持 Tensor Core）
+
+* 关键定义
+    * FP16混合精度：
+        * 使用FP16执行大部分计算 + 在关键步骤保留FP32精度
+        * 如果全用 FP16：有些操作（如累加、归一化、损失函数）容易因为精度太低导致数值不稳定。
+        * 一般来说
+            * 矩阵乘法、卷积、激活函数 → 用 FP16
+            * 权重累加、归一化、Softmax → 用 FP32
+
+* 正常混合精度会提升推理速度，但下面这些操作会降低推理速度
+    | 原因                  | 说明                                                        |
+    | ------------------- | --------------------------------------------------------- |
+    | **硬件不支持 FP16 加速**   | 如普通 CPU、部分老 GPU（GTX 10 系列）会自动回退到 FP32，甚至增加类型转换开销          |
+    | **模型太小**            | 模型计算量小，数据加载或调度开销主导，混合精度带来的收益反而被掩盖                         |
+    | **推理引擎未启用 FP16 优化** | 例如 ONNX Runtime 未设置 `use_fp16=True`，或者 PyTorch 没启用 AMP 模式 |
+    | **大量数据类型转换**        | FP16 和 FP32 来回切换频繁，导致额外开销                                 |
+    | **使用动态输入尺寸**        | 某些加速器对动态尺寸优化效果较差                                          |
+
+
+
+
+
+## 浮点数格式
+
+* 关键词
+    * Mantissa: 小数
+    * Exponent: 指数
+
+![](https://img.zhaoweiguo.com/uPic/2025/06/d7aqst.png)
+
+| 名称                  | 位数   | 指数位 | 尾数位 | 特点和用途                                  |
+| ------------------- | ---- | --- | --- | -------------------------------------- |
+| **FP32**            | 32   | 8   | 23  | 标准 IEEE 754 单精度浮点，常用于训练                |
+| **FP16**            | 16   | 5   | 10  | 精度低，范围小，需混合精度训练                        |
+| **BF16**            | 16   | 8   | 7   | 和 FP32 动态范围一致，精度略低，Google TPU/Intel 支持 |
+| **TF32**            | 19   | 8   | 10  | NVIDIA 提出，训练更快，保留动态范围                  |
+| **FP8 (E4M3/E5M2)** | 8    | 4/5 | 3/2 | 极小位宽，用于推理或模型压缩                         |
+| **INT8**            | 8    | –   | –   | 定点表示，主要用于推理，加速明显                       |
+| **INT4**            | 4    | –   | –   | 更强压缩率，推理专用                             |
+| **Quantized Float** | 各种   | –   | –   | 量化浮点数，用于加速和压缩                          |
+| **Posit**           | 可变   | 可变  | 可变  | 非IEEE格式，理论精度高，但支持较少                    |
+
+
+![](https://img.zhaoweiguo.com/uPic/2025/06/Aj11xw.png)
+
+模型的参数精度: FP32, TF32, FP16, BF16 [图片来源](https://blogs.nvidia.com/blog/2020/05/14/tensorfloat-32-precision-format/)
+
+* 图片说明
+    * TF32 是一个计算数据类型而不是存储数据类型
+
+* 参考资料：
+    * [wikibook](https://en.wikibooks.org/wiki/A-level_Computing/AQA/Paper_2/Fundamentals_of_data_representation/Floating_point_numbers#:~:text=In%20decimal%2C%20very%20large%20numbers,be%20used%20for%20binary%20numbers.)
+
+
+### TF32（TensorFloat-32）
+
+* 基本介绍：
+    * TF32 是 NVIDIA 在 **Ampere 架构（如 A100 GPU）** 中引入的新格式。
+    * **精度结构**：
+      * 总共 19 位
+      * **1 位符号位**
+      * **8 位指数位**（和 FP32 一致）
+      * **10 位尾数（mantissa）**（比 FP32 少了 13 位）
+
+* 设计动机：
+    * 兼容 FP32 的动态范围（因为指数位一致），但精度更低，计算更快；
+    * 用于 tensor core 加速深度学习模型训练。
+* 官方出处：
+    * 官方白皮书：《[NVIDIA A100 Tensor Core GPU Architecture](https://resources.nvidia.com/en-us-tensor-core)》
+    * 发布年份：**2020年**
+
+### BF16（Brain Float 16）
+
+* 基本介绍：
+    * BF16 是由 Google 为 TPU 推出的一种 16 位浮点格式。
+    * **精度结构**：
+      * 总共 16 位
+      * **1 位符号位**
+      * **8 位指数位**（和 FP32 一致）
+      * **7 位尾数（mantissa）**
+
+* 设计动机：
+    * 与 FP32 具有相同的动态范围（便于替换），但降低精度和存储；
+    * 适合神经网络中对数值不太敏感的部分，如前向传播。
+
+* 官方出处：
+    1. **Google TPU v2 白皮书**（首次大规模使用 BF16）：
+       * 《In-Datacenter Performance Analysis of a Tensor Processing Unit》
+       * 作者：Norman P. Jouppi 等
+       * 会议：ISCA 2017
+       * 链接：[https://dl.acm.org/doi/10.1145/3079856.3080246](https://dl.acm.org/doi/10.1145/3079856.3080246)
+    2. BF16 的技术说明文档（Intel 也开始广泛采用）：
+       * 《Bfloat16: The secret to high performance on Cloud TPUs》
+       * 链接：[https://cloud.google.com/blog/products/ai-machine-learning/bfloat16-the-secret-to-high-performance-on-cloud-tpus](https://cloud.google.com/blog/products/ai-machine-learning/bfloat16-the-secret-to-high-performance-on-cloud-tpus)
+
+
+
+### FP16（IEEE Half Precision）
+
+* **16位浮点**（1符号 + 5指数 + 10尾数）
+* 缺点：指数位仅5位，**动态范围小**，可能导致溢出/下溢
+* 使用：需配合 FP32 存储模型参数（混合精度训练）
+
+### FP8（8位浮点）
+
+* 两种主流格式：
+  * **E4M3**：4指数 + 3尾数（动态范围广）
+  * **E5M2**：5指数 + 2尾数（更小尾数精度）
+* **NVIDIA Hopper 架构（H100）** 开始支持 FP8
+* 用途：预训练大模型时加速训练/推理
+* 白皮书参考：
+  * 《[FP8 Formats for Deep Learning](https://arxiv.org/abs/2209.05433)》（NVIDIA, 2022）
+
+### INT8 / INT4（定点整数）
+
+* 用途：**推理阶段最常用的量化格式**
+* 使用场景：
+  * 转换后的模型保留原始 FP32 精度（使用校准或量化感知训练）
+  * 大模型 INT4 + GPTQ 方案（如 LLaMA/GPT 模型量化）
+
+### Posit
+
+* 非 IEEE 标准，由 John Gustafson 提出
+* 动态范围可变，自适应精度，理论性能优于 IEEE 格式
+* 参考论文：
+  * “Beating Floating Point at its Own Game: Posit Arithmetic” (2017)
+  * [https://arxiv.org/abs/1907.01007](https://arxiv.org/abs/1907.01007)
+* 缺点：硬件支持少，应用有限
+
+
+
+
+## weight-only quantization
+
+
+### 通用格式：`W{N}G{M}`
+
+* `W{N}`：表示 **权重被量化为 N 位（bit）**
+  * 例如：`W4` 就是 4-bit 权重量化
+* `G{M}`：表示 **每 M 个通道为一个分组（group-wise quantization）**
+  * 组内共享量化参数（如缩放因子 `scale` 和偏移 `zero point`），从而提升效率和量化效果
+  * 如果是 `G-1`，表示是 **逐通道（per-channel）量化**，即每个输出通道（例如线性层的每一行）一个独立组，精度更高但开销更大
+
+---
+
+### 各配置具体解释
+
+| 配置名        | 位宽 (bit-width) | 分组大小 (group size) | 描述说明                    |
+| ---------- | -------------- | ----------------- | ----------------------- |
+| **W4G-1**  | 4-bit          | 每个通道一个 group      | 逐通道量化，精度高，适用于小模型或精度敏感任务 |
+| **W4G128** | 4-bit          | 每 128 个通道一组       | 粗粒度分组，减少开销，适用于大模型的实际部署  |
+| **W3G128** | 3-bit          | 每 128 个通道一组       | 更低位宽（更高压缩比）下的量化方案       |
+| **W2G128** | 2-bit          | 每 128 个通道一组       | 极限压缩，压缩率最大但对精度影响最大      |
+
+
+### 选用建议
+
+* 如果你追求**较高精度**，使用 `W4G-1` 或 `W4G128` 是常见选择。
+* 如果你希望**极致压缩（模型更小）**，可以使用 `W3G128` 或 `W2G128`，但通常需要专门优化算法（如 SignRound）保持较好的性能。
+* `G128` 这类分组比 `G-1` 更适合在推理部署中加速，因为更少的量化参数可减少计算和存储开销。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

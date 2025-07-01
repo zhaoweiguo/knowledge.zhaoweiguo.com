@@ -1,0 +1,426 @@
+conda的使用
+################
+
+* anaconda官网: https://www.anaconda.com/
+* condar官网: https://conda.io
+
+
+官方定义::
+  
+    Package, dependency and environment management for any language—
+        Python, R, Ruby, Lua, Scala, Java, JavaScript, C/ C++, FORTRAN, and more.
+
+Anaconda是Python的一个开源发行版本，主要面向科学计算。包管理器和环境管理器。
+
+Conda是一种通用包管理系统，旨在构建和管理任何语言的任何类型的软件。因此，它也适用于Python包。因为conda来自于Python(更具体地说是PyData)社区，许多人错误地认为它基本上是一个Python包管理器。情况并非如此：conda旨在管理任何软件堆栈中的包和依赖关系。在这个意义上，它不像pip，更像是apt或yum等跨平台版本。
+
+
+
+conda分为anaconda和miniconda::
+
+    anaconda是包含一些常用包
+    miniconda则是精简版，需要啥装啥
+    
+
+安装
+====
+
+下载网站:
+---------
+
+* miniconda: https://docs.anaconda.com/miniconda/
+* anaconda: https://www.anaconda.com/download/
+
+
+::
+
+    安装过程: 印象笔记(20200229Docker安装Conda)
+
+
+    下载后直接执行sh命令,如:
+    ./Miniconda3-latest-MacOSX-x86_64.sh
+
+
+    Do you wish to update your shell profile to automatically initialize conda?
+    This will activate conda on startup and change the command prompt when activated.
+    If you'd prefer that conda's base environment not be activated on startup,
+       run the following command when conda is activated:
+
+    conda config --set auto_activate_base false
+
+    You can undo this by running `conda init --reverse $SHELL`? [yes|no]
+
+
+升级conda::
+
+    // 
+    $ conda update conda
+
+
+
+
+Docker
+------
+
+::
+
+    $ docker pull continuumio/miniconda3
+    $ docker pull continuumio/miniconda2
+    $ docker pull continuumio/anaconda2
+    $ docker pull continuumio/anaconda3
+
+
+
+环境相关命令
+============
+
+1. 查看当前存在的环境::
+
+    $ conda env list  (or $ conda info --envs)
+    # conda environments:
+    #
+    base                  *  /Users/zhaoweiguo/9tool/miniconda3
+    gluon                    /Users/zhaoweiguo/9tool/miniconda3/envs/gluon
+
+2. 创建conda环境::
+
+    常用参数:
+    #-n: 设置新的环境的名字
+    #python=3 指定新环境的python的版本
+
+    a. 创建一个纯净的Python环境,里面只包含conda install 安装的包
+    conda create -n python3 python=3
+
+    b. 创建一个Python环境,里面包含conda install 安装的包,也包含系统Python site-packages中的第三方包
+    conda create -n venv --sys-site-packages
+
+    c. 基于environment.yml创建Python环境
+    conda env create -f environment.yml
+
+    d. 创建环境并安装pip
+    conda create -n venv pip
+    =>
+    等同于
+    conda create -n venv 
+    conda activate venv
+    conda install pip
+
+    e. 基于指定环境创建新环境
+    $ conda create -n <new> --clone <old>
+
+
+    # 注：对已经创建了虚拟环境,也可以手动安装 Python 开发文件和编译工具
+    # 1. 安装 Python 开发文件
+    sudo apt install python3-dev  # Linux
+    python -m ensurepip --default-pip    # MacOS
+
+    # 2. 安装 GCC 编译器
+    sudo apt install gcc  # Linux 
+    brew install gcc     # MacOS
+
+
+
+3. 启动python2环境::
+
+    $ conda activate python2
+
+4. 退出环境::
+
+    $ conda deactivate
+
+5. 删除环境::
+
+    $ conda remove -n myenv --all
+
+
+
+environment.yml 文件内容示例::
+
+    name: aster
+    channels:
+      - pytorch
+      - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
+      - conda-forge
+      - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/
+      - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/
+      - https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge/
+      - https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/pytorch/
+      - defaults
+    dependencies:
+      - astor=0.7.1=py_0
+      - blas=2.11=openblas
+      ...
+      - pip:
+        - zhconv==1.4.3
+    prefix: /home/guanmengnan/anaconda3/envs/aster
+
+
+
+
+
+
+
+
+包操作命令
+==========
+
+搜索需要的安装包::
+
+    $  conda search gatk
+
+安装包::
+
+    $ conda install pytorch torchvision -c pytorch
+
+
+    $ conda install gatk
+
+    # 安装到指定channel
+    $ conda install gatk -c channel
+    
+    如需要安装特定的版本:
+    $ conda install 软件名=版本号
+    $ conda install gatk=3.7
+
+
+    指定channel安装包
+    $ conda install -c https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge/ numpy
+
+
+指定文件安装包::
+
+    $ conda install --file FILE
+
+查看已安装软件::
+
+    $ conda list
+
+更新指定软件::
+
+    $ conda update gatk
+
+升级Python::
+
+    # 升级Python
+    $ conda update python
+
+    # 升级Python到指定版
+    conda update python=<version>
+    conda update python=<version>-dev
+
+    注意:
+        新版本的conda已经不用update命令了，统一用install
+        CondaError: Invalid spec for 'conda update': python=3.8.16-dev
+            Use 'conda install' instead.
+
+
+
+升级pip::
+
+    # 升级pip
+    $ python -m pip install --upgrade pip
+
+    # 升级conda
+    $ conda install conda=<version>
+
+
+
+卸载指定软件::
+
+    $ conda remove gatk
+
+show_channel_urls
+=================
+
+
+设置是否显示每个包的来源 channel 的 URL::
+
+    // 当 show_channel_urls 设置为 "yes" 时
+    // conda list 命令将显示每个包的来源 channel 的 URL
+    // 开启:
+    $  conda config --set show_channel_urls yes
+    // 关闭:
+    $  conda config --set show_channel_urls no
+
+
+
+频道 channels
+=============
+
+
+查看已经添加的channels::
+
+    $ conda config --get channels
+
+
+
+添加频道::
+
+    官方channel：
+    $ conda config --add channels bioconda
+    $ conda config --add channels conda-forge
+
+    $ conda config --add channels genomedk
+
+    $ conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/
+    $ conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/
+    $ conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge/
+    $ conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/bioconda/
+
+
+    $ conda config --prepend channels new_channel
+    说明:
+        --add 是将指定的 new_channel 添加到 channels 列表的最前面
+        --prepend 是将指定的 new_channel 添加到 channels 列表的最后面
+
+
+清除索引缓存::
+
+    conda clean -i
+
+.. warning:: 有时你明明看到channel已经配置好了，就是很慢，原因就是没有清除索引
+
+
+更新镜像源channel
+=================
+
+tsinghua
+--------
+
+
+直接修改文件 ``~/.condarc`` ::
+
+    channels:
+      - defaults
+    show_channel_urls: true
+    channel_alias: https://mirrors.tuna.tsinghua.edu.cn/anaconda
+    default_channels:
+      - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
+      - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free
+      - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/r
+      - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/pro
+      - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/msys2
+    custom_channels:
+      conda-forge: https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
+      msys2: https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
+      bioconda: https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
+      menpo: https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
+      pytorch: https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
+      simpleitk: https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
+
+* https://mirrors.tuna.tsinghua.edu.cn/anaconda/archive/
+* https://mirrors.tuna.tsinghua.edu.cn/help/anaconda/
+
+
+aliyun
+------
+
+直接修改文件 ``~/.condarc`` ::
+
+    channels:
+      - defaults
+    show_channel_urls: true
+    default_channels:
+      - http://mirrors.aliyun.com/anaconda/pkgs/main
+      - http://mirrors.aliyun.com/anaconda/pkgs/r
+      - http://mirrors.aliyun.com/anaconda/pkgs/msys2
+    custom_channels:
+      conda-forge: http://mirrors.aliyun.com/anaconda/cloud
+      msys2: http://mirrors.aliyun.com/anaconda/cloud
+      bioconda: http://mirrors.aliyun.com/anaconda/cloud
+      menpo: http://mirrors.aliyun.com/anaconda/cloud
+      pytorch: http://mirrors.aliyun.com/anaconda/cloud
+      simpleitk: http://mirrors.aliyun.com/anaconda/cloud
+
+
+清除索引缓存运行::
+
+    conda clean -i
+
+
+
+对比
+====
+
+
+
+当在conda环境中,使用pip安装的包与直接从conda通道安装的包,主要有以下几点不同::
+
+    1. 安装路径不同
+    从conda通道安装的包位于conda环境的lib/site-packages路径下。
+    使用pip安装的包位于conda环境的lib/pythonX.X/site-packages路径下。
+
+    2. 依赖管理不同
+    conda可以跟踪并管理各个包之间的依赖关系。
+    pip安装无法跟踪到conda环境中已有的依赖,可能导致依赖冲突。
+
+    3. 环境隔离不同
+    conda环境可以很好地隔离不同版本的Python解释器和依赖库。
+    pip安装的库不能做到与conda环境完全隔离。
+
+    4. 升级管理不同 
+    conda可以直接管理每个环境内的所有包,进行升级等操作。
+    pip只管理pip安装的库,升级需要重新安装。
+
+    5. 二进制兼容性
+    conda的二进制包可在不同平台运行。
+    pip编译生成的文件通常与系统相关,不能跨平台直接使用。
+
+    6. 通道和来源
+    conda安装通过添加各种通道,安装源比较丰富。
+    pip主要通过PyPI来源安装Python库。
+
+
+常见问题
+========
+
+ERROR: Could not build wheels for uwsgi, which is required to install pyproject.toml-based projects
+---------------------------------------------------------------------------------------------------
+
+
+*  在使用 Anaconda 虚拟环境时遇到这个问题，可能是因为 Anaconda 环境中没有完整的 Python 开发工具链::
+
+    conda install python=3.x-dev
+    # x换成你要安装的 Python 版本
+    # 如:
+    conda install python=3.8.16-dev
+
+ImportError: Tornado requires an up-to-date SSL module.
+-------------------------------------------------------
+
+* 原因: 缺少 SSL 模块::
+
+    $ conda install -c conda-forge openssl
+
+* 结论：怀疑可能的原因是版本冲突，最终是修改python版本从3.14改为3.6解决的
+
+
+
+常见命令
+================
+
+
+* 查看当前conda版本::
+
+    $ conda --version
+
+如果没有nvcc命令，可以执行下面命令安装::
+
+    conda install -y nvidia/label/cuda-12.4.0::cuda-toolkit conda-forge::sparsehash
+
+Install pytorch with matching CUDA version::
+
+    # CUDA 11.8
+    conda install pytorch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1  pytorch-cuda=11.8 -c pytorch -c nvidia
+    # CUDA 12.1
+    conda install pytorch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 pytorch-cuda=12.1 -c pytorch -c nvidia
+    # CUDA 12.4
+    conda install pytorch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 pytorch-cuda=12.4 -c pytorch -c nvidia
+
+
+参考
+====
+
+* https://zhuanlan.zhihu.com/p/25198543
+* https://www.zhihu.com/question/58033789/answer/254673663
+

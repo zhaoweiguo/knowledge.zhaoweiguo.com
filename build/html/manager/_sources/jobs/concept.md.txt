@@ -1,0 +1,142 @@
+# 概念
+
+
+## API编排引擎
+
+
+* API编排引擎的实现流程，核心目标是通过一个统一的入口协调多个后端服务 API 的调用顺序、数据流转、错误处理、重试机制等，从而实现灵活的业务流程编排。它通常用于微服务架构、低代码平台、AI Agent、RPA系统等场景。
+* 核心组件
+
+    1. **DSL定义模块（流程定义语言）**
+       - 支持 JSON/YAML/可视化编排等形式描述流程。
+       - 典型字段：`steps`, `conditions`, `parallel`, `retry`, `input`, `output`。
+
+    2. **执行引擎**
+       - 解析流程定义，按顺序或并发执行每个步骤。
+       - 控制调用链、数据依赖、错误捕获、重试。
+
+    3. **API调用器（Invoker）**
+       - 负责封装 HTTP/gRPC 等协议的 API 调用逻辑。
+       - 支持认证、参数填充、请求映射、超时等控制。
+
+    4. **上下文管理器（Context）**
+       - 保存流程执行时的中间变量、状态。
+       - 类似一个作用域环境，支持变量读取、写入、传递。
+
+    5. **条件与路由引擎**
+       - 判断分支条件、流程跳转、循环等。
+       - 支持表达式引擎（如 `JEXL`、`MVEL` 或自研 mini DSL）。
+
+    6. **错误处理与重试模块**
+       - 指定某些步骤失败后的处理策略：重试、跳过、中断、兜底逻辑等。
+
+    7. **监控与日志**
+       - 对每一次执行进行 trace 记录：step 执行时间、状态、错误信息等。
+       - 可对接 Prometheus、ELK、Sentry 等系统。
+
+* 执行流程
+
+```
+[流程定义（DSL）]
+       ↓
+[解析器：将 DSL 编译成可执行的 DAG]
+       ↓
+[执行器：按 DAG 节点执行]
+       ├─> Step1: 调用 API-A
+       │     ├─ 填参 → 请求 → 返回 → 存入上下文
+       ├─> Step2: 调用 API-B（依赖 Step1 的结果）
+       ├─> Step3: 条件判断（If Step2.result == "OK"）
+       │     ├─ Yes → Step4
+       │     └─ No  → Step5
+       ↓
+[流程结束：输出结果 / 状态 / 日志]
+```
+
+---
+
+* 关键技术点（实现细节）
+
+| 模块             | 实现建议 / 说明 |
+|------------------|------------------|
+| DSL解析器        | 使用 JSONSchema 约束结构；可用 Antlr 实现自定义语法解析。 |
+| 表达式计算       | 采用 `JEXL` / `MVEL` / `Aviator` 等表达式引擎。 |
+| 并发执行         | 利用异步协程（如 Python asyncio、Java CompletableFuture、Golang goroutine）并发执行。 |
+| 依赖图管理       | 用 DAG 表示步骤依赖关系，拓扑排序后执行。 |
+| 调用失败重试     | 支持幂等重试、指数退避、断路器（可引入 Resilience4j） |
+| 状态持久化       | 可存入 Redis/MongoDB/PostgreSQL，实现断点续跑或可观测性。 |
+| 容错与降级       | 比如某个 API 不可用时执行备用逻辑（Fallback）。 |
+| 可视化界面       | 可以对接类似 Flowable、Camunda，也可自研基于 DAG 渲染的前端组件（如 React Flow）。 |
+
+---
+
+* 开源实现（可以学习或复用思想）
+    - [Apache Airflow](https://airflow.apache.org/)：通用 DAG 工作流引擎，适合批任务。
+    - [Netflix Conductor](https://github.com/Netflix/conductor)：微服务编排利器。
+    - [Temporal](https://temporal.io/)：事件驱动流程管理，容错强。
+    - [n8n](https://n8n.io/)、[Node-RED](https://nodered.org/)：低代码流程引擎。
+
+---
+
+* 简单例子（DSL结构）
+
+```json
+{
+  "name": "user_registration_flow",
+  "steps": [
+    {
+      "id": "check_user",
+      "type": "http",
+      "request": {
+        "method": "GET",
+        "url": "http://user-service/check",
+        "params": { "user_id": "${input.user_id}" }
+      }
+    },
+    {
+      "id": "create_user",
+      "type": "http",
+      "condition": "${check_user.response.exists == false}",
+      "request": {
+        "method": "POST",
+        "url": "http://user-service/create",
+        "body": { "user_id": "${input.user_id}" }
+      }
+    }
+  ]
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

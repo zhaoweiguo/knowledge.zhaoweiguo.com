@@ -1,0 +1,196 @@
+Builder-建造者
+##############
+
+.. note:: constructs complex objects by separating construction and representation.用来创建复杂对象，可以通过设置不同的可选参数，“定制化” 地创建不同的对象。
+
+
+
+.. image:: https://img.zhaoweiguo.com/knowledge/images/architectures/design-modes/Creationals/builder1.png
+
+
+.. note:: In Go we might use the “functional Options” idiom, whereas in Java we might use a builder pattern.
+
+
+
+遇到问题
+========
+
+在程序设计中，我们会经常遇到一些复杂的对象，其中有很多成员属性，甚至嵌套着多个复杂的对象。这种情况下，创建这个复杂对象就会变得很繁琐。
+
+对于 C++/Java 而言，最常见的表现就是构造函数有着长长的参数列表::
+
+    MyObject obj = new MyObject(param1, param2, param3, param4, param5, param6, ...)
+
+而对于 Go 语言来说，最常见的表现就是多层的嵌套实例化::
+
+    obj := &MyObject{
+      Field1: &Field1 {
+        Param1: &Param1 {
+          Val: 0,
+        },
+        Param2: &Param2 {
+          Val: 1,
+        },
+        ...
+      },
+      Field2: &Field2 {
+        Param3: &Param3 {
+          Val: 2,
+        },
+        ...
+      },
+      ...
+    }
+
+上述的对象创建方法有两个明显的缺点::
+
+    1. 对对象使用者不友好，使用者在创建对象时需要知道的细节太多
+    2. 代码可读性很差。
+
+示例
+====
+
+一个 Message 结构体，其主要有 Header 和 Body 组成::
+
+    package msg
+    ...
+    type Message struct {
+      Header *Header
+      Body   *Body
+    }
+    type Header struct {
+      SrcAddr  string
+      SrcPort  uint64
+      DestAddr string
+      DestPort uint64
+      Items    map[string]string
+    }
+    type Body struct {
+      Items []string
+    }
+    ...
+
+按照直接的对象创建方式，创建逻辑应该是这样的::
+
+    // 多层的嵌套实例化
+    message := msg.Message{
+      Header: &msg.Header{
+        SrcAddr:  "192.168.0.1",
+        SrcPort:  1234,
+        DestAddr: "192.168.0.2",
+        DestPort: 8080,
+        Items:    make(map[string]string),
+      },
+      Body:   &msg.Body{
+        Items: make([]string, 0),
+      },
+    }
+    // 需要知道对象的实现细节
+    message.Header.Items["contents"] = "application/json"
+    message.Body.Items = append(message.Body.Items, "record1")
+    message.Body.Items = append(message.Body.Items, "record2")
+
+建造者模式
+==========
+
+建造者模式的作用有如下几个::
+
+    1. 封装复杂对象的创建过程，使对象使用者不感知复杂的创建逻辑
+    2. 可以一步步按照顺序对成员进行赋值，或者创建嵌套对象，并最终完成目标对象的创建
+    3. 对多个对象复用同样的对象创建逻辑
+
+引入建造者模式对代码进行重构::
+
+    package msg
+    ...
+    // Message对象的Builder对象
+    type builder struct {
+      once *sync.Once
+      msg *Message
+    }
+    // 返回Builder对象
+    func Builder() *builder {
+      return &builder{
+        once: &sync.Once{},
+        msg: &Message{Header: &Header{}, Body: &Body{}},
+      }
+    }
+    // 以下是对Message成员对构建方法
+    func (b *builder) WithSrcAddr(srcAddr string) *builder {
+      b.msg.Header.SrcAddr = srcAddr
+      return b
+    }
+    func (b *builder) WithSrcPort(srcPort uint64) *builder {
+      b.msg.Header.SrcPort = srcPort
+      return b
+    }
+    func (b *builder) WithDestAddr(destAddr string) *builder {
+      b.msg.Header.DestAddr = destAddr
+      return b
+    }
+    func (b *builder) WithDestPort(destPort uint64) *builder {
+      b.msg.Header.DestPort = destPort
+      return b
+    }
+    func (b *builder) WithHeaderItem(key, value string) *builder {
+      // 保证map只初始化一次
+      b.once.Do(func() {
+        b.msg.Header.Items = make(map[string]string)
+      })
+      b.msg.Header.Items[key] = value
+      return b
+    }
+    func (b *builder) WithBodyItem(record string) *builder {
+      b.msg.Body.Items = append(b.msg.Body.Items, record)
+      return b
+    }
+    // 创建Message对象，在最后一步调用
+    func (b *builder) Build() *Message {
+      return b.msg
+    }
+
+测试代码如下::
+
+    package test
+    ...
+    func TestMessageBuilder(t *testing.T) {
+      // 使用消息建造者进行对象创建
+      message := msg.Builder().
+        WithSrcAddr("192.168.0.1").
+        WithSrcPort(1234).
+        WithDestAddr("192.168.0.2").
+        WithDestPort(8080).
+        WithHeaderItem("contents", "application/json").
+        WithBodyItem("record1").
+        WithBodyItem("record2").
+        Build()
+      if message.Header.SrcAddr != "192.168.0.1" {
+        t.Errorf("expect src address 192.168.0.1, but actual %s.", message.Header.SrcAddr)
+      }
+      if message.Body.Items[0] != "record1" {
+        t.Errorf("expect body item0 record1, but actual %s.", message.Body.Items[0])
+      }
+    }
+    // 运行结果
+    === RUN   TestMessageBuilder
+    --- PASS: TestMessageBuilder (0.00s)
+    PASS
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

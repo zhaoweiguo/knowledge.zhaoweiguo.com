@@ -1,0 +1,1191 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="zh-CN" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="zh-CN" > <!--<![endif]-->
+<head>
+
+
+<!-- start added 2025-04-14   增加对markdown中公式的支持 -->
+<script>
+window.MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+    },
+    options: {
+        ignoreHtmlClass: "tex2jax_ignore|mathjax_ignore",
+        processHtmlClass: "tex2jax_process|mathjax_process|math|output_area"
+    }
+};
+</script>
+<script defer="defer" src="https://fastly.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<!-- end added 2025-04-14   增加对markdown中公式的支持 -->
+
+
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>7.3.3. Tokenizers &mdash; 新溪-gordon V2025.06 文档</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+    <link rel="index" title="索引" href="../../genindex.html" />
+    <link rel="search" title="搜索" href="../../search.html" />
+    <link rel="next" title="7.3.4. PEFT" href="PEFT.html" />
+    <link rel="prev" title="Transformers 4.45.2" href="Transformers/Transformers_V4.45.2.html" /> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+  <script src="../../_static/js/jquery.min.js"></script>
+
+
+<!-- 评论插件 gittalk start -->
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script> -->
+<!-- 评论插件 gittalk end -->
+
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> 新溪-gordon
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                V2025.06
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">AI</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../normal.html">1. 常用</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/normal.html">1.1. 常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/AIGC.html">1.2. AIGC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/ml.html">1.3. 机器学习machine learning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/bi.html">1.4. BI(Business Intelligence)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/deep_learning.html">1.5. 深度学习</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../normals/deep_learnings/normal.html">1.5.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../normals/deep_learnings/history.html">1.5.2. 历史</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/monitor.html">1.6. monitor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/algorithm.html">1.7. 相关算法</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/tool.html">1.8. 工具</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/question.html">1.9. 常见问题</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/%E6%9C%BA%E5%99%A8%E4%BA%BA.html">1.10. 机器人领域</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../theory.html">2. 理论</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../theories/tmp.html">2.1. 临时</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../theories/tmps/ReAct.html">2.1.1. ReAct框架</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theories/tmps/Reflection.html">2.1.2. Reflection反思</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theories/tmps/math.html">2.1.3. 数学</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theories/tmps/bag-of-words.html">2.1.4. bag-of-words</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theories/tmps/word2vec.html">2.1.5. Word2Vec</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theories/tmps/doc2vec.html">2.1.6. Doc2Vec</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theories/tmps/FastText.html">2.1.7. FastText</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theories/tmps/LDA.html">2.1.8. LDA-Latent Dirichlet Allocation(潜在狄利克雷分配)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theories/tmps/overfitting-underfitting.html">2.1.9. overfitting&amp;underfitting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theories/tmps/RAG.html">2.1.10. RAG</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theories/tmps/Agent.html">2.1.11. Agent</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theories/tmps/LLM.html">2.1.12. LLM</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theories/tmps/RL.html">2.1.13. RL-强化学习</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theories/tmps/prompt_engineering.html">2.1.14. Prompt Engineering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theories/tmps/finetune.html">2.1.15. LLM调优(finetune)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theories/tmps/Workflow.html">2.1.16. Workflow</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../LLM.html">3. 大模型</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../LLMs/normal.html">3.1. 常用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../LLMs/normals/normal.html">3.1.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../LLMs/normals/package.html">3.1.2. 依赖安装</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../LLMs/normals/encoder.html">3.1.3. 编码-解码器</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../LLMs/normals/usage.html">3.1.4. 使用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../LLMs/normals/tmp.html">3.1.5. 临时</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../LLMs/model.html">3.2. 著名模型</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../LLMs/models/Qwen3.html">3.2.1. Qwen3</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../LLMs/models/DeepSeek.html">3.2.2. DeepSeek-R1-推理模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../LLMs/models/LLaMA.html">3.2.3. LLaMA</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../LLMs/models/ChatGLM.html">3.2.4. ChatGLM</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../LLMs/models/BERT.html">3.2.5. BERT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../LLMs/models/OpenAI.html">3.2.6. OpenAI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../LLMs/models/BART.html">3.2.7. BART</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../LLMs/models/T5.html">3.2.8. T5</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../LLMs/models/ChatRWKV.html">3.2.9. ChatRWKV</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../LLMs/models/Open-Assistant.html">3.2.10. Open-Assistant</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../LLMs/models/OpenGVLab.html">3.2.11. OpenGVLab</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../LLMs/finetune.html">3.3. 调优</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../LLMs/Quantization%E9%87%8F%E5%8C%96.html">3.4. 模型量化(Quantization)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../LLMs/Quantizations/normal.html">3.4.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../LLMs/Quantizations/GGUF.html">3.4.2. GGUF 文件</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../LLMs/fileformat.html">3.5. 文件格式</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../LLMs/fileformats/normal.html">3.5.1. 通用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../LLMs/fileformats/GGML.html">3.5.2. GGML系列文件格式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../LLMs/fileformats/ONNX.html">3.5.3. ONNX</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../LLMs/fileformats/ONNXs/normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../LLMs/fileformats/ONNXs/ONNX.html">ONNX</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../LLMs/fileformats/ONNXs/onnxruntime.html">onnxruntime</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../LLMs/fileformats/ONNXs/skl2onnx.html">skl2onnx</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../LLMs/fileformats/NCNN.html">3.5.4. NCNN</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../LLMs/openai.html">3.6. 商业项目</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../LLMs/openais/normal.html">3.6.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../LLMs/openais/openai.html">3.6.2. OpenAI</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../LLMs/prompt.html">3.7. Prompt 提示词</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../LLMs/prompts/demo_chinese.html">3.7.1. 中文</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../LLMs/prompts/demo_english.html">3.7.2. English</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../LLMs/prompts/skill.html">3.7.3. 示例</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../LLMs/Android.html">3.8. Android版LLM相关</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../LLMs/Androids/normal.html">3.8.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../LLMs/Androids/Android%E7%89%88%E9%83%A8%E7%BD%B2.html">3.8.2. Android版部署</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../LLMs/Androids/GPU.html">3.8.3. GPU</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../RAG.html">4. RAG相关</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../NLP.html">5. NLP</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../NLPs/normal.html">5.1. 常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../NLPs/preprocess.html">5.2. 预处理</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../NLPs/preprocesses/normal.html">5.2.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../NLPs/preprocesses/%E5%85%B3%E9%94%AE%E8%AF%8D%E6%8F%90%E5%8F%96.html">5.2.2. 关键词提取</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../NLPs/preprocesses/%E5%88%86%E8%AF%8D.html">5.2.3. 分词</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../NLPs/preprocesses/%E6%83%85%E6%84%9F%E5%88%86%E6%9E%90.html">5.2.4. 情感分析</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../NLPs/preprocesses/%E6%96%87%E6%9C%AC%E8%A1%A8%E7%A4%BA.html">5.2.5. 文本表示</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../NLPs/preprocesses/%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6.html">5.2.6. 注意力机制</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../NLPs/preprocesses/%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.html">5.2.7. 语言模型</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../NLPs/NER.html">5.3. NER-命名实体识别</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../NLPs/NERs/normal.html">5.3.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../NLPs/NERs/seq-label.html">5.3.2. 序列标注</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../NLPs/NERs/BiLSTM%2BCRF.html">5.3.3. BiLSTM+CRF</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../NLPs/NERs/history.html">5.3.4. 历史</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../NLPs/summary.html">5.4. 总结-摘要</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../NLPs/summarys/normal.html">5.4.1. 通用</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../library.html">6. 函数库</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../libraries/normal.html">6.1. 常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../libraries/Image.html">6.2. Image图像处理</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../libraries/Video.html">6.3. Video视频</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../libraries/IPython.html">6.4. IPython</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../libraries/IPythons/normal.html">6.4.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../libraries/IPythons/magic.html">6.4.2. 魔法命令 </a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../libraries/IPythons/display.html">6.4.3. display函数</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../libraries/Jupyter.html">6.5. Jupyter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../libraries/NumPy.html">6.6. NumPy</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../libraries/NumPys/normal.html">6.6.1. 通用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../libraries/NumPys/Ndarray.html">6.6.2. Ndarray 对象</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../libraries/NumPys/function.html">6.6.3. 通用函数</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../libraries/Pandas.html">6.7. Pandas</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../libraries/Pandas/normal.html">6.7.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../libraries/Pandas/example_subset.html">6.7.2. 实例-subset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../libraries/Pandas/example_analysis.html">6.7.3. 实例-统计分析</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../libraries/Pandas/example_sql.html">6.7.4. 利用pandas实现SQL操作</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../libraries/Pandas/example_default_value.html">6.7.5. 实例-缺失值的处理</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../libraries/Pandas/example_multi_index.html">6.7.6. 多层索引的使用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../libraries/Pandas/practice.html">6.7.7. 实践</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../libraries/Pandas/practices/practice_2012ObamaElect.html">实践-2012年奥巴马总统连任选举</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../libraries/Pandas/api_input_output.html">6.7.8. API-输入输出</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../libraries/Pandas/api_General.html">6.7.9. API-General functions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../libraries/Pandas/api_Series.html">6.7.10. API-Series</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../libraries/Pandas/api_DataFrame.html">6.7.11. API-DataFrame</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../libraries/Pandas/api_Index.html">6.7.12. API-index</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../libraries/Matplotlib.html">6.8. Matplotlib</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../libraries/Matplotlibs/normal.html">6.8.1. 基本</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../libraries/Matplotlibs/install.html">6.8.2. 安装</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../libraries/Matplotlibs/pyplot.html">6.8.3. pyplot </a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../libraries/Matplotlibs/matplotlib.patches.html">6.8.4. matplotlib.patches</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../libraries/Matplotlibs/example.html">6.8.5. 实例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../libraries/Matplotlibs/examples/plot.html">折线图plot</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../libraries/Matplotlibs/examples/bar.html">条形图bar</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../libraries/Matplotlibs/examples/hist.html">直方图hist</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../libraries/Matplotlibs/examples/scatter.html">散点图scatter</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../libraries/Matplotlibs/examples/stackplot.html">面积图stackplot</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../libraries/Matplotlibs/examples/pie.html">饼图pie</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../libraries/Matplotlibs/examples/box.html">箱型图box</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../libraries/Matplotlibs/examples/multi.html">多图合并multi</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../libraries/Matplotlibs/pylab.html">6.8.6. pylab子包</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../libraries/SciPy.html">6.9. SciPy</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../libraries/SciPys/normal.html">6.9.1. 常用</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../libraries/sklearn.html">6.10. sklearn</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../libraries/sklearns/normal.html">6.10.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../libraries/sklearns/supervised.html">6.10.2. 监督学习</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../libraries/sklearns/superviseds/glm.html">广义线性模型</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../libraries/sklearns/unsupervised.html">6.10.3. 无监督学习</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../libraries/statsmodels.html">6.11. statsmodels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../libraries/OpenCV.html">6.12. OpenCV</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../libraries/OpenCVs/normal.html">6.12.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../libraries/OpenCVs/example.html">6.12.2. 实例</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../libraries/OpenCVs/struct.html">6.12.3. 代码类结构</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../libraries/Seaborn.html">6.13. Seaborn</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../libraries/Seaborns/normal.html">6.13.1. 常用</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../libraries/jieba.html">6.14. jieba中文分词</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../libraries/gensim.html">6.15. gensim: 文本主题建模和相似性分析</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../libraries/gensims/normal.html">6.15.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../libraries/gensims/Core_Tutorials.html">6.15.2. Core Tutorials</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../libraries/gensims/Tutorials.html">6.15.3. Tutorials: Learning Oriented Lessons</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../libraries/gensims/How-to_Guides.html">6.15.4. How-to Guides: Solve a Problem</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../libraries/LAC.html">6.16. LAC-百度词法分析工具</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../framework.html">7. 学习框架</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../normal.html">7.1. 常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pytorch.html">7.2. PyTorch</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../pytorchs/normal.html">7.2.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../pytorchs/nn.html">7.2.2. nn模块</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../pytorchs/PyTorch.html">7.2.3. PyTorch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../pytorchs/ExecuTorch.html">7.2.4. ExecuTorch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../pytorchs/torchrun.html">7.2.5. torchrun (Elastic Launch)</a></li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="reference internal" href="../huggingface.html">7.3. huggingface</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="normal.html">7.3.1. 常用</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="normals/huggingface_hub.html">Hugging Face Hub</a></li>
+<li class="toctree-l4"><a class="reference internal" href="normals/lib_python.html">Hub Python Library</a></li>
+<li class="toctree-l4"><a class="reference internal" href="normals/Datasets.html">Datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="normals/Text_Generation_Inference_main.html">TGI: Text Generation Inference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="normals/Evaluate.html">Evaluate</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="Transformers.html">7.3.2. Transformers</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="Transformers/Transformers.html">Transformers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Transformers/Transformers_V4.45.2.html">Transformers 4.45.2</a></li>
+</ul>
+</li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">7.3.3. Tokenizers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PEFT.html">7.3.4. PEFT</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="PEFT/PEFT.html">PEFT</a></li>
+<li class="toctree-l4"><a class="reference internal" href="PEFT/PEFT_V0.13.0.html">PEFT 0.13.0</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="Accelerate.html">7.3.5. Accelerate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="TRL.html">7.3.6. TRL - Transformer Reinforcement Learning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="collect.html">7.3.7. 收集</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="collects/resources.html">resources</a></li>
+<li class="toctree-l4"><a class="reference internal" href="collects/model.html">model</a></li>
+<li class="toctree-l4"><a class="reference internal" href="collects/blog_decoding-methods.html">博文: decoding methods of LLM with transformers</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../vLLM.html">7.4. vLLM</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../vLLMs/normal.html">7.4.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../vLLMs/vLLM_doc.html">7.4.2. vLLM官方文档</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../llama.cpp.html">7.5. llama.cpp框架</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../llama.cpps/normal.html">7.5.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../llama.cpps/llama-cpp-python.html">7.5.2. Python bindings for llama.cpp</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../DeepSpeed.html">7.6. DeepSpeed</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../DeepSpeeds/huggingface.html">7.6.1. huggingface</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../DeepSpeeds/ZeRO.html">7.6.2. Zero Redundancy Optimizer (ZeRO)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../DeepSpeeds/deepspeed_doc.html">7.6.3. DeepSpeed</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../mxnet.html">7.7. mxnet库</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../mxnets/ndarray.html">7.7.1. nd模块</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../mxnets/ndarrays/ndarray.html">ndarray</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../mxnets/ndarrays/ndarray.random.html">ndarray.random</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../mxnets/gluon.html">7.7.2. gluon模块</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../mxnets/autograd.html">7.7.3. autograd模块</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../tensorflow.html">7.8. tensorflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../Keras.html">7.9. Keras</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../Keras/normal.html">7.9.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../Keras/demo.html">7.9.2. 实例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../Keras/demos/binary_classification.html">二分类问题</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../Keras/demos/multiclass_classification.html">多分类问题</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../Keras/demos/regression.html">回归问题</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../other.html">7.10. 其他</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../website.html">8. 关键网站</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../websites/Papers%20with%20Code.html">8.1. Papers with Code</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../websites/Kaggle.html">8.2. Kaggle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../websites/ArXiv.html">8.3. ArXiv 学术论文预印本平台</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../websites/video.html">8.4. 视频相关</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../websites/normal.html">8.5. 通用</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../practice.html">9. 实践</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../practices/OCR.html">9.1. OCR</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../practices/OCRs/normal.html">9.1.1. 常用</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../practices/AIML.html">9.2. AIML</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../practices/AIMLs/normal.html">9.2.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../practices/AIMLs/spec.html">9.2.2. AIML 2.1 Documentation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../opensource.html">10. 开源项目</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../opensources/Agent.html">10.1. Agent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../opensources/RAG.html">10.2. RAG</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../opensources/normal.html">10.3. 常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../opensources/ui.html">10.4. UI界面</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../opensources/finetune.html">10.5. 调优</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../opensources/search.html">10.6. 搜索</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../opensources/LLM-Inference-Engine.html">10.7. LLM Inference Engines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../opensources/LLM-Inference-Tool.html">10.8. 模型推理平台</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../opensources/LLM-inference-accelerate.html">10.9. LLM推理加速</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../opensources/Evaluate.html">10.10. LLM评估</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../opensources/platform.html">10.11. AI平台</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../dataset.html">11. 数据集</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../datasets/normal.html">11.1. 常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../datasets/chinese.html">11.2. 中文数据集</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../datasets/chinese_image.html">11.3. 中文图片相关数据集</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../datasets/huggingface.html">11.4. dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../datasets/website.html">11.5. 数据集相关网站</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../model.html">12. 常见模型</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cuda.html">13. 图形&amp;计算加速技术</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../cudas/normal.html">13.1. 常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../cudas/cuda.html">13.2. cuda</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../Evaluate.html">14. Evaluate评测</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../Evaluates/normal.html">14.1. 通用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../Evaluates/TruLens.html">14.2. TruLens</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../Evaluates/Ragas.html">14.3. Ragas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../Evaluates/DeepEval.html">14.4. DeepEval</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../Evaluates/UpTrain.html">14.5. UpTrain</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../Evaluates/huggingface.html">14.6. evaluate</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../%E4%BC%A0%E7%BB%9FAI.html">15. 传统AI</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">新溪-gordon</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../framework.html"><span class="section-number">7. </span>学习框架</a> &raquo;</li>
+        
+          <li><a href="../huggingface.html"><span class="section-number">7.3. </span>huggingface</a> &raquo;</li>
+        
+      <li><span class="section-number">7.3.3. </span>Tokenizers</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/frameworks/huggingfaces/Tokenizers_V0.13.3.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            <nav id="local-table-of-contents" role="navigation" aria-labelledby="local-table-of-contents-title">
+              <h4 id="local-table-of-contents-title">On This Page</h4>
+              <ul>
+<li><a class="reference internal" href="#">7.3.3. Tokenizers</a><ul>
+<li><a class="reference internal" href="#getting-started">Getting started</a><ul>
+<li><a class="reference internal" href="#quicktour">Quicktour</a><ul>
+<li><a class="reference internal" href="#build-a-tokenizer-from-scratch">Build a tokenizer from scratch</a></li>
+<li><a class="reference internal" href="#pretrained">Pretrained</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#the-tokenization-pipeline">The tokenization pipeline</a><ul>
+<li><a class="reference internal" href="#normalization">Normalization</a></li>
+<li><a class="reference internal" href="#pre-tokenization">Pre-Tokenization</a></li>
+<li><a class="reference internal" href="#model">Model</a></li>
+<li><a class="reference internal" href="#post-processing">Post-Processing</a></li>
+<li><a class="reference internal" href="#all-together-a-bert-tokenizer-from-scratch">All together: a BERT tokenizer from scratch</a></li>
+<li><a class="reference internal" href="#decoding">Decoding</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#components">Components</a><ul>
+<li><a class="reference internal" href="#normalizers">Normalizers</a></li>
+<li><a class="reference internal" href="#pre-tokenizers">Pre-tokenizers</a></li>
+<li><a class="reference internal" href="#models">Models</a><ul>
+<li><a class="reference internal" href="#wordlevel">WordLevel</a></li>
+<li><a class="reference internal" href="#bpe">BPE</a></li>
+<li><a class="reference internal" href="#wordpiece">WordPiece</a></li>
+<li><a class="reference internal" href="#unigram">Unigram</a></li>
+<li><a class="reference internal" href="#id2">总结对比</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#post-processors">Post-Processors</a></li>
+<li><a class="reference internal" href="#decoders">Decoders</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#api">API</a><ul>
+<li><a class="reference internal" href="#id3">Normalizers</a></li>
+<li><a class="reference internal" href="#trainers">Trainers</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            </nav>
+  <table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="../../genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../search.html"><span class="std std-ref">搜索页面</span></a></p></td>
+</tr>
+</tbody>
+</table>
+<section id="tokenizers">
+<h1><span class="section-number">7.3.3. </span>Tokenizers<a class="headerlink" href="#tokenizers" title="此标题的永久链接">¶</a></h1>
+<ul class="simple">
+<li><p>From: <a class="reference external" href="https://huggingface.co/docs/tokenizers/index">https://huggingface.co/docs/tokenizers/index</a></p></li>
+</ul>
+<section id="getting-started">
+<h2>Getting started<a class="headerlink" href="#getting-started" title="此标题的永久链接">¶</a></h2>
+<section id="quicktour">
+<h3>Quicktour<a class="headerlink" href="#quicktour" title="此标题的永久链接">¶</a></h3>
+<section id="build-a-tokenizer-from-scratch">
+<h4>Build a tokenizer from scratch<a class="headerlink" href="#build-a-tokenizer-from-scratch" title="此标题的永久链接">¶</a></h4>
+<p>Training the tokenizer:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">tokenizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tokenizer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tokenizers.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">BPE</span>
+<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">Tokenizer</span><span class="p">(</span><span class="n">BPE</span><span class="p">(</span><span class="n">unk_token</span><span class="o">=</span><span class="s2">&quot;[UNK]&quot;</span><span class="p">))</span>
+
+<span class="c1"># train our tokenizer on the wikitext files:</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tokenizers.trainers</span><span class="w"> </span><span class="kn">import</span> <span class="n">BpeTrainer</span>
+<span class="n">trainer</span> <span class="o">=</span> <span class="n">BpeTrainer</span><span class="p">(</span><span class="n">special_tokens</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;[UNK]&quot;</span><span class="p">,</span> <span class="s2">&quot;[CLS]&quot;</span><span class="p">,</span> <span class="s2">&quot;[SEP]&quot;</span><span class="p">,</span> <span class="s2">&quot;[PAD]&quot;</span><span class="p">,</span> <span class="s2">&quot;[MASK]&quot;</span><span class="p">])</span>
+
+<span class="c1"># 英文等增加对空格的分格(否则像it is这种会因为常出现被认识是一个token)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tokenizers.pre_tokenizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">Whitespace</span>
+<span class="n">tokenizer</span><span class="o">.</span><span class="n">pre_tokenizer</span> <span class="o">=</span> <span class="n">Whitespace</span><span class="p">()</span>
+
+<span class="c1"># train</span>
+<span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;data/wikitext-103-raw/wiki.</span><span class="si">{</span><span class="n">split</span><span class="si">}</span><span class="s2">.raw&quot;</span> <span class="k">for</span> <span class="n">split</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;test&quot;</span><span class="p">,</span> <span class="s2">&quot;train&quot;</span><span class="p">,</span> <span class="s2">&quot;valid&quot;</span><span class="p">]]</span>
+<span class="n">tokenizer</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">files</span><span class="p">,</span> <span class="n">trainer</span><span class="p">)</span>
+
+<span class="n">tokenizer</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;data/tokenizer-wiki.json&quot;</span><span class="p">)</span>
+
+<span class="c1"># 重新加载:</span>
+<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">Tokenizer</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;data/tokenizer-wiki.json&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Using the tokenizer:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">output</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;Hello, y&#39;all! How are you 😁 ?&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">tokens</span><span class="p">)</span>
+<span class="c1"># [&quot;Hello&quot;, &quot;,&quot;, &quot;y&quot;, &quot;&#39;&quot;, &quot;all&quot;, &quot;!&quot;, &quot;How&quot;, &quot;are&quot;, &quot;you&quot;, &quot;[UNK]&quot;, &quot;?&quot;]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">ids</span><span class="p">)</span>
+<span class="c1"># [27253, 16, 93, 11, 5097, 5, 7961, 5112, 6218, 0, 35]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">offsets</span><span class="p">[</span><span class="mi">9</span><span class="p">])</span>
+<span class="c1"># (26, 27)</span>
+
+<span class="n">sentence</span> <span class="o">=</span> <span class="s2">&quot;Hello, y&#39;all! How are you 😁 ?&quot;</span>
+<span class="n">sentence</span><span class="p">[</span><span class="mi">26</span><span class="p">:</span><span class="mi">27</span><span class="p">]</span>
+<span class="c1"># &quot;😁&quot;</span>
+</pre></div>
+</div>
+<p>Post-processing:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>tokenizer.token_to_id(&quot;[SEP]&quot;)
+# 2
+
+from tokenizers.processors import TemplateProcessing
+tokenizer.post_processor = TemplateProcessing(
+    single=&quot;[CLS] $A [SEP]&quot;,
+    pair=&quot;[CLS] $A [SEP] $B:1 [SEP]:1&quot;,
+    special_tokens=[
+        (&quot;[CLS]&quot;, tokenizer.token_to_id(&quot;[CLS]&quot;)),
+        (&quot;[SEP]&quot;, tokenizer.token_to_id(&quot;[SEP]&quot;)),
+    ],
+)
+# 说明
+1. 指定单句子的模板：格式是 “[CLS] $A [SEP]”，其中 $A 代表我们的句子
+2. 指定句子对的模板：格式是 “[CLS] $A [SEP] $B [SEP]”，其中 $A 代表第一个句子，$B 代表第二个句子
+
+# 单句子示例
+output = tokenizer.encode(&quot;Hello, y&#39;all! How are you 😁 ?&quot;)
+print(output.tokens)
+# [&quot;[CLS]&quot;, &quot;Hello&quot;, &quot;,&quot;, &quot;y&quot;, &quot;&#39;&quot;, &quot;all&quot;, &quot;!&quot;, &quot;How&quot;, &quot;are&quot;, &quot;you&quot;, &quot;[UNK]&quot;, &quot;?&quot;, &quot;[SEP]&quot;]
+
+# 句子对示例
+output = tokenizer.encode(&quot;Hello, y&#39;all!&quot;, &quot;How are you 😁 ?&quot;)
+print(output.tokens)
+# [&quot;[CLS]&quot;, &quot;Hello&quot;, &quot;,&quot;, &quot;y&quot;, &quot;&#39;&quot;, &quot;all&quot;, &quot;!&quot;, &quot;[SEP]&quot;, &quot;How&quot;, &quot;are&quot;, &quot;you&quot;, &quot;[UNK]&quot;, &quot;?&quot;, &quot;[SEP]&quot;]
+print(output.type_ids)
+# [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
+</pre></div>
+</div>
+<p>Encoding multiple sentences in a batch:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># process your texts by batches</span>
+<span class="n">output</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="o">.</span><span class="n">encode_batch</span><span class="p">([</span><span class="s2">&quot;Hello, y&#39;all!&quot;</span><span class="p">,</span> <span class="s2">&quot;How are you 😁 ?&quot;</span><span class="p">])</span>
+
+<span class="c1"># batch of sentences pairs</span>
+<span class="n">output</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="o">.</span><span class="n">encode_batch</span><span class="p">(</span>
+    <span class="p">[[</span><span class="s2">&quot;Hello, y&#39;all!&quot;</span><span class="p">,</span> <span class="s2">&quot;How are you 😁 ?&quot;</span><span class="p">],</span> <span class="p">[</span><span class="s2">&quot;Hello to you too!&quot;</span><span class="p">,</span> <span class="s2">&quot;I&#39;m fine, thank you!&quot;</span><span class="p">]]</span>
+<span class="p">)</span>
+
+<span class="c1"># automatically pad the outputs to the longest sentence</span>
+<span class="n">tokenizer</span><span class="o">.</span><span class="n">enable_padding</span><span class="p">(</span><span class="n">pad_id</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">pad_token</span><span class="o">=</span><span class="s2">&quot;[PAD]&quot;</span><span class="p">)</span> <span class="c1"># 分词器为填充标记 [PAD] 预设的唯一整数 ID。当分词器遇到 [PAD] 时，自动会将其转换为 3</span>
+
+<span class="n">output</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="o">.</span><span class="n">encode_batch</span><span class="p">([</span><span class="s2">&quot;Hello, y&#39;all!&quot;</span><span class="p">,</span> <span class="s2">&quot;How are you 😁 ?&quot;</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">output</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">tokens</span><span class="p">)</span>
+<span class="c1"># [&quot;[CLS]&quot;, &quot;How&quot;, &quot;are&quot;, &quot;you&quot;, &quot;[UNK]&quot;, &quot;?&quot;, &quot;[SEP]&quot;, &quot;[PAD]&quot;]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">output</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">attention_mask</span><span class="p">)</span>
+<span class="c1"># [1, 1, 1, 1, 1, 1, 1, 0]</span>
+</pre></div>
+</div>
+</section>
+<section id="pretrained">
+<h4>Pretrained<a class="headerlink" href="#pretrained" title="此标题的永久链接">¶</a></h4>
+<p>Using a pretrained tokenizer:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">tokenizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tokenizer</span>
+
+<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">Tokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s2">&quot;bert-base-uncased&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Importing a pretrained tokenizer from legacy vocabulary files:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">tokenizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">BertWordPieceTokenizer</span>
+
+<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">BertWordPieceTokenizer</span><span class="p">(</span><span class="s2">&quot;bert-base-uncased-vocab.txt&quot;</span><span class="p">,</span> <span class="n">lowercase</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="the-tokenization-pipeline">
+<h3>The tokenization pipeline<a class="headerlink" href="#the-tokenization-pipeline" title="此标题的永久链接">¶</a></h3>
+<p>When calling <code class="docutils literal notranslate"><span class="pre">Tokenizer.encode</span></code> or <code class="docutils literal notranslate"><span class="pre">Tokenizer.encode_batch</span></code>, the <code class="docutils literal notranslate"><span class="pre">input</span> <span class="pre">text(s)</span></code> go through the following pipeline:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">normalization</span>
+<span class="n">pre</span><span class="o">-</span><span class="n">tokenization</span>
+<span class="n">model</span>
+<span class="n">post</span><span class="o">-</span><span class="n">processing</span>
+</pre></div>
+</div>
+<section id="normalization">
+<h4>Normalization<a class="headerlink" href="#normalization" title="此标题的永久链接">¶</a></h4>
+<ul class="simple">
+<li><p>标准化是对原始字符串应用的一组操作，以使其不那么随机或“更干净”。</p></li>
+<li><p>常见操作包括去除空格、删除重音字符或小写所有文本。</p></li>
+<li><p>每个标准化操作在 🤗 Tokenizers 库中都由Normalizer表示，您可以使用normalizers.Sequence组合其中的多个操作</p></li>
+</ul>
+<p>应用 <strong>NFD Unicode 标准化</strong> 并 <strong>删除重音符号</strong> 的标准化器:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">tokenizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">normalizers</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tokenizers.normalizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">NFD</span><span class="p">,</span> <span class="n">StripAccents</span>
+<span class="n">normalizer</span> <span class="o">=</span> <span class="n">normalizers</span><span class="o">.</span><span class="n">Sequence</span><span class="p">([</span><span class="n">NFD</span><span class="p">(),</span> <span class="n">StripAccents</span><span class="p">()])</span>
+</pre></div>
+</div>
+<p>使用:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">normalizer</span><span class="o">.</span><span class="n">normalize_str</span><span class="p">(</span><span class="s2">&quot;Héllò hôw are ü?&quot;</span><span class="p">)</span>
+<span class="c1"># &quot;Hello how are u?&quot;</span>
+</pre></div>
+</div>
+<p>更改相应的属性来自定义其规范化器:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tokenizer</span><span class="o">.</span><span class="n">normalizer</span> <span class="o">=</span> <span class="n">normalizer</span>
+</pre></div>
+</div>
+</section>
+<section id="pre-tokenization">
+<h4>Pre-Tokenization<a class="headerlink" href="#pre-tokenization" title="此标题的永久链接">¶</a></h4>
+<ul class="simple">
+<li><p>预标记化是将文本分割成更小的对象的行为，这些对象为训练结束时的标记给出了上限(upper bound)。</p></li>
+<li><p>A good way to think of this is that the pre-tokenizer will split your text into “words” and then, your final tokens will be parts of those words.</p></li>
+</ul>
+<p>预标记输入的一种简单方法是根据空格和标点符号进行分割:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">tokenizers.pre_tokenizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">Whitespace</span>
+<span class="n">pre_tokenizer</span> <span class="o">=</span> <span class="n">Whitespace</span><span class="p">()</span>
+<span class="n">pre_tokenizer</span><span class="o">.</span><span class="n">pre_tokenize_str</span><span class="p">(</span><span class="s2">&quot;Hello! How are you? I&#39;m fine, thank you.&quot;</span><span class="p">)</span>
+<span class="c1"># [(&quot;Hello&quot;, (0, 5)), (&quot;!&quot;, (5, 6)), (&quot;How&quot;, (7, 10)), (&quot;are&quot;, (11, 14)), (&quot;you&quot;, (15, 18)),</span>
+<span class="c1">#  (&quot;?&quot;, (18, 19)), (&quot;I&quot;, (20, 21)), (&quot;&#39;&quot;, (21, 22)), (&#39;m&#39;, (22, 23)), (&quot;fine&quot;, (24, 28)),</span>
+<span class="c1">#  (&quot;,&quot;, (28, 29)), (&quot;thank&quot;, (30, 35)), (&quot;you&quot;, (36, 39)), (&quot;.&quot;, (39, 40))]</span>
+</pre></div>
+</div>
+<p>可以将任何PreTokenizer组合在一起:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># 将按空格、标点符号和数字进行分割，将数字分隔成各个数字</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tokenizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">pre_tokenizers</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tokenizers.pre_tokenizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">Digits</span>
+<span class="n">pre_tokenizer</span> <span class="o">=</span> <span class="n">pre_tokenizers</span><span class="o">.</span><span class="n">Sequence</span><span class="p">([</span><span class="n">Whitespace</span><span class="p">(),</span> <span class="n">Digits</span><span class="p">(</span><span class="n">individual_digits</span><span class="o">=</span><span class="kc">True</span><span class="p">)])</span>
+<span class="n">pre_tokenizer</span><span class="o">.</span><span class="n">pre_tokenize_str</span><span class="p">(</span><span class="s2">&quot;Call 911!&quot;</span><span class="p">)</span>
+<span class="c1"># [(&quot;Call&quot;, (0, 4)), (&quot;9&quot;, (5, 6)), (&quot;1&quot;, (6, 7)), (&quot;1&quot;, (7, 8)), (&quot;!&quot;, (8, 9))]</span>
+</pre></div>
+</div>
+<p>更改相应的属性来自定义Tokenizer的预分词器:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tokenizer</span><span class="o">.</span><span class="n">pre_tokenizer</span> <span class="o">=</span> <span class="n">pre_tokenizer</span>
+</pre></div>
+</div>
+</section>
+<section id="model">
+<h4>Model<a class="headerlink" href="#model" title="此标题的永久链接">¶</a></h4>
+<ul class="simple">
+<li><p>一旦输入文本被标准化和预标记化， Tokenizer就会在预标记上应用模型。</p></li>
+<li><p>模型的作用是使用它学到的规则将你的“单词”分割成标记。它还负责将这些标记映射到模型词汇表中相应的 ID。</p></li>
+<li><p>This model is passed along when intializing the Tokenizer</p></li>
+</ul>
+<p>Tokenizers 库支持:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">models</span><span class="o">.</span><span class="n">BPE</span>
+<span class="n">models</span><span class="o">.</span><span class="n">Unigram</span>
+<span class="n">models</span><span class="o">.</span><span class="n">WordLevel</span>
+<span class="n">models</span><span class="o">.</span><span class="n">WordPiece</span>
+</pre></div>
+</div>
+<p>示例:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Tokenizer初使化时就传递</span>
+<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">Tokenizer</span><span class="p">(</span><span class="n">BPE</span><span class="p">(</span><span class="n">unk_token</span><span class="o">=</span><span class="s2">&quot;[UNK]&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+</section>
+<section id="post-processing">
+<h4>Post-Processing<a class="headerlink" href="#post-processing" title="此标题的永久链接">¶</a></h4>
+<ul class="simple">
+<li><p>后处理是最后一步，用于在返回Encoding之前对其执行任何其他转换，例如添加潜在的特殊标记。</p></li>
+<li><p>通过设置相应的属性来自定义Tokenizer的后处理器</p></li>
+</ul>
+<p>示例-通过以下方式进行后处理以使输入适合 BERT 模型:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">tokenizers.processors</span><span class="w"> </span><span class="kn">import</span> <span class="n">TemplateProcessing</span>
+<span class="n">tokenizer</span><span class="o">.</span><span class="n">post_processor</span> <span class="o">=</span> <span class="n">TemplateProcessing</span><span class="p">(</span>
+    <span class="n">single</span><span class="o">=</span><span class="s2">&quot;[CLS] $A [SEP]&quot;</span><span class="p">,</span>
+    <span class="n">pair</span><span class="o">=</span><span class="s2">&quot;[CLS] $A [SEP] $B:1 [SEP]:1&quot;</span><span class="p">,</span>
+    <span class="n">special_tokens</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;[CLS]&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;[SEP]&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)],</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>与预分词器或标准化器不同，无需在更改后处理器后重新训练分词器</p></li>
+</ul>
+</section>
+<section id="all-together-a-bert-tokenizer-from-scratch">
+<h4>All together: a BERT tokenizer from scratch<a class="headerlink" href="#all-together-a-bert-tokenizer-from-scratch" title="此标题的永久链接">¶</a></h4>
+<p>BERT 依赖于 WordPiece，因此我们使用此模型实例化一个新的Tokenizer:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">tokenizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tokenizer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tokenizers.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">WordPiece</span>
+<span class="n">bert_tokenizer</span> <span class="o">=</span> <span class="n">Tokenizer</span><span class="p">(</span><span class="n">WordPiece</span><span class="p">(</span><span class="n">unk_token</span><span class="o">=</span><span class="s2">&quot;[UNK]&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>BERT 通过删除重音符号和小写字母来预处理文本:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">tokenizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">normalizers</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tokenizers.normalizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">NFD</span><span class="p">,</span> <span class="n">Lowercase</span><span class="p">,</span> <span class="n">StripAccents</span>
+<span class="n">bert_tokenizer</span><span class="o">.</span><span class="n">normalizer</span> <span class="o">=</span> <span class="n">normalizers</span><span class="o">.</span><span class="n">Sequence</span><span class="p">([</span><span class="n">NFD</span><span class="p">(),</span> <span class="n">Lowercase</span><span class="p">(),</span> <span class="n">StripAccents</span><span class="p">()])</span>
+</pre></div>
+</div>
+<p>根据空格和标点符号进行分割:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">tokenizers.pre_tokenizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">Whitespace</span>
+<span class="n">bert_tokenizer</span><span class="o">.</span><span class="n">pre_tokenizer</span> <span class="o">=</span> <span class="n">Whitespace</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>uses the template:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">tokenizers.processors</span><span class="w"> </span><span class="kn">import</span> <span class="n">TemplateProcessing</span>
+<span class="n">bert_tokenizer</span><span class="o">.</span><span class="n">post_processor</span> <span class="o">=</span> <span class="n">TemplateProcessing</span><span class="p">(</span>
+    <span class="n">single</span><span class="o">=</span><span class="s2">&quot;[CLS] $A [SEP]&quot;</span><span class="p">,</span>
+    <span class="n">pair</span><span class="o">=</span><span class="s2">&quot;[CLS] $A [SEP] $B:1 [SEP]:1&quot;</span><span class="p">,</span>
+    <span class="n">special_tokens</span><span class="o">=</span><span class="p">[</span>
+        <span class="p">(</span><span class="s2">&quot;[CLS]&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;[SEP]&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>use this tokenizer and train on it on wikitext:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">tokenizers.trainers</span><span class="w"> </span><span class="kn">import</span> <span class="n">WordPieceTrainer</span>
+<span class="n">trainer</span> <span class="o">=</span> <span class="n">WordPieceTrainer</span><span class="p">(</span><span class="n">vocab_size</span><span class="o">=</span><span class="mi">30522</span><span class="p">,</span> <span class="n">special_tokens</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;[UNK]&quot;</span><span class="p">,</span> <span class="s2">&quot;[CLS]&quot;</span><span class="p">,</span> <span class="s2">&quot;[SEP]&quot;</span><span class="p">,</span> <span class="s2">&quot;[PAD]&quot;</span><span class="p">,</span> <span class="s2">&quot;[MASK]&quot;</span><span class="p">])</span>
+<span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;data/wikitext-103-raw/wiki.</span><span class="si">{</span><span class="n">split</span><span class="si">}</span><span class="s2">.raw&quot;</span> <span class="k">for</span> <span class="n">split</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;test&quot;</span><span class="p">,</span> <span class="s2">&quot;train&quot;</span><span class="p">,</span> <span class="s2">&quot;valid&quot;</span><span class="p">]]</span>
+<span class="n">bert_tokenizer</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">files</span><span class="p">,</span> <span class="n">trainer</span><span class="p">)</span>
+<span class="n">bert_tokenizer</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;data/bert-wiki.json&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="decoding">
+<h4>Decoding<a class="headerlink" href="#decoding" title="此标题的永久链接">¶</a></h4>
+<ul>
+<li><p>除了对输入文本进行编码之外， Tokenizer还具有用于解码的 API，即将模型生成的 ID 转换回文本:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Tokenizer</span><span class="o">.</span><span class="n">decode</span> <span class="p">(</span><span class="k">for</span> <span class="n">one</span> <span class="n">predicted</span> <span class="n">text</span><span class="p">)</span>
+<span class="n">Tokenizer</span><span class="o">.</span><span class="n">decode_batch</span> <span class="p">(</span><span class="k">for</span> <span class="n">a</span> <span class="n">batch</span> <span class="n">of</span> <span class="n">predictions</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p>decoder首先将 ID 转换回标记（使用标记器的词汇表）并删除所有特殊标记，然后将这些标记与空格连接起来:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">output</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;Hello, y&#39;all! How are you 😁 ?&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">ids</span><span class="p">)</span>
+<span class="c1"># [1, 27253, 16, 93, 11, 5097, 5, 7961, 5112, 6218, 0, 35, 2]</span>
+<span class="n">tokenizer</span><span class="o">.</span><span class="n">decode</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">27253</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">93</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">5097</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">7961</span><span class="p">,</span> <span class="mi">5112</span><span class="p">,</span> <span class="mi">6218</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">35</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+<span class="c1"># &quot;Hello , y &#39; all ! How are you ?&quot;</span>
+</pre></div>
+</div>
+<p>如果您使用的模型添加了特殊字符来表示给定“单词”的子标记（例如 WordPiece 中的”##” ）:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">output</span> <span class="o">=</span> <span class="n">bert_tokenizer</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;Welcome to the 🤗 Tokenizers library.&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">tokens</span><span class="p">)</span>
+<span class="c1"># [&quot;[CLS]&quot;, &quot;welcome&quot;, &quot;to&quot;, &quot;the&quot;, &quot;[UNK]&quot;, &quot;tok&quot;, &quot;##eni&quot;, &quot;##zer&quot;, &quot;##s&quot;, &quot;library&quot;, &quot;.&quot;, &quot;[SEP]&quot;]</span>
+<span class="n">bert_tokenizer</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">ids</span><span class="p">)</span>
+<span class="c1"># &quot;welcome to the tok ##eni ##zer ##s library .&quot;</span>
+</pre></div>
+</div>
+<p>这种情况需要自定义decoder以正确处理它们:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">tokenizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">decoders</span>
+<span class="n">bert_tokenizer</span><span class="o">.</span><span class="n">decoder</span> <span class="o">=</span> <span class="n">decoders</span><span class="o">.</span><span class="n">WordPiece</span><span class="p">()</span>
+<span class="n">bert_tokenizer</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">ids</span><span class="p">)</span>
+<span class="c1"># &quot;welcome to the tokenizers library.&quot;</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="components">
+<h3>Components<a class="headerlink" href="#components" title="此标题的永久链接">¶</a></h3>
+<section id="normalizers">
+<h4>Normalizers<a class="headerlink" href="#normalizers" title="此标题的永久链接">¶</a></h4>
+<p>常用的Normalizer方法:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>NFD
+NFKD
+NFC
+NFKC
+Lowercase       =&gt; Input: HELLO ὈΔΥΣΣΕΎΣ  Output: helloὀδυσσεύς`
+Strip           =&gt; Input: &quot;  hi  &quot; Output: &quot;hi&quot;
+StripAccents    =&gt; Input: é Ouput: e
+Replace         =&gt; Replace(&quot;a&quot;, &quot;e&quot;) will behave like this: Input: &quot;banana&quot; Ouput: &quot;benene&quot;
+BertNormalizer
+    =&gt; Provides an implementation of the Normalizer used in the original BERT
+        clean_text
+        handle_chinese_chars
+        strip_accents
+        lowercase
+Sequence
+    =&gt; Composes multiple normalizers that will run in the provided order
+        Sequence([NFKC(), Lowercase()])
+</pre></div>
+</div>
+</section>
+<section id="pre-tokenizers">
+<h4>Pre-tokenizers<a class="headerlink" href="#pre-tokenizers" title="此标题的永久链接">¶</a></h4>
+<ul class="simple">
+<li><p>The PreTokenizer takes care of splitting the input according to a set of rules.</p></li>
+</ul>
+<p>algorithms:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>ByteLevel
+    Splits on whitespaces while remapping all the bytes to a set of visible characters.
+    introduced by OpenAI with GPT-2
+Whitespace          =&gt; Input: &quot;Hello there!&quot; Output: &quot;Hello&quot;, &quot;there!&quot;
+    Splits on word boundaries (using the following regular expression: `\w+|[^\w\s]+`
+WhitespaceSplit
+    Splits on any whitespace character
+Punctuation         =&gt; Input: &quot;Hello?&quot; Ouput: &quot;Hello&quot;, &quot;?&quot;
+Metaspace           =&gt; Input: &quot;Hello there&quot; Ouput: &quot;Hello&quot;, &quot;▁there&quot;
+    Splits on whitespaces and replaces them with a special char “▁” (U+2581)
+CharDelimiterSplit  =&gt; Example with x: Input: &quot;Helloxthere&quot; Ouput: &quot;Hello&quot;, &quot;there&quot;
+Digits              =&gt; Input: &quot;Hello123there&quot; Output: &quot;Hello&quot;, &quot;123&quot;, &quot;there&quot;
+        Splits the numbers from any other characters.
+Split
+    有下面3个参数:
+        1. `pattern` should be either a custom string or regexp.
+        2. `behavior` should be one of:
+            removed
+            isolated
+            merged_with_previous
+            merged_with_next
+            contiguous
+        3. `invert` should be a boolean flag.
+    示例:
+        pattern = , behavior = &quot;isolated&quot;, invert = False:
+        Input: &quot;Hello, how are you?&quot;
+        Output: &quot;Hello,&quot;, &quot; &quot;, &quot;how&quot;, &quot; &quot;, &quot;are&quot;, &quot; &quot;, &quot;you?&quot;
+Sequence
+    示例:
+        Sequence([Punctuation(), WhitespaceSplit()])
+</pre></div>
+</div>
+</section>
+<section id="models">
+<h4>Models<a class="headerlink" href="#models" title="此标题的永久链接">¶</a></h4>
+<p>分词:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">models</span><span class="o">.</span><span class="n">BPE</span>          <span class="o">=&gt;</span> <span class="n">Byte</span><span class="o">-</span><span class="n">Pair</span><span class="o">-</span><span class="n">Encoding</span>
+<span class="n">models</span><span class="o">.</span><span class="n">Unigram</span>      <span class="o">=&gt;</span>
+<span class="n">models</span><span class="o">.</span><span class="n">WordLevel</span>    <span class="o">=&gt;</span>
+<span class="n">models</span><span class="o">.</span><span class="n">WordPiece</span>    <span class="o">=&gt;</span>
+</pre></div>
+</div>
+<section id="wordlevel">
+<h5>WordLevel<a class="headerlink" href="#wordlevel" title="此标题的永久链接">¶</a></h5>
+<ul class="simple">
+<li><p>简介：WordLevel 是最基础的分词方法，也是我们通常所说的“词级别分词”。它将每个完整的词映射到一个唯一的ID，而不对词进一步分解。</p></li>
+<li><p>优点：简单直观，易于理解和实现。只需要一个单词-ID映射表。</p></li>
+<li><p>缺点：需要非常大的词汇表来覆盖所有可能出现的单词，导致模型体积大。而且在处理未见过的单词（out-of-vocabulary, OOV）时很可能会出现“[UNK]”（未知词）。</p></li>
+<li><p>适用场景：适用于词汇量较小的任务，或对词汇量没有严格要求的简单应用。</p></li>
+</ul>
+</section>
+<section id="bpe">
+<h5>BPE<a class="headerlink" href="#bpe" title="此标题的永久链接">¶</a></h5>
+<ul class="simple">
+<li><p>简介：BPE 是一种流行的子词分词算法。它从字符级别开始，通过合并在语料中最常出现的字符对逐步创建新的子词（tokens）。这种合并操作是迭代进行的，以构建更长的子词。</p></li>
+<li><p>优点：BPE 可以处理未见过的单词，因为它能够将生词分解为子词并进行组合。因此它的词汇表可以相对较小。</p></li>
+<li><p>缺点：BPE 的分词是基于频率统计的，因此分词结果是固定的，不具备动态性和上下文敏感性。</p></li>
+<li><p>适用场景：广泛用于 GPT-2 等子词模型，适合词汇丰富的语言以及希望减少词汇表大小的场景。</p></li>
+</ul>
+</section>
+<section id="wordpiece">
+<h5>WordPiece<a class="headerlink" href="#wordpiece" title="此标题的永久链接">¶</a></h5>
+<ul class="simple">
+<li><p>简介：WordPiece 是一种与 BPE 相似的子词分词算法，主要由 Google 在 BERT 模型中使用。它的分词策略是贪婪的，即优先尝试生成最长的子词。对于没有完整词汇的单词，WordPiece 会将其拆分为多个子词，并在单词内部使用 ## 前缀标识后续子词。</p></li>
+<li><p>优点：能有效处理未见过的单词，通过将未知单词拆分成多个子词以覆盖更多可能的组合。较少出现“[UNK]”标记。</p></li>
+<li><p>缺点：依赖语料的训练，需要更多的时间和计算资源。</p></li>
+<li><p>适用场景：用于 BERT 及其衍生模型。适合较长文本或希望通过分词算法获得稳定效果的情况。</p></li>
+</ul>
+</section>
+<section id="unigram">
+<h5>Unigram<a class="headerlink" href="#unigram" title="此标题的永久链接">¶</a></h5>
+<ul class="simple">
+<li><p>简介：Unigram 是另一种子词分词算法，与 BPE 和 WordPiece 不同，Unigram 基于概率模型来选择最优的分词组合。它会为一个句子计算多种分词方式，选择其中概率最高的组合。</p></li>
+<li><p>优点：Unigram 不依赖固定规则，而是基于概率动态选择最优分词，具有一定的灵活性和上下文敏感性。能够有效地压缩词汇表并减少 OOV 问题。</p></li>
+<li><p>缺点：相比其他算法更为复杂，可能计算量较大。</p></li>
+<li><p>适用场景：应用于 XLNet 和 SentencePiece 等模型，适合需要灵活分词的语言模型应用。</p></li>
+</ul>
+</section>
+<section id="id2">
+<h5>总结对比<a class="headerlink" href="#id2" title="此标题的永久链接">¶</a></h5>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>算法</p></th>
+<th class="head"><p>分词方式</p></th>
+<th class="head"><p>词汇表大小</p></th>
+<th class="head"><p>未知词处理</p></th>
+<th class="head"><p>主要应用模型</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>WordLevel</p></td>
+<td><p>直接按词映射ID</p></td>
+<td><p>非常大</p></td>
+<td><p>使用“[UNK]”</p></td>
+<td><p>简单文本分析任务</p></td>
+</tr>
+<tr class="row-odd"><td><p>BPE</p></td>
+<td><p>子词合并，频率统计</p></td>
+<td><p>中等</p></td>
+<td><p>子词组合</p></td>
+<td><p>GPT-2 等模型</p></td>
+</tr>
+<tr class="row-even"><td><p>WordPiece</p></td>
+<td><p>贪婪匹配，词首“##”标记</p></td>
+<td><p>中等</p></td>
+<td><p>子词组合</p></td>
+<td><p>BERT 及其变体</p></td>
+</tr>
+<tr class="row-odd"><td><p>Unigram</p></td>
+<td><p>概率模型，最优组合</p></td>
+<td><p>中等</p></td>
+<td><p>动态选择</p></td>
+<td><p>SentencePiece, XLNet</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="post-processors">
+<h4>Post-Processors<a class="headerlink" href="#post-processors" title="此标题的永久链接">¶</a></h4>
+<ul class="simple">
+<li><p>TemplateProcessing</p></li>
+<li><p>具体参见上面</p></li>
+</ul>
+</section>
+<section id="decoders">
+<h4>Decoders<a class="headerlink" href="#decoders" title="此标题的永久链接">¶</a></h4>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ByteLevel</span>
+<span class="n">Metaspace</span>
+<span class="n">WordPiece</span>
+
+<span class="n">BPEDecoder</span>
+<span class="n">CTC</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="api">
+<h2>API<a class="headerlink" href="#api" title="此标题的永久链接">¶</a></h2>
+<section id="id3">
+<h3>Normalizers<a class="headerlink" href="#id3" title="此标题的永久链接">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">BertNormalizer</span>
+<span class="n">Lowercase</span>
+</pre></div>
+</div>
+</section>
+<section id="trainers">
+<h3>Trainers<a class="headerlink" href="#trainers" title="此标题的永久链接">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">BpeTrainer</span>
+<span class="n">UnigramTrainer</span>
+<span class="n">WordLevelTrainer</span>
+<span class="n">WordPieceTrainer</span>
+</pre></div>
+</div>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="../../genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../search.html"><span class="std std-ref">搜索页面</span></a></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="PEFT.html" class="btn btn-neutral float-right" title="7.3.4. PEFT" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="Transformers/Transformers_V4.45.2.html" class="btn btn-neutral" title="Transformers 4.45.2" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+  
+  <div id="gitalk-container"></div>
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2010-2025, 新溪-gordon.
+
+    </p>
+  </div>
+  <div>备案号 <a href="http://www.beian.miit.gov.cn">京ICP备16018553号</a></div><div>Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a></div>. 
+
+
+</footer>
+
+<script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?042289284b8eb33866001347a3e0b129";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>     
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'V2025.06',
+            LANGUAGE:'zh-CN',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../_static/sphinx_highlight.js"></script>
+      <script type="text/javascript" src="../../_static/clipboard.min.js"></script>
+      <script type="text/javascript" src="../../_static/copybutton.js"></script>
+      <script type="text/javascript" src="../../_static/translations.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+
+  
+
+  <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+
+
+      // var gitalk = new Gitalk({
+      //         clientID: '565177626b5d46427009',
+      //         clientSecret: 'b2a36e67e1d2a73e43667f46d571c2624f8e1026',
+      //         repo: 'knowledge',
+      //         owner: 'zhaoweiguo',
+      //         admin: ['zhaoweiguo'],
+      //         id: location.pathname,      // Ensure uniqueness and length less than 50
+      //         distractionFreeMode: false  // Facebook-like distraction free mode
+      //       })
+      // gitalk.render('gitalk-container')
+
+  </script>
+
+
+<script type="text/javascript" src="../../_static/js/table-of-contents-sidebar.js"></script>
+<!-- <script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script> -->
+<script type="text/javascript">
+    window.onload = function(e){
+        TableOfContents.init({
+            basePath: "https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/",
+            querySelector: "body" // or other css querySelector
+        });
+    }
+</script> 
+
+</body>
+</html>

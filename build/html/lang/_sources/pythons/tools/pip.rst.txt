@@ -1,0 +1,254 @@
+pip的使用
+#########
+
+安装Pip
+=======
+
+
+* ``Pip`` 是安装python包的工具, 提供了安装包, 列出已经安装的包, 升级包以及卸载包的功能
+
+python命令安装::
+
+    python -m ensurepip --default-pip
+
+系统包管理器安装::
+
+    sudo apt install python-pip
+
+    sudo yum install python-pip
+
+    brew install pip
+
+* get_pip.py 脚本安装::
+
+    $ curl -0 https://raw.github.com/pypa/pip/master/contrib/get-pip.py
+    $ sudo python get-pip.py
+
+* 通过源文件来安装::
+
+    $ wget http://pypi.python.org/packages/source/p/pip/<pip-0.7.2>.tar.gz  # 替换为最新的包
+    $ tar xzf pip-0.7.2.tar.gz
+    $ cd pip-0.7.2
+    $ python setup.py install
+
+* 通过easy_install来安装::
+
+    $ easy_install pip
+
+
+
+使用Pip
+=======
+
+* 安装package::
+
+    $ pip install Markdown
+
+* 列出安装的packages::
+
+    $ pip freeze
+    or
+    $ pip list
+
+* 安装特定版本的package::
+
+    通过使用==, >=, <=, >, <来指定一个版本号
+    $ pip install 'Markdown<2.0'
+    $ pip install 'Markdown>2.0,<2.0.3'
+    $ pip install applicationName==version
+
+
+* 升级包::
+
+    升级包到当前最新的版本，可以使用-U 或者 --upgrade
+    $ pip install -U Markdown
+
+* 卸载包::
+
+    $ pip uninstall Markdown
+
+* 查询包::
+
+    $ pip search "Markdown"
+
+.. warning:: PyPI 停止支持 pip search 命令的日期是在 2018 年 4 月。这个决定是由于 XML-RPC search 在性能和安全性方面存在问题，因此被弃用。在 PyPI 的更新和升级过程中，许多旧的或不安全的功能都被移除或替代。如果你想查找 Python 包，现在推荐使用 https://pypi.org/search 网站上的搜索功能
+
+
+* 查看一个包的详细信息,包括其安装路径::
+
+   pip show pkgname
+
+
+查询路径
+========
+
+* 增加查询路径::
+
+    sys.path.insert(0, '/usr/local/lib')
+
+    sys.path.append('/usr/local/lib')
+
+
+* 默认路径优先级::
+
+    1. 当前工作目录(可以通过导入的包名直接使用)
+    2. PYTHONPATH目录(环境变量指定的目录)
+    3. 标准库目录(Python安装目录里的Lib)
+    4. site-packages目录(第三方模块安装目录)
+    5. 用户目录(主目录下的.local/lib/pythonX.X/site-packages)
+    6. /usr/local/lib/pythonX.X/dist-packages
+    7. /usr/lib/pythonX.X/dist-packages
+
+
+
+
+
+环境变量
+========
+
+* 包安装后的py文件路径: Linux/macOS:venv/lib/pythonX.X/site-packages
+
+修改安装目录::
+
+    方法1:
+    pip install -t /content/notebooks numpy
+
+    方法2:
+    export PYTHONUSERBASE=/content/notebooks
+    pip install numpy
+
+
+
+
+
+镜像源
+========
+
+::
+
+    https://pypi.douban.com/simple/ 豆瓣
+    https://mirrors.aliyun.com/pypi/simple/ 阿里
+    https://pypi.hustunique.com/simple/ 华中理工大学
+    https://pypi.sdutlinux.org/simple/ 山东理工大学
+    https://pypi.mirrors.ustc.edu.cn/simple/ 中国科学技术大学
+    https://pypi.tuna.tsinghua.edu.cn/simple 清华
+
+选项::
+
+    -i,--index-url <url>
+          Base URL of Python Package Index (default https://pypi.python.org/simple/).
+
+使用示例::
+
+    // -i 就是选择镜像源
+    pip install --upgrade jupyterhub -i https://pypi.douban.com/simple/
+
+
+
+全部配置::
+
+    # 配置清华PyPI镜像（如无法运行，将pip版本升级到>=10.0.0）
+    $ pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+    Writing to /Users/zhaoweiguo/.config/pip/pip.conf
+
+    # 重置
+    $ pip config unset global.index-url
+
+
+使用不同镜像源示例::
+
+    // cuda 11.7
+    pip3 install torch torchvision torchaudio
+
+    // cuda 11.8
+    pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
+    // cpu
+    pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+
+
+
+常见问题
+========
+
+较老版本的pip 中括号[]在 pip 安装命令中有特殊含义::
+
+    $ pip install huggingface-hub[cli]
+    zsh: no matches found: huggingface-hub[cli]
+
+    正确的做法:
+    $ pip install 'huggingface-hub[cli]'
+
+
+
+requirements.txt
+================
+
+生成requirements.txt的方法::
+
+    1. 适用于「单虚拟环境」
+    pip freeze > requirements.txt
+    说明: 会将环境中的依赖包全都加入，所以只适合「单虚拟环境」
+    2. 推荐用法: 使用pipreqs
+    pip install pipreqs
+    pipreqs . --encoding=utf8 --force
+
+使用requirements.txt安装依赖的方法::
+
+    $ pip install -r requirements.txt
+
+
+
+实战
+====
+
+::
+
+    ### 安装/升级 pip
+    python -m pip install --trusted-host=mirrors.aliyun.com -i https://mirrors.aliyun.com/pypi/simple/ --upgrade pip
+    ### 基于pip依次安装第三方包和aos-cube
+    pip install --trusted-host=mirrors.aliyun.com -i https://mirrors.aliyun.com/pypi/simple/   setuptools
+    pip install --trusted-host=mirrors.aliyun.com -i https://mirrors.aliyun.com/pypi/simple/   wheel
+    pip install --trusted-host=mirrors.aliyun.com -i https://mirrors.aliyun.com/pypi/simple/   aos-cube
+
+
+
+对比
+====
+
+* ``Pip`` 是对 ``easy_install`` 的取代, 提供了和easy_install相同的查找包的功能, 因此可以使用easy_install安装的包也同样可以使用pip进行安装
+
+
+site-packages和dist-packages的区别::
+
+    site-packages目录更适合本地编译安装的Python库。
+    dist-packages目录更适合系统包管理工具(如apt、yum等)全局安装的库。
+
+
+    site-packages目录需要当前用户有写入权限。
+    dist-packages目录需要root/管理员权限才能写入。
+
+    导入模块时,Python会先搜索site-packages目录,然后是dist-packages目录。
+
+
+    一些Linux发行版默认使用dist-packages,如Ubuntu。
+    一些使用site-packages,如CentOS。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

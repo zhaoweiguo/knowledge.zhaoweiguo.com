@@ -1,0 +1,251 @@
+# lshw命令
+
+* `lshw`（**list hardware**）是 Linux 下一个功能强大的命令行工具，用于显示系统的硬件配置信息。
+* 相比 `lspci`、`lsusb` 等，它可以提供**更全面、更详细**的系统硬件信息，包括内存、CPU、主板、硬盘、网络设备等。
+
+
+
+## 基本信息
+
+
+### 🛠️ 基本用法
+
+```bash
+sudo lshw [选项]
+```
+
+
+### 📋 常用选项
+
+| 命令示例                       | 功能说明                 |
+| -------------------------- | -------------------- |
+| `sudo lshw`                | 显示全部硬件详细信息           |
+| `sudo lshw -short`         | 以简洁列表格式显示硬件信息        |
+| `sudo lshw -class cpu`     | 仅显示 CPU 信息           |
+| `sudo lshw -class memory`  | 仅显示内存相关信息            |
+| `sudo lshw -class network` | 显示网络设备信息             |
+| `sudo lshw -C display`     | 
+| `sudo lshw -html`          | 以 HTML 格式输出          |
+| `sudo lshw -json`          | 以 JSON 格式输出（便于自动化分析） |
+
+
+
+### ✅ 优点
+
+* 信息非常全面（比 `lscpu`, `lspci`, `lsusb` 等更详细）
+* 支持分类输出（如 `-class` 过滤）
+* 支持结构化输出（如 JSON、HTML）
+* 对系统调试、资产盘点、性能诊断非常有用
+
+
+### ⚠️ 注意事项
+
+* **必须使用 `sudo`** 才能获取完整的硬件信息
+* 部分系统未预装，可使用以下命令安装：
+
+  ```bash
+  sudo apt install lshw     # Debian/Ubuntu
+  sudo yum install lshw     # RHEL/CentOS
+  sudo dnf install lshw     # Fedora
+  ```
+
+
+
+
+
+---
+
+## 📦 示例输出
+
+
+### GPU示例
+
+```bash
+sudo lshw -C display
+  *-display
+       description: VGA compatible controller
+       product: GD 5446
+       vendor: Cirrus Logic
+       physical id: 1
+       bus info: pci@0000:02:01.0
+       logical name: /dev/fb0
+       version: 00
+       width: 32 bits
+       clock: 33MHz
+       capabilities: vga_controller rom fb
+       configuration: depth=16 driver=cirrus latency=0 resolution=1024,768
+       resources: irq:0 memory:e0000000-e1ffffff memory:fd828000-fd828fff memory:c0000-dffff
+  *-display
+       description: 3D controller
+       product: NVIDIA Corporation
+       vendor: NVIDIA Corporation
+       physical id: 0
+       bus info: pci@0000:23:00.0
+       logical name: /dev/fb0
+       version: a1
+       width: 64 bits
+       clock: 33MHz
+       capabilities: pm bus_master cap_list fb
+       configuration: depth=16 driver=nvidia latency=0 mode=1024x768 visual=truecolor xres=1024 yres=768
+       resources: iomemory:200-1ff iomemory:300-2ff irq:11 memory:fc000000-fcffffff memory:2000000000-2fffffffff memory:3000000000-3001ffffff
+
+```
+
+```bash
+sudo lshw -short -C display
+H/W path             Device      Class          Description
+===========================================================
+/0/100/1/0/1         /dev/fb0    display        GD 5446
+/0/102/0/0/0         /dev/fb0    display        NVIDIA Corporation
+```
+
+* 分析
+    * 一个虚拟 VGA 控制器（Cirrus GD 5446）：仅用于基础图形输出；
+    * 一个真实的 NVIDIA GPU，并已加载专有 nvidia 驱动，可用于 CUDA、TensorRT、PyTorch 等加速任务。
+
+
+
+
+
+### CPU示例
+
+```bash
+$ sudo lshw -class cpu
+  *-cpu
+       description: CPU
+       product: AMD EPYC 9K84 96-Core Processor
+       vendor: Advanced Micro Devices [AMD]
+       physical id: 400
+       bus info: cpu@0
+       version: 25.17.0
+       slot: CPU 0
+       size: 2GHz
+       capacity: 2GHz
+       width: 64 bits
+       capabilities: fpu fpu_exception wp vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp x86-64 constant_tsc rep_good nopl nonstop_tsc cpuid extd_apicid amd_dcm tsc_known_freq pni pclmulqdq monitor ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm cmp_legacy cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw topoext perfctr_core invpcid_single ibpb vmmcall fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 avx512_bf16 clzero xsaveerptr wbnoinvd arat avx512vbmi umip avx512_vbmi2 vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq rdpid fsrm
+       configuration: cores=16 enabledcores=16 microcode=16777317 threads=2
+```
+
+
+
+
+* 分析
+    *  处理器基本信息
+        | 项目        | 内容                                                                |
+        | --------- | ----------------------------------------------------------------- |
+        | **型号**    | AMD EPYC 9K84 96-Core Processor                                   |
+        | **厂商**    | Advanced Micro Devices (AMD)                                      |
+        | **架构**    | x86\_64（64 位）                                                     |
+        | **主频**    | 2.0 GHz                                                           |
+        | **插槽**    | CPU 0（单路处理器）                                                      |
+        | **虚拟/物理** | 这是一个虚拟机环境，运行在支持 AMD EPYC 的物理主机上                                   |
+        | **内核信息**  | `cores=16`，`enabledcores=16`，`threads=2` 表示**16 核 32 线程**（SMT 开启） |
+
+        * **注意**：虽然标识为 EPYC 9K84（最多 96 核），但当前虚拟机只被分配了 16 核 32 线程资源。
+
+    * 特性（Capabilities）
+        * **基础指令集支持**：x86, MMX, SSE, SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, AVX, AVX2
+        * **高级 SIMD 扩展**：
+          * AVX-512（包括子集 AVX512F, AVX512BW, AVX512DQ, AVX512CD, AVX512VL, AVX512VBMI, AVX512\_VNNI, AVX512\_BF16 等）
+          * FMA（融合乘加）、SHA（加密加速）、VAES（向量化 AES）、VPCLMULQDQ（进阶加密运算）
+        * **虚拟化相关**：
+          * `hypervisor`: 当前运行在虚拟机中
+          * `vmmcall`, `invpcid`, `tsc_adjust`：为虚拟化优化的指令支持
+        * **安全性增强**：
+          * `nx`（No eXecute bit）、`smep`、`smap`、`umip`、`ibpb`（分支预测清理）等
+        * **性能追踪支持**：
+          * `perfctr_core`, `tsc`, `rdtscp`, `rdpid` 等
+        * **说明**：这是一颗**现代高端服务器级 CPU（如 EPYC 9654）** 的虚拟化暴露，支持几乎所有最新的 SIMD 指令和安全特性，适合运行并行计算、AI 推理等工作负载。
+
+
+### 内存示例
+
+```bash
+$ sudo lshw -class memory
+  *-firmware
+       description: BIOS
+       vendor: SeaBIOS
+       physical id: 0
+       version: seabios-1.9.1-qemu-project.org
+       date: 04/01/2014
+       size: 96KiB
+  *-memory
+       description: System Memory
+       physical id: 1000
+       size: 96GiB
+       capabilities: ecc
+       configuration: errordetection=multi-bit-ecc
+     *-bank:0
+          description: DIMM RAM
+          vendor: Red Hat
+          physical id: 0
+          slot: DIMM 0
+          size: 16GiB
+     *-bank:1
+          description: DIMM RAM
+          vendor: Red Hat
+          physical id: 1
+          slot: DIMM 1
+          size: 16GiB
+     *-bank:2
+          description: DIMM RAM
+          vendor: Red Hat
+          physical id: 2
+          slot: DIMM 2
+          size: 16GiB
+     *-bank:3
+          description: DIMM RAM
+          vendor: Red Hat
+          physical id: 3
+          slot: DIMM 3
+          size: 16GiB
+     *-bank:4
+          description: DIMM RAM
+          vendor: Red Hat
+          physical id: 4
+          slot: DIMM 4
+          size: 16GiB
+     *-bank:5
+          description: DIMM RAM
+          vendor: Red Hat
+          physical id: 5
+          slot: DIMM 5
+          size: 16GiB
+```
+
+* 分析:
+    * 固件（BIOS）
+        * **Vendor**: SeaBIOS
+        * **Version**: seabios-1.9.1-qemu-project.org
+            * 你使用的是 QEMU 虚拟机环境中的 SeaBIOS 固件。这表明当前运行环境是**虚拟机**而非物理机。
+        * **Date**: 2014-04-01
+        * **Size**: 96 KiB
+    * 系统内存（System Memory）
+        * **总内存容量**：96 GiB
+        * **支持功能**：
+          * `ecc`: 支持纠错码（Error-Correcting Code）内存
+          * `errordetection=multi-bit-ecc`: 支持多位错误检测与修复
+        * **说明**：系统启用了 ECC 内存（用于检测并纠正内存错误），这通常见于高可靠性要求的服务器或虚拟机环境中。
+    * 内存条信息（每个 Bank）
+        * 你有 6 条内存条，每条 16GiB，总共 96GiB
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

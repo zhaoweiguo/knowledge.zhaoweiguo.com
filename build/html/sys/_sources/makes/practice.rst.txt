@@ -1,0 +1,39 @@
+实践
+####
+
+
+Makefile 的实例
+---------------
+
+（1）执行多个目标::
+
+    .PHONY: cleanall cleanobj cleandiff
+    cleanall : cleanobj cleandiff
+            rm program
+    cleanobj :
+            rm *.o
+    cleandiff :
+            rm *.diff
+    //上面代码可以调用不同目标，删除不同后缀名的文件，也可以调用一个目标（cleanall），删除所有指定类型的文件。
+
+（2）编译C语言项目::
+
+    edit : main.o kbd.o command.o display.o 
+        cc -o edit main.o kbd.o command.o display.o
+
+    main.o : main.c defs.h
+        cc -c main.c
+    kbd.o : kbd.c defs.h command.h
+        cc -c kbd.c
+    command.o : command.c defs.h command.h
+        cc -c command.c
+    display.o : display.c defs.h
+        cc -c display.c
+
+    clean :
+         rm edit main.o kbd.o command.o display.o
+
+    .PHONY: edit clean
+
+
+

@@ -1,0 +1,150 @@
+brew命令
+###############
+
+brew常见命令::
+
+    brew install
+    brew uninstall 
+    brew link
+    brew unlink
+    brew doctor
+    brew cleanup
+
+brew cask::
+
+    brew cask doctor   // Warning: Calling brew cask doctor is deprecated! Use brew doctor --verbose instead.
+
+
+展示Homebrew的安装路径::
+
+    // /usr/local on macOS 
+    // /home/linuxbrew/.linuxbrew on Linux
+    brew --prefix
+
+
+
+
+
+命令
+====
+
+::
+
+    brew help   查看帮助
+    brew search 软件名 搜索软件
+    brew info 软件名   查询指定软件信息
+    brew install 软件名    安装软件
+    brew install 软件名 @版本号   安装指定版本的软件 (安装前可先 search 有哪些版本)
+    brew outdated   检查哪些软件可更新
+    brew update 升级所有软件
+    brew upgrade 软件名    升级指定软件
+    brew uninstall 软件名  卸载软件
+    brew cleanup    清除所有软件的旧版本
+    brew cleanup 软件名    清除指定软件的旧版本
+    brew cleanup -n 查看可清理的旧版本的软件，不做实际清除操作
+    brew pin 软件名    锁定指定软件，保证在全局更新时不更新
+    brew unpin 软件名  取消锁定指定软件
+    brew list   查询已安装的软件信息
+    brew deps --installed --tree    查看已安装软件的依赖，以树形展示
+    brew config 查看 Homebrew 配置
+    brew services start|stop|restart 软件名    启动 / 停止 / 重启 Homebrew 服务
+
+
+
+
+
+brew与brew cask的区别
+=======================
+
+brew是从下载源码解压然后 ./configure && make install ，同时会包含相关依存库。并自动配置好各种环境变量，而且易于卸载。 
+
+brew cask是 已经编译好了的应用包 （.dmg/.pkg），仅仅是下载解压，放在统一的目录中（/opt/homebrew-cask/Caskroom），省掉了自己去下载、解压、拖拽（安装）等蛋疼步骤，同样，卸载相当容易与干净。这个对一般用户来说会比较方便，包含很多在 AppStore 里没有的常用软件。
+
+
+
+cask 官方的两个安装索引源，一个针对稳定版本，一个针对 Dev::
+
+    https://github.com/Homebrew/homebrew-cask-versions
+    https://github.com/Homebrew/homebrew-cask
+
+
+brew主要用来下载一些不带界面的命令行下的工具和第三方库来进行二次开发
+brew cask主要用来下载一些带界面的应用软件，下载好后会自动安装，并能在mac中直接运行使用
+
+举个例子::
+
+    brew install curl可以安装curl第三方库，这样你在开发时就可以使用它的库来进行开发
+    brew cask install chrome可以安装谷歌浏览器应用程序，可直接运行
+
+
+.. warning:: 注意最新版已经没有brew cask命令了，报错： ``Error: `brew cask` is no longer a `brew` command. Use `brew <command> --cask` instead.``
+
+
+
+简介
+=====
+
+
+Homebrew 是一款包管理工具，目前支持 macOS 和 linux 系统。主要有四个部分组成: brew、homebrew-core 、homebrew-cask、homebrew-bottles::
+
+    名称                说明
+    brew                Homebrew 源代码仓库
+    homebrew-core       Homebrew 核心源
+    homebrew-cask       提供 macOS 应用和大型二进制文件的安装
+    homebrew-bottles    预编译二进制软件包
+
+
+安装与卸载::
+
+    # 安装
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    # 卸载
+    /bin/bash -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall)"
+    # 自升级
+    brew upgrade brew
+
+
+
+换源
+======
+
+替换 brew.git::
+
+    cd "$(brew --repo)"
+    git remote set-url origin https://mirrors.ustc.edu.cn/brew.git
+
+替换 homebrew-core.git::
+
+    cd "$(brew --repo)/Library/Taps/homebrew/homebrew-core"
+    git remote set-url origin https://mirrors.ustc.edu.cn/homebrew-core.git
+
+
+替换 homebrew-cask 默认源::
+
+    cd "$(brew --repo)/Library/Taps/homebrew/homebrew-cask"
+    git remote set-url origin git://mirrors.ustc.edu.cn/homebrew-cask.git
+
+替换 homebrew-bottle 默认源::
+
+    echo 'export HOMEBREW_BOTTLE_DOMAIN=https://mirrors.ustc.edu.cn/homebrew-bottles' >> ~/.bash_profile
+    source ~/.bash_profile
+
+
+
+
+宏说明
+======
+
+* HOMEBREW_PREFIX: 默认是brew命令的目录(即: /usr/local/bin)
+* HOMEBREW_CELLAR: 默认是brew安装命令的目录(即: /usr/local/Homebrew/Cellar)
+* 说明：如果提示``Warning: your HOMEBREW_PREFIX is set to /usr/local but HOMEBREW_CELLAR is set to /usr/local/Homebrew/Cellar.``则表示两边不对应，我这次的解决方法是删除/usr/local/bin/brew这个软链
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,80 @@
+Factor-Method工厂方法
+#####################
+
+.. note:: creates objects without specifying the exact class to create. 在工厂方法模式中，依赖工厂接口，我们可以通过实现工厂接口来创建多种工厂，将对象创建从由一个对象负责所有具体类的实例化，变成由一群子类来负责对具体类的实例化，从而将过程解耦。
+
+.. image:: https://img.zhaoweiguo.com/knowledge/images/architectures/design-modes/Creationals/factory-method1.png
+
+
+工厂模式的作用-是否使用工厂模式最本质的参考标准::
+
+    1. 封装变化：创建逻辑有可能变化，封装成工厂类之后，创建逻辑的变更对调用者透明
+    2. 代码复用：创建代码抽离到独立的工厂类之后可以复用
+    3. 隔离复杂性：封装复杂的创建逻辑，调用者无需了解如何创建对象
+    4. 控制复杂度：将创建代码抽离出来，让原本的函数或类职责更单一，代码更简洁
+
+
+
+
+示例::
+
+    type Person struct {
+      name string
+      age int
+    }
+
+    func NewPersonFactory(age int) func(name string) Person {
+      return func(name string) Person {
+        return Person{
+          name: name,
+          age: age,
+        }
+      }
+    }
+
+我们可以使用此功能来创建具有默认年龄的工厂::
+
+    newBaby := NewPersonFactory(1)
+    baby := newBaby("john")
+
+    newTeenager := NewPersonFactory(16)
+    teen := newTeenager("jill")
+
+
+使用工厂方法来创建对象主要有两个好处::
+
+    1. 代码可读性更好
+        相比于使用 C++/Java 中的构造函数，或者 Go 中的 {} 来创建对象，
+        工厂方法因为可以通过函数名来表达代码含义，从而具备更好的可读性。
+        比如，使用工厂方法 productA := CreateProductA() 创建一个 ProductA 对象，
+        比直接使用 productA := ProductA{} 的可读性要好。
+    2. 与使用者代码解耦。
+        很多情况下，对象的创建往往是一个容易变化的点，
+        通过工厂方法来封装对象的创建过程，可以在创建逻辑变更时，避免霰弹式修改。
+
+
+工厂方法模式也有两种实现方式::
+
+    1. 提供一个工厂对象，通过调用工厂对象的工厂方法来创建产品对象
+    2. 将工厂方法集成到产品对象中（C++/Java 中对象的 static 方法，Go 中同一 package 下的函数）
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

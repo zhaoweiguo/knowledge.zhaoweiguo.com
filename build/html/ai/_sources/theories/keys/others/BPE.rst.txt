@@ -1,0 +1,101 @@
+BPE
+###
+
+
+* Byte-Pair Encoding（BPE）是一种常用于文本分词的算法，特别适用于自然语言处理中的子词级（subword-level）分词。
+* BPE 的核心思想是通过频率统计将频繁出现的字符或子词组合起来，以实现高效、紧凑的编码。
+
+
+核心流程
+========
+
+* 1. 字符级初始化：开始时，将每个单词分解为单个字符的序列。例如，“hello” 可以表示为 ["h", "e", "l", "l", "o"]。
+* 2. 统计字符对的频率：统计数据集中所有字符对的频率（例如 “l”和“l”）出现的次数。字符对指的是在单词内相邻的字符组合。
+* 3. 合并频率最高的字符对：选择频率最高的字符对，将它们合并为一个新的“子词”单元。例如，如果 “l l” 是频率最高的组合，那么合并成 ["h", "e", "ll", "o"]。
+* 4. 重复上述过程：继续统计频率最高的子词对，并重复合并操作，直到达到设定的子词单元数量，或无法继续合并为止。
+
+* 1. Start with all the characters present in the training corpus as tokens.
+* 2. Identify the most common pair of tokens and merge it into one token.
+* 3. Repeat until the vocabulary (e.g., the number of tokens) has reached the size we want.
+
+
+
+* 通过不断合并频繁出现的字符对或子词，BPE 会生成一套合并规则，这些规则可以应用于其他文本，使其能够通过 BPE 的方式进行分词。
+
+优点
+====
+
+* 灵活性：它能够处理未见过的词汇（即没有在训练集中出现的词汇）——通过将词分解为已知的子词单元，BPE 能够较好地应对词汇的多样性。
+* 减少词汇表大小：通过子词级分词，BPE 可以有效减少词汇表的大小，同时保留高频词汇的完整性。
+
+
+演示示例
+========
+
+语料库::
+
+    "low", "lower", "newest", "wider"
+
+* 初始状态：每个单词分解为字符序列，如 ["l", "o", "w"]。
+* 第一次合并：假设频率最高的字符对是 “l o”，合并为 ["lo", "w"]。
+* 第二次合并：如果下一步频率最高的对是 “lo w”，将其合并为一个新单元，依此类推。
+
+
+使用示例
+========
+
+::
+
+    from tokenizers import Tokenizer
+    from tokenizers.models import BPE
+    tokenizer = Tokenizer(BPE(unk_token="[UNK]"))
+
+train our tokenizer on the wikitext files::
+
+    from tokenizers.trainers import BpeTrainer
+    trainer = BpeTrainer(special_tokens=["[UNK]", "[CLS]", "[SEP]", "[PAD]", "[MASK]"])
+
+::
+
+    from tokenizers.pre_tokenizers import Whitespace
+    tokenizer.pre_tokenizer = Whitespace()
+
+    files = [f"data/wikitext-103-raw/wiki.{split}.raw" for split in ["test", "train", "valid"]]
+    tokenizer.train(files, trainer)
+    
+
+使用场景
+========
+
+BPE 分词算法被广泛应用在许多 NLP 模型中，例如 GPT 系列、BERT 等，它们在词汇丰富的语言上能够提供较好的表现，避免了大规模词典的使用成本，同时提升了对未见词汇的适应性。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

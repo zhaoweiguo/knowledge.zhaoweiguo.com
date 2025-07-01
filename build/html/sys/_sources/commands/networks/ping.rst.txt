@@ -1,0 +1,48 @@
+.. _ping:
+
+ping命令使用
+############
+
+
+ping 是基于一种叫做 ICMP 的协议开发的，ICMP 又是一种基于 IP 协议的控制协议，翻译为网际控制协议
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/04/AOiW22.jpg
+   :width: 50 %
+
+   ICMP 在 IP 报文后加入了新的内容，这些内容包括::
+
+        1. 类型：即 ICMP 的类型, 其中 ping 的请求类型为 8，应答为 0
+        2. 代码：进一步划分 ICMP 的类型, 用来查找产生错误的原因
+        3. 校验和：用于检查错误的数据
+        4. 标识符：通过标识符来确认是谁发送的控制协议，可以是进程 ID
+        5. 序列号：唯一确定的一个报文，前面 ping 名字执行后显示的 icmp_seq 就是这个值
+
+
+::
+
+    ping <IP 地址>
+
+
+常见问题
+========
+
+iputils-ping VS inetutils-ping
+------------------------------
+
+::
+
+    Package ping is a virtual package provided by:
+      iputils-ping 3:20161105-1
+      inetutils-ping 2:1.9.4-2+b1
+    You should explicitly select one to install.
+
+* iputils’s ping supports quite a few more features than inetutils’ ping, e.g. IPv6 (which inetutils implements in a separate binary, ping6), broadcast pings, quality of service bits... The linked manpages provide details.
+* iputils’ ping supports all the options available on inetutils’ ping, so scripts written for the latter will work fine with the former. The reverse is not true: scripts using iputils-specific options won’t work with inetutils.
+* As far as why both exist, inetutils is the GNU networking utilities, targeting a variety of operating systems and providing lots of different networking tools; iputils is Linux-specific and includes fewer utilities. So typically you’d combine both to obtain complete coverage and support for Linux-specific features, on Linux, and only use inetutils on non-Linux systems.
+
+
+
+* 参考: https://unix.stackexchange.com/questions/400351/what-are-the-differences-between-iputils-ping-and-inetutils-ping
+
+
+

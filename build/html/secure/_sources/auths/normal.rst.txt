@@ -1,0 +1,112 @@
+常用
+##########
+
+认证和授权的区别::
+
+    1. 认证（Authentication，英文缩写 authn）
+        用来验证某个用户是否具有访问系统的权限
+        如果认证通过，该用户就可以访问系统，从而创建、修改、删除、查询平台支持的资源
+    2. 授权（Authorization，英文缩写 authz）
+        用来验证某个用户是否具有访问某个资源的权限
+        如果授权通过，该用户就能对资源做增删改查等操作
+
+
+.. figure:: https://img.zhaoweiguo.com/knowledge/images/soft-engineerings/standard-auth1.jpg
+
+   认证证明了你是谁，授权决定了你能做什么
+
+
+四种基本的认证方式::
+
+    1. Basic Auth
+    2. Digest Auth
+    3. OAuth 
+    4. Bearer
+
+Basic 认证-基础认证
+===================
+
+.. note:: 最简单的认证方式。它简单地将用户名：密码进行 base64 编码后，放到 HTTP Authorization Header 中。HTTP 请求到达后端服务后，后端服务会解析出 Authorization Header 中的 base64 字符串，解码获取用户名和密码，并将用户名和密码跟数据库中记录的值进行比较，如果匹配则认证通过
+
+示例::
+
+    $ basic=`echo -n 'admin:Admin@2021'|base64`
+    $ curl -XPOST -H"Authorization: Basic ${basic}" http://127.0.0.1:8080/login
+
+
+.. note:: 使用 Basic 认证的唯一方式就是将它和 SSL 配合使用，来确保整个认证过程是安全的。
+
+
+.. important:: 在设计系统时，要遵循一个通用的原则：不要在请求参数中使用明文密码，也不要在任何存储中保存明文密码。
+
+
+Digest 认证-摘要认证
+====================
+
+Digest 具有如下特点::
+
+    1. 绝不会用明文方式在网络上发送密码
+    2. 可以有效防止恶意用户进行重放攻击
+    3. 可以有选择地防止对报文内容的篡改
+
+
+.. figure:: https://img.zhaoweiguo.com/knowledge/images/soft-engineerings/standard-auth2.jpg
+
+   摘要认证的过程
+
+
+完成摘要认证过程::
+
+    1. 客户端请求服务端的资源
+    2. 在客户端能够证明它知道密码从而确认其身份之前
+        服务端认证失败，返回 401 Unauthorized，并返回 WWW-Authentication 头，里面包含认证需要的信息
+    3. 客户端重新请求
+        根据 WWW-Authentication 头中的信息，选择加密算法，
+        并使用密码随机数 nonce，计算出密码摘要 response，并再次请求服务端
+    4. 服务器将客户端提供的密码摘要与服务器内部计算出的摘要进行对比
+        如果匹配，就说明客户端知道密码，认证通过，
+        并返回一些与授权会话相关的附加信息，放在 Authorization-Info 中
+
+.. figure:: https://img.zhaoweiguo.com/knowledge/images/soft-engineerings/standard-auth3.png
+
+   WWW-Authentication 头中包含的信息
+
+.. note:: 摘要认证可以保护密码，比基本认证安全很多。但摘要认证并不能保护内容，所以仍然要与 HTTPS 配合使用，来确保通信的安全。
+
+
+OAuth-开放授权
+==============
+
+OAuth2.0 一共分为四种授权方式::
+
+    1. 密码模式
+    2. 客户端模式
+    3. 简化模式
+    4. 授权码模式
+
+
+Bearer-令牌认证
+===============
+
+* Bearer 认证的核心是 bearer token。bearer token 是一个加密字符串，通常由服务端根据密钥生成。客户端在请求服务端时，必须在请求头中包含 Authorization: Bearer <token>。服务端收到请求后，解析出 <token> ，并校验 <token> 的合法性，如果校验通过，则认证通过。跟基本认证一样，Bearer 认证需要配合 HTTPS 一起使用，来保证认证安全性。
+
+* 为了区分用户和保证安全，必须对 API 请求进行鉴权，但是不能要求每一个请求都进行登录操作。合理做法是，在第一次登录之后产生一个有一定有效期的 token，并将它存储在浏览器的 Cookie 或 LocalStorage 之中。之后的请求都携带这个 token ，请求到达服务器端后，服务器端用这个 token 对请求进行认证。在第一次登录之后，服务器会将这个 token 用文件、数据库或缓存服务器等方法存下来，用于之后请求中的比对。
+
+* 当前最流行的 token 编码方式是 JSON Web Token(JWT)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

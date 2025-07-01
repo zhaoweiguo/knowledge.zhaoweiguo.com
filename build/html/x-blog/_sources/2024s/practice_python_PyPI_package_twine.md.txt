@@ -1,0 +1,205 @@
+# 实践：如何打包你的Python项目并分发到TestPyPI
+
+## 说明
+
+- 测试项目，纯为了演示如何打包并分发，所以没有使用正式的 [PyPI](https://pypi.org/)，使用了测试专用的 [TestPyPI](https://test.pypi.org/)
+- 最近一直在看、在写Python项目，就想着是否可以把一些通用的、业务无关的东西放到 PyPI 上，方便调用
+
+
+## 注册 TestPyPI PyPI会员
+
+- 分别注册 [PyPI](https://pypi.org/) 和 [TestPyPI](https://test.pypi.org/) 会员
+- 在对应网站([TestPyPI](https://test.pypi.org/search/?q=zwgpackage) 或 [TestPyPI](https://pypi.org/search/?q=zwgpackage))上查询未被人注册的 Package(我这儿用的是`zwgpackage`)
+- 注册后，启动 `2FA`后生成`API tokens`(这个以pypi-开头的字符串就是下面要用的password)
+- 创建或编辑 .pypirc 文件
+```
+[distutils]
+index-servers =
+    pypi
+    testpypi
+
+[pypi]
+username = __token__
+password = pypi-<your-pypi-token>
+
+[testpypi]
+repository = https://test.pypi.org/legacy/
+username = __token__
+password = pypi-<your-testpypi-token>
+```
+
+
+## 模拟一个要分发的项目
+
+创建项目结构:
+
+```shell
+mkdir zwg_project && cd zwg_project
+touch setup.py
+touch README.md
+mkdir zwgpackage
+touch zwgpackage/__init__.py
+touch zwgpackage/greetings.py
+```
+
+编写代码:.gitignore:
+
+```shell
+tee .gitignore <<-'EOF'
+zwgpackage.egg-info
+build
+dist
+EOF
+```
+
+编写代码:zwgpackage/greetings.py:
+
+```shell
+tee zwgpackage/greetings.py <<-'EOF'
+def say_hello(name):
+    return f"Hello, {name}!"
+EOF
+```
+
+
+编写代码:zwgpackage/__init__.py:
+
+```shell
+tee zwgpackage/__init__.py <<-'EOF'
+from .greetings import say_hello
+EOF
+```
+
+编写安装脚本:
+```python
+tee setup.py <<-'EOF'
+from setuptools import setup, find_packages
+
+setup(
+    name='zwgpackage',
+    version='0.1',
+    packages=find_packages(),
+    install_requires=[
+        # 任何依赖项可以在这里列出
+    ],
+    author='Your Name',
+    author_email='your.email@example.com',
+    description='A simple greetings plugin',
+    long_description=open('README.md').read(),
+    long_description_content_type='text/markdown',
+)
+EOF
+```
+
+文档:
+
+```shell
+tee README.md <<-'EOF'
+# zwgpackage
+
+This is a simple greeting package.
+
+## Installation
+
+You can install `zwgpackage` by running:
+pip install zwgpackage
+
+
+## Usage
+
+To use this package:
+
+"""
+from zwgpackage import say_hello
+print(say_hello("World"))
+"""
+EOF
+```
+
+## 打包&分发
+
+测试你的插件:
+```shell
+pip install .
+# 安装后使用Readme里面Usage的方法测试
+```
+
+打包：
+```shell
+python setup.py sdist
+```
+
+分发：
+```shell
+twine upload --repository testpypi dist/*
+# 注：你可能需要先安装twine: pip install twine
+```
+分发-自己的仓库
+```shell
+# 指定repo url
+twine upload --repository-url http://10.140.13.16:9081/repository/ dist/*
+```
+成功日志
+```
+twine upload --repository testpypi dist/*
+Uploading distributions to https://test.pypi.org/legacy/
+Uploading zwgpackage-0.1.tar.gz
+100% ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.1/4.1 kB • 00:00 • ?
+View at:
+https://test.pypi.org/project/zwgpackage/0.1/
+```
+
+## 最后成果
+
+- 参见：https://test.pypi.org/project/zwgpackage/0.1/
+- 安装
+```shell
+pip install -i https://test.pypi.org/simple/ zwgpackage==0.1
+```
+- 使用自己的仓库
+```
+pip install zwgpackage==0.1.0 -i http://10.140.13.16:9081/repository/pypi/
+```
+- 使用
+```python
+from zwgpackage import say_hello
+print(say_hello("World"))
+```
+
+## 常见问题
+
+
+### twine upload 报 403
+
+执行 twine upload 命令:
+```
+➜ twine upload --repository testpypi dist/*
+Uploading distributions to https://test.pypi.org/legacy/
+Uploading my_package-0.1.tar.gz
+100% ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.1/4.1 kB • 00:03 • ?
+WARNING  Error during upload. Retry with the --verbose option for more details.
+ERROR    HTTPError: 403 Forbidden from https://test.pypi.org/legacy/
+         The user 'zhaoweiguo' isn't allowed to upload to project 'my_package'. See https://test.pypi.org/help/#project-name for more information.
+```
+
+这个可能的原因:
+```
+1. `my_package` 这个Package 已经被人用了，你没有权限使用了
+2. 你没有好配置 ~/.pypirc，记得 username = __token__
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

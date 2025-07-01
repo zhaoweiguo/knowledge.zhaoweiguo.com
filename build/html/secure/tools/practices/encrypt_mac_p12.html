@@ -1,0 +1,683 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="zh-CN" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="zh-CN" > <!--<![endif]-->
+<head>
+
+
+<!-- start added 2025-04-14   增加对markdown中公式的支持 -->
+<script>
+window.MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+    },
+    options: {
+        ignoreHtmlClass: "tex2jax_ignore|mathjax_ignore",
+        processHtmlClass: "tex2jax_process|mathjax_process|math|output_area"
+    }
+};
+</script>
+<script defer="defer" src="https://fastly.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<!-- end added 2025-04-14   增加对markdown中公式的支持 -->
+
+
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>mac的p12导出私钥 &mdash; 新溪-gordon V2025.06 文档</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+    <link rel="index" title="索引" href="../../genindex.html" />
+    <link rel="search" title="搜索" href="../../search.html" />
+    <link rel="next" title="微软makecert导出私钥" href="encrypt_makecert.html" />
+    <link rel="prev" title="实战" href="../practice.html" /> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+  <script src="../../_static/js/jquery.min.js"></script>
+
+
+<!-- 评论插件 gittalk start -->
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script> -->
+<!-- 评论插件 gittalk end -->
+
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> 新溪-gordon
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                V2025.06
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">安全相关</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../normal.html">常用</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/normal.html">常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/mfa.html">多因素认证</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/hacker.html">黑客相关</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/DNS.html">DNS相关安全</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/resource.html">资源</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/tmp.html">临时</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../vulnerability.html">漏洞相关</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../vulnerabilities/injection.html">injection 注入攻击</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../vulnerabilities/injections/injection_xPath.html">XPath injection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vulnerabilities/injections/injection_sql.html">sql injection</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../vulnerabilities/XSS.html">XSS跨站脚本攻击</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../vulnerabilities/CSRF.html">CSRF</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../vulnerabilities/SSRF.html">SSRF</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../vulnerabilities/Control_Missing.html">越权(控制缺失)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../vulnerabilities/Clickjacking.html">Clickjacking</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../cryptography.html">加密</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../cryptographys/normal.html">常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../cryptographys/symmetric-key.html">对称加密(Symmetric-key Cryptography)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/symmetric-keys/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/symmetric-keys/SM4.html">SM4-国密</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/symmetric-keys/AES.html">AES加解密</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/symmetric-keys/other.html">其他</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../cryptographys/public-key.html">公钥加密(Public-key Cryptography)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/public-keys/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/public-keys/SM2.html">SM2-国密</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/public-keys/RSA.html">rsa加解密</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/public-keys/DH.html">DH</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/public-keys/EC.html">EC</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/public-keys/PKCS.html">PKCS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/public-keys/file.html">文件</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../cryptographys/digest-algorithm.html">摘要算法(digest-algorithm)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/digest-algorithms/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/digest-algorithms/SM3.html">SM3-国密</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/digest-algorithms/sha2.html">SHA-2</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/digest-algorithms/sha3.html">SHA-3</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/digest-algorithms/bcrypt.html">bcrypt算法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/digest-algorithms/md5.html">md5摘要算法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/digest-algorithms/other.html">其他</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../cryptographys/message-authentication-code.html">消息认证码(MAC, Message Authentication Code)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/macs/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/macs/HMAC-SHA256.html">HMAC-SHA256</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../cryptographys/signature-algorithm.html">数字签名</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/signature-algorithms/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/signature-algorithms/RSA.html">RSA签名算法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/signature-algorithms/DSA.html">DSA</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/signature-algorithms/ECDSA.html">ECDSA</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/signature-algorithms/other.html">其他</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../cryptographys/key.html">密钥——秘密的精华</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/keys/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/keys/KDF.html">密码衍生函数(key derivation function)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../cryptographys/keys/kdfs/normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../cryptographys/keys/kdfs/PAKE.html">PAKE</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../cryptographys/keys/kdfs/PBKDF.html">PBKDF(Password-Based Key Derivation Function)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../cryptographys/keys/kdfs/PBKDF2.html">PBKDF2</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../cryptographys/keys/kdfs/bcrypt.html">bcrypt</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../cryptographys/keys/kdfs/scrypt.html">scrypt</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../cryptographys/rand-generator.html">伪随机数生成器(Pseudo Random Number Generator, PRNG)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/rand-generators/normal.html">常用</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../cryptographys/0knowledge-proof.html">零知识证明(zero-knowledge proof)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/0knowledge-proofs/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/0knowledge-proofs/Proof%20of%20knowledge.html">Proof of knowledge</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/0knowledge-proofs/Interactive%20proof%20system.html">Interactive proof system</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/0knowledge-proofs/Zero-knowledge%20proof.html">Zero-knowledge proof</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../cryptographys/0knowledge-proofs/Sigma.html">Sigma</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../cert.html">证书相关</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../certs/normal.html">基本</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../certs/cert_normal.html">数字证书简介</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../certs/cert_ca.html">ca证书相关</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../certs/letsencrypt.html">Let’s Encrypt</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../certs/hpkp.html">证书固定(钉扎)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../certs/subjectAlternativeName.html">subjectAlternativeName</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../certs/question.html">常见问题</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../authn.html">认证授权——认证</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../authns/normal.html">常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../authns/basic.html">四种基本的认证方式</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../authns/oauth.html">oauth协议</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../authns/oauths/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../authns/oauths/oauth1.html">OAuth1.0协议</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../authns/oauths/oauth2.html">OAuth2.0协议</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../authns/oauths/oauth2_4patterns.html">四种授权模式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../authns/oauths/example.html">示例</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../authns/jwt.html">JWT</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../authns/AK-SK.html">AK/SK</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../authz.html">认证授权——授权</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../authzs/access-control.html">授权&gt;权限模型-Access Control</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../trust_network.html">信任网络</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../trust_networks/normal.html">常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trust_networks/PKI.html">PKI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trust_networks/PGP.html">pgp/gpg相关</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trust_networks/PGP.html#id3">参考</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../tool.html">加密工具</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../encrypt_openssl.html">Openssl命令相关</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../openssls/normal.html">openssl基本</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../openssls/openssl_rsa.html">openssl rsa命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../openssls/openssl_ciphers.html">openssl ciphers命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../openssls/openssl_pkcs12.html">openssl pkcs12命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../openssls/openssl_rand.html">openssl rand命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../openssls/openssl_ecparam.html">openssl ecparam命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../openssls/openssl_enc.html">openssl enc命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../openssls/openssl_sha.html">openssl sha命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../openssls/openssl_s_client.html">openssl s_client命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../openssls/openssl_dgst.html">openssl dgst命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../openssls/openssl_x509.html">openssl x509命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../openssls/openssl_verify.html">openssl verify命令</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../encrypt_base64.html">baseXX命令使用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../encrypt_easy-rsa.html">easy-rsa命令</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../encrypt_cfssl.html">cfssl命令</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../web.html">web</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../practice.html">实战</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">mac的p12导出私钥</a></li>
+<li class="toctree-l3"><a class="reference internal" href="encrypt_makecert.html">微软makecert导出私钥</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gen-cert.html">证书生成</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="gen-certs/normal.html">说明</a></li>
+<li class="toctree-l4"><a class="reference internal" href="gen-certs/gen_normal.html">证书创建-基本</a></li>
+<li class="toctree-l4"><a class="reference internal" href="gen-certs/gen_conf.html">证书创建-配置文件</a></li>
+<li class="toctree-l4"><a class="reference internal" href="gen-certs/tmp.html">临时</a></li>
+<li class="toctree-l4"><a class="reference internal" href="gen-certs/tmp.html#ca">生成ca证书并签名子证书</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ssl_to_ssh.html">OpenSSL转OpenSSH密钥</a></li>
+<li class="toctree-l3"><a class="reference internal" href="disable_tls1.0.html">网站如何禁止tls1.0漏洞</a></li>
+<li class="toctree-l3"><a class="reference internal" href="self_signed_cert.html">新增可信CA证书库</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cert_match.html">验证是否与秘钥匹配</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../encrypt_mbedtls.html">mbedtls-主流的SSL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../kerberos.html">Kerberos</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../question.html">常见问题</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../practice.html">实践</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../practices/normal.html">临时</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../practices/example.html">示例</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../%E5%8F%AF%E4%BF%A1%E7%A1%AC%E4%BB%B6.html">可信硬件</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">新溪-gordon</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../tool.html">加密工具</a> &raquo;</li>
+        
+          <li><a href="../practice.html">实战</a> &raquo;</li>
+        
+      <li>mac的p12导出私钥</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/tools/practices/encrypt_mac_p12.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+  <table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="../../genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../search.html"><span class="std std-ref">搜索页面</span></a></p></td>
+</tr>
+</tbody>
+</table>
+<section id="macp12">
+<h1>mac的p12导出私钥<a class="headerlink" href="#macp12" title="此标题的永久链接">¶</a></h1>
+<p>p12文件:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">files</span><span class="o">/</span><span class="n">encrypts</span><span class="o">/</span><span class="n">apns</span><span class="o">-</span><span class="n">dev</span><span class="o">-</span><span class="n">key</span><span class="o">.</span><span class="n">p12</span>
+</pre></div>
+</div>
+<p>导出无私钥的证书文件:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">openssl</span> <span class="n">pkcs12</span> <span class="o">-</span><span class="n">clcerts</span> <span class="o">-</span><span class="n">nokeys</span> <span class="o">-</span><span class="n">out</span> <span class="n">apns</span><span class="o">-</span><span class="n">dev</span><span class="o">-</span><span class="n">cert</span><span class="o">.</span><span class="n">pem</span> <span class="o">-</span><span class="ow">in</span> <span class="n">apns</span><span class="o">-</span><span class="n">dev</span><span class="o">-</span><span class="n">cert</span><span class="o">.</span><span class="n">p12</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Bag</span> <span class="n">Attributes</span>
+    <span class="n">friendlyName</span><span class="p">:</span> <span class="n">Apple</span> <span class="n">Development</span> <span class="n">IOS</span> <span class="n">Push</span> <span class="n">Services</span><span class="p">:</span> <span class="n">com</span><span class="o">.</span><span class="n">wei64</span><span class="o">.</span><span class="n">octopus</span>
+    <span class="n">localKeyID</span><span class="p">:</span> <span class="mi">7</span><span class="n">F</span> <span class="mi">0</span><span class="n">E</span> <span class="mi">83</span> <span class="mi">38</span> <span class="n">DF</span> <span class="n">C0</span> <span class="mi">1</span><span class="n">A</span> <span class="mi">04</span> <span class="mi">75</span> <span class="n">E1</span> <span class="mi">95</span> <span class="mi">21</span> <span class="n">A0</span> <span class="mi">83</span> <span class="mi">61</span> <span class="n">C0</span> <span class="mi">8</span><span class="n">A</span> <span class="n">E5</span> <span class="mi">05</span> <span class="mi">0</span><span class="n">B</span> 
+<span class="n">subject</span><span class="o">=/</span><span class="n">UID</span><span class="o">=</span><span class="n">com</span><span class="o">.</span><span class="n">wei64</span><span class="o">.</span><span class="n">octopus</span><span class="o">/</span><span class="n">CN</span><span class="o">=</span><span class="n">Apple</span> <span class="n">Development</span> <span class="n">IOS</span> <span class="n">Push</span> <span class="n">Services</span><span class="p">:</span> <span class="n">com</span><span class="o">.</span><span class="n">wei64</span><span class="o">.</span><span class="n">octopus</span><span class="o">/</span><span class="n">OU</span><span class="o">=</span><span class="mi">6</span><span class="n">VMJ9DSG5J</span><span class="o">/</span><span class="n">C</span><span class="o">=</span><span class="n">CN</span>
+<span class="n">issuer</span><span class="o">=/</span><span class="n">C</span><span class="o">=</span><span class="n">US</span><span class="o">/</span><span class="n">O</span><span class="o">=</span><span class="n">Apple</span> <span class="n">Inc</span><span class="o">./</span><span class="n">OU</span><span class="o">=</span><span class="n">Apple</span> <span class="n">Worldwide</span> <span class="n">Developer</span> <span class="n">Relations</span><span class="o">/</span><span class="n">CN</span><span class="o">=</span><span class="n">Apple</span> <span class="n">Worldwide</span> <span class="n">Developer</span> <span class="n">Relations</span> <span class="n">Certification</span> <span class="n">Authority</span>
+<span class="o">-----</span><span class="n">BEGIN</span> <span class="n">CERTIFICATE</span><span class="o">-----</span>
+<span class="n">MIIFhzCCBG</span><span class="o">+</span><span class="n">gAwIBAgIIA5NhHm0FzCcwDQYJKoZIhvcNAQEFBQAwgZYxCzAJBgNV</span>
+<span class="n">BAYTAlVTMRMwEQYDVQQKDApBcHBsZSBJbmMuMSwwKgYDVQQLDCNBcHBsZSBXb3Js</span>
+<span class="n">ZHdpZGUgRGV2ZWxvcGVyIFJlbGF0aW9uczFEMEIGA1UEAww7QXBwbGUgV29ybGR3</span>
+<span class="n">aWRlIERldmVsb3BlciBSZWxhdGlvbnMgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkw</span>
+<span class="n">HhcNMTgwODAxMDYwMDM1WhcNMTkwODAxMDYwMDM1WjCBhjEhMB8GCgmSJomT8ixk</span>
+<span class="n">AQEMEWNvbS53ZWk2NC5vY3RvcHVzMT8wPQYDVQQDDDZBcHBsZSBEZXZlbG9wbWVu</span>
+<span class="n">dCBJT1MgUHVzaCBTZXJ2aWNlczogY29tLndlaTY0Lm9jdG9wdXMxEzARBgNVBAsM</span>
+<span class="n">CjZWTUo5RFNHNUoxCzAJBgNVBAYTAkNOMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A</span>
+<span class="n">MIIBCgKCAQEAu</span><span class="o">+</span><span class="n">CJUERgJI</span><span class="o">+</span><span class="n">YcJHMMmdfy6hPPShFBsg</span><span class="o">/</span><span class="n">AQjV2Kx7xFDgOS</span><span class="o">+</span><span class="mi">80</span><span class="n">n1j</span>
+<span class="n">ClNYnF3oFlQ6MVOhqHGHN</span><span class="o">/</span><span class="n">dcKB1w8VBmr42c</span><span class="o">+</span><span class="n">vIisjGAI8TLmmnlYvC2oV3fRtCs</span>
+<span class="n">UodcLsn5owjvPb1Cih7gFTM8m</span><span class="o">/</span><span class="n">pkCnhmGjEwgJJLbx9ROJmxCq7X2JqxFJACxsSJ</span>
+<span class="n">A7II7skMKOVcq4jkg2ci8tAI</span><span class="o">+</span><span class="n">BS</span><span class="o">/</span><span class="n">gYd0LYQvK2tzzLensqwnpkePAYApNU3BtQ57</span>
+<span class="mi">9</span><span class="n">hvbn6xft</span><span class="o">+</span><span class="n">WUKEc4eNZqihiTkPVEcm47WVYTN4U4hwAP3p7okUJn026FJLhmD5Sb</span>
+<span class="n">nhO2zjKwBBmDRkz3Cnioex6</span><span class="o">//</span><span class="n">Q2KVNHAPQIDAQABo4IB5TCCAeEwCQYDVR0TBAIw</span>
+<span class="n">ADAfBgNVHSMEGDAWgBSIJxcJqbYYYIvs67r2R1nFUlSjtzCCAQ8GA1UdIASCAQYw</span>
+<span class="n">ggECMIH</span><span class="o">/</span><span class="n">BgkqhkiG92NkBQEwgfEwgcMGCCsGAQUFBwICMIG2DIGzUmVsaWFuY2Ug</span>
+<span class="n">b24gdGhpcyBjZXJ0aWZpY2F0ZSBieSBhbnkgcGFydHkgYXNzdW1lcyBhY2NlcHRh</span>
+<span class="n">bmNlIG9mIHRoZSB0aGVuIGFwcGxpY2FibGUgc3RhbmRhcmQgdGVybXMgYW5kIGNv</span>
+<span class="n">bmRpdGlvbnMgb2YgdXNlLCBjZXJ0aWZpY2F0ZSBwb2xpY3kgYW5kIGNlcnRpZmlj</span>
+<span class="n">YXRpb24gcHJhY3RpY2Ugc3RhdGVtZW50cy4wKQYIKwYBBQUHAgEWHWh0dHA6Ly93</span>
+<span class="n">d3cuYXBwbGUuY29tL2FwcGxlY2EvMBMGA1UdJQQMMAoGCCsGAQUFBwMCME0GA1Ud</span>
+<span class="n">HwRGMEQwQqBAoD6GPGh0dHA6Ly9kZXZlbG9wZXIuYXBwbGUuY29tL2NlcnRpZmlj</span>
+<span class="n">YXRpb25hdXRob3JpdHkvd3dkcmNhLmNybDAdBgNVHQ4EFgQUfw6DON</span><span class="o">/</span><span class="n">AGgR14ZUh</span>
+<span class="n">oINhwIrlBQswCwYDVR0PBAQDAgeAMBAGCiqGSIb3Y2QGAwEEAgUAMA0GCSqGSIb3</span>
+<span class="n">DQEBBQUAA4IBAQBuey1</span><span class="o">+</span><span class="n">dq5C</span><span class="o">+</span><span class="n">jiGvng2</span><span class="o">/</span><span class="n">rBjuMxkrIpW8d</span><span class="o">/</span><span class="n">qX5nIi</span><span class="o">+</span><span class="n">JI0OxoIkyc</span>
+<span class="n">FVNcBU6sZjoywP7VmyMaMsQ5XK1PmfkL6KOBthM0pmlgbBeO9kNMUlatcqS2b2Rs</span>
+<span class="mi">4</span><span class="n">D</span><span class="o">+</span><span class="n">Q958nq6nOG</span><span class="o">/</span><span class="n">SFIaNnQe2bBpm0xc27SyqftLjrXAIgaPI</span><span class="o">/</span><span class="n">CxrSK</span><span class="o">/</span><span class="n">sJsIz3qjPr</span>
+<span class="n">blVT1issE0GIHxPlRENZ7txLgwMFchBCZosc26RXvQRAiADxICrk1br8E41p7E</span><span class="o">+</span><span class="mi">7</span>
+<span class="n">MIeUGNRIfx0F3FBn1njkz1HS2gbZcwK9FLcGsz5qtKgGnGylmQMf1IgLBdoqa6tp</span>
+<span class="n">lONQ5oGHN7HYJPczb1dVutASzDXdXwVNIgXW</span>
+<span class="o">-----</span><span class="n">END</span> <span class="n">CERTIFICATE</span><span class="o">-----</span>
+</pre></div>
+</div>
+<p>导出私钥:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">openssl</span> <span class="n">pkcs12</span> <span class="o">-</span><span class="n">nocerts</span> <span class="o">-</span><span class="n">nodes</span> <span class="o">-</span><span class="n">out</span> <span class="n">apns</span><span class="o">-</span><span class="n">dev</span><span class="o">-</span><span class="n">key</span><span class="o">.</span><span class="n">pem</span> <span class="o">-</span><span class="ow">in</span> <span class="n">apns</span><span class="o">-</span><span class="n">dev</span><span class="o">-</span><span class="n">key</span><span class="o">.</span><span class="n">p12</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Bag</span> <span class="n">Attributes</span>
+    <span class="n">friendlyName</span><span class="p">:</span> <span class="n">octopus</span>
+    <span class="n">localKeyID</span><span class="p">:</span> <span class="mi">7</span><span class="n">F</span> <span class="mi">0</span><span class="n">E</span> <span class="mi">83</span> <span class="mi">38</span> <span class="n">DF</span> <span class="n">C0</span> <span class="mi">1</span><span class="n">A</span> <span class="mi">04</span> <span class="mi">75</span> <span class="n">E1</span> <span class="mi">95</span> <span class="mi">21</span> <span class="n">A0</span> <span class="mi">83</span> <span class="mi">61</span> <span class="n">C0</span> <span class="mi">8</span><span class="n">A</span> <span class="n">E5</span> <span class="mi">05</span> <span class="mi">0</span><span class="n">B</span> 
+<span class="n">Key</span> <span class="n">Attributes</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">No</span> <span class="n">Attributes</span><span class="o">&gt;</span>
+<span class="o">-----</span><span class="n">BEGIN</span> <span class="n">PRIVATE</span> <span class="n">KEY</span><span class="o">-----</span>
+<span class="n">MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC74IlQRGAkj5hw</span>
+<span class="n">kcwyZ1</span><span class="o">/</span><span class="n">LqE89KEUGyD8BCNXYrHvEUOA5L7zSfWMKU1icXegWVDoxU6GocYc391wo</span>
+<span class="n">HXDxUGavjZz68iKyMYAjxMuaaeVi8LahXd9G0KxSh1wuyfmjCO89vUKKHuAVMzyb</span>
+<span class="o">+</span><span class="n">mQKeGYaMTCAkktvH1E4mbEKrtfYmrEUkALGxIkDsgjuyQwo5VyriOSDZyLy0Aj4</span>
+<span class="n">FL</span><span class="o">+</span><span class="n">Bh3QthC8ra3PMt6eyrCemR48BgCk1TcG1Dnv2G9ufrF</span><span class="o">+</span><span class="mi">35</span><span class="n">ZQoRzh41mqKGJOQ</span>
+<span class="mi">9</span><span class="n">URybjtZVhM3hTiHAA</span><span class="o">/</span><span class="n">enuiRQmfTboUkuGYPlJueE7bOMrAEGYNGTPcKeKh7Hr</span><span class="o">/</span><span class="mi">9</span>
+<span class="n">DYpU0cA9AgMBAAECggEAR6jkFwaNeUSAC2fA7</span><span class="o">/</span><span class="n">S3</span><span class="o">+</span><span class="n">DERUC1c7rJQPa</span><span class="o">/</span><span class="n">GCSf46S9D</span>
+<span class="mi">5</span><span class="n">uwLZGnI7fZOVQ4IaQPlUk0o2tu6jKE</span><span class="o">/</span><span class="n">uFlKa</span><span class="o">/</span><span class="n">CTyiAEoT7b9wWkb4AvfI0pnixc</span>
+<span class="n">LH5mnFcZcz0H7xzAp</span><span class="o">+</span><span class="n">vPfMgEajROmid51bCSmd</span><span class="o">/</span><span class="n">EafcbHd8vAIp8a09L1NxNneLy</span>
+<span class="n">XwFnbBeAETURlgC7yEEiKO</span><span class="o">+</span><span class="n">HiPiA9</span><span class="o">/</span><span class="n">ggCZfOyd6QZ8e8Lpktr</span><span class="o">+</span><span class="n">KA2ddg</span><span class="o">+</span><span class="n">VJ5PCTU</span>
+<span class="n">mdaX2UBC20e2FL0ZQz8gaC4qpLgkbP2LZrxpcx</span><span class="o">+</span><span class="n">VbMLN7fYhw72H6kqf9FI</span><span class="o">+</span><span class="n">MnBT</span>
+<span class="mi">9</span><span class="n">vKkZ1a8dwdOQdTP0mto6onabD5iXfTqbibv3VbpTQKBgQD3ubTX40ujKl0n6DqV</span>
+<span class="n">lus2zi4Qaomi2eF12bYC</span><span class="o">/</span><span class="n">S2FV3DqhFdjiiAbo2qtL8a</span><span class="o">/</span><span class="mi">7</span><span class="n">gNWkLvVYjaF7TRoKOSf</span>
+<span class="n">Q4JHtzbUSTLFhn87B6uGZDv2IsMHzsgcbJyx5VYc8V</span><span class="o">+</span><span class="n">bBdM9qh1V5yFYYSreAEWy</span>
+<span class="n">mebYG5</span><span class="o">/</span><span class="n">JIUiRPi4VwhoD</span><span class="o">+</span><span class="n">qyJ1wKBgQDCJxGLSL</span><span class="o">+</span><span class="n">h5CJ5Sp3OhaMnmEAK</span><span class="o">+</span><span class="n">YlzhC1X</span>
+<span class="mi">1</span><span class="n">cWGEVQVGAw</span><span class="o">+</span><span class="n">Ol0xdieVG</span><span class="o">/</span><span class="n">u3jg2r2aeaYYTJbu8lZ7jJzZ0jVIX</span><span class="o">/</span><span class="mi">2</span><span class="n">sdCss0EhbwP</span>
+<span class="n">QeX7DpXPOw7Fo1ag7EI1oqiUQDM6tH1cRqqN84ML4FIqLgdauGXHdrhP3AziqpRt</span>
+<span class="n">sZT3peRMCwKBgFdITEqgoD7OJ2JvNW0NbrSxspNAJlyFriWq3rFw6QAJThSjKnM8</span>
+<span class="mi">8</span><span class="n">JEsY</span><span class="o">+</span><span class="n">K</span><span class="o">/</span><span class="n">aaSoRO7UMgo9</span><span class="o">/</span><span class="mi">33</span><span class="n">ylLt6ZQskaxu</span><span class="o">/</span><span class="n">lwb2</span><span class="o">/</span><span class="mi">3</span><span class="n">ePKvbufeXtHR9dIiB3IBS7</span>
+<span class="n">w</span><span class="o">/</span><span class="mi">3</span><span class="o">+</span><span class="n">EvhBp3DkfYhFju58cEhGfCcaK3SBO0</span><span class="o">+</span><span class="mi">7</span><span class="n">c</span><span class="o">/</span><span class="n">IW0w2xveUWrbnnMbGjAoGBAInq</span>
+<span class="n">asIASXBcuEhkwrijoYRM2KFzJTqTmAoe5pMX2Byr2naRywWJoxB</span><span class="o">+</span><span class="n">sk5vcDK1CCPY</span>
+<span class="n">RhU44lQ128QudQNV1WIsLQOqM4yU20QTUaUHdU</span><span class="o">+</span><span class="n">h6hpmrvDdIyMqionVGQ8Ii0xz</span>
+<span class="n">PlBbvKlBDdy8majN</span><span class="o">+</span><span class="n">C66nK7N57FT7uAFF4bbptKFAoGAAhdd5EVBbZYm5146iL1R</span>
+<span class="n">t4Ha51TmjsWNfY2MTDUrdAh</span><span class="o">+</span><span class="n">e</span><span class="o">/</span><span class="n">ZNM0HUx5qlnWDotWCmrdqiYaPnCdhCj</span><span class="o">+</span><span class="n">GXa4AO</span>
+<span class="n">ex2k1FsWHDApv2HL</span><span class="o">+</span><span class="mi">1</span><span class="n">eybEbPvcM</span><span class="o">+</span><span class="mi">9</span><span class="n">aSRytHomRRtrFazrvu6FVde8t</span><span class="o">/</span><span class="mi">39</span><span class="n">mlpV0xr</span>
+<span class="n">md7RePNayXdEbK</span><span class="o">+</span><span class="n">Vm8jYli8</span><span class="o">=</span>
+<span class="o">-----</span><span class="n">END</span> <span class="n">PRIVATE</span> <span class="n">KEY</span><span class="o">-----</span>
+</pre></div>
+</div>
+<p>去掉私钥中的密码:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">openssl</span> <span class="n">rsa</span> <span class="o">-</span><span class="ow">in</span> <span class="n">apns</span><span class="o">-</span><span class="n">dev</span><span class="o">-</span><span class="n">key</span><span class="o">.</span><span class="n">pem</span> <span class="o">-</span><span class="n">out</span> <span class="n">apns</span><span class="o">-</span><span class="n">dev</span><span class="o">-</span><span class="n">key</span><span class="o">-</span><span class="n">noenc</span><span class="o">.</span><span class="n">pem</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-----</span><span class="n">BEGIN</span> <span class="n">RSA</span> <span class="n">PRIVATE</span> <span class="n">KEY</span><span class="o">-----</span>
+<span class="n">MIIEowIBAAKCAQEAu</span><span class="o">+</span><span class="n">CJUERgJI</span><span class="o">+</span><span class="n">YcJHMMmdfy6hPPShFBsg</span><span class="o">/</span><span class="n">AQjV2Kx7xFDgOS</span><span class="o">+</span><span class="mi">8</span>
+<span class="mi">0</span><span class="n">n1jClNYnF3oFlQ6MVOhqHGHN</span><span class="o">/</span><span class="n">dcKB1w8VBmr42c</span><span class="o">+</span><span class="n">vIisjGAI8TLmmnlYvC2oV3f</span>
+<span class="n">RtCsUodcLsn5owjvPb1Cih7gFTM8m</span><span class="o">/</span><span class="n">pkCnhmGjEwgJJLbx9ROJmxCq7X2JqxFJAC</span>
+<span class="n">xsSJA7II7skMKOVcq4jkg2ci8tAI</span><span class="o">+</span><span class="n">BS</span><span class="o">/</span><span class="n">gYd0LYQvK2tzzLensqwnpkePAYApNU3B</span>
+<span class="n">tQ579hvbn6xft</span><span class="o">+</span><span class="n">WUKEc4eNZqihiTkPVEcm47WVYTN4U4hwAP3p7okUJn026FJLhm</span>
+<span class="n">D5SbnhO2zjKwBBmDRkz3Cnioex6</span><span class="o">//</span><span class="n">Q2KVNHAPQIDAQABAoIBAEeo5BcGjXlEgAtn</span>
+<span class="n">wO</span><span class="o">/</span><span class="mi">0</span><span class="n">t</span><span class="o">/</span><span class="n">gxEVAtXO6yUD2vxgkn</span><span class="o">+</span><span class="n">OkvQ</span><span class="o">+</span><span class="n">bsC2RpyO32TlUOCGkD5VJNKNrbuoyhP7hZ</span>
+<span class="n">Smvwk8ogBKE</span><span class="o">+</span><span class="mi">2</span><span class="o">/</span><span class="n">cFpG</span><span class="o">+</span><span class="n">AL3yNKZ4sXCx</span><span class="o">+</span><span class="n">ZpxXGXM9B</span><span class="o">+</span><span class="mi">8</span><span class="n">cwKfrz3zIBGo0TponedWw</span>
+<span class="n">kpnfxGn3Gx3fLwCKfGtPS9TcTZ3i8l8BZ2wXgBE1EZYAu8hBIijvh4j4gPf4IAmX</span>
+<span class="n">zsnekGfHvC6ZLa</span><span class="o">/</span><span class="n">igNnXYPlSeTwk1JnWl9lAQttHthS9GUM</span><span class="o">/</span><span class="n">IGguKqS4JGz9i2a8</span>
+<span class="n">aXMflWzCze32IcO9h</span><span class="o">+</span><span class="n">pKn</span><span class="o">/</span><span class="n">RSPjJwU</span><span class="o">/</span><span class="n">bypGdWvHcHTkHUz9JraOqJ2mw</span><span class="o">+</span><span class="n">Yl306m4m</span>
+<span class="mi">791</span><span class="n">W6U0CgYEA97m01</span><span class="o">+</span><span class="n">NLoypdJ</span><span class="o">+</span><span class="n">g6lZbrNs4uEGqJotnhddm2Av0thVdw6oRXY4og</span>
+<span class="n">G6NqrS</span><span class="o">/</span><span class="n">Gv</span><span class="o">+</span><span class="mi">4</span><span class="n">DVpC71WI2he00aCjkn0OCR7c21EkyxYZ</span><span class="o">/</span><span class="n">OwerhmQ79iLDB87IHGyc</span>
+<span class="n">seVWHPFfmwXTPaodVechWGEq3gBFspnm2BufySFIkT4uFcIaA</span><span class="o">/</span><span class="n">qsidcCgYEAwicR</span>
+<span class="n">i0i</span><span class="o">/</span><span class="n">oeQieUqdzoWjJ5hACvmJc4QtV9XFhhFUFRgMPjpdMXYnlRv7t44Nq9mnmmGE</span>
+<span class="n">yW7vJWe4yc2dI1SF</span><span class="o">/</span><span class="mi">9</span><span class="n">rHQrLNBIW8D0Hl</span><span class="o">+</span><span class="n">w6VzzsOxaNWoOxCNaKolEAzOrR9XEaq</span>
+<span class="n">jfODC</span><span class="o">+</span><span class="n">BSKi4HWrhlx3a4T9wM4qqUbbGU96XkTAsCgYBXSExKoKA</span><span class="o">+</span><span class="n">zidibzVtDW60</span>
+<span class="n">sbKTQCZcha4lqt6xcOkACU4UoypzPPCRLGPiv2mkqETu1DIKPf998pS7emULJGsb</span>
+<span class="n">v5cG9v93jyr27n3l7R0fXSIgdyAUu8P9</span><span class="o">/</span><span class="n">hL4Qadw5H2IRY7ufHBIRnwnGit0gTtP</span>
+<span class="n">u3PyFtMNsb3lFq255zGxowKBgQCJ6mrCAElwXLhIZMK4o6GETNihcyU6k5gKHuaT</span>
+<span class="n">F9gcq9p2kcsFiaMQfrJOb3AytQgj2EYVOOJUNdvELnUDVdViLC0DqjOMlNtEE1Gl</span>
+<span class="n">B3VPoeoaZq7w3SMjKoqJ1RkPCItMcz5QW7ypQQ3cvJmozfguupyuzeexU</span><span class="o">+</span><span class="mi">7</span><span class="n">gBReG</span>
+<span class="mi">26</span><span class="n">bShQKBgAIXXeRFQW2WJudeOoi9UbeB2udU5o7FjX2NjEw1K3QIfnv2TTNB1Mea</span>
+<span class="n">pZ1g6LVgpq3aomGj5wnYQo</span><span class="o">/</span><span class="n">hl2uADnsdpNRbFhwwKb9hy</span><span class="o">/</span><span class="n">tXsmxGz73DPvWkkcrR</span>
+<span class="mi">6</span><span class="n">JkUbaxWs677uhVXXvLf9</span><span class="o">/</span><span class="n">ZpaVdMa5ne0XjzWsl3RGyvlZvI2JYv</span>
+<span class="o">-----</span><span class="n">END</span> <span class="n">RSA</span> <span class="n">PRIVATE</span> <span class="n">KEY</span><span class="o">-----</span>
+</pre></div>
+</div>
+<p>合并私钥和证书:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cat</span> <span class="n">apns</span><span class="o">-</span><span class="n">dev</span><span class="o">-</span><span class="n">cert</span><span class="o">.</span><span class="n">pem</span> <span class="n">apns</span><span class="o">-</span><span class="n">dev</span><span class="o">-</span><span class="n">key</span><span class="o">-</span><span class="n">noenc</span><span class="o">.</span><span class="n">pem</span> <span class="o">&gt;</span> <span class="n">apns</span><span class="o">-</span><span class="n">dev</span><span class="o">.</span><span class="n">pem</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Bag</span> <span class="n">Attributes</span>
+    <span class="n">friendlyName</span><span class="p">:</span> <span class="n">Apple</span> <span class="n">Development</span> <span class="n">IOS</span> <span class="n">Push</span> <span class="n">Services</span><span class="p">:</span> <span class="n">com</span><span class="o">.</span><span class="n">wei64</span><span class="o">.</span><span class="n">octopus</span>
+    <span class="n">localKeyID</span><span class="p">:</span> <span class="mi">7</span><span class="n">F</span> <span class="mi">0</span><span class="n">E</span> <span class="mi">83</span> <span class="mi">38</span> <span class="n">DF</span> <span class="n">C0</span> <span class="mi">1</span><span class="n">A</span> <span class="mi">04</span> <span class="mi">75</span> <span class="n">E1</span> <span class="mi">95</span> <span class="mi">21</span> <span class="n">A0</span> <span class="mi">83</span> <span class="mi">61</span> <span class="n">C0</span> <span class="mi">8</span><span class="n">A</span> <span class="n">E5</span> <span class="mi">05</span> <span class="mi">0</span><span class="n">B</span> 
+<span class="n">subject</span><span class="o">=/</span><span class="n">UID</span><span class="o">=</span><span class="n">com</span><span class="o">.</span><span class="n">wei64</span><span class="o">.</span><span class="n">octopus</span><span class="o">/</span><span class="n">CN</span><span class="o">=</span><span class="n">Apple</span> <span class="n">Development</span> <span class="n">IOS</span> <span class="n">Push</span> <span class="n">Services</span><span class="p">:</span> <span class="n">com</span><span class="o">.</span><span class="n">wei64</span><span class="o">.</span><span class="n">octopus</span><span class="o">/</span><span class="n">OU</span><span class="o">=</span><span class="mi">6</span><span class="n">VMJ9DSG5J</span><span class="o">/</span><span class="n">C</span><span class="o">=</span><span class="n">CN</span>
+<span class="n">issuer</span><span class="o">=/</span><span class="n">C</span><span class="o">=</span><span class="n">US</span><span class="o">/</span><span class="n">O</span><span class="o">=</span><span class="n">Apple</span> <span class="n">Inc</span><span class="o">./</span><span class="n">OU</span><span class="o">=</span><span class="n">Apple</span> <span class="n">Worldwide</span> <span class="n">Developer</span> <span class="n">Relations</span><span class="o">/</span><span class="n">CN</span><span class="o">=</span><span class="n">Apple</span> <span class="n">Worldwide</span> <span class="n">Developer</span> <span class="n">Relations</span> <span class="n">Certification</span> <span class="n">Authority</span>
+<span class="o">-----</span><span class="n">BEGIN</span> <span class="n">CERTIFICATE</span><span class="o">-----</span>
+<span class="n">MIIFhzCCBG</span><span class="o">+</span><span class="n">gAwIBAgIIA5NhHm0FzCcwDQYJKoZIhvcNAQEFBQAwgZYxCzAJBgNV</span>
+<span class="n">BAYTAlVTMRMwEQYDVQQKDApBcHBsZSBJbmMuMSwwKgYDVQQLDCNBcHBsZSBXb3Js</span>
+<span class="n">ZHdpZGUgRGV2ZWxvcGVyIFJlbGF0aW9uczFEMEIGA1UEAww7QXBwbGUgV29ybGR3</span>
+<span class="n">aWRlIERldmVsb3BlciBSZWxhdGlvbnMgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkw</span>
+<span class="n">HhcNMTgwODAxMDYwMDM1WhcNMTkwODAxMDYwMDM1WjCBhjEhMB8GCgmSJomT8ixk</span>
+<span class="n">AQEMEWNvbS53ZWk2NC5vY3RvcHVzMT8wPQYDVQQDDDZBcHBsZSBEZXZlbG9wbWVu</span>
+<span class="n">dCBJT1MgUHVzaCBTZXJ2aWNlczogY29tLndlaTY0Lm9jdG9wdXMxEzARBgNVBAsM</span>
+<span class="n">CjZWTUo5RFNHNUoxCzAJBgNVBAYTAkNOMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A</span>
+<span class="n">MIIBCgKCAQEAu</span><span class="o">+</span><span class="n">CJUERgJI</span><span class="o">+</span><span class="n">YcJHMMmdfy6hPPShFBsg</span><span class="o">/</span><span class="n">AQjV2Kx7xFDgOS</span><span class="o">+</span><span class="mi">80</span><span class="n">n1j</span>
+<span class="n">ClNYnF3oFlQ6MVOhqHGHN</span><span class="o">/</span><span class="n">dcKB1w8VBmr42c</span><span class="o">+</span><span class="n">vIisjGAI8TLmmnlYvC2oV3fRtCs</span>
+<span class="n">UodcLsn5owjvPb1Cih7gFTM8m</span><span class="o">/</span><span class="n">pkCnhmGjEwgJJLbx9ROJmxCq7X2JqxFJACxsSJ</span>
+<span class="n">A7II7skMKOVcq4jkg2ci8tAI</span><span class="o">+</span><span class="n">BS</span><span class="o">/</span><span class="n">gYd0LYQvK2tzzLensqwnpkePAYApNU3BtQ57</span>
+<span class="mi">9</span><span class="n">hvbn6xft</span><span class="o">+</span><span class="n">WUKEc4eNZqihiTkPVEcm47WVYTN4U4hwAP3p7okUJn026FJLhmD5Sb</span>
+<span class="n">nhO2zjKwBBmDRkz3Cnioex6</span><span class="o">//</span><span class="n">Q2KVNHAPQIDAQABo4IB5TCCAeEwCQYDVR0TBAIw</span>
+<span class="n">ADAfBgNVHSMEGDAWgBSIJxcJqbYYYIvs67r2R1nFUlSjtzCCAQ8GA1UdIASCAQYw</span>
+<span class="n">ggECMIH</span><span class="o">/</span><span class="n">BgkqhkiG92NkBQEwgfEwgcMGCCsGAQUFBwICMIG2DIGzUmVsaWFuY2Ug</span>
+<span class="n">b24gdGhpcyBjZXJ0aWZpY2F0ZSBieSBhbnkgcGFydHkgYXNzdW1lcyBhY2NlcHRh</span>
+<span class="n">bmNlIG9mIHRoZSB0aGVuIGFwcGxpY2FibGUgc3RhbmRhcmQgdGVybXMgYW5kIGNv</span>
+<span class="n">bmRpdGlvbnMgb2YgdXNlLCBjZXJ0aWZpY2F0ZSBwb2xpY3kgYW5kIGNlcnRpZmlj</span>
+<span class="n">YXRpb24gcHJhY3RpY2Ugc3RhdGVtZW50cy4wKQYIKwYBBQUHAgEWHWh0dHA6Ly93</span>
+<span class="n">d3cuYXBwbGUuY29tL2FwcGxlY2EvMBMGA1UdJQQMMAoGCCsGAQUFBwMCME0GA1Ud</span>
+<span class="n">HwRGMEQwQqBAoD6GPGh0dHA6Ly9kZXZlbG9wZXIuYXBwbGUuY29tL2NlcnRpZmlj</span>
+<span class="n">YXRpb25hdXRob3JpdHkvd3dkcmNhLmNybDAdBgNVHQ4EFgQUfw6DON</span><span class="o">/</span><span class="n">AGgR14ZUh</span>
+<span class="n">oINhwIrlBQswCwYDVR0PBAQDAgeAMBAGCiqGSIb3Y2QGAwEEAgUAMA0GCSqGSIb3</span>
+<span class="n">DQEBBQUAA4IBAQBuey1</span><span class="o">+</span><span class="n">dq5C</span><span class="o">+</span><span class="n">jiGvng2</span><span class="o">/</span><span class="n">rBjuMxkrIpW8d</span><span class="o">/</span><span class="n">qX5nIi</span><span class="o">+</span><span class="n">JI0OxoIkyc</span>
+<span class="n">FVNcBU6sZjoywP7VmyMaMsQ5XK1PmfkL6KOBthM0pmlgbBeO9kNMUlatcqS2b2Rs</span>
+<span class="mi">4</span><span class="n">D</span><span class="o">+</span><span class="n">Q958nq6nOG</span><span class="o">/</span><span class="n">SFIaNnQe2bBpm0xc27SyqftLjrXAIgaPI</span><span class="o">/</span><span class="n">CxrSK</span><span class="o">/</span><span class="n">sJsIz3qjPr</span>
+<span class="n">blVT1issE0GIHxPlRENZ7txLgwMFchBCZosc26RXvQRAiADxICrk1br8E41p7E</span><span class="o">+</span><span class="mi">7</span>
+<span class="n">MIeUGNRIfx0F3FBn1njkz1HS2gbZcwK9FLcGsz5qtKgGnGylmQMf1IgLBdoqa6tp</span>
+<span class="n">lONQ5oGHN7HYJPczb1dVutASzDXdXwVNIgXW</span>
+<span class="o">-----</span><span class="n">END</span> <span class="n">CERTIFICATE</span><span class="o">-----</span>
+<span class="n">Bag</span> <span class="n">Attributes</span>
+    <span class="n">friendlyName</span><span class="p">:</span> <span class="n">octopus</span>
+    <span class="n">localKeyID</span><span class="p">:</span> <span class="mi">7</span><span class="n">F</span> <span class="mi">0</span><span class="n">E</span> <span class="mi">83</span> <span class="mi">38</span> <span class="n">DF</span> <span class="n">C0</span> <span class="mi">1</span><span class="n">A</span> <span class="mi">04</span> <span class="mi">75</span> <span class="n">E1</span> <span class="mi">95</span> <span class="mi">21</span> <span class="n">A0</span> <span class="mi">83</span> <span class="mi">61</span> <span class="n">C0</span> <span class="mi">8</span><span class="n">A</span> <span class="n">E5</span> <span class="mi">05</span> <span class="mi">0</span><span class="n">B</span> 
+<span class="n">Key</span> <span class="n">Attributes</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">No</span> <span class="n">Attributes</span><span class="o">&gt;</span>
+<span class="o">-----</span><span class="n">BEGIN</span> <span class="n">PRIVATE</span> <span class="n">KEY</span><span class="o">-----</span>
+<span class="n">MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC74IlQRGAkj5hw</span>
+<span class="n">kcwyZ1</span><span class="o">/</span><span class="n">LqE89KEUGyD8BCNXYrHvEUOA5L7zSfWMKU1icXegWVDoxU6GocYc391wo</span>
+<span class="n">HXDxUGavjZz68iKyMYAjxMuaaeVi8LahXd9G0KxSh1wuyfmjCO89vUKKHuAVMzyb</span>
+<span class="o">+</span><span class="n">mQKeGYaMTCAkktvH1E4mbEKrtfYmrEUkALGxIkDsgjuyQwo5VyriOSDZyLy0Aj4</span>
+<span class="n">FL</span><span class="o">+</span><span class="n">Bh3QthC8ra3PMt6eyrCemR48BgCk1TcG1Dnv2G9ufrF</span><span class="o">+</span><span class="mi">35</span><span class="n">ZQoRzh41mqKGJOQ</span>
+<span class="mi">9</span><span class="n">URybjtZVhM3hTiHAA</span><span class="o">/</span><span class="n">enuiRQmfTboUkuGYPlJueE7bOMrAEGYNGTPcKeKh7Hr</span><span class="o">/</span><span class="mi">9</span>
+<span class="n">DYpU0cA9AgMBAAECggEAR6jkFwaNeUSAC2fA7</span><span class="o">/</span><span class="n">S3</span><span class="o">+</span><span class="n">DERUC1c7rJQPa</span><span class="o">/</span><span class="n">GCSf46S9D</span>
+<span class="mi">5</span><span class="n">uwLZGnI7fZOVQ4IaQPlUk0o2tu6jKE</span><span class="o">/</span><span class="n">uFlKa</span><span class="o">/</span><span class="n">CTyiAEoT7b9wWkb4AvfI0pnixc</span>
+<span class="n">LH5mnFcZcz0H7xzAp</span><span class="o">+</span><span class="n">vPfMgEajROmid51bCSmd</span><span class="o">/</span><span class="n">EafcbHd8vAIp8a09L1NxNneLy</span>
+<span class="n">XwFnbBeAETURlgC7yEEiKO</span><span class="o">+</span><span class="n">HiPiA9</span><span class="o">/</span><span class="n">ggCZfOyd6QZ8e8Lpktr</span><span class="o">+</span><span class="n">KA2ddg</span><span class="o">+</span><span class="n">VJ5PCTU</span>
+<span class="n">mdaX2UBC20e2FL0ZQz8gaC4qpLgkbP2LZrxpcx</span><span class="o">+</span><span class="n">VbMLN7fYhw72H6kqf9FI</span><span class="o">+</span><span class="n">MnBT</span>
+<span class="mi">9</span><span class="n">vKkZ1a8dwdOQdTP0mto6onabD5iXfTqbibv3VbpTQKBgQD3ubTX40ujKl0n6DqV</span>
+<span class="n">lus2zi4Qaomi2eF12bYC</span><span class="o">/</span><span class="n">S2FV3DqhFdjiiAbo2qtL8a</span><span class="o">/</span><span class="mi">7</span><span class="n">gNWkLvVYjaF7TRoKOSf</span>
+<span class="n">Q4JHtzbUSTLFhn87B6uGZDv2IsMHzsgcbJyx5VYc8V</span><span class="o">+</span><span class="n">bBdM9qh1V5yFYYSreAEWy</span>
+<span class="n">mebYG5</span><span class="o">/</span><span class="n">JIUiRPi4VwhoD</span><span class="o">+</span><span class="n">qyJ1wKBgQDCJxGLSL</span><span class="o">+</span><span class="n">h5CJ5Sp3OhaMnmEAK</span><span class="o">+</span><span class="n">YlzhC1X</span>
+<span class="mi">1</span><span class="n">cWGEVQVGAw</span><span class="o">+</span><span class="n">Ol0xdieVG</span><span class="o">/</span><span class="n">u3jg2r2aeaYYTJbu8lZ7jJzZ0jVIX</span><span class="o">/</span><span class="mi">2</span><span class="n">sdCss0EhbwP</span>
+<span class="n">QeX7DpXPOw7Fo1ag7EI1oqiUQDM6tH1cRqqN84ML4FIqLgdauGXHdrhP3AziqpRt</span>
+<span class="n">sZT3peRMCwKBgFdITEqgoD7OJ2JvNW0NbrSxspNAJlyFriWq3rFw6QAJThSjKnM8</span>
+<span class="mi">8</span><span class="n">JEsY</span><span class="o">+</span><span class="n">K</span><span class="o">/</span><span class="n">aaSoRO7UMgo9</span><span class="o">/</span><span class="mi">33</span><span class="n">ylLt6ZQskaxu</span><span class="o">/</span><span class="n">lwb2</span><span class="o">/</span><span class="mi">3</span><span class="n">ePKvbufeXtHR9dIiB3IBS7</span>
+<span class="n">w</span><span class="o">/</span><span class="mi">3</span><span class="o">+</span><span class="n">EvhBp3DkfYhFju58cEhGfCcaK3SBO0</span><span class="o">+</span><span class="mi">7</span><span class="n">c</span><span class="o">/</span><span class="n">IW0w2xveUWrbnnMbGjAoGBAInq</span>
+<span class="n">asIASXBcuEhkwrijoYRM2KFzJTqTmAoe5pMX2Byr2naRywWJoxB</span><span class="o">+</span><span class="n">sk5vcDK1CCPY</span>
+<span class="n">RhU44lQ128QudQNV1WIsLQOqM4yU20QTUaUHdU</span><span class="o">+</span><span class="n">h6hpmrvDdIyMqionVGQ8Ii0xz</span>
+<span class="n">PlBbvKlBDdy8majN</span><span class="o">+</span><span class="n">C66nK7N57FT7uAFF4bbptKFAoGAAhdd5EVBbZYm5146iL1R</span>
+<span class="n">t4Ha51TmjsWNfY2MTDUrdAh</span><span class="o">+</span><span class="n">e</span><span class="o">/</span><span class="n">ZNM0HUx5qlnWDotWCmrdqiYaPnCdhCj</span><span class="o">+</span><span class="n">GXa4AO</span>
+<span class="n">ex2k1FsWHDApv2HL</span><span class="o">+</span><span class="mi">1</span><span class="n">eybEbPvcM</span><span class="o">+</span><span class="mi">9</span><span class="n">aSRytHomRRtrFazrvu6FVde8t</span><span class="o">/</span><span class="mi">39</span><span class="n">mlpV0xr</span>
+<span class="n">md7RePNayXdEbK</span><span class="o">+</span><span class="n">Vm8jYli8</span><span class="o">=</span>
+<span class="o">-----</span><span class="n">END</span> <span class="n">PRIVATE</span> <span class="n">KEY</span><span class="o">-----</span>
+</pre></div>
+</div>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="../../genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../search.html"><span class="std std-ref">搜索页面</span></a></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="encrypt_makecert.html" class="btn btn-neutral float-right" title="微软makecert导出私钥" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="../practice.html" class="btn btn-neutral" title="实战" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+  
+  <div id="gitalk-container"></div>
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2010-2025, 新溪-gordon.
+
+    </p>
+  </div>
+  <div>备案号 <a href="http://www.beian.miit.gov.cn">京ICP备16018553号</a></div><div>Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a></div>. 
+
+
+</footer>
+
+<script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?042289284b8eb33866001347a3e0b129";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>     
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'V2025.06',
+            LANGUAGE:'zh-CN',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../_static/sphinx_highlight.js"></script>
+      <script type="text/javascript" src="../../_static/clipboard.min.js"></script>
+      <script type="text/javascript" src="../../_static/copybutton.js"></script>
+      <script type="text/javascript" src="../../_static/translations.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+
+  
+
+  <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+
+
+      // var gitalk = new Gitalk({
+      //         clientID: '565177626b5d46427009',
+      //         clientSecret: 'b2a36e67e1d2a73e43667f46d571c2624f8e1026',
+      //         repo: 'knowledge',
+      //         owner: 'zhaoweiguo',
+      //         admin: ['zhaoweiguo'],
+      //         id: location.pathname,      // Ensure uniqueness and length less than 50
+      //         distractionFreeMode: false  // Facebook-like distraction free mode
+      //       })
+      // gitalk.render('gitalk-container')
+
+  </script>
+
+
+<script type="text/javascript" src="../../_static/js/table-of-contents-sidebar.js"></script>
+<!-- <script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script> -->
+<script type="text/javascript">
+    window.onload = function(e){
+        TableOfContents.init({
+            basePath: "https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/",
+            querySelector: "body" // or other css querySelector
+        });
+    }
+</script> 
+
+</body>
+</html>

@@ -1,0 +1,71 @@
+常用
+####
+
+
+
+Protocol Buffers 的主要特性有下面这几个::
+
+    1. 更快的数据传输速度
+        protobuf 在传输时，会将数据序列化为二进制数据
+        和 XML、JSON 的文本传输格式相比，这可以节省大量的 IO 操作，从而提高数据传输速度
+    2. 跨平台多语言
+        protobuf 自带的编译工具 protoc 可以基于 protobuf 定义文件
+        编译出不同语言的客户端或者服务端，供程序直接调用，因此可以满足多语言需求的场景
+    3. 具有非常好的扩展性和兼容性，可以更新已有的数据结构，而不破坏和影响原有的程序
+    4. 基于 IDL 文件定义服务，通过 proto3 工具生成指定语言的数据结构、服务端和客户端接口
+
+Protocol Buffers 主要有三个作用::
+
+    1. 可以用来定义数据结构
+        message SecretInfo {
+            string name = 1;
+            string secret_id  = 2;
+            int64 expires = 3;
+        }
+    2. 可以用来定义服务接口
+        service Cache{
+          rpc ListSecrets(ListSecretsRequest) returns (ListSecretsResponse) {}
+          rpc ListPolicies(ListPoliciesRequest) returns (ListPoliciesResponse) {}
+        }
+    3. 可以通过 protobuf 序列化和反序列化，提升传输效率
+
+
+
+gRPC 支持定义 4 种类型的服务方法::
+
+    1. 简单模式（Simple RPC）
+        是最简单的 gRPC 模式
+        客户端发起一次请求，服务端响应一个数据
+        定义格式为:
+           rpc SayHello (HelloRequest) returns (HelloReply) {}
+
+    2. 服务端数据流模式（Server-side streaming RPC）
+        客户端发送一个请求，服务器返回数据流响应，客户端从流中读取数据直到为空
+        定义格式为:
+           rpc SayHello (HelloRequest) returns (stream HelloReply) {}
+
+    3. 客户端数据流模式（Client-side streaming RPC）
+        客户端将消息以流的方式发送给服务器，服务器全部处理完成之后返回一次响应
+        定义格式为:
+           rpc SayHello (stream HelloRequest) returns (HelloReply) {}
+    4. 双向数据流模式（Bidirectional streaming RPC）
+        客户端和服务端都可以向对方发送数据流，双方的数据可以同时互相发送，也就是可以实现实时交互 RPC 框架原理
+        定义格式为:
+           rpc SayHello (stream HelloRequest) returns (stream HelloReply) {}
+
+
+RPC 调用具有下面两个特点::
+
+    1. 调用方便
+        RPC 屏蔽了底层的网络通信细节，使得调用 RPC 就像调用本地方法一样方便，
+        调用方式跟大家所熟知的调用类的方法一致：ClassName.ClassFuc(params)。
+    2. 不需要打包和解包
+        RPC 调用的入参和返回的结果都是 Go 的结构体，
+        不需要对传入参数进行打包操作，也不需要对返回参数进行解包操作，简化了调用步骤
+
+
+* 官网: https://grpc.io/
+* golang 版快速使用: https://grpc.io/docs/languages/go/quickstart/
+
+
+

@@ -1,0 +1,37 @@
+pg_settings表相关
+#################
+
+
+查看配置文件的位置::
+
+    postgres=# select name, setting from pg_settings where category='File Locations';
+           name        |                 setting                 
+    -------------------+-----------------------------------------
+     config_file       |/var/lib/pgsql/<version>/data/postgresql.conf
+     data_directory    | /var/lib/pgsql/<version>/data
+     external_pid_file | 
+     hba_file          | /var/lib/pgsql/<version>/data/pg_hba.conf
+     ident_file        | /var/lib/pgsql/<version>/data/pg_ident.conf
+
+关键的设置::
+
+    postgres=# select name,context,unit,setting,boot_val,reset_val from pg_settings 
+        where name in('listen_addresses','max_connections','shared_buffers',
+            'effective_cache_size','work_mem','maintenance_work_mem')
+        order by context, name;
+             name         | context   | unit | setting |boot_val  | reset_val 
+    ----------------------+------------+------+---------+-----------+-----------
+     listen_addresses     | postmaster |      | *      | localhost | *
+     max_connections      | postmaster |      | 100    | 100       | 100
+     shared_buffers       | postmaster | 8kB  | 16384  | 1024      | 16384
+     effective_cache_size | user       | 8kB | 524288  | 524288    | 524288
+     maintenance_work_mem | user       | kB  | 65536   | 65536     | 65536
+     work_mem             | user       | kB  | 4096    | 4096      | 4096
+    (6 rows)
+
+
+
+
+
+
+

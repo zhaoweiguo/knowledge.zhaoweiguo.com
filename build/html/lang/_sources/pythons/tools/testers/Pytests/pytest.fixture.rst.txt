@@ -1,0 +1,165 @@
+@pytest.fixture-测试夹具
+########################
+
+
+- 代码复用：通过夹具，可以在多个测试函数中共享相同的初始化代码和清理代码，避免重复代码。
+- 依赖注入：测试函数可以通过参数的方式获取夹具提供的资源，pytest 会自动解析并注入这些参数。
+- 灵活的作用范围：夹具可以配置为函数级别、模块级别、类级别或会话级别，控制夹具的生命周期。
+
+- 测试夹具用于在测试函数执行之前准备特定的状态或对象，并在测试函数执行之后进行清理工作。
+
+
+
+fixture函数的发现顺序::
+
+    1. 测试类
+    2. 测试模块
+    3. conftest.py文件
+    4. 内置和第三方插件
+
+
+
+参数
+====
+
+scope
+-----
+
+
+通过 scope 参数设置夹具的作用范围::
+
+    function(默认): 每个测试函数调用一次
+    class:      每个测试类调用一次
+    module:     每个测试模块调用一次
+    session:    每个测试会话调用一次
+    package: 
+
+
+autouse
+-------
+
+::
+
+    autouse=False(默认)
+    autouse=True：自动应用该夹具到指定范围内的所有测试。
+
+使用示例::
+
+    1. 设置和清理全局环境
+    @pytest.fixture(scope="session", autouse=True)
+    def setup_environment():
+        # 设置全局环境变量
+        os.environ['API_KEY'] = 'my_api_key'
+        yield
+        # 清理全局环境变量
+        del os.environ['API_KEY']
+
+    def test_example():
+        assert os.getenv('API_KEY') == 'my_api_key'
+
+    2. 配置数据库连接
+    @pytest.fixture(scope="session", autouse=True)
+    def setup_database():
+        # 假设这里是连接数据库的代码
+        db = connect_to_database()
+        yield db
+        # 假设这里是断开数据库连接的代码
+        db.close()
+
+    def test_db_query():
+        # 这里可以使用已经建立的数据库连接
+        result = execute_query("SELECT 1")
+        assert result == 1
+
+
+
+
+
+
+自带fixture
+===========
+
+
+tmp_path
+--------
+
+* 3.9版本新功能
+* mp_path 可以在临时目录中创建一个独立的临时目录以供测试调用
+* 示例::
+
+    # test_tmp_path.py文件内容
+    import os
+
+    CONTENT = u"content"
+
+    def test_create_file(tmp_path):
+        d = tmp_path / "sub"
+        d.mkdir()
+        p = d / "hello.txt"
+        p.write_text(CONTENT)
+        assert p.read_text() == CONTENT
+        assert len(list(tmp_path.iterdir())) == 1
+
+
+tmpdir_factory
+--------------
+
+* 3.8版本新功能
+* tmpdir_factory是一个session范围的fixture，可从任何其他测试用例及fixture中创建任意临时目录
+* 例如，假设你的测试套件需要使用程序动态生成在本地磁盘上的一个大图片，你可以整个测试session中只生成一次以节省时间，而不是为每个用例都在自己的tmpdir中计算并生成一次：
+* 示例::
+
+    # conftest.py文件内容
+    import pytest
+
+    @pytest.fixture(scope="session")
+    def image_file(tmpdir_factory):
+        img = compute_expensive_image()
+        fn = tmpdir_factory.mktemp("data").join("img.png")
+        img.save(str(fn))
+        return fn
+
+    # contents of test_image.py
+    def test_histogram(image_file):
+        img = load_image(image_file)
+        # 计算和测试histogram
+
+
+
+
+
+
+
+
+
+
+示例
+====
+
+::
+
+    # yield 语句前的代码在每个测试函数运行之前执行，并返回给测试函数使用的资源
+    # yield 语句后的代码在每个测试函数运行之后执行，用于清理资源（如果有需要）
+    @pytest.fixture
+    def sample_fixture():
+        # 准备工作
+        # ...
+        data = {"key": "value"}
+
+        yield data
+
+        # 清理工作（如果需要）
+        # ...
+
+
+    # sample_fixture 是作为 test_example 函数的参数
+    # 在运行测试时，pytest 框架将自动注入该固定装置的返回值作为参数传递给 test_example 函数
+    def test_sample(sample_fixture):
+        ...
+
+
+
+
+
+
+

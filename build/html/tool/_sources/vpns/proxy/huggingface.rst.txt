@@ -1,0 +1,105 @@
+huggingface
+###########
+
+
+
+镜像站
+=============
+
+* 镜像站: https://hf-mirror.com
+* 镜像站: https://alpha.hf-mirror.com
+
+
+* 环境变量::
+
+    export HF_ENDPOINT=https://hf-mirror.com
+
+    export HF_ENDPOINT=https://alpha.hf-mirror.com
+
+
+工具
+====
+
+
+使用 huggingface-cli
+--------------------
+
+::
+
+    # 3.1 下载模型
+    huggingface-cli download --resume-download gpt2 --local-dir gpt2
+
+    # 3.2 下载数据集
+    huggingface-cli download --repo-type dataset --resume-download wikitext --local-dir wikitext
+
+    # 3.3 需要登录的
+    huggingface-cli download --token hf_*** --resume-download meta-llama/Llama-2-7b-hf --local-dir Llama-2-7b-hf
+
+
+    # 说明
+    # 可以添加 --local-dir-use-symlinks False 参数禁用文件软链接
+
+
+
+使用 hfd
+--------
+
+* gist: https://gist.github.com/padeoe/697678ab8e528b85a2a7bddafea1fa4f
+* 简介: hfd 是基于 curl 和 aria2 实现的专用于huggingface 下载的命令行脚本
+
+完整命令::
+
+    $ ./hfd.sh --help
+    用法:
+      hfd <REPO_ID> [--include include_pattern1 include_pattern2 ...] [--exclude exclude_pattern1 exclude_pattern2 ...] [--hf_username username] [--hf_token token] [--tool aria2c|wget] [-x threads] [-j jobs] [--dataset] [--local-dir path]
+
+    描述:
+    使用提供的仓库ID从Hugging Face下载模型或数据集。
+
+    参数:
+    仓库ID          Hugging Face仓库ID(必需)
+                    格式:'组织名/仓库名'或旧版格式(如 gpt2)
+    选项:
+    包含/排除模式    用于匹配文件路径的模式,支持通配符。
+                     例如:'--exclude *.safetensor .md', '--include vae/*'。
+    --include       (可选)指定要下载的文件包含模式(支持多个模式)。
+    --exclude       (可选)指定要排除下载的文件模式(支持多个模式)。
+    --hf_username   (可选)Hugging Face用户名用于认证(非邮箱)。
+    --hf_token      (可选)Hugging Face令牌用于认证。
+    --tool          (可选)使用的下载工具:aria2c(默认)或wget。
+    -x              (可选)aria2c的下载线程数(默认:4)。
+    -j              (可选)aria2c的并发下载数(默认:5)。
+    --dataset       (可选)标记下载的是数据集。
+    --local-dir     (可选)存储下载数据的目录路径。
+                     默认下载到当前目录下以'仓库名'命名的子目录。(如果记仓库ID为'组织名/仓库名')。
+
+    示例:
+    hfd gpt2
+    hfd bigscience/bloom-560m --exclude *.bin .msgpack onnx/
+    hfd meta-llama/Llama-2-7b --hf_username myuser --hf_token mytoken -x 4
+    hfd lavita/medical-qa-shared-task-v1-toy --dataset
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

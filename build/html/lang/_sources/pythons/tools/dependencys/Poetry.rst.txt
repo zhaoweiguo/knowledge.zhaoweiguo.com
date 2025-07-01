@@ -1,0 +1,228 @@
+Poetry
+######
+
+* 官网: https://python-poetry.org/
+* GitHub: https://github.com/python-poetry/poetry
+
+简介
+====
+
+* 依赖管理和构建工具，提供了一种替代 pip 和 setuptools 的方法
+* Poetry requires Python 3.8+. It is multi-platform and the goal is to make it work equally well on Linux, macOS and Windows.
+* Poetry 是一个专注于 Python 项目依赖管理的工具，它使用 pyproject.toml 文件来定义项目元数据和依赖项。
+* 相比Conda：conda 是一个通用的包管理和环境管理工具，不仅可以管理 Python 包，还可以管理其他语言的包；Poetry 更专注于 Python 项目的依赖和包管理，而 conda 则是一个通用的包管理器，适用于跨语言和跨平台的应用
+
+* Poetry 是一个现代化的 ``依赖和虚拟环境`` 管理工具，它不仅提供了 ``构建和打包`` 功能，还支持依赖管理、虚拟环境创建和发布。Poetry 使用 pyproject.toml 管理项目的元数据和依赖关系。与 Setuptools 类似，但提供了更高级的功能，如依赖版本的锁定和虚拟环境的自动管理。
+
+
+
+
+
+安装::
+
+    curl -sSL https://install.python-poetry.org | python3 -
+    or
+    pip install poetry
+
+
+
+
+Basic usage
+===========
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/01/peotry_demo.gif
+
+
+Project setup
+-------------
+
+create our new project::
+
+    $ poetry new poetry-demo
+    =>
+    目录结构:
+    poetry-demo
+    ├── pyproject.toml
+    ├── README.md
+    ├── poetry_demo
+    │   └── __init__.py
+    └── tests
+        └── __init__.py
+
+
+pyproject.toml::
+
+    [tool.poetry]
+    name = "poetry-demo"
+    version = "0.1.0"
+    description = ""
+    authors = ["Sébastien Eustace <sebastien@eustace.io>"]
+    readme = "README.md"
+    packages = [{include = "poetry_demo"}]
+
+    [tool.poetry.dependencies]
+    python = "^3.7"
+    ...     # 增加各种依赖
+
+    [build-system]
+    requires = ["poetry-core"]
+    build-backend = "poetry.core.masonry.api"
+
+
+Using your virtual environment
+------------------------------
+
+* By default, Poetry creates a virtual environment in {cache-dir}/virtualenvs
+
+Using poetry run
+^^^^^^^^^^^^^^^^
+
+直接使用::
+
+    poetry run python your_script.py
+
+
+Activating the virtual environment
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* The easiest way to activate the virtual environment is to create a nested shell with poetry shell.
+* 对应的退出命令::
+
+    $ exit
+    or
+    $ deactivate
+
+
+Installing dependencies
+-----------------------
+
+::
+
+    poetry install
+
+Installing without poetry.lock
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* If you have never run the command before and there is also no poetry.lock file present, Poetry simply resolves all dependencies listed in your pyproject.toml file and downloads the latest version of their files.
+* When Poetry has finished installing, it writes all the packages and their exact versions that it downloaded to the poetry.lock file, locking the project to those specific versions. You should commit the poetry.lock file to your project repo so that all people working on the project are locked to the same versions of dependencies (more below).
+
+Installing with poetry.lock
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* If there is already a poetry.lock file as well as a pyproject.toml file when you run poetry install, it means either you ran the install command before, or someone else on the project ran the install command and committed the poetry.lock file to the project 
+* Running install when a poetry.lock file is present resolves and installs all dependencies that you listed in pyproject.toml, but Poetry uses the exact versions listed in poetry.lock to ensure that the package versions are consistent for everyone working on your project.
+
+
+poetry config
+-------------
+
+::
+
+    poetry config virtualenvs.create false --local
+    # 配置项：virtualenvs.create 是 Poetry 中控制是否自动创建虚拟环境的开关
+    # 设置为 false 意味着：不自动创建虚拟环境，而是在当前环境（比如系统的 Python 环境或你已经激活的虚拟环境）中安装依赖
+    # --local: 表示：将配置写入当前项目的 .venv 配置文件中（通常是 poetry.toml）。也就是说，这个配置只对当前项目有效，不会影响其他项目或全局设置
+
+
+poetry export
+-------------
+
+.. note:: poetry export 这个命令 并不是内置在 Poetry 本体中的，它是由官方维护的 插件 提供的。
+
+
+安装 poetry-plugin-export::
+
+    poetry self add poetry-plugin-export
+
+
+✅ 标准导出命令（不带 dev 依赖）::
+
+    poetry export -f requirements.txt --without-hashes -o requirements.txt
+
+✅ 导出开发依赖（比如测试工具）::
+
+    poetry export -f requirements.txt --with dev --without-hashes -o requirements.txt
+
+
+
+
+
+
+配置
+====
+
+cache-dir::
+
+    Environment Variable: POETRY_CACHE_DIR
+
+    // 默认目录
+    macOS: ~/Library/Caches/pypoetry
+    Windows: C:\Users\<username>\AppData\Local\pypoetry\Cache
+    Unix: ~/.cache/pypoetry
+
+
+
+
+
+poe
+===
+
+* poe 是 Poe the Poet 的命令行接口。
+* https://github.com/nat-n/poethepoet
+* https://poethepoet.natn.io/
+* A task runner that works well with poetry or uv.
+
+
+Quick start
+-----------
+
+Install the Poe the Poet::
+
+    pipx install poethepoet
+
+Define some tasks in your pyproject.toml::
+
+    [tool.poe.tasks]
+    test         = "pytest --cov=my_app"                         # a simple command task
+    serve.script = "my_app.service:run(debug=True)"              # python script based task
+    tunnel.shell = "ssh -N -L 0.0.0.0:8080:$PROD:8080 $PROD &"   # (posix) shell based task
+
+
+Run your tasks via the CLI::
+
+    $ poe test -v tests/unit # extra CLI arguments are appended to the underlying command
+    # 等同于执行: pytest --cov=my_app -v tests/unit
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,110 @@
+PBKDF(Password-Based Key Derivation Function)
+#############################################
+
+* In cryptography, PBKDF1 and PBKDF2 (Password-Based Key Derivation Function 1 and 2) are key derivation functions with a sliding computational cost, used to reduce vulnerabilities of brute-force attacks.
+* PBKDF2 is part of RSA Laboratories' Public-Key Cryptography Standards (PKCS) series, specifically PKCS #5 v2.0, also published as Internet Engineering Task Force's RFC 2898. It supersedes PBKDF1, which could only produce derived keys up to 160 bits long. RFC 8018 (PKCS #5 v2.1), published in 2017, recommends PBKDF2 for password hashing.
+
+Purpose and operation
+=====================
+
+* PBKDF2 applies a pseudorandom function, such as hash-based message authentication code (HMAC), to the input password or passphrase along with a salt value and repeats the process many times to produce a derived key, which can then be used as a cryptographic key in subsequent operations. The added computational work makes password cracking much more difficult, and is known as key stretching.
+
+* When the standard was written in the year 2000 the recommended minimum number of iterations was 1,000, but the parameter is intended to be increased over time as CPU speeds increase. A Kerberos standard in 2005 recommended 4,096 iterations; Apple reportedly used 2,000 for iOS 3, and 10,000 for iOS 4; while LastPass in 2011 used 5,000 iterations for JavaScript clients and 100,000 iterations for server-side hashing. In 2021, OWASP recommended to use 310,000 iterations for PBKDF2-HMAC-SHA256 and 120,000 for PBKDF2-HMAC-SHA512.
+
+* Having a salt added to the password reduces the ability to use precomputed hashes (rainbow tables) for attacks, and means that multiple passwords have to be tested individually, not all at once. The standard recommends a salt length of at least 64 bits. The US National Institute of Standards and Technology recommends a salt length of 128 bits.
+
+Key derivation process
+======================
+
+The PBKDF2 key derivation function has five input parameters::
+
+    DK = PBKDF2(PRF, Password, Salt, c, dkLen)
+    参数说明:
+      PRF is a pseudorandom function of two parameters with output length ``hLen`` (e.g., a keyed HMAC)
+      Password is the master password from which a derived key is generated
+      Salt is a sequence of bits, known as a cryptographic salt
+      c is the number of iterations desired
+      dkLen is the desired bit-length of the derived key
+      DK is the generated derived key
+
+例-WPA2 uses::
+
+    DK = PBKDF2(HMAC−SHA1, passphrase, ssid, 4096, 256)
+    参数说明:
+      PRF: HMAC−SHA1
+      c: 4096
+      dkLen: 256
+
+公式详解::
+
+    1. 如果伪随机函数 PRF 输出的结果比期望得到的密钥长度要短，则要通过拼接多个结果以满足密钥的长度
+    lenBlock = dklen/hlen
+    DK = T1 + T2 + ⋯ + T_lenBlock
+
+    2. 每个 block 则通过则通过函数 F 得到:
+    T_i = F(Password, Salt, c, i)
+
+    3. 函数 F 里，PRF 会进行 c 次的运算，然后把得到的结果进行异或运算，得到最终的值
+    F(Password, Salt, c, i) = U1 ^ U2 ^ ⋯ ^ Uc
+    where:
+      U1 = PRF(Password, Salt + INT_32_BE(i))
+      U2 = PRF(Password, U1)
+      ⋮
+      Uc = PRF(Password, Uc−1)
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2022/11/wgVX2t.jpg
+
+   SHA-256 算法流程图
+
+
+
+
+说明
+====
+
+* PBKDF1使用DES算法，
+* PBKDF2使用伪随机数算法(PKCS#5建议为HMAC—SHAl)
+
+
+
+应用
+====
+
+1. 无线局域网802．11协议
+2. 著名的压缩软件WinZ—ip
+3. 开源加密软件TrueCrypt
+4. iOS系统加密
+5. Android系统加密
+
+
+PBKDF2 算法的产生背景
+=====================
+
+用户密码加密的方法演变::
+
+    1. 明文保存
+    2. 对称加密算法来保存
+    3. 使用 MD5、SHA1 等单向 HASH 算法保护密码
+        可以建立彩虹表进行查表破解，目前这种方式已经很不安全了
+    4. 特殊的单向 HASH 算法
+        加盐、多次 HASH 等扩展
+    5. PBKDF2 算法
+        在 HASH 算法基础上增加随机盐，并进行多次 HASH 运算
+        随机盐使得彩虹表的建表难度大幅增加，而多次 HASH 也使得建表和破解的难度都大幅增加
+
+
+
+
+参考
+====
+
+* https://en.wikipedia.org/wiki/PBKDF2
+
+
+
+
+
+
+
+
+

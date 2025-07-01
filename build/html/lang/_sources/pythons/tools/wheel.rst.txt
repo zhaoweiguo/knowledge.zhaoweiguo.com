@@ -1,0 +1,119 @@
+wheel
+#####
+
+安装::
+
+    pip install wheel
+
+
+
+生成whl文件
+===========
+
+
+
+Converting Eggs to Wheels::
+
+    # It works on both .egg files and .egg directories, 
+    # and you can convert multiple eggs with a single command:
+    $ wheel convert blah-1.2.3-py2.7.egg foo-2.0b1-py3.5.egg
+
+
+使用whl文件安装应用
+===================
+
+Usage::
+
+    $ pip install someproject-1.5.0-py2-py3-none.whl
+
+
+
+常用命令
+========
+
+
+wheel convert
+-------------
+
+* Convert one or more eggs (.egg; made with bdist_egg) or Windows installers (.exe; made with bdist_wininst) into wheels.
+* Egg names must match the standard format::
+
+    <project>-<version>-pyX.Y for pure Python wheels
+    <project>-<version>-pyX.Y-<arch> for binary wheels
+
+
+
+::
+
+    $ wheel convert foobar-1.2.3-py2.7.egg
+    $ ls *.whl
+    foobar-1.2.3-py27-none.whl
+
+
+wheel unpack
+------------
+
+* Unpack the given wheel file.
+* This is the equivalent of unzip <wheel_file>, except that it also checks that the hashes and file sizes match with those in RECORD and exits with an error if it encounters a mismatch.
+
+
+
+::
+
+    $ wheel unpack someproject-1.5.0-py2-py3-none.whl
+    Unpacking to: ./someproject-1.5.0
+
+
+wheel pack
+----------
+
+* Repack a previously unpacked wheel file.
+* This command can be used to repack a wheel file after its contents have been modified. This is the equivalent of zip -r <wheel_file> <wheel_directory> except that it regenerates the RECORD file which contains hashes of all included files.
+
+::
+
+    $ wheel unpack someproject-1.5.0-py2-py3-none.whl
+    Unpacking to: ./someproject-1.5.0
+    $ touch someproject-1.5.0/somepackage/module.py
+    $ wheel pack --build-number 2 someproject-1.5.0
+    Repacking wheel as ./someproject-1.5.0-2-py2-py3-none.whl...OK
+
+
+wheel tags
+----------
+
+* Make a new wheel with given tags from and existing wheel.
+* Any tags left unspecified will remain the same. Multiple tags are separated by a “.” Starting with a “+” will append to the existing tags. Starting with a “-” will remove a tag. Be sure to use the equals syntax on the shell so that it does not get parsed as an extra option, such as --python-tag=-py2. The original file will remain unless --remove is given. The output filename(s) will be displayed on stdout for further processing.
+
+::
+
+    $ wheel tags --python-tag=py2.py3 --abi-tag=none cmake-3.20.2-cp39-cp39-win_amd64.whl
+    cmake-3.20.2-py2.py3-none-win_amd64.whl
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

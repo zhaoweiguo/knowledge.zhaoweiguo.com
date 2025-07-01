@@ -1,0 +1,106 @@
+LayerNorm(层归一化)
+###################
+
+* Layer Normalization (LayerNorm) 是一种归一化方法，主要用来改善训练过程中梯度的稳定性。它在Transformer 模型等现代神经网络架构中广泛使用。
+
+* 在深度学习中，特别是在神经网络的训练过程中，归一化技术是非常重要的。它有助于加速模型的收敛，并提高模型的泛化能力。
+* Layer Normalization（层归一化）是其中一种归一化技术，用于解决训练深层网络时的梯度消失或爆炸问题。
+* 根据归一化操作相对于激活函数的位置不同，可以将Layer Normalization分为Pre-LayerNorm（前归一化）和Post-LayerNorm（后归一化）两种形式。
+
+.. note:: 选择哪种形式取决于具体的任务需求和模型架构。随着研究的深入，Pre-LayerNorm因其在训练稳定性上的优势而越来越受到欢迎。
+
+
+
+1. Post-LayerNorm
+=================
+
+* 这是 Transformer 原始论文中的设计（Vaswani et al., 2017）。
+* LayerNorm 被应用在残差连接之后
+
+计算公式
+--------
+
+::
+
+    y=LayerNorm(x+SubLayer(x))
+
+    1. 计算子层的输出 SubLayer(𝑥)
+    2. 将 SubLayer(𝑥) 与输入 𝑥 相加（残差连接）
+    3. 对相加后的结果进行 LayerNorm
+
+    顺序可以表示为:
+    Linear -> Activation -> LayerNorm
+
+特点
+----
+
+* 归一化在残差连接之后进行，有助于保持残差连接的信息完整性。
+* 原始 Transformer 中的标准实现。
+
+* 【优点】优点在于其设计直观，容易实现。
+* 【缺点】训练早期梯度可能较不稳定，可能导致收敛速度慢或性能下降。
+
+
+
+
+
+2. Pre-LayerNorm
+================
+
+* 在 Pre-LayerNorm 中，LayerNorm 被应用在子层计算之前，即 LayerNorm 的输入是当前子层的输入。
+
+计算公式
+--------
+
+::
+
+    y=x+SubLayer(LayerNorm(x))
+
+    1. 对输入 𝑥 先进行 LayerNorm
+    2. 将归一化后的输出传入子层 SubLayerSubLayer
+    3. 将子层的输出与原始输入 𝑥 相加（残差连接）
+
+    顺序可以表示为:
+    LayerNorm -> Linear -> Activation
+
+特点
+----
+
+* 归一化在残差连接之前进行，使得每个子层的输入分布更加稳定。
+* 梯度在训练早期更稳定，有助于提升深层模型的收敛性。
+* 在一些改进的 Transformer 架构（如 GPT）中常被使用。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

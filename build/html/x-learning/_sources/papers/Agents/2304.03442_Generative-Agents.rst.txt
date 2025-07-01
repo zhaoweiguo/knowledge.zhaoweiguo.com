@@ -1,0 +1,130 @@
+2304.03442_Generative-Agents
+############################
+
+
+* https://arxiv.org/abs/2304.03442
+* 组织：斯坦福大学、Google Research、Google DeepMind
+* Believable proxies of human behavior can empower interactive applications ranging from immersive environments to rehearsal spaces for interpersonal communication to prototyping tools. In this paper, we introduce generative agents--computational software agents that simulate believable human behavior. Generative agents wake up, cook breakfast, and head to work; artists paint, while authors write; they form opinions, notice each other, and initiate conversations; they remember and reflect on days past as they plan the next day. To enable generative agents, we describe an architecture that extends a large language model to store a complete record of the agent's experiences using natural language, synthesize those memories over time into higher-level reflections, and retrieve them dynamically to plan behavior. We instantiate generative agents to populate an interactive sandbox environment inspired by The Sims, where end users can interact with a small town of twenty five agents using natural language. In an evaluation, these generative agents produce believable individual and emergent social behaviors: for example, starting with only a single user-specified notion that one agent wants to throw a Valentine's Day party, the agents autonomously spread invitations to the party over the next two days, make new acquaintances, ask each other out on dates to the party, and coordinate to show up for the party together at the right time. We demonstrate through ablation that the components of our agent architecture--observation, planning, and reflection--each contribute critically to the believability of agent behavior. By fusing large language models with computational, interactive agents, this work introduces architectural and interaction patterns for enabling believable simulations of human behavior.
+* 可信的人类行为代理可以为交互式应用程序提供支持，从沉浸式环境到人际交流的排练空间，再到原型制作工具。在本文中，我们引入了Generative Agents——模拟可信人类行为的计算软件代理。Generative Agents醒来，做早餐，然后去上班;艺术家绘画，作家写作;他们形成意见，互相注意，并开始对话;他们在计划第二天时会记住并反思过去的日子。为了实现生成代理，我们描述了一种架构，该架构扩展了大型语言模型，以使用自然语言存储代理体验的完整记录，将这些记忆随着时间的推移综合到更高级别的反射中，并动态检索它们以规划行为。我们实例化生成代理，以填充受《模拟人生》启发的交互式沙盒环境，最终用户可以使用自然语言与一个由25个代理组成的小镇进行交互。在评估中，这些生成代理产生可信的个人和紧急社会行为：例如，从一个用户指定的概念开始，即一个代理想要举办情人节派对，代理在接下来的两天里自动向派对发出邀请，结识新朋友，在派对上互相约约会， 并协调在正确的时间一起出现在派对上。我们通过消融证明，我们的代理架构的组成部分——观察、计划和反思——每个组件都对代理行为的可信度做出了至关重要的贡献。 通过将大型语言模型与计算、交互式代理融合在一起，这项工作引入了架构和交互模式，以实现对人类行为的可信模拟。
+
+
+
+* GitHub: https://github.com/joonspk-research/generative_agents
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/08/LIZG8r.png
+
+    斯坦福小镇：A screenshot of the game world populated by generative agents.
+
+
+* 本文有以下几点贡献
+    * Generative agents, believable simulacra of human behavior that are dynamically conditioned on agents’ changing experiences and environment.
+    * A novel architecture that makes it possible for generative agents to remember, retrieve, reflect, interact with other agents, and plan through dynamically evolving circumstances. The architecture leverages the powerful prompting capabilities of large language models and supplements those capabilities to support longer-term agent coherence, the ability to manage dynamically evolving memory, and recursively produce higher-level reflections.
+    * Two evaluations, a controlled evaluation and an end-to-end evaluation, that establish causal effects of the importance of components of the architecture, as well as identify breakdowns arising from, e.g., improper memory retrieval.
+    * 生成代理，对人类行为的可信模拟，这些行为动态地受制于代理不断变化的经验和环境。
+    * 一种新颖的架构，使生成代理能够记住、检索、反映、与其他代理交互，并在动态变化的环境中进行规划。该架构利用了大型语言模型的强大提示功能，并补充了这些功能，以支持长期的代理一致性、管理动态演变内存的能力，以及递归产生更高级别的反射。
+    * 两种评估，一种是受控评估，另一种是端到端评估，用于确定架构组件重要性的因果效应，并识别由不当内存检索等引起的故障。
+
+
+Generative Agent Architecture
+=============================
+
+Memory and Retrieval
+--------------------
+
+* The memory stream maintains a comprehensive record of the agent’s experience. 它是内存对象的列表，其中每个对象都包含自然语言描述、创建时间戳和最近的访问时间戳。
+* 内存流的最基本元素是观察值，它是代理直接感知的事件。常见的观察结果包括智能体本身执行的行为，或者智能体感知到其他智能体或非智能体对象正在执行的行为。
+* 例如，在咖啡店工作的伊莎贝拉·罗德里格斯（Isabella Rodriguez）可能会随着时间的推移积累以下观察结果::
+
+    1. 伊莎贝拉·罗德里格斯（Isabella Rodriguez）正在摆放糕点
+    2. 玛丽亚·洛佩兹（Maria Lopez）在喝咖啡时学习化学测试
+    3. 伊莎贝拉·罗德里格斯 和 玛丽亚·洛佩兹 正在谈论在 霍布斯咖啡馆 计划情人节派对
+    4. 冰箱是空的
+
+* Recency assigns a higher score to memory objects that were recently accessed, so that events from a moment ago or this morning are likely to remain in the agent’s attentional sphere. 新近度为最近访问的内存对象分配更高的分数，因此前一刻或今天早上的事件可能会保留在代理的注意力范围内。在我们的实现中，我们将新近度视为自上次检索内存以来沙盒游戏小时数上的指数衰减函数。我们的衰减因子是 
+* Importance distinguishes mundane from core memories by assigning a higher score to memory objects that the agent believes to be important. 重要性通过为代理认为重要的内存对象分配更高的分数来区分普通记忆和核心记忆。例如，一件平凡的事情，比如在一个人的房间里吃早餐，会产生低重要性分数，而与一个人的另一半分手会产生高分。重要性分数有许多可能的实现;我们发现，直接要求语言模型输出整数分数是有效的。
+
+* Relevance assigns a higher score to memory objects that are related to the current situation.相关性为与当前情况相关的内存对象分配更高的分数。
+
+* 检索功能以代理的当前情况作为输入，检索出一部分记忆流，以传递给语言模型。
+* 排序打分包括三个部分::
+
+    1. 近期性（Recency）
+        为最近访问的记忆对象分配更高的分数，因此刚刚发生的事件或今天早上的事件可能会保留在代理的注意力范围内。
+        将近期性视为一个指数衰减函数，衰减的对象是自上次检索记忆以来的沙盒游戏小时数。衰减因子是0.99。
+    2. 重要性（Importance）
+        通过为代理认为重要的记忆对象分配更高的分数，区分了平凡记忆和核心记忆。
+        例如，一个平凡的事件，如在房间里吃早餐，会产生一个低重要性分数，而与重要的他人分手则会产生一个高分。
+        重要性分数的实现方式有很多种；作者直接使用LLM打分，输出一个整数分数。
+    3. 相关性（Relevance）
+        为与当前情况相关的记忆对象分配更高的分数。
+        使用常见的向量检索引擎即可。
+
+
+
+
+
+Reflection
+----------
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/08/moYg5J.png
+
+    Reflection。我们引入了第二种类型的记忆，我们称之为反射。反射是由智能体产生的更高层次、更抽象的想法。因为它们是一种内存，所以在进行检索时，它们会与其他观察结果一起包含在内。反射是定期生成的;在我们的实现中，当代理感知的最新事件的重要性分数之和超过阈值（在我们的实现中为 150）时，我们会生成反射。在实践中，我们的代理人大约每天反映两到三次。
+
+* 反思的第一步是让代理确定要反思什么，通过确定代理最近的经历可以提出哪些问题。作者用代理记忆流中最近的100条记录
+* 第二步，将这些生成的问题作为检索的查询，收集每个问题的相关记忆（包括其他反思）。然后使用LLM从中提取洞见（insight），并引用生成洞见对应的特定记录。
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/08/ZO8uHi.png
+
+    ``Klaus Mueller`` 反思提示示例
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/08/R6Jot4.png
+
+    Figure 7: A reflection tree for ``Klaus Mueller``. The agent’s observations of the world, represented in the leaf nodes, are recursively synthesized to derive Klaus’s self-notion that he is highly dedicated to his research. 反思树：树的叶节点代表基础观察，非叶节点代表的思考越往树上越抽象和高级。图中包含了3种 Memory：Observation、Reflection、Plan。
+
+
+
+
+
+Planning and Reacting
+---------------------
+
+* Plans describe a future sequence of actions for the agent, and help keep the agent’s behavior consistent over time. 
+    * 1. Reacting and Updating Plans(由于时刻在观察，所以可能会影响并修改Plans)
+    * 2. Dialogue
+
+
+* 计划（Plan）是为了做更长时间的规划。
+* 像反思一样，计划也被储存在记忆流中（第三种记忆），并被包含在检索过程中。这使得代理能够在决定如何行动时，同时考虑观察、反思和计划。如果需要，代理可能在中途改变他们的计划（即响应，reacting）。
+* 为了创建这样的计划，方法是从上到下，递归地生成更多的细节。第一步是创建一个大致概述一天行程的计划。为了创建初始计划，使用代理的摘要描述（例如，名字，特征，和他们最近经历的总结）和他们前一天的总结来提示语言模型。
+* 下面是一个完整的示例提示，底部未完成，由LLM完成::
+
+    Name: Eddy Lin (age: 19) 
+    Innate traits: ... 
+    On Tuesday February 12, Eddy 
+    1) woke up and completed the morning routine at 7:00 am, 
+    [. . . ] 
+    6) got ready to sleep around 10 pm.
+
+    Today is Wednesday February 13. Here is Eddy’s plan today in broad strokes: 1)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

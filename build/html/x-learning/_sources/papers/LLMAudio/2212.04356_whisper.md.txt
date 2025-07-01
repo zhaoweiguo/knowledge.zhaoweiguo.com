@@ -1,0 +1,321 @@
+# 2212.04356_whisper: Robust Speech Recognition via Large-Scale Weak Supervision
+
+* [https://arxiv.org/abs/2212.04356](https://arxiv.org/abs/2212.04356)
+* 组织: OpenAI
+* Github: [https://github.com/openai/whisper](https://github.com/openai/whisper)
+
+
+## Abstract
+
+* 我们研究了一种通过预测大量网络音频转录文本来训练的语音处理系统。
+* 用68万小时的多语言、多任务数据训练后，模型在无需微调的情况下就能很好地适应各种标准测试，表现接近甚至超过传统有监督方法。
+* 与人类相比，这些模型的准确性和鲁棒性也非常接近。我们将公开模型和推理代码，供后续研究使用。
+
+
+
+## 1. Introduction
+
+* 近年来，无监督预训练技术（如Wav2Vec 2.0）极大推动了语音识别的发展，因为它们能利用海量无标注语音数据进行训练，效果优于传统小规模有监督数据训练的模型。但这些无监督模型缺乏高质量的预训练解码器，必须通过有监督微调才能真正完成语音识别任务，且微调过程复杂且容易过拟合特定数据集，导致模型泛化能力差。
+* 已有工作通过多数据集的有监督预训练提高了模型的鲁棒性，但可用的高质量有监督数据量有限，且规模远小于无监督训练的数据量。近期尝试用弱监督（自动标注但质量较低）方法扩展了数据规模，但仍远小于无监督数据量。
+* 本文提出了一个名为Whisper的新方法，使用规模达到68万小时的弱监督标注数据进行训练，涵盖多语言和多任务（包括翻译），大幅提升了模型的泛化能力，实现了“开箱即用”的效果，无需针对特定数据集微调。该方法证明简单扩大弱监督预训练规模，对语音识别效果提升极大。作者同时开源了相关模型和代码，推动后续研究。
+
+
+
+## 2. Approach
+
+* 2.1 Data Processing
+   * 直接使用网络上带字幕的音频数据，几乎不做复杂预处理，让模型自己学习从语音到文本的映射。
+   * 过滤掉质量差的字幕，尤其是机器生成的字幕，因为它们会影响模型性能。
+   * 用语言检测确保音频和字幕语言匹配，语言不符的例外处理为语音翻译任务。
+   * 把长音频分成30秒片段，训练时也用无语音片段来辅助语音活动检测。
+   * 训练初期用模型反馈筛选数据，剔除低质量样本。
+   * 去除训练集和测试集的重复样本避免数据泄漏。
+
+![](https://img.zhaoweiguo.com/uPic/2025/06/A5On9y.png)
+
+Figure 1:Overview of our approach. A sequence-to-sequence Transformer model is trained on many different speech processing tasks, including multilingual speech recognition, speech translation, spoken language identification, and voice activity detection. All of these tasks are jointly represented as a sequence of tokens to be predicted by the decoder, allowing for a single model to replace many different stages of a traditional speech processing pipeline. The multitask training format uses a set of special tokens that serve as task specifiers or classification targets, as further explained in Section 2.3.
+
+* 2.2 Model
+   * 采用标准的Encoder-Decoder Transformer结构，输入是16kHz采样的Mel频谱，做规范化和位置编码。
+   * 文字部分用GPT-2的BPE分词器（英文）或多语言调整后的分词器。
+
+* 2.3 Multitask Format
+   * 设计了一个统一格式，让模型能完成语音识别、语音翻译、语言识别、语音活动检测等多任务。
+   * 通过特定的控制token告诉模型当前任务类型（识别/翻译/无语音等）。
+   * 模型还能用上下文文本帮助判断模糊的语音内容。
+   * 支持预测时间戳以辅助字幕定位。
+
+* 2.4 Training Details
+   * 训练多种规模模型，使用FP16混合精度和动态loss缩放，AdamW优化器，学习率线性衰减。
+   * 训练次数较少（约2~3遍数据），依靠大规模多样数据避免过拟合，无特别数据增强（后期V2版本加了正则化方法）。
+   * 微调去除模型“猜人名”的偏差，避免识别错误的说话人名。
+
+
+![](https://img.zhaoweiguo.com/uPic/2025/06/3Lap5A.jpg)
+
+Table 1. Architecture details of the Whisper model family
+
+
+## 3. Experiments
+
+### 3.1 Zero-shot Evaluation
+
+* Whisper 的目标是构建一个无需针对特定数据集微调、就能在不同任务、语言和领域上表现良好的通用语音模型。
+* 为验证这一点，作者直接在多个已有语音数据集上测试 Whisper，而**不使用这些数据集的训练集**，从而评估其泛化能力。
+
+### 3.2 Evaluation Metrics
+
+* 语音识别常用的指标是 WER（词错误率），但它会因细微格式差异（如缩写、空格）而高估错误率。
+* 为解决这一问题，作者设计了文本标准化器，对输出做统一处理，**以更公平地评估模型表现**，并开源了这套标准化工具。
+
+### 3.3 English Speech Recognition
+
+* 虽然有模型在 转录(transcribing)数据集 LibriSpeech 上表现超过人类，但这些是“分布内测试”。
+* 人类往往能在陌生环境下保持表现（即“分布外泛化”），而这些模型却下降明显。
+* Whisper 虽然在 LibriSpeech 上表现一般，但**在其它数据集上明显胜过其他模型，显示出更强的鲁棒性**，甚至可与人类接近。
+
+### 3.4 Multilingual Speech Recognition
+
+* Whisper 在低资源语言数据集 MLS(Multilingual LibriSpeech) 上表现优于现有模型，但在 VoxPopuli 上表现较差，可能是因为训练数据覆盖度不同。
+* 此外，作者发现某些非印欧语系（如中文、韩语）表现较差，可能与语言距离或分词器不适配有关。
+
+
+### 3.5 Translation
+
+* 在语音翻译任务上，Whisper 在低资源语言上表现优越，创下 CoVoST2 上的新纪录，原因是其预训练数据量远超其他模型。
+* 但在高资源语言上表现就不突出。
+* 训练数据质量（如语种识别错误）也会影响表现。
+
+### 3.6 Language Identification
+
+* Whisper 在语言识别任务上表现不如有监督模型，部分原因是训练集中缺少一些测试语言，**最高准确率受限在约 80% 左右**。
+
+### 3.7 Robustness to Additive Noise
+
+* 作者测试了加白噪声和酒吧背景噪声情况下的表现。
+* 虽然有些模型在低噪声下表现更好，但在**高噪声下 Whisper 表现更稳健**，展示出对真实环境更强的适应性。
+
+### 3.8 Long-form Transcription
+
+* Whisper 原本只处理 30 秒音频，但作者设计了滑动窗口方法实现长音频转写。
+* 结果显示，通过**调节温度和束搜索策略**，Whisper 能可靠处理长时音频。
+
+### 3.9 Comparison with Human Performance
+
+* 最好的转录服务（机器辅助）WER比Whisper低1.15个百分点；
+* 纯人工的WER仅比Whisper低一点点；
+* 说明Whisper在英文语音识别方面的准确率已非常接近人类。
+
+
+## 4. Analysis and Ablations
+
+### 4.1 Model Scaling
+
+* 更大模型在大多数任务上效果更好，尤其是多语言语音识别和翻译任务。
+* 但英语识别任务提升趋缓，可能是因为已接近人类水平，进入“性能饱和”阶段。
+
+### 4.2 Dataset Scaling
+
+* 使用更多数据训练模型会提升效果，但收益逐渐减小。
+* 英语识别在 1.3 万小时后效果提升放缓，68 万小时相比 5.4 万小时仅微小提升。
+* 多语言识别和语音翻译也有类似的“收益递减”现象。
+* 表明未来需要更长时间训练或更大模型，或者可能已接近数据规模带来的上限。
+
+### 4.3 Multitask and Multilingual Transfer
+
+* 小模型训练资源有限时，多任务/多语言会产生干扰，效果不如只做英语训练。
+* 但大模型在多任务场景下反而表现更好，说明存在**正向迁移**：其他任务或语言的数据帮助提升主任务表现。
+
+### 4.4 Text Normalization
+
+* 作者自研的文本标准化器可能偏向 Whisper 的输出风格。
+* 与独立开发的标准器对比发现，大多数情况两者效果相近，但在一些特定数据集上作者的标准器更有优势。
+* 主要是因为对格式的处理方式不同（例如数字、缩写等）。
+
+
+### 4.5 Strategies for Reliable Long-form Transcription
+
+* Whisper 每次只处理 30 秒音频，因此长音频需要拼接多个段落的结果。
+* 如果某段预测错了，会影响后续段落。
+* 提出一系列 **启发式策略** 改善效果，包括：
+    * 用 beam search 减少重复；
+    * 根据概率自适应调整采样温度；
+    * 引入上下文信息；
+    * 改进无语音检测；
+    * 限制首个时间戳范围。
+* 实验表明这些策略能降低 WER，但不同数据集提升不一致。
+
+
+## 5. Related Work
+
+### Scaling Speech Recognition
+
+* 语音识别效果随着**模型更大、数据更多、算力更强**而显著提升。
+* 从早期几小时数据，到后来的数千、甚至百万小时的训练数据，表现持续提升。
+* 使用**弱监督或半监督学习**可以大幅扩展训练数据规模。
+
+### Multitask Learning
+
+* 多任务学习能让一个模型同时完成多个任务，提高泛化能力。
+* 在语音识别中，早期就有**多语言模型**的尝试。
+* 现代方法用**共享结构**（比如统一的编码器/解码器）来简化训练。
+* 有研究已将这种方法扩展到几十种语言和**十亿参数规模**的模型。
+
+### Robustness
+
+* 研究发现，模型在训练数据上表现很好，但在**新环境或不同数据分布下会出错**。
+* 多领域训练（多种任务、语言或数据类型）可以**增强模型的泛化能力和鲁棒性**。
+* 这种提升鲁棒性的趋势也在 NLP 和视觉领域被观察到。
+
+
+## 6. Limitations and Future Work
+
+1. 改进解码策略(Improved decoding strategies)
+    * 虽然模型变大后识别效果更好，但仍会出现一些非人类常见的错误
+    * 随着 Whisper 规模的扩大，我们观察到规模更大的模型在减少感知相关错误（例如混淆发音相似的单词）方面取得了稳步可靠的进展。
+    * 许多剩余的错误，尤其是在长篇转录中，似乎本质上更加顽固，
+        * 它们是 seq2seq 模型、语言模型和文本-音频对齐的故障模式的结合
+        * 如重复输出、漏掉开头或结尾、内容完全不符等。这些可能通过微调或强化学习来优化解码过程。
+
+2. 增加低资源语言的数据(Increase Training Data For Lower-Resource Languages)
+    * 模型在训练数据少的语言上表现差。
+    * 只要有更多这类语言的数据，即使整体数据量不大，也可能显著提升表现。
+
+3. 研究微调效果(Studying fine-tuning)
+    * 当前只研究了模型在零样本迁移上的表现（即没专门训练过某些任务的能力），未来可以尝试微调模型来进一步提高特定任务的效果。
+
+4. 研究语言模型对鲁棒性的影响(Studying the impact of Language Models on Robustness)
+    * 模型的鲁棒性可能来自它强大的语言生成能力。需要进一步研究解码器和编码器各自的作用。
+
+5. 加入辅助训练目标(Adding Auxiliary Training Objectives)
+    * 目前没有使用自监督学习等额外训练方式，未来可能通过引入这些方式进一步提高模型性能。
+
+
+
+## 7. Conclusions
+
+* 以往语音识别研究低估了“弱监督预训练”的价值。
+* Whisper 没有用常见的自监督或自训练方法，而是直接用一个大规模、多样化的有标注数据集训练模型，并专注于“零样本迁移”，就取得了非常强的鲁棒性表现。
+
+
+
+## A. Evaluation Datasets
+
+
+### A.1 Short-form English-only datasets
+
+* LibriSpeech: We used the test-clean and test-other splits from the [LibriSpeech ASR corpus](https://www.openslr.org/12).
+* TED-LIUM 3: We used the test split of [TED-LIUM Release 3](https://www.openslr.org/51/), using the segmented manual transcripts included in the release.
+* Common Voice 5.1: We downloaded the English subset of Common Voice Corpus 5.1 from [the official website](https://commonvoice.mozilla.org/en/datasets).
+* Artie bias corpus: We used the [Artie bias corpus](https://github.com/artie-inc/artie-bias-corpus). This is a subset of the Common Voice dataset.
+* CallHome and Switchboard: We used the two corpora from [LDC2002S09](https://catalog.ldc.upenn.edu/LDC2002S09) and [LDC2002T43](https://catalog.ldc.upenn.edu/LDC2002T43).
+* WSJ: We used [LDC93S6B](https://catalog.ldc.upenn.edu/LDC93S6B) and [LDC94S13B](https://catalog.ldc.upenn.edu/LDC94S13B) and followed the [s5 recipe](https://github.com/kaldi-asr/kaldi/tree/master/egs/wsj/s5) to preprocess the dataset.
+* CORAAL: We used the 231 interviews from CORAAL and used the preprocessing script from [the FairSpeech project](https://github.com/stanford-policylab/asr-disparities/blob/master/input/CORAAL_transcripts.csv).
+* CHiME-6: We downloaded the [CHiME-5 dataset](https://spandh.dcs.shef.ac.uk//chime_challenge/CHiME5/download.html) and followed the stage 0 of the [s5\_track1 recipe](https://github.com/kaldi-asr/kaldi/tree/master/egs/chime6/s5_track1) to create the CHiME-6 dataset which fixes synchronization. We then used the binaural recordings (\*\_P??.wav) and the corresponding transcripts.
+* AMI-IHM and AMI-SDM1: We preprocessed the [AMI Corpus](https://groups.inf.ed.ac.uk/ami/corpus/overview.shtml) by following the stage 0 ad 2 of the [s5b recipe](https://github.com/kaldi-asr/kaldi/tree/master/egs/ami/s5b).
+
+
+
+### A.2 Long-form English-only datasets
+
+* •
+  
+  TED-LIUM 3 (Hernandez etal., [2018]): We used the 11 full-length TED talks from the test split of [TED-LIUM Release 3](https://www.openslr.org/51/), slicing the source audio files between the beginning of the first labeled segment and the end of the last labeled segment of each talk, and we used the concatenated text as the label.
+* •
+  
+  Meanwhile: This dataset consists of 64 segments from The Late Show with Stephen Colbert. The YouTube video ID and the corresponding start and end timestamps are available as part of the code release. The labels are collected from the closed-caption data for each video and corrected with manual inspection.
+* •
+  
+  Rev16: We use a subset of 16 files from the 30 podcast episodes in [Rev.AI’s Podcast Transcription Benchmark](https://www.rev.ai/blog/podcast-transcription-benchmark-part-1/), after finding that there are multiple cases where a significant portion of the audio and the labels did not match, mostly on the parts introducing the sponsors. We selected 16 episodes that do not have this error, whose “file number”s are:
+  
+  
+  3 4 9 10 11 14 17 18 20 21 23 24 26 27 29 32
+* •
+  
+  Kincaid46: This dataset consists of 46 audio files and the corresponding transcripts compiled in the blog article [¡Which automatic transcription service is the most accurate - 2018¿](https://medium.com/descript/which-automatic-transcription-service-is-the-most-accurate-2018-2e859b23ed19) by Jason Kincaid. We used the 46 audio files and reference transcripts from the Airtable widget in the article. For the human transcription benchmark in the paper, we use a subset of 25 examples from this data, whose “Ref ID”s are:
+  
+  
+  2 4 5 8 9 10 12 13 14 16 19 21 23 25 26 28 29 30 33 35 36 37 42 43 45
+* •
+  
+  Earnings-21 (DelRio etal., [2021]) and Earnings-22: We used the files available in the [speech-datasets repository](https://github.com/revdotcom/speech-datasets), as of their 202206 version.
+* •
+  
+  CORAAL: We used the 231 full-length interviews and transcripts from (Kendall & Farrington, [2021]).
+
+
+### A.3 Multilingual datasets
+
+* •
+  
+  Multilingual LibriSpeech (Pratap etal., [2020b]): We used the test splits from each language in [the Multilingual LibriSpeech (MLS) corpus](https://www.openslr.org/94/).
+* •
+  
+  Fleurs (Conneau etal., [2022]): We collected audio files and transcripts using the implementation available as [HuggingFace datasets](https://huggingface.co/datasets/google/fleurs/blob/main/fleurs.py). To use as a translation dataset, we matched the numerical utterance IDs to find the corresponding transcript in English.
+* •
+  
+  VoxPopuli (Wang etal., [2021]): We used the get_asr_data.py script from [the official repository](https://github.com/facebookresearch/voxpopuli) to collect the ASR data in 16 languages, including English.
+* •
+  
+  Common Voice 9 (Ardila etal., [2019]): We downloaded the Common Voice Corpus 9 from [the official website](https://commonvoice.mozilla.org/en/datasets).
+* •
+  
+  CoVOST 2 (Wang etal., [2020b]): We collected the X into English data collected using the official repository.
+
+
+## B Compared Models
+
+* •facebook/wav2vec2-large-960h-lv60-self (Xu etal., [2021]
+* •facebook/wav2vec2-large-robust-ft-libri-960h (Hsu etal., [2021b]
+* •ebook/wav2vec2-base-100h (Baevski etal., [2020]
+* •facebook/wav2vec2-base-960h (Baevski etal., [2020]
+* •facebook/wav2vec2-large-960h (Baevski etal., [2020]
+* •facebook/hubert-large-ls960-ft (Hsu etal., [2021a]
+* •facebook/hubert-xlarge-ls960-ft (Hsu etal., [2021a]
+* •facebook/s2t-medium-librispeech-asr (Wang etal., [2020a]
+* •facebook/s2t-large-librispeech-asr (Wang etal., [2020a]
+* •microsoft/unispeech-sat-base-100h-libri-ft (Chen etal., [2022a]
+* •nvidia/stt\_en\_conformer\_ctc\_large (Kuchaiev etal., [2019]
+* •nvidia/stt\_en\_conformer\_transducer\_xlarge (Kuchaiev etal., [2019]
+* •speechbrain/asr-crdnn-rnnlm-librispeech (Ravanelli etal., [2021]
+* •speechbrain/asr-transformer-transformerlm-librispeech (Ravanelli etal., [2021]
+
+
+
+## C. Text Standardization
+
+* 为了更准确评估 Whisper 模型的识别效果，我们需要对模型输出的文本进行标准化处理，去除不影响实际内容的差异（比如标点、拼写、格式等），避免这些因素被误认为是识别错误。
+* **对英文的处理包括：**
+    1. 删除中括号和括号中的内容。
+    2. 删除语气词（如 hmm, uh）。
+    3. 去掉撇号前的空格。
+    4. 把缩写还原为完整形式（如 "don't" → "do not"）。
+    5. 去掉数字中的逗号、小数点后没数字的点号。
+    6. 去掉多余的符号和音标。
+    7. 把金额和数字用阿拉伯数字表示（如 "ten thousand dollars" → "\$10000"）。
+    8. 英式拼写转换成美式。
+    9. 合并多余空格。
+
+* **对非英文的处理较简单：**
+    1. 删除括号和标点中的内容。
+    2. 把所有标点、符号替换为空格。
+    3. 全部转为小写。
+    4. 合并多余空格。
+    5. 对中文、日文、泰文等不空格分词的语言，在每个字之间加空格，方便计算字符错误率。
+
+* 最后说明：这些标准化步骤不是为了得出“正确”的文本格式，而是为了更公平地评估识别错误。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

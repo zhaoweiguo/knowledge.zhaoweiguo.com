@@ -1,0 +1,81 @@
+ipynb相关
+#########
+
+
+
+
+在Jupyter Notebook中使用multiprocessing
+=======================================
+
+报::
+
+  Traceback (most recent call last):
+    File "<string>", line 1, in <module>
+    File "/Users/zhaoweiguo/9tool/miniconda3/envs/syscmd/lib/python3.8/multiprocessing/spawn.py", line 116, in spawn_main
+      exitcode = _main(fd, parent_sentinel)
+    File "/Users/zhaoweiguo/9tool/miniconda3/envs/syscmd/lib/python3.8/multiprocessing/spawn.py", line 126, in _main
+      self = reduction.pickle.load(from_parent)
+  AttributeError: Can't get attribute 'Test' on <module '__main__' (built-in)>
+
+
+- 这个问题出现的原因是在Jupyter Notebook中使用multiprocessing时，由于Jupyter的特殊性质，可能导致无法正确地序列化和传递类对象，从而导致子进程无法正确地访问到类的属性和方法。
+- 需要把相关代码放到专门的py文件中，即可解决
+
+
+在Jupyter import本地模板修改但运行不生效
+========================================
+
+
+* 如果修改了test_module.py文件的内容，但在Jupyter Notebook中运行时没有生效，可能是因为Jupyter Notebook会缓存已经导入的模块，以提高性能。这种情况下，你可以尝试一些方法来强制Jupyter重新加载模块，以确保修改的内容得到应用：
+
+
+【方法一】使用reload函数：Python提供了importlib.reload函数，可以用来重新加载已经导入的模块::
+
+  import importlib
+  import test_module
+  importlib.reload(test_module)
+
+【方法二】删除已导入的模块对象::
+
+    del test_module
+    import test_module
+
+
+【方法三】重启Kernel
+
+
+
+
+RuntimeError: asyncio.run() cannot be called from a running event loop
+======================================================================
+
+* 这个错误表明在已经运行的事件循环中调用了 asyncio.run() 函数，但 asyncio.run() 函数只能在没有正在运行的事件循环时调用。
+* 这通常发生在交互式环境（比如 Jupyter Notebook、IPython、Python 解释器等）中，因为这些环境可能已经创建了一个事件循环。
+* 在这种情况下，你可以考虑使用 ``asyncio.create_task()`` 函数来启动异步任务，而不是使用 ``asyncio.run()`` 函数。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

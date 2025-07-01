@@ -1,0 +1,169 @@
+# Android版部署
+
+* 在 Android 设备上部署 LLM（大型语言模型）并不是一件轻量级的工作
+
+
+## ✅ 一、明确需求
+
+### 1. **模型体积**
+
+* 小模型（几十MB以内）：如 TinyGPT、MiniLM、Phi-2 等，适合本地运行。
+* 中等模型（几百MB到2GB）：如 LLaMA 2 7B 经过量化的版本。
+* 大模型（大于4GB）：通常不适合直接在 Android 本地部署，推荐远程推理或云端中转。
+
+### 2. **设备性能**
+
+* RAM ≥ 4GB：可以运行 4-bit 量化模型。
+* NPU/GPU 支持（如高通 Snapdragon AI Engine）：可以用硬件加速推理。
+
+---
+
+## ✅ 二、本地部署方案
+
+### 方案 1：使用 [GGML / GGUF + llama.cpp + JNI](https://github.com/ggerganov/llama.cpp)
+
+适合离线、小模型部署。
+
+#### 步骤：
+
+1. **模型转换**
+   将原始模型（如 LLaMA2、Mistral）转换为 GGUF 格式，量化成 Q4、Q5 等低精度版本。
+
+   ```bash
+   python convert.py --format gguf ...
+   ```
+
+2. **使用 `llama.cpp` 编译 Android JNI 库**
+
+   ```bash
+   cd llama.cpp
+   mkdir build-android
+   cmake -B build-android -DCMAKE_TOOLCHAIN_FILE=path/to/android-ndk/build/cmake/android.toolchain.cmake ...
+   make
+   ```
+
+3. **集成进 Android App**
+
+   * 使用 JNI 接口加载模型。
+   * 编写 Kotlin/Java 调用 C++ 层的代码。
+   * 调用推理接口。
+
+#### 优点：
+
+* 完全离线。
+* 支持主流 GGUF 格式模型。
+
+#### 缺点：
+
+* 构建复杂。
+* 大模型推理速度较慢。
+
+---
+
+### 方案 2：使用 ONNX + NCNN + LLM.int8 / LLM.inference
+
+适合量化后的 Transformer 模型（如 GPT2、TinyGPT）。
+
+#### 步骤：
+
+1. 将模型转换为 ONNX 格式。
+2. 使用 [Tencent/ncnn](https://github.com/Tencent/ncnn) 工具链将 ONNX 转换为 ncnn 格式（`.param` 和 `.bin`）。
+3. 在 Android 中使用 JNI 或 ncnn Java API 调用。
+
+#### 优点：
+
+* ncnn 为轻量级、高性能的推理框架，适合 ARM。
+* 无需 root 权限。
+
+#### 缺点：
+
+* 支持的模型结构有限，通常需要裁剪模型。
+
+---
+
+### 方案 3：使用 MLC LLM (Machine Learning Compilation for LLM)
+
+👉 推荐尝试
+
+[MLC LLM](https://github.com/mlc-ai/mlc-llm) 是一个专门支持在 Android、iOS、macOS 上运行 GGUF 格式 LLM 的项目。
+
+#### 步骤：
+
+1. 安装并使用 [MLC CLI](https://mlc.ai/package/mlc_llm/) 下载/转换模型。
+
+   ```bash
+   mlc_llm convert --model mistral-7b
+   mlc_llm compile ...
+   ```
+
+2. 使用官方提供的 Android App 示例运行模型。
+
+   * MLC 已提供可编译的 Android 项目。
+   * 支持 Vulkan / Metal 加速。
+
+#### 优点：
+
+* 轻量，支持 Vulkan 加速。
+* 提供现成的 Android 项目模板。
+* 支持 Chat 模式、多轮对话。
+
+#### 缺点：
+
+* 编译环境配置稍复杂。
+* 模型支持范围还在扩展中。
+
+
+---
+
+## ✅ 工具汇总
+
+| 工具/项目       | 功能                      |
+| ----------- | ----------------------- |
+| llama.cpp   | 本地推理，C++ 实现，支持 GGUF     |
+| MLC LLM     | 多平台轻量推理方案，推荐            |
+| ncnn        | 腾讯轻量推理框架，适合 Transformer |
+| GGUF        | 通用模型格式（替代 GGML）         |
+| LlamaIndex  | Android 中构建 RAG 应用      |
+| Android NDK | 编译 C/C++ 推理库            |
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

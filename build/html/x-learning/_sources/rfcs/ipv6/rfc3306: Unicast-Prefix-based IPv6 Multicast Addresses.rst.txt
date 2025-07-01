@@ -1,0 +1,219 @@
+RFC3306: Unicast-Prefix-based IPv6 Multicast Addresses
+######################################################
+
+* August 2002
+
+
+* 该文档定义了一种基于单播前缀的 IPv6 多播地址格式，这种地址格式允许IPv6 路由器根据前缀来自动分配多播地址，而不需要进行人工配置。
+* 多播地址的前缀和接口标识分别由单播地址的前缀和接口标识组成。这种基于单播地址的格式可以提高多播路由器的效率，减少网络流量，同时也方便管理和配置。
+* 该标准文档为 IPv6 多播地址的自动配置提供了重要的基础。
+
+
+* 定义的 IPv6 多播地址格式由单播地址前缀和接口标识组成
+
+
+IPv6 多播地址中前缀长度的取值范围
+---------------------------------
+
+IPv6 多播地址中前缀长度
+
+前缀长度越小，可以生成的多播组数量就越多，但是每个多播组可用的主机数量就越少。例如，前缀长度为 3 时，可以生成 2^45 个多播组，每个多播组可以使用的主机数量为 2^59；而前缀长度为 7 时，可以生成 2^41 个多播组，每个多播组可以使用的主机数量为 2^63。
+
+
+
+
+IPv6 多播地址中前缀长度的取值范围是 32 位至 48 位，其中前缀长度为 32 位时是一种特殊的多播地址，用于表示所有节点的组播地址（All Nodes Address），前缀长度为 48 位时是一种预留地址，用于将未分配的多播地址保留给特殊用途。
+
+对于前缀长度在 33 位至 47 位之间的 IPv6 多播地址，RFC 3306 规定了不同前缀长度对应的多播地址数量，具体如下::
+
+    33 位前缀长度对应的多播地址数量为 8
+    34 位前缀长度对应的多播地址数量为 16
+    35 位前缀长度对应的多播地址数量为 32
+    36 位前缀长度对应的多播地址数量为 64
+    37 位前缀长度对应的多播地址数量为 128
+    38 位前缀长度对应的多播地址数量为 256
+    39 位前缀长度对应的多播地址数量为 512
+    40 位前缀长度对应的多播地址数量为 1024
+    41 位前缀长度对应的多播地址数量为 2048
+    42 位前缀长度对应的多播地址数量为 4096
+    43 位前缀长度对应的多播地址数量为 8192
+    44 位前缀长度对应的多播地址数量为 16384
+    45 位前缀长度对应的多播地址数量为 32768
+    46 位前缀长度对应的多播地址数量为 65536
+    47 位前缀长度对应的多播地址数量为 131072
+
+
+
+多播地址的分配规则
+------------------
+
+多播地址的格式::
+
+    FFx5:0:0:0:0:0:0:yyyy
+    其中 x 是前缀长度，取值范围为 3-7，对应的二进制位为全 1 的个数
+    yyyy 是 4 个十六进制数字，表示接口标识。
+
+
+多播地址的生成方法::
+
+    将单播地址的前 x 位保留不变，后面加上一个 5 位二进制数，再加上接口标识，即可生成一个对应的多播地址。
+
+
+多播地址的分配规则，其中包括以下几个方面::
+
+    1. 多播地址的分配应该遵循 IANA 分配政策，确保多播地址的唯一性。
+    2. 多播地址的分配应该考虑多播应用的需求，例如多播组的大小、频繁性等因素。
+    3. 多播地址的分配应该避免重叠，确保不同的多播组拥有不同的地址。
+
+
+IPv6多播地址的前缀有三种类型::
+
+    1. 全球范围多播地址前缀：全球范围多播地址前缀是0x2开头，全球范围多播地址的范围可以跨越多个网络或子网，只要支持IPv6的网络都可以收到全球范围多播地址的数据包。
+    2. 本地范围多播地址前缀：本地范围多播地址前缀是0x2F开头，本地范围多播地址只在一个网络或子网内有效，不会被路由到其他网络或子网。
+    3. 专用多播地址前缀：专用多播地址前缀是0x3F开头，用于特殊用途
+
+
+IPv6多播地址的格式为::
+
+    FF00::/8
+
+IPv6还定义了一些特定的多播地址用于特殊用途::
+
+    1. FF02::1 所有节点地址，用于向网络上的所有IPv6节点发送数据
+    2. FF02::2 所有路由器地址，用于向网络上的所有IPv6路由器发送数据
+    3. FF02::5 OSPFv3路由器，用于发送OSPFv3路由器的组播数据包
+    4. FF02::6 OSPFv3设计者，用于发送OSPFv3设计者的组播数据包
+    5. FF02::9 表示所有DHCPv6代理服务器，用于发送DHCPv6代理服务器的组播数据包
+    6. FF02::D PIMv6路由器，用于发送PIMv6路由器的组播数据包
+
+    前8个二进制位是固定的，表示多播地址的前缀
+    IPv6多播地址的前缀固定为"1111 1111"，即"FF"，它们用于标识IPv6多播地址
+
+本地范围多播地址的示例::
+
+    1. FF02::1:2 所有本地节点地址，用于向本地网络上的所有IPv6节点发送数据
+    2. FF02::2:2 所有本地路由器地址，用于向本地网络上的所有IPv6路由器发送数据
+    3. FF02::9:2 DHCPv6服务器地址，用于向本地网络上的DHCPv6服务器发送数据
+    4. FF02::C:2 PIMv6路由器地址，用于向本地网络上的PIMv6路由器发送数据
+
+* 本地范围多播地址的地址前缀是0xFF0x，其中x表示8个二进制位的任意值，而地址前缀的第13位到第16位是固定的0x2
+
+
+IPv6多播地址的前缀有三种类型::
+
+    1. 全球范围多播地址前缀：全球范围多播地址前缀是0x2开头，全球范围多播地址的范围可以跨越多个网络或子网，只要支持IPv6的网络都可以收到全球范围多播地址的数据包
+    2. 本地范围多播地址前缀：本地范围多播地址前缀是0x2F开头，本地范围多播地址只在一个网络或子网内有效，不会被路由到其他网络或子网
+    3. 专用多播地址前缀：专用多播地址前缀是0x3F开头，用于特殊用途
+
+
+标志位用于指定多播组的范围、生存时间以及其他属性。标志位的长度为4位，其中第一位表示多播组的范围，第二位表示多播组的生存时间，第三位是保留位，第四位用于指示多播组的有效性。
+
+
+
+* 全球范围多播地址：全球范围多播地址用于跨越多个网络或子网，向全球范围内的多个IPv6节点发送数据。其地址前缀为0xFF0x，其中x表示8个二进制位的任意值。全球范围多播地址中，多播地址前缀为0xFF02，后面的位被用于指定特定的多播组。
+* 本地范围多播地址：本地范围多播地址只在一个网络或子网内有效，用于向该网络或子网上的多个IPv6节点发送数据。其地址前缀为0xFF02，固定的第13位到第16位为0x2。本地范围多播地址中，多播地址前缀为0xFF02，后面的位被用于指定特定的多播组。
+* 唯一本地范围多播地址：唯一本地范围多播地址只在单个设备上有效，用于向同一设备内的多个进程发送数据。其地址前缀为0xFF01，固定的第12位到第16位为0x5。唯一本地范围多播地址中，多播地址前缀为0xFF01，后面的位被用于指定特定的多播组。
+
+
+
+Abstract
+========
+
+* This specification defines an extension to the multicast addressing architecture of the IP Version 6 protocol.  
+* The extension presented in this document allows for unicast-prefix-based allocation of multicast addresses.  
+* By delegating multicast addresses at the same time as unicast prefixes, network operators will be able to identify their multicast addresses without needing to run an inter-domain allocation protocol.
+
+
+1. Introduction
+===============
+
+This proposal introduces encoded information in the multicast address to allow for dynamic allocation of IPv6 multicast addresses and IPv6 source-specific multicast addresses.
+
+
+2. Motivation
+=============
+
+* The current IPv4 multicast address allocation architecture [RFC 2908] is based on a multi-layered, multi-protocol system.  The goal of this proposal is to reduce the number of protocols that need to be deployed in order to get dynamic multicast address allocation.
+* The use of unicast prefix-based multicast address allocation will, at a minimum, remove the need to run the Multicast Address Allocation Protocol (AAP) [AAP WORK] and the Multicast Address-Set Claim (MASC) Protocol [RFC 2909].
+
+4. Multicast Address Format
+===========================
+
+``RFC4291`` defines the following operational format of IPv6 multicast addresses::
+
+      |    8   |  4 |  4 |                     112                     |
+      +--------+----+----+---------------------------------------------+
+      |11111111|flgs|scop|                  group ID                   |
+      +--------+----+----+---------------------------------------------+
+
+      flgs:     |0|R|P|T|
+
+
+This document introduces a new format that incorporates unicast prefix information in the multicast address::
+
+    |   8    |  4 |  4 |   8    |    8   |       64       |    32    |
+    +--------+----+----+--------+--------+----------------+----------+
+    |11111111|flgs|scop|reserved|  plen  | network prefix | group ID |
+    +--------+----+----+--------+--------+----------------+----------+
+
+    plen: => prefix length
+        indicates the actual number of bits in the network prefix field that identify the subnet when P = 1.
+    network prefix:
+        identifies the network prefix of the unicast subnet owning the multicast address. 
+        If P = 1, this field contains the unicast network prefix assigned to the domain owning, or allocating, the multicast address.  
+        All non-significant bits of the network prefix field SHOULD be zero.
+        注:
+            因为单播的Interface Identifier固定是64位，所以unicast prefix固定为64位
+            所以这儿的network prefix也固定为64位
+
+6. SSM(Source-Specific Multicast Addresses)
+===========================================
+
+The unicast prefix-based IPv6 multicast address format supports Source-specific multicast addresses::
+
+    - Set P = 1.
+    - Set plen = 0.
+    - Set network prefix = 0.
+
+SSM(Source-Specific Multicast) range of::
+
+    FF3x::/32 (where 'x' is any valid scope value)
+
+    The source address field in the IPv6 header identifies the owner of the multicast address.
+
+SSM定义::
+
+    1. 用途: 当使用组播传输数据时，有时需要限制数据流向的范围，以确保数据只传输到特定的发送源和接收者之间
+    2. SSM是一种多播传输模型，允许发送源和接收者使用IP地址对数据流进行精确控制
+    3. 在SSM模型中，发送者和接收者都必须使用源特定的多播地址（源地址和多播组地址的组合）
+    4. 这种多播地址由IPv6地址中的源地址和多播组地址构成，因此在SSM中不使用Rendezvous Point（RP）协议
+    5. 使用SSM，接收者只能订阅已知的源地址和多播组地址组合，而不是订阅广泛的多播组地址
+    6. 这提供了更多的灵活性和安全性，可以减少不必要的流量和降低网络安全风险
+
+
+.. note:: 有关SSM的内容，具体参见 RFC3569
+
+
+
+7. Examples
+===========
+
+::
+
+    unicast prefix: 3FFE:FFFF:1::/48
+    =>
+    unicast prefix-based multicast prefix: FF3x:0030:3FFE:FFFF:0001::/96
+
+
+
+
+
+参考
+====
+
+* https://www.rfc-editor.org/rfc/rfc3306.html
+  
+
+
+
+

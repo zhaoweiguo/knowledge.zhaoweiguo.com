@@ -1,0 +1,65 @@
+常用
+####
+
+安装
+====
+
+安装::
+
+    curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
+    distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+    curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+    sudo apt-get update && sudo apt-get install -y nvidia-container-runtime
+
+    sudo apt-get install -y nvidia-docker2
+
+
+验证::
+
+    nvidia-container-runtime
+
+修改 docker 配置::
+
+    cat /etc/docker/daemon.json
+    {
+      "default-runtime": "nvidia",
+      "runtimes": {
+        "nvidia": {
+          "path": "/usr/bin/nvidia-container-runtime",
+          "runtimeArgs": []
+        }
+      }
+    }
+
+
+重启::
+
+    sudo systemctl restart docker
+
+使用
+====
+
+
+和普通不同的点是增加了 ``--gpus=all``::
+
+    docker run -it -gpus all <image> nvidia-smi
+
+
+
+
+
+Error response from daemon: could not select device driver "" with capabilities: [[gpu]]::
+
+    没有配置好 docker 运行环境导致的，执行安装容器运行环境
+    $ apt-get install nvidia-container-runtime
+    安装后重新启动 docker
+
+
+
+
+
+
+
+
+
+

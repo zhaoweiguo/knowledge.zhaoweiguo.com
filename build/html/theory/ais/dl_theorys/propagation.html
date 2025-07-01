@@ -1,0 +1,1174 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="zh-CN" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="zh-CN" > <!--<![endif]-->
+<head>
+
+
+<!-- start added 2025-04-14   增加对markdown中公式的支持 -->
+<script>
+window.MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+    },
+    options: {
+        ignoreHtmlClass: "tex2jax_ignore|mathjax_ignore",
+        processHtmlClass: "tex2jax_process|mathjax_process|math|output_area"
+    }
+};
+</script>
+<script defer="defer" src="https://fastly.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<!-- end added 2025-04-14   增加对markdown中公式的支持 -->
+
+
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>前向/反向传播 &mdash; 新溪-gordon V2025.05 文档</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+    <link rel="index" title="索引" href="../../genindex.html" />
+    <link rel="search" title="搜索" href="../../search.html" />
+    <link rel="next" title="Linear Layer" href="LinearLayer.html" />
+    <link rel="prev" title="LSTM: 长短时记忆(Long Short Term Memory, LSTM)" href="../dls/LSTM-%E9%95%BF%E7%9F%AD%E6%97%B6%E8%AE%B0%E5%BF%86.html" /> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+  <script src="../../_static/js/jquery.min.js"></script>
+
+
+<!-- 评论插件 gittalk start -->
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script> -->
+<!-- 评论插件 gittalk end -->
+
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> 新溪-gordon
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                V2025.05
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">理论</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../normal.html">常用</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/normal.html">常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/iceberg_theory.html">冰山理论</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/Six_Degrees.html">Six Degrees of Kevin Bacon</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/Forgetting_Curve.html">Forgetting Curve-遗忘曲线</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../%E5%88%9B%E6%96%B0%E6%80%9D%E7%BB%B4.html">创新思维</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../inovative_thinkings/TRIZ.html">TRIZ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../inovative_thinkings/design_thinking.html">设计思维</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../inovative_thinkings/%E5%A4%B4%E8%84%91%E9%A3%8E%E6%9A%B4.html">头脑风暴</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../ai.html">关键定义</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../Parallelism/normal.html">通用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../Parallelism/PipelineParallelism.html">Pipeline Parallelism</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../Parallelism/TensorParallesim.html">Tensor Parallesim</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_activations/activation_Sigmoid.html">激活函数-Sigmoid</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_activations/activation_RELU.html">激活函数-ReLU</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_activations/activation_Leaky-ReLU.html">激活函数-Leaky ReLU</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_activations/activation_Tanh.html">激活函数-Tanh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_activations/activation_GELU.html">激活函数-GELU</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_activations/normalization_L1.html">归一化-L1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_activations/normalization_L2.html">归一化-L2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_activations/probabilistic_Softmax.html">概率分布-Softmax</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_activations/probabilistic_logSoftmax.html">概率分布-logsoftmax</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_activations/probabilistic_Sparsemax.html">概率分布-Sparsemax</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_loss/classify_cross_entropy.html">损失函数-分类-cross-entropy(交叉熵)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_loss/classify_NLL.html">损失函数-分类-负对数似然损失NLL Loss</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_loss/classify_log.html">损失函数-分类-对数损失(Log Loss)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_loss/classify_kl.html">损失函数-分类-KL 散度(KL Loss)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_loss/regression_MSE.html">损失函数-回归-均方误差(MSE)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_loss/regression_MAE.html">损失函数-回归-平均绝对误差(MAE)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_loss/regression_Huber.html">损失函数-回归-Huber 损失</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_loss/regression_log_cosh.html">损失函数-回归-对数余弦损失(Log-Cosh Loss)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_loss/%E6%9D%83%E9%87%8D%E8%A1%B0%E5%87%8F-L2%E6%AD%A3%E5%88%99%E5%8C%96.html">权重衰减(L2正则化)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_optims/GD.html">GD(梯度下降)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_optims/SGD.html">SGD随机梯度下降</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_optims/RMSprop.html">RMSprop</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_optims/Adam.html">Adam</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_optims/AdamW.html">AdamW</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_optims/Momentum.html">Momentum</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ners/HMM-%E9%9A%90%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E6%A8%A1%E5%9E%8B.html">HMM-隐马尔可夫模型</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ners/WWM-%E5%85%A8%E8%AF%8DMask.html">WWM-Whole Word Masking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ners/CRF-%E6%9D%A1%E4%BB%B6%E9%9A%8F%E6%9C%BA%E5%9C%BA.html">CRF-条件随机场</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dls/ANN.html">ANN(NN)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dls/DNN-%E6%B7%B1%E5%BA%A6%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C.html">深度神经网络(Deep Neural Network, DNN)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dls/CNN-%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C.html">卷积神经网络(Convolutional Neural Network, CNN)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dls/RNN-%E5%BE%AA%E7%8E%AF%E7%A5%9E%E7%BB%8F%E7%BD%91.html">RNN: 循环神经网(Recurrent Neural Network, RNN)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dls/LSTM-%E9%95%BF%E7%9F%AD%E6%97%B6%E8%AE%B0%E5%BF%86.html">LSTM: 长短时记忆(Long Short Term Memory, LSTM)</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">前向/反向传播</a></li>
+<li class="toctree-l2"><a class="reference internal" href="LinearLayer.html">Linear Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="FFN.html">Feedforward Network-前馈网络</a></li>
+<li class="toctree-l2"><a class="reference internal" href="LayerNorm.html">LayerNorm(层归一化)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="WeightTying.html">Weight Tying</a></li>
+<li class="toctree-l2"><a class="reference internal" href="GreedyDecoding.html">Greedy Decoding</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ImageGrounding.html">Image Grounding</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Perplexity.html">Perplexity(PPL)困惑度</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../3Ds/ManhattanWorld%E6%9B%BC%E5%93%88%E9%A1%BF%E4%B8%96%E7%95%8C.html">Manhattan World(曼哈顿世界)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../3Ds/HoughTransform%E9%9C%8D%E5%A4%AB%E5%8F%98%E6%8D%A2.html">Hough Transform（霍夫变换）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../3Ds/PolarCoordinateSystem%E6%9E%81%E5%9D%90%E6%A0%87%E8%A1%A8%E7%A4%BA%E6%B3%95.html">极坐标表示法(Polar Coordinate System)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../3Ds/GaussianSphere%E9%AB%98%E6%96%AF%E7%90%83.html">Gaussian Sphere（高斯球）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../3Ds/edge_direction%E8%BE%B9%E7%BC%98%E6%96%B9%E5%90%91.html">边缘方向 Edge Direction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../3Ds/NormalVector%E6%B3%95%E5%90%91%E9%87%8F.html">NormalVector法向量</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../others/%E5%88%A4%E5%88%AB%E5%BC%8F%E6%A8%A1%E5%9E%8Bvs%E7%94%9F%E6%88%90%E5%BC%8F%E6%A8%A1%E5%9E%8B.html">判别式模型vs生成式模型</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../others/AllReduce.html">AllReduce</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../others/Embedding%E6%A8%A1%E5%9E%8B.html">Embedding 模型</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../others/BPE.html">BPE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../others/LLM.html">LLM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../others/KL%E6%95%A3%E5%BA%A6.html">Kullback-Leibler 散度</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../others/deeplearning.html">深度学习相关</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../others/%E7%9F%A2%E9%87%8F%E5%8C%96%E8%AE%A1%E7%AE%97.html">矢量化计算(Vectorize calculations)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../others/other.html">其他</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../math.html">数学方法</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E5%9F%BA%E6%9C%AC-%E6%96%B9%E5%B7%AE_%E6%A0%87%E5%87%86%E5%B7%AE.html">方差/标准差</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E5%9F%BA%E6%9C%AC-%E5%AF%B9%E6%95%B0.html">基本-对数(logarithmic)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E5%9F%BA%E6%9C%AC-%E5%AF%BC%E6%95%B0.html">基本-导数</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E5%9F%BA%E6%9C%AC-%E7%9F%A9%E9%98%B5%E4%B9%98%E6%B3%95.html">基本-矩阵乘法</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E5%88%86%E5%B8%83-%E5%9D%87%E5%8C%80%E5%88%86%E5%B8%83.html">分布-均匀分布(Uniform Distribution)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E5%88%86%E5%B8%83-%E6%AD%A3%E6%80%81%E5%88%86%E5%B8%83.html">分布-正态分布(Normal Distribution)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E5%88%86%E5%B8%83-%E9%AB%98%E6%96%AF%E5%88%86%E5%B8%83.html">分布-高斯分布(Gaussian Distribution)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E5%88%86%E5%B8%83-%E4%BC%AF%E5%8A%AA%E5%88%A9%E5%88%86%E5%B8%83.html">分布-伯努利分布(Bernoulli Distribution)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E5%88%86%E5%B8%83-%E5%87%A0%E4%BD%95%E5%88%86%E5%B8%83.html">分布-几何分布(Geometric Distribution)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E5%88%86%E5%B8%83-%E6%B3%8A%E6%9D%BE%E5%88%86%E5%B8%83.html">分布-泊松分布(Poisson Distribution)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E5%88%86%E5%B8%83-%E4%BA%8C%E9%A1%B9%E5%88%86%E5%B8%83.html">分布-二项分布</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E6%A6%82%E7%8E%87%E5%AF%86%E5%BA%A6%E5%87%BD%E6%95%B0.html">概率密度函数(Probability Density Function, PDF)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E6%A6%82%E7%8E%87%E8%B4%A8%E9%87%8F%E5%87%BD%E6%95%B0.html">概率质量函数(Probability Mass Function, PMF)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E8%8C%83%E6%95%B0-%E6%9B%BC%E5%93%88%E9%A1%BF%E8%B7%9D%E7%A6%BB.html">L1 范数(曼哈顿距离)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E8%8C%83%E6%95%B0-%E6%AC%A7%E5%87%A0%E9%87%8C%E5%BE%97%E8%8C%83%E6%95%B0.html">L2 范数(欧几里得范数)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E8%8C%83%E6%95%B0-%E6%9C%80%E5%A4%A7%E8%8C%83%E6%95%B0.html">L∞ 范数(最大范数)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E8%8C%83%E6%95%B0-Frobenius%E8%8C%83%E6%95%B0.html">范数-Frobenius范数</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E7%BB%9F%E8%AE%A1-%E6%9C%80%E5%A4%A7%E4%BC%BC%E7%84%B6%E5%8E%9F%E7%90%86_MLP.html">统计-最大似然原理(Maximum Likelihood Principle)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E7%BB%9F%E8%AE%A1-%E6%9C%80%E5%A4%A7%E4%BC%BC%E7%84%B6%E4%BC%B0%E8%AE%A1_MLE.html">MLE-最大似然估计</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E7%BB%9F%E8%AE%A1-%E4%BC%BC%E7%84%B6%E5%87%BD%E6%95%B0.html">统计-似然函数(Likelihood)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E7%BB%9F%E8%AE%A1-%E8%BE%9B%E6%99%AE%E6%A3%AE%E6%B3%95%E5%88%99.html">统计-辛普森法则(Simpson’s Paradox)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E7%BB%9F%E8%AE%A1-%E4%B8%AD%E5%BF%83%E6%9E%81%E9%99%90%E5%AE%9A%E7%90%86_CLT.html">统计-中心极限定理(Central Limit Theorem, CLT)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E4%BA%8C%E5%85%AB%E5%AE%9A%E5%BE%8B.html">二八定律</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E5%90%88%E7%90%86%E8%BF%90%E7%94%A8%E6%97%B6%E9%97%B4%E5%BA%8F%E5%88%97.html">合理运用时间序列</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E5%A4%9A%E5%9B%A0%E7%B4%A0%E5%88%86%E6%9E%90%E9%97%AE%E9%A2%98.html">多因素分析问题</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E8%BF%B9%E5%87%BD%E6%95%B0.html">迹函数(trace function)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E7%89%B9%E5%BE%81%E5%80%BC.html">特征值(Eigenvalue)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E8%A1%8C%E5%88%97%E5%BC%8F.html">行列式(determinant)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E8%BD%AC%E7%BD%AE%E7%9F%A9%E9%98%B5.html">矩阵-转置矩阵</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E8%A7%A3%E6%9E%90%E8%A7%A3.html">解析解(Analytic Solution)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E5%87%BD%E6%95%B0-%E4%BB%BF%E5%B0%84%E5%87%BD%E6%95%B0.html">函数-仿射函数(affine functions)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E5%87%BD%E6%95%B0-%E7%BA%BF%E6%80%A7%E5%87%BD%E6%95%B0.html">函数-线性函数(Linear Function)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../analysis.html">分析方法</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../analysis/%E8%BE%A9%E8%AF%81%E6%B3%95.html">辩证法</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../analysis/%E5%BD%92%E7%BA%B3%E6%B3%95.html">归纳法</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../analysis/%E6%BC%94%E7%BB%8E%E6%B3%95.html">演绎法</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../secure.html">安全</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../secures/KMS.html">KMS-密钥管理服务(Key Management Service)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../secures/%E5%9F%BA%E7%BA%BF%E7%AE%A1%E7%90%86.html">基线管理</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../secures/%E8%BF%9C%E7%A8%8B%E8%AF%81%E6%98%8E.html">远程证明</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../theorem.html">定理-原理</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../theorems/law.html">Law定理/定律</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/laws/Murphys_Law.html">墨菲定律(Murphy’s Law)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/laws/Parkinsons_Law.html">帕金森定律(Parkinson’s Law)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/laws/Peter_Principle.html">彼得原理(peterPrinciple)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/laws/Conways_Law.html">康威定律(Conway’s Law)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/laws/Dunbars_Number.html">Dunbar Number</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/laws/Benfords_Law.html">Benford’s law</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/laws/Zipfs_Law.html">Zipf’s law</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/laws/Clarkes_3Laws.html">Clarke’s three laws</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/laws/Occams_Razor.html">奥卡姆剃刀原则</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/laws/Law_of_Thermodynamics2.html">second law of thermodynamics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/laws/Law_of_Diminishing_Marginal_Utility.html">The Law Of Diminishing Marginal Utility</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/laws/X-Y_PROBLEM.html">X-Y PROBLEM</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/laws/Amdahls_Law.html">Amdahl’s Law</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/laws/Scaling_Law.html">scaling law</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/laws/Scaling_Law.html#id2">一种本质性的思维方式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/laws/Scaling_Law.html#id3">各领域的应用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/laws/Power_Law.html">Power Law(幂律)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/laws/%E5%A4%A7%E6%95%B0%E5%AE%9A%E5%BE%8B.html">大数定律(law of large numbers)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../theorems/question.html">问问题的技巧</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/questions/%E6%B5%B7%E5%B0%94%E8%BF%88%E8%80%B6%E7%B3%BB%E5%88%97%E9%97%AE%E9%A2%98.html">海尔迈耶系列问题</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../theorems/rule.html">Rule原则/规则</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/rules/ruleofthree.html">三次法则</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/rules/Peak-End%20Rule.html">峰终定律-Peak-End Rule</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/rules/MECE.html">MECE</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/rules/SMART.html">SMART 原则</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../theorems/model.html">模型</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/models/%E6%B3%A2%E5%A3%AB%E9%A1%BF%E7%9F%A9%E9%98%B5%E6%A8%A1%E5%9E%8B.html">波士顿矩阵模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/models/%E8%89%BE%E6%A3%AE%E8%B1%AA%E5%A8%81%E5%B0%94%E7%9F%A9%E9%98%B5.html">艾森豪威尔矩阵</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/models/Wardley%20Map.html">Wardley Map</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/models/ARCI%E6%A8%A1%E5%9E%8B.html">ARCI模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/models/%E8%BE%9B%E6%99%AE%E6%A3%AE%E6%82%96%E8%AE%BA.html">辛普森悖论</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/models/WBS.html">工作分解结构Work Breakdown Structure</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../learning.html">学习相关</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../learnings/study.html">如何学习</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/studys/fast-learn-new-field.html">如何快速学习</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/studys/%E4%BB%A5%E6%95%99%E4%B8%BA%E5%AD%A6.html">以教为学</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/studys/ZTD%E5%AD%A6%E4%B9%A0%E6%B3%95.html">ZTD学习套路</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/studys/%E5%A6%82%E4%BD%95%E6%88%90%E4%B8%BA%E5%A4%A7%E7%89%9B.html">如何成为大师/大牛</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/studys/%E9%AB%98%E6%95%88%E5%AD%A6%E4%B9%A0.html">高效学习</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/studys/%E5%AD%A6%E4%B9%A0%E6%96%B9%E6%B3%95%E8%AE%BA%E5%AF%BC%E5%9B%BE.html">学习方法论导图</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/studys/%E5%85%AD%E6%AD%A5%E5%AD%A6%E4%B9%A0%E6%B3%95.html">六步学习法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/studys/%E8%B4%B9%E6%9B%BC%E5%AD%A6%E4%B9%A0%E6%B3%95.html">费曼学习法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/studys/%E5%A4%96%E8%AF%AD%E5%AD%A6%E4%B9%A0%E6%8A%80%E5%B7%A7.html">外语学习技巧</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/studys/%E7%9F%A5%E8%AF%86%E5%9B%BE%E8%B0%B1.html">知识图谱</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/studys/%E5%A6%82%E4%BD%95%E8%AE%B0%E7%AC%94%E8%AE%B0.html">如何记笔记</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/studys/tmp.html">临时</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../learnings/source_code.html">源码学习</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/source_codes/learn-method.html">如何高效学习</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/source_codes/why-read-code.html">为何阅读源码</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/source_codes/how-to-read-code.html">如何阅读源码</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/source_codes/how-to-read-code2.html">如何阅读源码2</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/source_codes/how-to-read-code3.html">如何阅读源码3</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/source_codes/efficient-read-code.html">如何高效阅读源码</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../learnings/lifelong-learning.html">终身学习方法论</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/lifelong-learnings/learning1.html">终身学习方法论1</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/lifelong-learnings/%E6%8E%A8%E6%BC%94-%E5%81%9A-%E5%A4%8D%E7%9B%98.html">推演-做-复盘</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/lifelong-learnings/%E5%A4%8D%E7%9B%98.html">复盘</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/lifelong-learnings/%E4%BA%BA%E7%94%9F%E7%9A%84%E4%B8%89%E4%B8%AA%E9%98%B6%E6%AE%B5.html">人生的三个阶段</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/lifelong-learnings/mental-model.html">思维模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/lifelong-learnings/question.html">关键问题</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../learnings/read.html">如何阅读</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/reads/%E5%A6%82%E4%BD%95%E9%98%85%E8%AF%BB.html">如何阅读</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/reads/%E5%A6%82%E4%BD%95%E8%AF%BB%E4%B8%80%E6%9C%AC%E9%9D%9E%E8%99%9A%E6%9E%84%E5%9B%BE%E4%B9%A6.html">如何读一本非虚构图书</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/reads/%E5%BF%AB%E9%80%9F%E9%98%85%E8%AF%BB.html">快速阅读</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../learnings/write.html">如何写作</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/writes/how-to-write.html">如何写作</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/writes/%E5%86%99%E4%BD%9C%E5%A6%82%E7%BC%96%E7%A0%81.html">写作如编码</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/writes/%E9%87%91%E5%AD%97%E5%A1%94%E5%8E%9F%E7%90%86%E8%AE%B2%E5%86%99%E4%BD%9C.html">金字塔原理讲写作</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/writes/%E5%A6%82%E4%BD%95%E6%94%B6%E9%9B%86%E7%B4%A0%E6%9D%90.html">如何收集素材</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/writes/%E7%A8%8B%E5%BA%8F%E5%91%98%E6%80%8E%E6%A0%B7%E5%86%99%E5%A5%BD%E6%96%87%E7%AB%A0.html">程序员怎样写好文章</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../learnings/speech.html">如何演讲</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/speechs/%E8%A1%A8%E8%BE%BE%E5%A5%97%E8%B7%AF.html">表达套路</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/speechs/%E5%A6%82%E4%BD%95%E6%BC%94%E8%AE%B2.html">如何演讲</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../learnings/opensource.html">开源</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../economy.html">经济</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../psychics.html">心理学</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../startup.html">创业</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other.html">其他</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">新溪-gordon</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../ai.html">关键定义</a> &raquo;</li>
+        
+      <li>前向/反向传播</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/ais/dl_theorys/propagation.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            <nav id="local-table-of-contents" role="navigation" aria-labelledby="local-table-of-contents-title">
+              <h4 id="local-table-of-contents-title">On This Page</h4>
+              <ul>
+<li><a class="reference internal" href="#">前向/反向传播</a><ul>
+<li><a class="reference internal" href="#id3">神经元</a></li>
+<li><a class="reference internal" href="#id4">感知机和神经网络</a><ul>
+<li><a class="reference internal" href="#boltzmannboltzmann">Boltzmann机和受限Boltzmann机</a></li>
+<li><a class="reference internal" href="#rbf">RBF网络</a></li>
+<li><a class="reference internal" href="#art">ART网络</a></li>
+<li><a class="reference internal" href="#som">SOM网络</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#forward-propagation">forward propagation 前向传播</a><ul>
+<li><a class="reference internal" href="#id5">1.输入层—-&gt;隐含层</a></li>
+<li><a class="reference internal" href="#id6">2.隐含层—-&gt;输出层</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#backward-propagation">backward propagation 反向传播</a><ul>
+<li><a class="reference internal" href="#id7">1.计算总误差</a></li>
+<li><a class="reference internal" href="#w5-w8">2.隐含层—-&gt;输出层(w5-w8)的权值更新</a></li>
+<li><a class="reference internal" href="#w1-w4">3.输入层—&gt;隐含层的权值(w1-w4)更新</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#frac-1-1-e-n"><span class="math notranslate nohighlight">\(\frac{1}{1+e^{-n}}\)</span> 求导公式推理</a></li>
+<li><a class="reference internal" href="#demo">演示Demo</a></li>
+<li><a class="reference internal" href="#id8">图示例反向传播</a></li>
+<li><a class="reference internal" href="#id9">参考</a></li>
+</ul>
+</li>
+</ul>
+
+            </nav>
+  <table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="../../genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../search.html"><span class="std std-ref">搜索页面</span></a></p></td>
+</tr>
+</tbody>
+</table>
+<section id="id2">
+<h1>前向/反向传播<a class="headerlink" href="#id2" title="此标题的永久链接">¶</a></h1>
+<ul class="simple">
+<li><p>“正向传播”求损失，“反向传播”回传误差</p></li>
+<li><p>神经网络每层的每个神经元都可以根据误差信号修正每层的权重</p></li>
+</ul>
+<section id="id3">
+<h2>神经元<a class="headerlink" href="#id3" title="此标题的永久链接">¶</a></h2>
+<figure class="align-default" id="id11">
+<img alt="https://img.zhaoweiguo.com/uPic/2024/11/lh50CD.png" src="https://img.zhaoweiguo.com/uPic/2024/11/lh50CD.png" />
+<figcaption>
+<p><span class="caption-text">M-P(麦卡洛克-皮茨, McCulloch-Pitts)神经元模型，它是感知机的基础模型。M-P神经元是一种二元分类模型，将加权求和的结果输入到激活函数中，判断输出是0或1。神经元的输出: <span class="math notranslate nohighlight">\(y=\textstyle\mathrm{f}( \sum_{i=1}^n w_i x_i - \theta)\)</span>.其中 <code class="docutils literal notranslate"><span class="pre">θ</span></code> 为我们之前提到的神经元的激活阈值，函数 <code class="docutils literal notranslate"><span class="pre">f(⋅)</span></code> 也被称为是激活函数。</span><a class="headerlink" href="#id11" title="此图像的永久链接">¶</a></p>
+</figcaption>
+</figure>
+<ul class="simple">
+<li><p>常用的方法是用sigmod函数来表示激活函数，表达式为 <span class="math notranslate nohighlight">\(f(x)=\frac{1}{1+e^{-x}}\)</span></p></li>
+</ul>
+<figure class="align-default">
+<img alt="https://img.zhaoweiguo.com/uPic/2024/11/AglfkZ.png" src="https://img.zhaoweiguo.com/uPic/2024/11/AglfkZ.png" />
+</figure>
+</section>
+<section id="id4">
+<h2>感知机和神经网络<a class="headerlink" href="#id4" title="此标题的永久链接">¶</a></h2>
+<ul class="simple">
+<li><p>感知机（Perceptron）通常被认为是最早的一种人工神经网络模型之一，它由Frank Rosenblatt于1958年提出。尽管感知机的概念相对简单，但它为后续更复杂的神经网络的发展奠定了基础。</p></li>
+<li><p>感知机（perceptron）是由两层神经元(输入层和输出层)组成的结构，输入层用于接受外界输入信号，输出层（也被称为是感知机的功能层）就是M-P神经元，将这些数据通过权重进行处理后，输出一个结果。输出层通过对输入信号加权求和并应用一个激活函数来决定输出值。</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>从结构上来说，一个标准的感知机模型实际上只包含一层“权重”节点，这些节点接收输入数据，并通过加权求和的方式计算出一个值，然后通过激活函数（通常是阶跃函数）来决定输出。因此，从严格意义上讲，感知机可以被看作是只有单层的神经网络，而不是两层。但是，当人们提到感知机有“两层神经元”的时候，他们可能是指包括输入层在内的整个结构。在这种描述中：输入层：不被视为真正的神经元层，因为这里的节点只是将输入数据传递给下一层，没有进行任何计算或变换。输出层：这一层包含了执行实际计算的神经元，每个神经元接收来自输入层的数据，对其进行加权求和，并通过激活函数产生最终输出。 <strong>这种表述方式有助于与多层神经网络（如深度学习中的模型）进行对比和理解。</strong> ——fromGPT</p>
+</div>
+<figure class="align-default" id="id12">
+<img alt="https://img.zhaoweiguo.com/uPic/2024/11/IZUYmc.png" src="https://img.zhaoweiguo.com/uPic/2024/11/IZUYmc.png" />
+<figcaption>
+<p><span class="caption-text">一个输入层具有三个神经元（分别表示为x0、x1、x2）的感知机结构。（神经元的主要组成部分包括轴突（axon）、树突（dendrite）、胞体（soma）和突触（synapse））</span><a class="headerlink" href="#id12" title="此图像的永久链接">¶</a></p>
+</figcaption>
+</figure>
+<ul class="simple">
+<li><p>感知机模型的公式表示: <span class="math notranslate nohighlight">\(y=f(w x+b)\)</span> 其中，w为感知机输入层到输出层连接的权重，b表示输出层的偏置。事实上，感知机是一种判别式的线性分类模型，可以解决与、或、非这样的简单的线性可分（linearly separable）问题</p></li>
+</ul>
+<figure class="align-default" id="id13">
+<img alt="https://img.zhaoweiguo.com/uPic/2024/11/aciY7D.png" src="https://img.zhaoweiguo.com/uPic/2024/11/aciY7D.png" />
+<figcaption>
+<p><span class="caption-text">线性可分问题的示意图</span><a class="headerlink" href="#id13" title="此图像的永久链接">¶</a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id14">
+<img alt="https://img.zhaoweiguo.com/uPic/2024/11/2P6VlY.png" src="https://img.zhaoweiguo.com/uPic/2024/11/2P6VlY.png" />
+<figcaption>
+<p><span class="caption-text">典型的三层神经网络的基本构成，Layer L1是输入层，Layer L2是隐含层，Layer L3是输出层</span><a class="headerlink" href="#id14" title="此图像的永久链接">¶</a></p>
+</figcaption>
+</figure>
+<section id="boltzmannboltzmann">
+<h3>Boltzmann机和受限Boltzmann机<a class="headerlink" href="#boltzmannboltzmann" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>神经网络中有一类模型是为网络状态定义一个“能量”，能量最小化时网络达到理想状态，而网络的训练就是在最小化这个能量函数。Boltzmann（玻尔兹曼）机就是基于能量的模型，其神经元分为两层：显层和隐层。显层用于表示数据的输入和输出，隐层则被理解为数据的内在表达。Boltzmann机的神经元都是布尔型的，即只能取0、1值。标准的Boltzmann机是全连接的，也就是说各层内的神经元都是相互连接的，因此计算复杂度很高，而且难以用来解决实际问题。因此，我们经常使用一种特殊的Boltzmann机——受限玻尔兹曼机（Restricted Boltzmann Mechine，简称RBM），它层内无连接，层间有连接，可以看做是一个二部图。</p></li>
+</ul>
+<figure class="align-default">
+<img alt="https://img.zhaoweiguo.com/uPic/2024/11/aerRnB.png" src="https://img.zhaoweiguo.com/uPic/2024/11/aerRnB.png" />
+</figure>
+</section>
+<section id="rbf">
+<h3>RBF网络<a class="headerlink" href="#rbf" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>RBF（Radial Basis Function）径向基函数网络是一种单隐层前馈神经网络，它使用径向基函数作为隐层神经元激活函数，而输出层则是对隐层神经元输出的线性组合。</p></li>
+</ul>
+<figure class="align-default">
+<img alt="https://img.zhaoweiguo.com/uPic/2024/11/0QY42H.png" src="https://img.zhaoweiguo.com/uPic/2024/11/0QY42H.png" />
+</figure>
+<p>训练RBF网络通常采用两步:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1&gt; 确定神经元中心，常用的方式包括随机采样，聚类等；
+2&gt; 确定神经网络参数，常用算法为BP算法。
+</pre></div>
+</div>
+</section>
+<section id="art">
+<h3>ART网络<a class="headerlink" href="#art" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>ART（Adaptive Resonance Theory）自适应谐振理论网络是竞争型学习的重要代表，该网络由比较层、识别层、识别层阈值和重置模块构成。ART比较好的缓解了竞争型学习中的“可塑性-稳定性窘境”（stability-plasticity dilemma），可塑性是指神经网络要有学习新知识的能力，而稳定性则指的是神经网络在学习新知识时要保持对旧知识的记忆。这就使得ART网络具有一个很重要的优点：可进行增量学习或在线学习。</p></li>
+</ul>
+</section>
+<section id="som">
+<h3>SOM网络<a class="headerlink" href="#som" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>SOM（Self-Organizing Map，自组织映射）网络是一种竞争学习型的无监督神经网络，它能将高维输入数据映射到低维空间（通常为二维），同时保持输入数据在高维空间的拓扑结构，即将高维空间中相似的样本点映射到网络输出层中的临近神经元。</p></li>
+</ul>
+<figure class="align-default">
+<img alt="https://img.zhaoweiguo.com/uPic/2024/11/P6iFWC.png" src="https://img.zhaoweiguo.com/uPic/2024/11/P6iFWC.png" />
+</figure>
+</section>
+</section>
+<section id="forward-propagation">
+<h2>forward propagation 前向传播<a class="headerlink" href="#forward-propagation" title="此标题的永久链接">¶</a></h2>
+<ul class="simple">
+<li><p>FP算法</p></li>
+<li><p>前向传播（forward propagation或forward pass） 指的是：按顺序（从输入层到输出层）计算和存储神经网络中每层的结果。</p></li>
+</ul>
+<figure class="align-default" id="id15">
+<img alt="https://img.zhaoweiguo.com/uPic/2024/11/T1rWVG.png" src="https://img.zhaoweiguo.com/uPic/2024/11/T1rWVG.png" />
+<figcaption>
+<p><span class="caption-text">第一层是输入层，包含两个神经元i1，i2，和偏置项（bias term）b1；第二层是隐含层，包含两个神经元h1,h2和偏置项（bias term）b2，第三层是输出o1,o2，每条线上标的wi是层与层之间连接的权重，激活函数我们默认为sigmoid函数。</span><a class="headerlink" href="#id15" title="此图像的永久链接">¶</a></p>
+</figcaption>
+</figure>
+<p>赋上初值:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">输入数据</span>  <span class="n">i1</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">i2</span><span class="o">=</span><span class="mf">0.10</span>
+<span class="n">输出数据</span>  <span class="n">o1</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">o2</span><span class="o">=</span><span class="mf">0.99</span>
+<span class="n">初始权重</span>  <span class="n">w1</span><span class="o">=</span><span class="mf">0.15</span><span class="p">,</span> <span class="n">w2</span><span class="o">=</span><span class="mf">0.20</span><span class="p">,</span> <span class="n">w3</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">w4</span><span class="o">=</span><span class="mf">0.30</span>
+         <span class="n">w5</span><span class="o">=</span><span class="mf">0.40</span><span class="p">,</span> <span class="n">w6</span><span class="o">=</span><span class="mf">0.45</span><span class="p">,</span> <span class="n">w7</span><span class="o">=</span><span class="mf">0.50</span><span class="p">,</span> <span class="n">w8</span><span class="o">=</span><span class="mf">0.55</span>
+</pre></div>
+</div>
+<figure class="align-default">
+<img alt="https://img.zhaoweiguo.com/uPic/2024/11/MBZJqt.png" src="https://img.zhaoweiguo.com/uPic/2024/11/MBZJqt.png" />
+</figure>
+<section id="id5">
+<h3>1.输入层—-&gt;隐含层<a class="headerlink" href="#id5" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>计算神经元h1的输入加权和：</p></li>
+</ul>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{array}{l}
+\text { net }_{h1}=w_{1} * i_{1}+w_{2} * i_{2}+b_{1} * 1 \\
+\text { net }_{h1}=0.15 * 0.05+0.2 * 0.1+0.35 * 1=0.3775
+\end{array}\end{split}\]</div>
+<ul class="simple">
+<li><p>神经元h1的输出o1:(此处用到激活函数为sigmoid函数)：</p></li>
+</ul>
+<div class="math notranslate nohighlight">
+\[{out}_{h1}=\frac{1}{1+e^{-net_{h_1}} } = \frac{1}{1+e^{-0.3775}}=0.593269992\]</div>
+<ul class="simple">
+<li><p>同理，可计算出神经元h2的输出o2: <span class="math notranslate nohighlight">\({out}_{h2}=0.596884378\)</span></p></li>
+</ul>
+</section>
+<section id="id6">
+<h3>2.隐含层—-&gt;输出层<a class="headerlink" href="#id6" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>计算输出层神经元o1和o2的值</p></li>
+</ul>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{array}{l}
+\text {net}_{o1} =w_5*{out}_{h1}+w_6*{out}_{h2}+b_2*1 \\
+\text {net}_{o1} =0.4*0.593269992 + 0.45*0.596884378 + 0.6*1 = 1.105905967 \\
+\text {out}_{o1} =\frac{1}{1+e^{-{net}_{o1}}} = \frac{1}{1+e^{1.105905967}} = 0.75136507 \\
+同理 \\
+\text {out}_{o2} = 0.772928465
+\end{array}\end{split}\]</div>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>前向传播的过程就结束了，我们得到输出值为[0.75136079 , 0.772928465]，与实际值[0.01 , 0.99]相差还很远</p>
+</div>
+</section>
+</section>
+<section id="backward-propagation">
+<h2>backward propagation 反向传播<a class="headerlink" href="#backward-propagation" title="此标题的永久链接">¶</a></h2>
+<ul class="simple">
+<li><p>BP算法，也叫 δ算法</p></li>
+<li><p>反向传播（backward propagation或backpropagation）指的是计算神经网络参数梯度的方法。 简言之，该方法根据微积分中的链式规则，按相反的顺序从输出层到输入层遍历网络。 该算法存储了计算某些参数梯度时所需的任何中间变量（偏导数）。</p></li>
+<li><p>反向传播：“误差反向传播”的简称，是一种与最优化方法（如梯度下降法）结合使用的，用来训练人工神经网络的常见方法。 该方法对网络中所有权重计算损失函数的梯度。 这个梯度会反馈给最优化方法，用来更新权值以最小化损失函数。</p></li>
+</ul>
+<section id="id7">
+<h3>1.计算总误差<a class="headerlink" href="#id7" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>误差：(square error): <span class="math notranslate nohighlight">\(E_{total} = \sum{\frac{1}{2}(target-output)^2}\)</span></p></li>
+<li><p>有两个输出，所以分别计算o1和o2的误差，总误差为两者之和</p></li>
+</ul>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{array}{l}
+\text E_{o1}=\frac{1}{2}(target_{o1} - out_{o1})^2 = \frac{1}{2}(0.01-0.75136507)^2 = 0.274811083 \\
+\text E_{o2} = 0.023560026 \\
+\text E_{total} = E_{o1} + E_{o2} = 0.274811083 + 0.023560026 = 0.298371109
+\end{array}\end{split}\]</div>
+</section>
+<section id="w5-w8">
+<h3>2.隐含层—-&gt;输出层(w5-w8)的权值更新<a class="headerlink" href="#w5-w8" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>以权重参数w5为例，如果我们想知道w5对整体误差产生了多少影响，可以用整体误差对w5求偏导求出(链式法则)</p></li>
+</ul>
+<div class="math notranslate nohighlight">
+\[\frac{\partial E_{\text {total }}}{\partial w_{5}}=\frac{\partial E_{\text {total}}}{\partial out_{o1}} *
+    \frac{\partial out_{o1}}{\partial net_{o1}} * \frac{\partial net_{o1}}{\partial w_{5}}\]</div>
+<figure class="align-default" id="id16">
+<img alt="https://img.zhaoweiguo.com/uPic/2024/11/W0l3WL.png" src="https://img.zhaoweiguo.com/uPic/2024/11/W0l3WL.png" />
+<figcaption>
+<p><span class="caption-text">误差是怎样反向传播的</span><a class="headerlink" href="#id16" title="此图像的永久链接">¶</a></p>
+</figcaption>
+</figure>
+<ul class="simple">
+<li><p>计算 <span class="math notranslate nohighlight">\(\frac{\partial E_{total}}{\partial out_{o1}}\)</span></p></li>
+</ul>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{array}{l}
+\text E_{total} = \frac{1}{2}(target_{o1} - out_{o1})^2 + \frac{1}{2}(target_{o2} - out_{o2})^2 \\
+\frac{\partial E_{total}}{\partial out_{o1}} = out_{o1} - target_{o1}
+    = 0.75136507 - 0.01 = 0.74136507
+\end{array}\end{split}\]</div>
+<ul class="simple">
+<li><p>计算 <span class="math notranslate nohighlight">\(\frac{\partial out_{o1}}{\partial net_{o1}}\)</span> :</p></li>
+</ul>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}\begin{split}\begin{array}{l}
+out_{o1} = \frac{1}{1+e^{-net_{o1}}} \\
+\frac{\partial out_{o1}}{\partial net_{o1}} = out_{o1}(1-out_{o1})
+    = 0.75136507(1-0.75136507) = 0.186815602
+\end{array}\end{split}\\注：这儿的推导过程后面专门讲一下\end{aligned}\end{align} \]</div>
+<ul class="simple">
+<li><p>计算 <span class="math notranslate nohighlight">\(\frac{\partial net_{o1}}{\partial w_5}\)</span></p></li>
+</ul>
+<div class="math notranslate nohighlight">
+\[net_{o1} = w_5 * out_{h1} + w_6 * out_{h2} + b_2 * 1
+\frac{\partial net_{o1}}{\partial w_5} = out_{h1} = 0.593269992\]</div>
+<p>最后三者相乘(计算出整体误差E(total)对w5的偏导值):</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{array}{l}
+\frac{\partial E_{total}}{\partial w_{5}}=\frac{\partial E_{\text {total }}}{\partial out_{o1}} *
+    \frac{\partial out_{o1}}{\partial net_{o1}} * \frac{\partial net_{o1}}{\partial w_{5}} \\
+    = 0.74136507 * 0.186815602 * 0.593269992 \\
+    = 0.082167041
+\end{array}\end{split}\]</div>
+<p>上面3个公式合并:</p>
+<div class="math notranslate nohighlight">
+\[\frac{\partial E_{total}}{\partial w_{5}}=
+    (out_{o2} - target_{o2}) * out_{o1}(1-out_{o1}) * out_{h1}\]</div>
+<ul class="simple">
+<li><p>为了表达方便，用 <span class="math notranslate nohighlight">\(\delta_{o1}\)</span> 来表示输出层的误差</p></li>
+</ul>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{array}{l}
+\delta_{o1}=\frac{\partial E_{total}}{\partial out_{o1}} * \frac{\partial out_{o1}}{\partial net_{o1}}=\frac{\partial E_{total}}{\partial net_{o1}} \\
+\delta_{o1}=-(target_{o1} - out_{o1}) * out_{o1}(1-out_{o1})
+           =-(0.01-0.75136507) * 0.75136507 * (1-0.75136507)
+           =0.74136507*0.18681560 = 0.138498562
+\end{array}\end{split}\]</div>
+<p>因此，整体误差E(total)对w5的偏导公式可以写成：</p>
+<div class="math notranslate nohighlight">
+\[\frac{\partial E_{\text {total }}}{\partial w_{5}}= |\delta_{o1}out_{h1}|\]</div>
+<ul class="simple">
+<li><p>更新w5的值(这儿 <span class="math notranslate nohighlight">\(\eta\)</span> 是学习率，这儿取0.5) <span class="math notranslate nohighlight">\({w_5}^+=w_5-\eta * \frac{\partial E_{total}}{\partial w_5} = 0.4 - 0.5*0.082167041=0.35891648\)</span></p></li>
+<li><p>同理，可更新w6,w7,w8:</p></li>
+</ul>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{array}{l}
+{w_6}^+ = 0.408666186 \\
+{w_7}^+ = 0.511301270 \\
+{w_8}^+ = 0.561370121 \\
+\end{array}\end{split}\]</div>
+</section>
+<section id="w1-w4">
+<h3>3.输入层—&gt;隐含层的权值(w1-w4)更新<a class="headerlink" href="#w1-w4" title="此标题的永久链接">¶</a></h3>
+<figure class="align-default" id="id17">
+<img alt="https://img.zhaoweiguo.com/uPic/2024/11/wXtyDk.png" src="https://img.zhaoweiguo.com/uPic/2024/11/wXtyDk.png" />
+<figcaption>
+<p><span class="caption-text">与上面说的差不多，但是有个地方需要变一下，在上文计算总误差对w5的偏导时，是从out(o1)—&gt;net(o1)—&gt;w5,但是在隐含层之间的权值更新时，是out(h1)—&gt;net(h1)—&gt;w1,而out(h1)会接受E(o1)和E(o2)两个地方传来的误差，所以这个地方两个都要计算。</span><a class="headerlink" href="#id17" title="此图像的永久链接">¶</a></p>
+</figcaption>
+</figure>
+<p>计算 <span class="math notranslate nohighlight">\(\frac{\partial E_{total}}{\partial out_{h1}}\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\frac{\partial E_{total}}{\partial out_{h1}} = \frac{\partial E_{o1}}{\partial out_{h1}} + \frac{\partial E_{o2}}{\partial out_{h1}}\]</div>
+<ul class="simple">
+<li><p>先计算 <span class="math notranslate nohighlight">\(\frac{\partial E_{o1}}{\partial out_{h1}}\)</span></p></li>
+</ul>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{array}{l}
+\frac{\partial E_{o1}}{\partial out_{h1}} = \frac{\partial E_{o1}}{\partial net_{o1}} \cdot \frac{\partial net_{o1}}{\partial out_{h1}} \\
+\frac{\partial E_{o1}}{\partial net_{o1}} = \frac{\partial E_{o1}}{\partial out_{o1}} \cdot \frac{\partial out_{o1}}{\partial net_{o1}} \\
+    = 0.74136507 \cdot 0.186815602 = 0.138498562 \\
+net_{o1} = w_5 \cdot out_{h1} + w_6 \cdot out_{h2} + b_2 \cdot 1 \\
+\frac{\partial net_{o1}}{\partial out_{h1}} = w_5 = 0.40 \\
+\frac{\partial E_{o1}}{\partial out_{h1}} = \frac{\partial E_{o1}}{\partial net_{o1}} \cdot \frac{\partial net_{o1}}{\partial out_{h1}} \\
+    = 0.138498562 \cdot 0.40 = 0.055399425 \\
+同理 \\
+\frac{\partial E_{o2}}{\partial out_{h1}} = -0.019049119 \\
+两者相加 \\
+\frac{\partial E_{total}}{\partial out_{h1}} = \frac{\partial E_{o1}}{\partial out_{h1}} + \frac{\partial E_{o2}}{\partial out_{h1}} \\
+    = 0.055399425 + (-0.019049119) = 0.036350306
+\end{array}\end{split}\]</div>
+<p>再计算 <span class="math notranslate nohighlight">\(\frac{\partial out_{h1}}{\partial net_{h1}}\)</span> :</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{array}{l}
+out_{h1} = \frac{1}{1+e^{-net_{h1}}} \\
+\frac{\partial out_{h1}}{\partial net_{h1}} = out_{h1}(1-out_{h1}) \\
+    = 0.59326999(1-0.59326999) = 0.241300709
+\end{array}\end{split}\]</div>
+<p>再计算 <span class="math notranslate nohighlight">\(\frac{\partial net_{h1}}{\partial w1}\)</span> :</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{array}{l}
+net_{h1} = w_1*i_1 + w_2*i_2 + b_1 *1 \\
+\frac{\partial net_{h1}}{\partial w_1} = i_1=0.05
+\end{array}\end{split}\]</div>
+<p>三者相乘</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{array}{l}
+\frac{\partial E_{total}}{\partial w_{1}}=\frac{\partial E_{total}}{\partial out_{h1}} *
+    \frac{\partial out_{h1}}{\partial net_{h1}} * \frac{\partial net{h1}}{\partial w_{1}} \\
+    = 0.036350306 * 0.241300709 * 0.05
+    = 0.000438568
+\end{array}\end{split}\]</div>
+<ul class="simple">
+<li><p>上面的过程汇总</p></li>
+</ul>
+<div class="math notranslate nohighlight">
+\[\begin{split}\frac{\partial E_{total}}{\partial w_1} =
+    (\sum_o \frac{\partial E_{total}}{\partial out_o} * \frac{\partial out_o}{\partial net_o} * \frac{\partial net_o}{\partial out_{h1}})
+        * \frac{\partial out_{h1}}{\partial net_{h1}} * \frac{\partial net_{h1}}{\partial w_1} \\\end{split}\]</div>
+<ul class="simple">
+<li><p>最后，更新w1的权值：(这儿 <span class="math notranslate nohighlight">\(\eta\)</span> 是学习率，这儿取0.5) <span class="math notranslate nohighlight">\({w_1}^+=w_1-\eta * \frac{\partial E_{total}}{\partial w_1} = 0.15 - 0.5*0.000438568=0.149780716\)</span></p></li>
+<li><p>同理，可更新w1,w2,w3:</p></li>
+</ul>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{array}{l}
+{w_2}^+ = 0.19956143 \\
+{w_3}^+ = 0.24975114 \\
+{w_4}^+ = 0.29950229 \\
+\end{array}\end{split}\]</div>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>这样误差反向传播法就完成了，最后我们再把更新的权值重新计算，不停地迭代，在这个例子中第一次迭代之后，总误差E(total)由0.298371109下降至0.291027924。迭代10000次后，总误差为0.000035085，输出为[0.015912196,0.984065734](原输入为[0.01,0.99]),证明效果还是不错的。</p>
+</div>
+</section>
+</section>
+<section id="frac-1-1-e-n">
+<h2><span class="math notranslate nohighlight">\(\frac{1}{1+e^{-n}}\)</span> 求导公式推理<a class="headerlink" href="#frac-1-1-e-n" title="此标题的永久链接">¶</a></h2>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(𝑓(𝑛)=\frac{1}{1+e^{-n}}\)</span> 求导公式推理</p></li>
+<li><p>1、重写为 <span class="math notranslate nohighlight">\(𝑓(𝑛)=(1+e^{-n})^{-1}\)</span></p></li>
+<li><p>2、求导: <span class="math notranslate nohighlight">\(𝑓′(𝑛)=-\frac{1}{(1+e^{-n})^2} \cdot \frac{d}{dn}(1+e^{-n})\)</span></p></li>
+<li><p>3、计算内部的导数: <span class="math notranslate nohighlight">\(\frac{d}{dn}(1+e^{-n}) = -e^{-n}\)</span></p></li>
+<li><p>4、代入第2步: <span class="math notranslate nohighlight">\(𝑓′(𝑛)=-\frac{1}{(1+e^{-n})^2} \cdot (-e^{-n})=\frac{e^{-n}}{(1+e^{-n})^2}\)</span></p></li>
+<li><p>5、由于 <span class="math notranslate nohighlight">\(𝑓(𝑛)=\frac{1}{1+e^{-n}}\)</span> 将分子和分母表示成 𝑓(𝑛) 的形式 <span class="math notranslate nohighlight">\(𝑓′(𝑛)=𝑓(𝑛) \cdot (1-𝑓(𝑛))\)</span></p></li>
+</ul>
+</section>
+<section id="demo">
+<h2>演示Demo<a class="headerlink" href="#demo" title="此标题的永久链接">¶</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#coding:utf-8</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+
+<span class="c1">#</span>
+<span class="c1">#   参数解释：</span>
+<span class="c1">#   &quot;pd_&quot; ：偏导的前缀</span>
+<span class="c1">#   &quot;d_&quot; ：导数的前缀</span>
+<span class="c1">#   &quot;w_ho&quot; ：隐含层到输出层的权重系数索引</span>
+<span class="c1">#   &quot;w_ih&quot; ：输入层到隐含层的权重系数的索引</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">NeuralNetwork</span><span class="p">:</span>
+    <span class="n">LEARNING_RATE</span> <span class="o">=</span> <span class="mf">0.5</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_inputs</span><span class="p">,</span> <span class="n">num_hidden</span><span class="p">,</span> <span class="n">num_outputs</span><span class="p">,</span> <span class="n">hidden_layer_weights</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">hidden_layer_bias</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">output_layer_weights</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">output_layer_bias</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_inputs</span> <span class="o">=</span> <span class="n">num_inputs</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">hidden_layer</span> <span class="o">=</span> <span class="n">NeuronLayer</span><span class="p">(</span><span class="n">num_hidden</span><span class="p">,</span> <span class="n">hidden_layer_bias</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_layer</span> <span class="o">=</span> <span class="n">NeuronLayer</span><span class="p">(</span><span class="n">num_outputs</span><span class="p">,</span> <span class="n">output_layer_bias</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">init_weights_from_inputs_to_hidden_layer_neurons</span><span class="p">(</span><span class="n">hidden_layer_weights</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">init_weights_from_hidden_layer_neurons_to_output_layer_neurons</span><span class="p">(</span><span class="n">output_layer_weights</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_weights_from_inputs_to_hidden_layer_neurons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hidden_layer_weights</span><span class="p">):</span>
+        <span class="n">weight_num</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hidden_layer</span><span class="o">.</span><span class="n">neurons</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_inputs</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">hidden_layer_weights</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">hidden_layer</span><span class="o">.</span><span class="n">neurons</span><span class="p">[</span><span class="n">h</span><span class="p">]</span><span class="o">.</span><span class="n">weights</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">())</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">hidden_layer</span><span class="o">.</span><span class="n">neurons</span><span class="p">[</span><span class="n">h</span><span class="p">]</span><span class="o">.</span><span class="n">weights</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hidden_layer_weights</span><span class="p">[</span><span class="n">weight_num</span><span class="p">])</span>
+                <span class="n">weight_num</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_weights_from_hidden_layer_neurons_to_output_layer_neurons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_layer_weights</span><span class="p">):</span>
+        <span class="n">weight_num</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_layer</span><span class="o">.</span><span class="n">neurons</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hidden_layer</span><span class="o">.</span><span class="n">neurons</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">output_layer_weights</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">output_layer</span><span class="o">.</span><span class="n">neurons</span><span class="p">[</span><span class="n">o</span><span class="p">]</span><span class="o">.</span><span class="n">weights</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">())</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">output_layer</span><span class="o">.</span><span class="n">neurons</span><span class="p">[</span><span class="n">o</span><span class="p">]</span><span class="o">.</span><span class="n">weights</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">output_layer_weights</span><span class="p">[</span><span class="n">weight_num</span><span class="p">])</span>
+                <span class="n">weight_num</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">inspect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;------&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;* Inputs: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_inputs</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;------&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Hidden Layer&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hidden_layer</span><span class="o">.</span><span class="n">inspect</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;------&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;* Output Layer&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_layer</span><span class="o">.</span><span class="n">inspect</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;------&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">feed_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">):</span>
+        <span class="n">hidden_layer_outputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hidden_layer</span><span class="o">.</span><span class="n">feed_forward</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_layer</span><span class="o">.</span><span class="n">feed_forward</span><span class="p">(</span><span class="n">hidden_layer_outputs</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">training_inputs</span><span class="p">,</span> <span class="n">training_outputs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">feed_forward</span><span class="p">(</span><span class="n">training_inputs</span><span class="p">)</span>
+
+        <span class="c1"># 1. 输出神经元的值</span>
+        <span class="n">pd_errors_wrt_output_neuron_total_net_input</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_layer</span><span class="o">.</span><span class="n">neurons</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_layer</span><span class="o">.</span><span class="n">neurons</span><span class="p">)):</span>
+
+            <span class="c1"># ∂E/∂zⱼ</span>
+            <span class="n">pd_errors_wrt_output_neuron_total_net_input</span><span class="p">[</span><span class="n">o</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_layer</span><span class="o">.</span><span class="n">neurons</span><span class="p">[</span><span class="n">o</span><span class="p">]</span><span class="o">.</span><span class="n">calculate_pd_error_wrt_total_net_input</span><span class="p">(</span><span class="n">training_outputs</span><span class="p">[</span><span class="n">o</span><span class="p">])</span>
+
+        <span class="c1"># 2. 隐含层神经元的值</span>
+        <span class="n">pd_errors_wrt_hidden_neuron_total_net_input</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hidden_layer</span><span class="o">.</span><span class="n">neurons</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hidden_layer</span><span class="o">.</span><span class="n">neurons</span><span class="p">)):</span>
+
+            <span class="c1"># dE/dyⱼ = Σ ∂E/∂zⱼ * ∂z/∂yⱼ = Σ ∂E/∂zⱼ * wᵢⱼ</span>
+            <span class="n">d_error_wrt_hidden_neuron_output</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_layer</span><span class="o">.</span><span class="n">neurons</span><span class="p">)):</span>
+                <span class="n">d_error_wrt_hidden_neuron_output</span> <span class="o">+=</span> <span class="n">pd_errors_wrt_output_neuron_total_net_input</span><span class="p">[</span><span class="n">o</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_layer</span><span class="o">.</span><span class="n">neurons</span><span class="p">[</span><span class="n">o</span><span class="p">]</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="n">h</span><span class="p">]</span>
+
+            <span class="c1"># ∂E/∂zⱼ = dE/dyⱼ * ∂zⱼ/∂</span>
+            <span class="n">pd_errors_wrt_hidden_neuron_total_net_input</span><span class="p">[</span><span class="n">h</span><span class="p">]</span> <span class="o">=</span> <span class="n">d_error_wrt_hidden_neuron_output</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">hidden_layer</span><span class="o">.</span><span class="n">neurons</span><span class="p">[</span><span class="n">h</span><span class="p">]</span><span class="o">.</span><span class="n">calculate_pd_total_net_input_wrt_input</span><span class="p">()</span>
+
+        <span class="c1"># 3. 更新输出层权重系数</span>
+        <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_layer</span><span class="o">.</span><span class="n">neurons</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">w_ho</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_layer</span><span class="o">.</span><span class="n">neurons</span><span class="p">[</span><span class="n">o</span><span class="p">]</span><span class="o">.</span><span class="n">weights</span><span class="p">)):</span>
+
+                <span class="c1"># ∂Eⱼ/∂wᵢⱼ = ∂E/∂zⱼ * ∂zⱼ/∂wᵢⱼ</span>
+                <span class="n">pd_error_wrt_weight</span> <span class="o">=</span> <span class="n">pd_errors_wrt_output_neuron_total_net_input</span><span class="p">[</span><span class="n">o</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_layer</span><span class="o">.</span><span class="n">neurons</span><span class="p">[</span><span class="n">o</span><span class="p">]</span><span class="o">.</span><span class="n">calculate_pd_total_net_input_wrt_weight</span><span class="p">(</span><span class="n">w_ho</span><span class="p">)</span>
+
+                <span class="c1"># Δw = α * ∂Eⱼ/∂wᵢ</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">output_layer</span><span class="o">.</span><span class="n">neurons</span><span class="p">[</span><span class="n">o</span><span class="p">]</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="n">w_ho</span><span class="p">]</span> <span class="o">-=</span> <span class="bp">self</span><span class="o">.</span><span class="n">LEARNING_RATE</span> <span class="o">*</span> <span class="n">pd_error_wrt_weight</span>
+
+        <span class="c1"># 4. 更新隐含层的权重系数</span>
+        <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hidden_layer</span><span class="o">.</span><span class="n">neurons</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">w_ih</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hidden_layer</span><span class="o">.</span><span class="n">neurons</span><span class="p">[</span><span class="n">h</span><span class="p">]</span><span class="o">.</span><span class="n">weights</span><span class="p">)):</span>
+
+                <span class="c1"># ∂Eⱼ/∂wᵢ = ∂E/∂zⱼ * ∂zⱼ/∂wᵢ</span>
+                <span class="n">pd_error_wrt_weight</span> <span class="o">=</span> <span class="n">pd_errors_wrt_hidden_neuron_total_net_input</span><span class="p">[</span><span class="n">h</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">hidden_layer</span><span class="o">.</span><span class="n">neurons</span><span class="p">[</span><span class="n">h</span><span class="p">]</span><span class="o">.</span><span class="n">calculate_pd_total_net_input_wrt_weight</span><span class="p">(</span><span class="n">w_ih</span><span class="p">)</span>
+
+                <span class="c1"># Δw = α * ∂Eⱼ/∂wᵢ</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">hidden_layer</span><span class="o">.</span><span class="n">neurons</span><span class="p">[</span><span class="n">h</span><span class="p">]</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="n">w_ih</span><span class="p">]</span> <span class="o">-=</span> <span class="bp">self</span><span class="o">.</span><span class="n">LEARNING_RATE</span> <span class="o">*</span> <span class="n">pd_error_wrt_weight</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate_total_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">training_sets</span><span class="p">):</span>
+        <span class="n">total_error</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">training_sets</span><span class="p">)):</span>
+            <span class="n">training_inputs</span><span class="p">,</span> <span class="n">training_outputs</span> <span class="o">=</span> <span class="n">training_sets</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">feed_forward</span><span class="p">(</span><span class="n">training_inputs</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">training_outputs</span><span class="p">)):</span>
+                <span class="n">total_error</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_layer</span><span class="o">.</span><span class="n">neurons</span><span class="p">[</span><span class="n">o</span><span class="p">]</span><span class="o">.</span><span class="n">calculate_error</span><span class="p">(</span><span class="n">training_outputs</span><span class="p">[</span><span class="n">o</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">total_error</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">NeuronLayer</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_neurons</span><span class="p">,</span> <span class="n">bias</span><span class="p">):</span>
+
+        <span class="c1"># 同一层的神经元共享一个截距项b</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bias</span> <span class="o">=</span> <span class="n">bias</span> <span class="k">if</span> <span class="n">bias</span> <span class="k">else</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">neurons</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_neurons</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">neurons</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Neuron</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bias</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">inspect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Neurons:&#39;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">neurons</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">neurons</span><span class="p">)):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39; Neuron&#39;</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">neurons</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">weights</span><span class="p">)):</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;  Weight:&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">neurons</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="n">w</span><span class="p">])</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;  Bias:&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bias</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">feed_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">):</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">neuron</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">neurons</span><span class="p">:</span>
+            <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">neuron</span><span class="o">.</span><span class="n">calculate_output</span><span class="p">(</span><span class="n">inputs</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">outputs</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_outputs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">neuron</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">neurons</span><span class="p">:</span>
+            <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">neuron</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">outputs</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Neuron</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bias</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bias</span> <span class="o">=</span> <span class="n">bias</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weights</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span> <span class="o">=</span> <span class="n">inputs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">squash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">calculate_total_net_input</span><span class="p">())</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate_total_net_input</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">)):</span>
+            <span class="n">total</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">total</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">bias</span>
+
+    <span class="c1"># 激活函数sigmoid</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">squash</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">total_net_input</span><span class="p">):</span>
+        <span class="k">return</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">total_net_input</span><span class="p">))</span>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate_pd_error_wrt_total_net_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target_output</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculate_pd_error_wrt_output</span><span class="p">(</span><span class="n">target_output</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculate_pd_total_net_input_wrt_input</span><span class="p">();</span>
+
+    <span class="c1"># 每一个神经元的误差是由平方差公式计算的</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target_output</span><span class="p">):</span>
+        <span class="k">return</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">target_output</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate_pd_error_wrt_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target_output</span><span class="p">):</span>
+        <span class="k">return</span> <span class="o">-</span><span class="p">(</span><span class="n">target_output</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate_pd_total_net_input_wrt_input</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate_pd_total_net_input_wrt_weight</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+
+
+<span class="c1"># 文中的例子:</span>
+
+<span class="n">nn</span> <span class="o">=</span> <span class="n">NeuralNetwork</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">hidden_layer_weights</span><span class="o">=</span><span class="p">[</span><span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">],</span> <span class="n">hidden_layer_bias</span><span class="o">=</span><span class="mf">0.35</span><span class="p">,</span> <span class="n">output_layer_weights</span><span class="o">=</span><span class="p">[</span><span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.45</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.55</span><span class="p">],</span> <span class="n">output_layer_bias</span><span class="o">=</span><span class="mf">0.6</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10000</span><span class="p">):</span>
+    <span class="n">nn</span><span class="o">.</span><span class="n">train</span><span class="p">([</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.09</span><span class="p">])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">calculate_total_error</span><span class="p">([[[</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.09</span><span class="p">]]]),</span> <span class="mi">9</span><span class="p">))</span>
+
+
+<span class="c1">#另外一个例子，可以把上面的例子注释掉再运行一下:</span>
+
+<span class="c1"># training_sets = [</span>
+<span class="c1">#     [[0, 0], [0]],</span>
+<span class="c1">#     [[0, 1], [1]],</span>
+<span class="c1">#     [[1, 0], [1]],</span>
+<span class="c1">#     [[1, 1], [0]]</span>
+<span class="c1"># ]</span>
+
+<span class="c1"># nn = NeuralNetwork(len(training_sets[0][0]), 5, len(training_sets[0][1]))</span>
+<span class="c1"># for i in range(10000):</span>
+<span class="c1">#     training_inputs, training_outputs = random.choice(training_sets)</span>
+<span class="c1">#     nn.train(training_inputs, training_outputs)</span>
+<span class="c1">#     print(i, nn.calculate_total_error(training_sets))</span>
+</pre></div>
+</div>
+</section>
+<section id="id8">
+<h2>图示例反向传播<a class="headerlink" href="#id8" title="此标题的永久链接">¶</a></h2>
+<figure class="align-default" id="id18">
+<a class="reference internal image-reference" href="https://img.zhaoweiguo.com/uPic/2024/11/h2REcu.png"><img alt="https://img.zhaoweiguo.com/uPic/2024/11/h2REcu.png" src="https://img.zhaoweiguo.com/uPic/2024/11/h2REcu.png" style="width: 50%;" /></a>
+<figcaption>
+<p><span class="caption-text">反向传播算法的多层神经网络的教学过程。为了说明这一点 处理如图所示的具有两个输入和一个输出的三层神经网络</span><a class="headerlink" href="#id18" title="此图像的永久链接">¶</a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id19">
+<a class="reference internal image-reference" href="https://img.zhaoweiguo.com/uPic/2024/11/ElshJt.png"><img alt="https://img.zhaoweiguo.com/uPic/2024/11/ElshJt.png" src="https://img.zhaoweiguo.com/uPic/2024/11/ElshJt.png" style="width: 50%;" /></a>
+<figcaption>
+<p><span class="caption-text">每个神经元由两个单元组成。第一个单元将权重系数和输入信号的乘积相加。第二个单元实现非线性函数，称为神经元激活函数。信号e为加法器输出信号， y=f(e)为非线性元件的输出信号。信号y也是神经元的输出信号。</span><a class="headerlink" href="#id19" title="此图像的永久链接">¶</a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id20">
+<a class="reference internal image-reference" href="https://img.zhaoweiguo.com/uPic/2024/11/FDeqmU.png"><img alt="https://img.zhaoweiguo.com/uPic/2024/11/FDeqmU.png" src="https://img.zhaoweiguo.com/uPic/2024/11/FDeqmU.png" style="width: 50%;" /></a>
+<figcaption>
+<p><span class="caption-text">网络训练是一个迭代过程。在每次迭代中，使用训练数据集中的新数据来修改节点的权重系数。使用下述算法计算修改：每个训练步骤都强制从训练集的两个输入信号开始。在此阶段之后，我们可以确定每个网络层中每个神经元的输出信号值。下图说明了信号如何在网络中传播，符号 <span class="math notranslate nohighlight">\(w_{(x_m)n}\)</span> 表示网络输入 <span class="math notranslate nohighlight">\(x_m\)</span> 与输入层神经元n之间的连接权重。符号 <span class="math notranslate nohighlight">\(y_n\)</span> 表示神经元n的输出信号。</span><a class="headerlink" href="#id20" title="此图像的永久链接">¶</a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id21">
+<a class="reference internal image-reference" href="https://img.zhaoweiguo.com/uPic/2024/11/5y4XIN.png"><img alt="https://img.zhaoweiguo.com/uPic/2024/11/5y4XIN.png" src="https://img.zhaoweiguo.com/uPic/2024/11/5y4XIN.png" style="width: 50%;" /></a>
+<figcaption>
+<p><span class="caption-text">通过隐藏层传播信号。符号 <span class="math notranslate nohighlight">\(w_{mn}\)</span> 表示神经元m的输出与下一层神经元n的输入之间的连接权重。</span><a class="headerlink" href="#id21" title="此图像的永久链接">¶</a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id22">
+<a class="reference internal image-reference" href="https://img.zhaoweiguo.com/uPic/2024/11/EK0qBc.png"><img alt="https://img.zhaoweiguo.com/uPic/2024/11/EK0qBc.png" src="https://img.zhaoweiguo.com/uPic/2024/11/EK0qBc.png" style="width: 50%;" /></a>
+<figcaption>
+<p><span class="caption-text">通过输出层传播信号。Propagation of signals through the output layer.</span><a class="headerlink" href="#id22" title="此图像的永久链接">¶</a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id23">
+<a class="reference internal image-reference" href="https://img.zhaoweiguo.com/uPic/2024/11/aoeQyp.png"><img alt="https://img.zhaoweiguo.com/uPic/2024/11/aoeQyp.png" src="https://img.zhaoweiguo.com/uPic/2024/11/aoeQyp.png" style="width: 50%;" /></a>
+<figcaption>
+<p><span class="caption-text">在下一个算法步骤中，将网络y的输出信号与训练数据集的目标值(label)进行比较。该差值称为输出层神经元的误差信号d 。</span><a class="headerlink" href="#id23" title="此图像的永久链接">¶</a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id24">
+<a class="reference internal image-reference" href="https://img.zhaoweiguo.com/uPic/2024/11/NlT2pm.png"><img alt="https://img.zhaoweiguo.com/uPic/2024/11/NlT2pm.png" src="https://img.zhaoweiguo.com/uPic/2024/11/NlT2pm.png" style="width: 50%;" /></a>
+<figcaption>
+<p><span class="caption-text">直接计算内部神经元的误差信号是不可能的，因为这些神经元的输出值是未知的。多年来，训练多结点网络的有效方法一直未知。直到八十年代中期，反向传播算法才被研究出来。这个想法是将误差信号d （在单个教学步骤中计算）传播回所有神经元，其输出信号是所讨论神经元的输入。</span><a class="headerlink" href="#id24" title="此图像的永久链接">¶</a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id25">
+<a class="reference internal image-reference" href="https://img.zhaoweiguo.com/uPic/2024/11/4dO6ai.png"><img alt="https://img.zhaoweiguo.com/uPic/2024/11/4dO6ai.png" src="https://img.zhaoweiguo.com/uPic/2024/11/4dO6ai.png" style="width: 50%;" /></a>
+<figcaption>
+<p><span class="caption-text">用于传播误差的权重系数 <span class="math notranslate nohighlight">\(w_{mn}\)</span> 等于计算输出值期间使用的权重系数。仅改变数据流的方向（信号从输出依次传播到输入）。该技术用于所有网络层。</span><a class="headerlink" href="#id25" title="此图像的永久链接">¶</a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id26">
+<a class="reference internal image-reference" href="https://img.zhaoweiguo.com/uPic/2024/11/e2BuKP.png"><img alt="https://img.zhaoweiguo.com/uPic/2024/11/e2BuKP.png" src="https://img.zhaoweiguo.com/uPic/2024/11/e2BuKP.png" style="width: 50%;" /></a>
+<figcaption>
+<p><span class="caption-text">当计算每个神经元的误差信号时，可以修改每个神经元输入节点的权重系数。在如图公式中， <code class="docutils literal notranslate"><span class="pre">df(e)/de</span></code> 表示神经元激活函数的导数（其权重被修改）。</span><a class="headerlink" href="#id26" title="此图像的永久链接">¶</a></p>
+</figcaption>
+</figure>
+<figure class="align-default">
+<a class="reference internal image-reference" href="https://img.zhaoweiguo.com/uPic/2024/11/IPOXKQ.png"><img alt="https://img.zhaoweiguo.com/uPic/2024/11/IPOXKQ.png" src="https://img.zhaoweiguo.com/uPic/2024/11/IPOXKQ.png" style="width: 50%;" /></a>
+</figure>
+</section>
+<section id="id9">
+<h2>参考<a class="headerlink" href="#id9" title="此标题的永久链接">¶</a></h2>
+<ul class="simple">
+<li><p>Principles of training multi-layer neural network using backpropagation: <a class="reference external" href="http://galaxy.agh.edu.pl/~vlsi/AI/backp_t_en/backprop.html">http://galaxy.agh.edu.pl/~vlsi/AI/backp_t_en/backprop.html</a></p></li>
+<li><p>[Deep Learning] 神经网络基础: <a class="reference external" href="https://www.cnblogs.com/maybe2030/p/5597716.html">https://www.cnblogs.com/maybe2030/p/5597716.html</a></p></li>
+</ul>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="../../genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../search.html"><span class="std std-ref">搜索页面</span></a></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="LinearLayer.html" class="btn btn-neutral float-right" title="Linear Layer" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="../dls/LSTM-%E9%95%BF%E7%9F%AD%E6%97%B6%E8%AE%B0%E5%BF%86.html" class="btn btn-neutral" title="LSTM: 长短时记忆(Long Short Term Memory, LSTM)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+  
+  <div id="gitalk-container"></div>
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2010-2025, 新溪-gordon.
+
+    </p>
+  </div>
+  <div>备案号 <a href="http://www.beian.miit.gov.cn">京ICP备16018553号</a></div><div>Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a></div>. 
+
+
+</footer>
+
+<script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?042289284b8eb33866001347a3e0b129";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>     
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'V2025.05',
+            LANGUAGE:'zh-CN',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../_static/sphinx_highlight.js"></script>
+      <script type="text/javascript" src="../../_static/clipboard.min.js"></script>
+      <script type="text/javascript" src="../../_static/copybutton.js"></script>
+      <script type="text/javascript" src="../../_static/translations.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script type="text/javascript" src="../../None"></script>
+      <script type="text/javascript" src="https://fastly.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  
+
+  <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+
+
+      // var gitalk = new Gitalk({
+      //         clientID: '565177626b5d46427009',
+      //         clientSecret: 'b2a36e67e1d2a73e43667f46d571c2624f8e1026',
+      //         repo: 'knowledge',
+      //         owner: 'zhaoweiguo',
+      //         admin: ['zhaoweiguo'],
+      //         id: location.pathname,      // Ensure uniqueness and length less than 50
+      //         distractionFreeMode: false  // Facebook-like distraction free mode
+      //       })
+      // gitalk.render('gitalk-container')
+
+  </script>
+
+
+<script type="text/javascript" src="../../_static/js/table-of-contents-sidebar.js"></script>
+<!-- <script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script> -->
+<script type="text/javascript">
+    window.onload = function(e){
+        TableOfContents.init({
+            basePath: "https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/",
+            querySelector: "body" // or other css querySelector
+        });
+    }
+</script> 
+
+</body>
+</html>

@@ -1,0 +1,68 @@
+alsamixer
+^^^^^^^^^
+
+* alsamixer 是 ALSA 项目提供的一个命令行下的音量控制工具。它可以控制 ALSA 驱动支持的所有声卡通道和控制的音量。
+* 是一个带界面交互的 amixer 版本，alsamixer 基于 amixer 之上开发,扩展了其功能,并加入了图形界面用于更友好的用户交互。
+
+
+::
+
+	Usage: alsamixer [options]
+	Useful options:
+	  -h, --help              this help
+	  -c, --card=NUMBER       sound card number or id
+	  -D, --device=NAME       mixer device name
+	  -m, --mouse             enable mouse
+	  -M, --no-mouse          disable mouse
+	  -f, --config=FILE       configuration file
+	  -F, --no-config         do not load configuration file
+	  -V, --view=MODE         starting view mode: playback/capture/all
+	Debugging options:
+	  -g, --no-color          toggle using of colors
+	  -a, --abstraction=NAME  mixer abstraction level: none/basic
+
+
+
+
+alsamixer 的主要功能包括::
+
+	1. 显示声卡的详细信息,如声卡名、芯片名、所有通道及其功能等。
+	2. 可以通过键盘来调整每个声道的音量、静音或解除静音。支持使用 ↑↓ ←→ 方向键和 + - 键来调整音量。
+	3. 支持切换声道视图,可以只显示某一个声卡或屏蔽不重要的声道。
+	4. 支持切换单声道可视化模式或者所有声道可视化模式。在单声道可视化模式可以更清楚地看到每个声道的音量状态。
+	5. 支持通过 F6 键来选择不同的声卡,如果系统有多个音频设备的话。
+	6. 支持静音/解除静音所有声道或某一个声道。按 m 键静音,再按 m 键解除静音。
+	7. 支持增加/减少所有的声道音量。按 F3/F4 键可以同时控制所有的声道。
+	8. 支持捕捉和显示音量对应的 dB 值。
+	9. 支持声道重命名和隐藏。
+	10. 支持通过配置文件来保存和恢复 alsamixer 的设置。
+
+* alsamixer 是非 GUI 下控制 ALSA 音量的常用工具,简单实用,是 Linux 音频控制不可缺少的一个利器。 
+* 可以通过修改 ~/.asoundrc 文件来设置 alsamixer 的默认设置
+
+
+~/.asoundrc(/etc/asound.conf)::
+
+	defaults.pcm.card 0
+	defaults.pcm.device 0
+	defaults.ctl.card 0
+
+	ctl.!default
+	{ 
+	    type integer
+	   iface MIXER
+	    name 'Master'
+	    value 80       # 设置 Master 声道默认音量为 80
+	}
+
+	ctl.!default 
+	{
+	    type enum
+	    iface MIXER
+	    name  'Input Source'
+	    enum 'Mic'      # 设置默认输入源为 Mic
+	}
+
+
+
+

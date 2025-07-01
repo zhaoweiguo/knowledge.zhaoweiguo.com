@@ -1,0 +1,108 @@
+# JSON-RPC 简介
+
+* https://www.jsonrpc.org/
+
+## 1. **JSON-RPC 是什么？**
+
+* JSON-RPC（JavaScript Object Notation Remote Procedure Call）是一种基于 JSON 的远程过程调用（RPC）协议，支持请求-响应模式和单向通知模式，适用于客户端-服务器通信。
+
+## 2. **主要特点**
+- **轻量级**：使用 JSON 作为数据格式，易于解析和传输。
+- **无状态**：通常不依赖于服务器的会话状态。
+- **跨语言**：适用于 Python、JavaScript、Go、Rust 等各种编程语言。
+- **双向通信**：支持双向调用（如 WebSocket 双向通信）。
+- **批量请求**：支持多个请求合并为一个 JSON 数组，提高效率。
+
+## 3. **基本结构**
+
+### 3.1 **请求格式**
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "subtract",
+  "params": [42, 23],
+  "id": 1
+}
+```
+- `jsonrpc`：版本号（目前为 `"2.0"`）。
+- `method`：要调用的远程方法名称。
+- `params`：方法参数（可以是数组或对象）。
+- `id`：请求 ID（用于匹配响应）。
+
+
+
+### 3.2 **响应格式**
+```json
+{
+  "jsonrpc": "2.0",
+  "result": 19,
+  "id": 1
+}
+```
+- `result`：方法的返回值。
+- `id`：对应请求的 ID。
+
+
+
+### 3.3 **错误响应**
+```json
+{
+  "jsonrpc": "2.0",
+  "error": {
+    "code": -32601,
+    "message": "Method not found"
+  },
+  "id": 1
+}
+```
+- `error.code`：标准错误码，如 `-32601`（方法未找到）。
+- `error.message`：错误描述。
+
+
+
+
+## 4. **通信方式**
+
+- **HTTP/HTTPS**：通过 POST 发送 JSON 请求。
+- **WebSocket**：支持全双工通信，可实现实时交互。
+- **TCP/IPC**：适用于高性能应用。
+
+
+## 5. **Python 示例**
+```python
+import requests
+import json
+
+url = "http://localhost:4000/jsonrpc"
+headers = {"Content-Type": "application/json"}
+data = {
+    "jsonrpc": "2.0",
+    "method": "add",
+    "params": [5, 3],
+    "id": 1
+}
+
+response = requests.post(url, data=json.dumps(data), headers=headers)
+print(response.json())
+```
+
+## 7. **总结**
+JSON-RPC 提供了一种简单高效的远程调用机制，适用于跨语言、轻量级 RPC 需求，尤其适合 Web 服务、区块链等场景。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

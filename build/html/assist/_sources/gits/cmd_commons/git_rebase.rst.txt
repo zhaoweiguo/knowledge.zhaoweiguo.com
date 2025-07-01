@@ -1,0 +1,140 @@
+git rebase命令
+##############
+
+Reapply commits on top of another base tip
+
+
+把一个分支的修改合并到当前分支
+==============================
+
+说明
+----
+
+::
+
+        A---B---C topic
+        /
+   D---E---F---G master
+
+
+执行::
+
+  $ git rebase master   // 当前在topic节点
+  $ git rebase master topic
+
+结果::
+
+                 A'--B'--C' topic
+                /
+   D---E---F---G master
+
+
+示例
+----
+
+定期使用项目仓库内容更新自己仓库内容::
+
+  $ git remote add upstream https://github.com/yeasy/blockchain_guide
+  $ git fetch upstream
+  $ git checkout master
+  $ git rebase upstream/master
+  $ git push -f origin master
+
+
+
+
+
+
+修改commit的内容
+================
+
+在本地分支通过 git rebase -i 的方式来指定修改某条 Commit，修改完后，通过 push --force 强行同步给远端进行修改::
+
+    -i, --interactive
+      Make a list of the commits which are about to be rebased. 
+      Let the user edit that list before rebasing. 
+
+.. note:: 因为最新的 commit 依赖于「时间早的 commit」，所以即使只修改一点「时间早的 commit」，后面所有的 commit 都会变化。如果有多个 commit 修改，则从时间由早到新的顺序一个个处理【理解小技巧】处理当前 commit 时，HEAD 指针在当前 commit 上。
+
+
+
+实例-展示从 n 次前修改到现在的 Commit 记录::
+
+    $ git rebase -i HEAD~n
+    如: 展示最近2次修改的 Commit 记录
+    $ git rebase -i HEAD~2
+
+实例-展示从指定 commit 到当前 commit 的记录::
+
+    $ git rebase -i <commit>^
+
+示例::
+
+    Rebase e69a059..e43345a onto e69a059 (2 commands)
+    Commands:
+    p, pick <commit> = use commit
+        不做任务修改
+    r, reword <commit> = use commit, but edit the commit message
+        只修改消息内容
+    e, edit <commit> = use commit, but stop for amending
+        修改可接合 git commit --amend
+    s, squash <commit> = use commit, but meld into previous commit
+        合并当前 commit 到之前的 commit 上
+    f, fixup [-C | -c] <commit> = like "squash" 
+            but keep only the previous commit's log message
+        和 squash 命令一样，但直接使用前一个 commit 的message
+        -C: keep only this commit's message
+            直接使用当前 commit 的 message
+        -c: same as -C but opens the editor
+            直接使用当前 commit 的 message 且打开编辑器
+
+    下面的不太常用
+    x, exec <command> = run command (the rest of the line) using shell
+    b, break = stop here (continue rebase later with 'git rebase --continue')
+    d, drop <commit> = remove commit
+    l, label <label> = label current HEAD with a name
+    t, reset <label> = reset HEAD to a label
+    m, merge [-C <commit> | -c <commit>] <label> [# <oneline>]
+    .       create a merge commit using the original merge commit's
+    .       message (or the oneline, if no original merge commit was
+    .       specified); use -c <commit> to reword the commit message
+
+
+修改commit的user和email
+=======================
+
+执行::
+
+    git rebase -i <commit-hash>^ --exec "git commit --amend --author='NewName <new@zhaoweiguo.com>'"
+
+或者::
+
+    只执行:
+    git rebase -i <commit-hash>
+    然后在交互窗口增加命令
+    >> 这是一个commit内容,在下面增加命令
+    >> exec git commit --amend --author='New <new@zhaoweiguo.com>'
+
+
+
+
+说明
+====
+
+冲突 (conflict)解决::
+
+    在 rebase 的过程中，也许会出现冲突 (conflict)
+    在这种情况:
+    1. Git 会停止 rebase 并会让你去解决冲突
+    2. 在解决完冲突后，用”git add“命令去更新这些内容的索引 (index)
+    3. 无需执行 git commit, 只要执行:
+        $ git rebase --continue
+
+
+
+终止::
+
+    在任何时候，可以用如下命令终止 rebase 的操作
+    $ git rebase --abort
+
+

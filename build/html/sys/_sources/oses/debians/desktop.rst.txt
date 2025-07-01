@@ -1,0 +1,277 @@
+桌面相关
+########
+
+Ubuntu
+=======
+
+常用::
+
+  //右键里面添加一个“打开终端”的菜单:
+  sudo apt-get install nautilus-open-terminal
+
+  //配置中文环境 [这个在新系统中一般用不到了]:
+  sudo apt-get install language-support-zh
+
+
+工具包::
+
+  pdfeditor(Xournal和Okular都可以实现添加批注，但pdfedit是真正的PDF编辑软件):
+  $> sudo apt-get install pdfeditor
+
+
+在ubuntu下close laptop lid, 不执行任何操作::
+
+    Alt + F2 and enter this: gconf-editor 
+    apps > gnome-power-manager > buttons
+    Set lid_ac and lid_battery to nothing
+
+    OR
+
+    1.When on AC Power, do nothing when laptop lid is closed: 
+    gconftool-2 -t string -s /apps/gnome-power-manager/buttons/lid_ac nothing 
+
+    2.When on Battery Power, do nothing when laptop lid is closed: 
+    gconftool-2 -t string -s /apps/gnome-power-manager/buttons/lid_battery nothing 
+
+
+
+Backports::
+
+    Backports默认在ubuntu11.10(不包括)之前的版本是关闭的。因为在这些版本中,在从Backport安装包之前必须手工开启Backports.
+    详情察看 `这儿 <https://help.ubuntu.com/community/UbuntuBackports#Enabling_Backports>`_
+
+
+
+中文输入法
+===============
+
+搜索五笔的安装包::
+
+    apt search fcitx | grep wb
+
+
+安装软件包::
+
+    sudo apt install fcitx fcitx-table-wbpy
+
+
+
+* Ubuntu 安装五笔输入法: https://blog.csdn.net/x763795151/article/details/118864770
+
+.. warning:: 注意：要在增加输入法配置时，去掉左侧选中的``Only Show Current Language``
+
+
+截屏
+======
+
+* ubuntu 系统自带截图工具 screenshot
+* 自定义区域截图的快捷键：Setting -> Devices -> Keyboard
+* 可以设置为 ``ctrl + alt + A``
+
+
+电脑合盖
+===========
+
+* 有时界面上相关设置，有时则没有，没有的话可以用下面方法
+
+文件 /etc/systemd/logind.conf::
+
+    HandleLidSwitch=suspend：当笔记本电脑使用电池供电时，合盖挂起
+    HandleLidSwitchExternalPower=suspend：当笔记本电脑插入电源插座时，合盖挂起
+    HandleLidSwitchDocked=ignore：当笔记本电脑连接到扩展坞时，合盖忽略
+
+参数的值::
+
+    suspend：合盖时挂起
+    lock：合盖时锁定
+    ignore：什么都不做
+    poweroff：关机
+    hibernate：合盖时休眠
+
+重启::
+
+    // 查看:
+    $ systemctl list-units | grep login
+    systemd-logind.service      loaded active running   User Login Management
+
+    // 重启
+    sudo systemctl restart systemd-logind.service
+
+
+亮度调节
+==============
+
+
+xbacklight
+-------------
+
+* xbacklight -set <亮度值>，其中<亮度值>是一个0到100之间的整数
+* 提示“No outputs have backlight property”，通常意味着当前系统没有检测到支持背光调节的输出设备。这种情况可能发生在非Intel核显的系统中，因为xbacklight默认只对Intel核显有效
+
+
+
+
+
+
+鼠标配置
+============
+
+.. note:: 2024-07-14 使用联想的一个无线鼠标，前进后退键和我原来习惯是相反的，搞搞搞，搞了半天，最后也没搞好，换了一个蓝牙鼠标直接就好了。原来这两款鼠标的这两个键是相反的，即Thumb1和Thumb2对应的Button8 Button9是反的。总之下面这些实践中并没有用。
+
+xev
+===
+
+确定每个按键的编号::
+
+    $ sudo apt update
+    $ sudo apt install x11-utils x11-xserver-utils
+    $ xev
+        将鼠标移到弹出的白色窗口内，按下前进键和后退键，记录输出的按钮编号。
+        例如，假设前进键的按钮编号是 8，后退键是 9。
+        示例:
+            鼠标按钮(左键Button1)按下时：
+                ButtonPress event, serial 32, synthetic NO, window 0x4e00001,
+                    root 0x1a6, subw 0x0, time 123456789, (100,200), root:(300,400),
+                    state 0x10, button 1, same_screen YES
+            鼠标按钮(右键Button3)释放时：
+                ButtonPress event, serial 32, synthetic NO, window 0x4e00001,
+                    root 0x1a6, subw 0x0, time 123456789, (100,200), root:(300,400),
+                    state 0x10, button 3, same_screen YES
+            鼠标移动时：
+                MotionNotify event, serial 37, synthetic NO, window 0x4c00001,
+                    root 0x1c8, subw 0x0, time 196784800, (177,13), root:(227,134),
+                    state 0x0, is_hint 0, same_screen YES
+            键盘按下(回车键)时：
+                KeyPress event, serial 34, synthetic NO, window 0x4c00001,
+                    root 0x1c8, subw 0x0, time 196747968, (84,81), root:(134,202),
+                    state 0x0, keycode 36 (keysym 0xff0d, Return), same_screen YES,
+                "   XLookupString gives 1 bytes: (0d) "
+                "   XmbLookupString gives 1 bytes: (0d) "
+                    XFilterEvent returns: False
+            键盘释放(回车键)时：
+                KeyRelease event, serial 37, synthetic NO, window 0x4c00001,
+                    root 0x1c8, subw 0x0, time 196748109, (84,81), root:(134,202),
+                    state 0x0, keycode 36 (keysym 0xff0d, Return), same_screen YES,
+                "   XLookupString gives 1 bytes: (0d) "
+                    XFilterEvent returns: False
+
+
+鼠标Button说明::
+
+    Button1：鼠标左键
+    Button2：鼠标中键（滚轮按下）
+    Button3：鼠标右键
+    Button4：鼠标滚轮向上滚动
+    Button5：鼠标滚轮向下滚动
+    Button6：鼠标滚轮向左滚动（如果支持）
+    Button7：鼠标滚轮向右滚动（如果支持）
+    Button8：通常为鼠标侧边的前进按钮
+    Button9：通常为鼠标侧边的后退按钮
+
+键盘按键说明::
+
+    Q: 大写Q
+    q: 小写q
+    Alt_L: 左Alt键
+    Shift_R: 右Shift键
+    Return: 回车键
+    Caps_Lock：大小写切换键
+    Escape：Esc键
+    Tab：Tab制表格键
+    Up: 上箭头键
+    Down: 下箭头键
+    Left: 左箭头键
+    Right: 右箭头键
+
+
+
+imwheel
+-------------
+
+* imwheel - a mouse wheel and button interpreter for X Windows
+
+调整编号::
+
+    $ sudo apt install imwheel
+    $ gedit ~/.imwheelrc
+    ...
+    $ imwheel   # 启动 imwheel
+    or
+    $ imwheel -b "8 9"  # specify button remappings(default="4 5 6 7 8 9")
+
+.imwheelrc 文件示例说明::
+
+    ".*"
+    None,      Up,      Button4, 4
+    None,      Down,    Button5, 3
+
+    说明:
+    第一行的 .* 代表对所有应用生效。
+    第二行和第三行的3代表一次滚动的行数，这里调到3就比较合适了。
+
+
+
+.imwheelrc 文件字段说明::
+
+    文件格式：
+        "匹配模式" 操作, 按键, 滚动量
+
+    1. 修饰键
+        None：没有修饰键。
+        Shift：Shift 键。
+        Control：Control 键（Ctrl）。
+        Alt：Alt 键。
+        Meta：Meta 键（通常是 Windows 键或 Command 键）。
+
+    2. 鼠标按钮动作：
+        定义鼠标按钮的动作
+            有两个主要值：Up（松开）和 Down（按下）。
+            例子：Up 表示鼠标按钮被松开时的动作，Down 表示鼠标按钮被按下时的动作。
+        动作说明：
+        Index   Interpreted As    Button Number   Name in imwheelrc
+         1       Wheel Up          4               Up
+         2       Wheel Down        5               Down
+         3       Wheel Left        6               Left
+         4       Wheel Right       7               Right
+         5       Thumb Button 1    8               Thumb1
+         6       Thumb Button 2    9               Thumb2
+         7       Extra Button 1    10              ExtBt7
+         8       Extra Button 2    11              ExtBt8
+
+    3. 要执行的动作：
+        定义在满足修饰键和鼠标按钮动作时要执行的动作。
+            动作可以是发送按键或组合键。
+            例子：
+                Button4（鼠标按钮4）
+                Alt_L|Left（左Alt键和左箭头键的组合）。
+
+
+
+    假设你想在按下某个修饰键时改变鼠标按钮的行为：
+        ".*"
+        Shift, Button8, Button9    # 按下 Shift 键并点击 Button8 会触发 Button9 的功能
+        Control, Button8, Button1  # 按下 Control 键并点击 Button8 会触发 Button1 的功能（鼠标左键点击）
+        Alt, Button8, Button3      # 按下 Alt 键并点击 Button8 会触发 Button3 的功能（鼠标右键点击）
+        Meta, Button8, Button2     # 按下 Meta 键并点击 Button8 会触发 Button2 的功能（鼠标中键点击）
+
+
+
+启动时自动运行::
+
+    打开“启动应用程序首选项”：
+    $ gnome-session-properties
+    点击“添加”，填写以下内容：
+        名称：imwheel
+        命令：imwheel -b "8 9"
+
+
+
+
+
+
+
+
+
+
+
+

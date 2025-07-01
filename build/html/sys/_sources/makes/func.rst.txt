@@ -1,0 +1,120 @@
+函数
+####
+
+* [清单手册]8 Functions for Transforming Text: https://www.gnu.org/software/make/manual/html_node/Functions.html
+
+函数语法包括::
+
+    定义语法和调用语法
+
+自定义函数
+==========
+
+自定义函数的语法为::
+
+    define 函数名
+    函数体
+    endef
+
+示例::
+
+    define Foo
+        @echo "my name is $(0)"
+        @echo "param is $(1)"
+    endef
+
+.. note:: define 本质上是定义一个多行变量，可以在 call 的作用下当作函数来使用，在其他位置使用只能作为多行变量来使用
+
+例如::
+
+    var := $(call Foo)
+    new := $(Foo)
+
+自定义函数是一种过程调用，没有任何的返回值。可以使用自定义函数来定义命令的集合，并应用在规则中。
+
+
+预定义函数
+==========
+
+.. note:: make 编译器也定义了很多函数，这些函数叫作预定义函数
+
+语法为::
+
+    $(<function> <arguments>)
+    或者
+    ${<function> <arguments>}
+    <function> 是函数名，<arguments> 是函数参数
+    参数间用逗号分割。函数的参数也可以是变量。
+
+例::
+
+    PLATFORM = linux_amd64
+    GOOS := $(word 1, $(subst _, ,$(PLATFORM)))
+
+    上面的例子用到了两个函数: word 和 subst
+    word 函数有两个参数，1 和 subst 函数的输出
+    subst 函数将 PLATFORM 变量值中的 _ 替换成空格（替换后的 PLATFORM 值为 linux amd64）
+    word 函数取 linux amd64 字符串中的第一个单词
+    所以最后 GOOS 的值为 linux
+
+.. figure:: https://img.zhaoweiguo.com/knowledge/images/sys/makes/func1.jpg
+
+   常用的函数
+
+
+1. shell 函数::
+
+    srcfiles := $(shell echo src/{00..99}.txt)
+
+2. wildcard 函数::
+
+    srcfiles := $(wildcard src/*.txt)
+
+3. subst 函数::
+
+    $(subst from,to,text)
+    说明:
+      把 text 字符串中的「from」替换成「to」
+
+
+    示例:
+    a. 将字符串"feet on the street"替换成"fEEt on the strEEt":
+        $(subst ee,EE,feet on the street)
+
+    b. 实例2:
+    empty:=
+    # space变量用两个空变量作为标识符，当中是一个空格
+    space:= $(empty) $(empty)
+    foo:= a b c
+    bar:= $(subst $(space),$(comma),$(foo))
+    # bar is now `a,b,c'.
+
+4. patsubst函数::
+
+    patsubst 函数用于模式匹配的替换
+    格式如下:
+    $(patsubst pattern,replacement,text)
+
+    实例:
+    下面的例子将文件名"x.c.c bar.c"，替换成"x.c.o bar.o":
+    $(patsubst %.c,%.o,x.c.c bar.c)
+
+5. 替换后缀名::
+
+    替换后缀名函数的写法:
+    变量名 + 冒号 + 后缀名替换规则
+    
+    注: 它实际上patsubst函数的一种简写形式:
+
+    例:
+    min: $(OUTPUT:.js=.min.js)
+    上面代码的意思是，将变量OUTPUT中的后缀名 .js 全部替换成 .min.js
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,189 @@
+.. _mod:
+
+go mod命令
+##########
+
+Usage::
+
+    $ go mod <command> [arguments]
+    $ go help mod <command>
+
+<command>::
+
+    download    download modules to local cache
+    edit        edit go.mod from tools or scripts
+    graph       print module requirement graph
+    init        initialize new module in current directory
+    tidy        add missing and remove unused modules
+    vendor      make vendored copy of dependencies
+    verify      verify dependencies have expected content
+    why         explain why packages or modules are needed
+
+实例init::
+
+    $ go mod init example.com/m
+    实例:
+
+    $ go mod init github.com/zhaoweiguo/abc
+    or
+    $ go mod init github.com/zhaoweiguo/abc/v2
+
+
+
+移除mod::
+
+    1. 移出所有代码中不需要的包
+    $ go mod tidy
+    $ go mod tidy -go=1.16    // 指定golang版本
+
+    2. 仅仅修改 go.mod 配置文件的内容
+    $ go mod edit --droprequire=golang.org/x/crypto
+
+查看依赖包::
+
+    1. 可以直接查看 go.mod 文件，或者使用命令行：
+    $ go list -m all
+
+    2. json 格式输出
+    $ go list -m -json all
+
+升级相关::
+
+    1. 实例查看要升级的依赖:
+    $ go list -u -m all
+
+    2. 升级次级或补丁版本号:
+    $ go get -u rsc.io/quote
+
+    3. 仅升级补丁版本号：
+    $ go get -u=patch rscio/quote
+
+    4. 升降级版本号，可以使用比较运算符控制：
+    $ go get foo@'<v1.6.2'
+
+    5. 增加确定版本
+    $ go get foo@v1.6.2
+
+发布版本::
+
+    官方推荐将上述过程在一个新分支来避免混淆，那么类如上述例子可以创建一个 v2 分支，但这个不是强制要求的
+    还有一种方式发布新版本，那就是在主线版本种加入 v2 文件夹，相应的也需要内置 go.mod 这个文件
+    $ go mod edit --module=github.com/islishude/gomodtest/v2
+
+
+
+说明::
+
+    在 Go v1.12 功能基本稳定，到下一个版本 v1.13 将默认开启
+    在1.11版本引入，尚且是初期版本。考虑向前兼容，目前仍然可以用go get，但最终这个命令是会消失的。
+    go命令(‘go build’, ‘go test’, 甚至 ‘go list’)执行时，会自己去修改go.mod文件
+
+
+go.sum 文件
+===========
+
+go.sum 文件中每行记录由 module 名、版本和哈希组成，并由空格分开::
+
+    <module> <version>[/go.mod] <hash>
+
+
+示例::
+
+    github.com/google/uuid v1.1.1 h1:Gkbcsh/GbpXz7lPftLA3P6TYMwjCLYm83jiFQZF/3gY=  
+    github.com/google/uuid v1.1.1/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGEw/LqOeaOT+nhxU+yHo=
+    说明:
+        v1.1.1 表示该依赖包版本整体
+        v1.1.1/go.mod 表示该依赖包版本中 go.mod 文件
+
+
+incompatible 机制
+-----------------
+
+示例::
+
+    require (...    github.com/blang/semver v3.5.0+incompatible    ...）
+
+
+* 如果 major 版本号大于 1 时，其版本号还需要体现在 Module 名字中。比如 Module github.com/RainbowMango/m，如果其版本号增长到 v2.x.x 时，其 Module 名字也需要相应的改变为: ``github.com/RainbowMango/m/v2`` 即: 如果 major 版本号大于 1 时，需要在 Module 名字中体现版本
+* 如果 Module 的 major 版本号虽然变成了 v2.x.x，但 Module 名字仍保持原样就会出现 +incompatible，说明你引用了一个不规范的 Module，正常情况下，只能说明这个 Module 版本未遵循版本化语义规范。引用这个会有一定的风险
+
+
+伪版本
+------
+
+伪版本的版本号格式::
+
+    vx.y.z-yyyymmddhhmmss-abcdefabcdef
+    示例:
+        v0.0.0-20191023171146-3cf2f69b5738
+
+
+
+下载指定库::
+
+    go get github.com/zhaoweiguo/demo@v1.5.0
+    go get github.com/zhaoweiguo/demo@6eb27062747a458a27fb05fceff6e3175e5eca95
+
+exclude
+-------
+
+::
+
+    require github.com/go-logr/logr v0.4.0
+    exclude github.com/go-logr/logr v1.0.0
+
+.. note:: 如果有多个版本存在依赖问题时，可以用这种排除法某个库的指定版本。
+
+
+go mod vender
+=============
+
+* 如果是那种开发环境受限，因无法访问外部代理而无法通过 go 命令自动解决依赖和下载依赖的环境下，我们通过 vendor 来辅助解决。
+* go mod vendor 命令在 vendor 目录下，创建了一份这个项目的依赖包的副本，并且通过 vendor/modules.txt 记录了 vendor 下的 module 以及版本。
+* 要基于 vendor 构建，而不是基于本地缓存的 Go Module 构建，我们需要在 go build 后面加上 -mod=vendor 参数
+* 在 Go 1.14 及以后版本中，如果 Go 项目的顶层目录下存在 vendor 目录，那么 go build 默认也会优先基于 vendor 构建，除非你给 go build 传入 -mod=mod 的参数
+
+retract/Deprecated标识
+======================
+
+* 从 Go 1.16 版本开始，Go Module 作者还可以在 go.mod 中使用新增加的retract 指示符，标识出哪些版本是作废的且不推荐使用的
+* retracted 仅仅是一个提示作用，并不影响 go build 的结果
+* retract 指示符适合标记要作废的独立的 minor 和 patch 版本，如果要提示用某个 module 的某个大版本整个作废，我们用 Go 1.17 版本引入的 Deprecated 注释行更适合。
+
+retract示例::
+
+    // go.mod
+    retract v1.0.0           // 作废v1.0.0版本
+    retract [v1.1.0, v1.2.0] // 作废v1.1.0和v1.2.0两个版本
+
+retract使用显示::
+
+    go list -m -u all
+    ... ...
+    github.com/zhaoweiguo/m1 v1.0.2 (retracted) [v1.0.3]
+
+Deprecated示例::
+
+    // Deprecated: use github.com/zhaoweiguo/m1/v2 instead.
+    module github.com/zhaoweiguo/m1
+
+Deprecated使用显示::
+
+    $go get github.com/zhaoweiguo/m1@latest
+    go: downloading github.com/zhaoweiguo/m1 v1.0.3
+    go: module github.com/zhaoweiguo/m1 is deprecated: use github.com/zhaoweiguo/m1/v2 instead.
+    ... ...
+
+
+
+
+参考
+====
+
+* `Go Modules : v2 及更高版本 <https://juejin.im/post/5de7c00d518825122b0f7113>`_
+
+
+
+
+
+

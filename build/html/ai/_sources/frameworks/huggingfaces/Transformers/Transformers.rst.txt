@@ -1,0 +1,2073 @@
+Transformers
+############
+
+.. note:: 本文档是参考自 ``v4.34.1`` 版本
+
+* from: https://huggingface.co/docs/transformers/v4.23.1/en/index
+
+
+简介
+====
+
+
+1. GET STARTED::
+
+    provides a quick tour of the library and installation instructions to get up and running.
+
+2. TUTORIALS::
+
+    are a great place to start if you’re a beginner.
+    This section will help you gain the basic skills you need to start using the library.
+
+3. HOW-TO GUIDES::
+
+    show you how to achieve a specific goal, 
+    like finetuning a pretrained model for language modeling 
+    or how to write and share a custom model.
+
+4. CONCEPTUAL GUIDES::
+
+    offers more discussion and explanation of the underlying concepts 
+        and ideas behind models, tasks, and the design philosophy of 🤗 Transformers.
+
+5. API: describes all classes and functions::
+
+    MAIN CLASSES
+        details the most important classes like configuration, model, tokenizer, and pipeline.
+    MODELS
+        details the classes and functions related to each model implemented in the library.
+    INTERNAL
+        HELPERS details utility classes and functions used internally.
+
+
+GET STARTED
+===========
+
+Quick tour
+----------
+
+安装::
+
+    pip install transformers datasets
+    # optional
+    sentiment
+    pip install tensorflow
+
+
+Pipeline
+^^^^^^^^
+
+Task List::
+
+    +------------------------------+-----------------+-----------------------------------------------+
+    | Task                         | Modality        | Pipeline identifier                           |
+    +==============================+=================+===============================================+
+    | Text classification          | NLP             | pipeline(task="sentiment-analysis")           |
+    +------------------------------+-----------------+-----------------------------------------------+
+    | Text generation              | NLP             | pipeline(task="text-generation")              |
+    +------------------------------+-----------------+-----------------------------------------------+
+    | Summarization                | NLP             | pipeline(task="summarization")                |
+    +------------------------------+-----------------+-----------------------------------------------+
+    | Image classification         | Computer vision | pipeline(task="image-classification")         |
+    +------------------------------+-----------------+-----------------------------------------------+
+    | Image segmentation           | Computer vision | pipeline(task="image-segmentation")           |
+    +------------------------------+-----------------+-----------------------------------------------+
+    | Object detection             | Computer vision | pipeline(task="object-detection")             |
+    +------------------------------+-----------------+-----------------------------------------------+
+    | Audio classification         | Audio           | pipeline(task="audio-classification")         |
+    +------------------------------+-----------------+-----------------------------------------------+
+    | Automatic speech recognition | Audio           | pipeline(task="automatic-speech-recognition") |
+    +------------------------------+-----------------+-----------------------------------------------+
+    | Visual question answering    | Multimodal      | pipeline(task="vqa")                          |
+    +------------------------------+-----------------+-----------------------------------------------+
+    | Document question answering  | Multimodal      | pipeline(task="document-question-answering")  |
+    +------------------------------+-----------------+-----------------------------------------------+
+    | Image captioning             | Multimodal      | pipeline(task="image-to-text")                |
+    +------------------------------+-----------------+-----------------------------------------------+
+
+::
+
+    >>> from transformers import pipeline
+
+    >>> classifier = pipeline("sentiment-analysis")
+    >>> classifier("We are very happy to show you the 🤗 Transformers library.")
+    [{'label': 'POSITIVE', 'score': 0.9998}]
+
+
+Example: iterate over an entire dataset of automatic speech::
+
+    import torch
+    from transformers import pipeline
+
+    # 语音识别pipeline(speech_recognizer)
+    sr = pipeline("automatic-speech-recognition", model="facebook/wav2vec2-base-960h")
+
+    # 载入数据
+    from datasets import load_dataset, Audio
+    dataset = load_dataset("PolyAI/minds14", name="en-US", split="train")
+
+    # 确保相同的 sampling rate
+    dataset = dataset.cast_column("audio", Audio(sampling_rate=sr.feature_extractor.sampling_rate))
+
+    # 执行task
+    result = sr(dataset[:4]["audio"])
+    print([d["text"] for d in result])
+
+
+Example: Use another model and tokenizer in the pipeline::
+
+    model_name = "nlptown/bert-base-multilingual-uncased-sentiment"
+
+    from transformers import AutoTokenizer, AutoModelForSequenceClassification
+
+    model = AutoModelForSequenceClassification.from_pretrained(model_name)
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+    # 指定model和tokenizer
+    classifier = pipeline("sentiment-analysis", model=model, tokenizer=tokenizer)
+
+    # 执行
+    classifier("Nous sommes très heureux de vous présenter la bibliothèque 🤗 Transformers.")
+
+
+
+AutoClass
+^^^^^^^^^
+
+AutoTokenizer::
+
+    from transformers import AutoTokenizer
+
+    model_name = "nlptown/bert-base-multilingual-uncased-sentiment"
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+    # Pass your text to the tokenizer:
+    encoding = tokenizer("We are very happy to show you the 🤗 Transformers library.")
+    print(encoding)
+    # {
+    #         'input_ids': [101, 11312, 10320, 12495, 19308, 10114, 11391, 10855, 10103, 100, 58263, 13299, 119, 102], 
+    #        'token_type_ids': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+    #        'attention_mask': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    # }
+
+    # accept a list of inputs, and pad and truncate the text to return a batch with uniform length
+    pt_batch = tokenizer(
+        ["We are very happy to show you the 🤗 Transformers library.", "We hope you don't hate it."],
+        padding=True,
+        truncation=True,
+        max_length=512,
+        return_tensors="pt",
+    )
+
+AutoModel::
+
+    # For text (or sequence) classification, you should load `AutoModelForSequenceClassification`
+    from transformers import AutoModelForSequenceClassification
+
+    model_name = "nlptown/bert-base-multilingual-uncased-sentiment"
+    pt_model = AutoModelForSequenceClassification.from_pretrained(model_name)
+
+    # pass your preprocessed batch of inputs directly to the model
+    pt_outputs = pt_model(**pt_batch)
+
+    from torch import nn
+
+    # outputs the final activations in the logits attribute
+    >>> pt_predictions = nn.functional.softmax(pt_outputs.logits, dim=-1)
+    >>> print(pt_predictions)
+    tensor([[0.0021, 0.0018, 0.0115, 0.2121, 0.7725],
+            [0.2084, 0.1826, 0.1969, 0.1755, 0.2365]], grad_fn=<SoftmaxBackward0>)
+
+
+Save a model::
+
+    pt_save_directory = "./pt_save_pretrained"
+    tokenizer.save_pretrained(pt_save_directory)
+    pt_model.save_pretrained(pt_save_directory)
+
+    # load
+    pt_model = AutoModelForSequenceClassification.from_pretrained("./pt_save_pretrained")
+
+
+Custom model builds
+^^^^^^^^^^^^^^^^^^^
+
+::
+
+    # 使用AutoConfig加载要修改的预训练模型生成自定义配置
+    from transformers import AutoConfig
+    my_config = AutoConfig.from_pretrained("distilbert-base-uncased", n_heads=12)
+
+    # 使用AutoModel基于自定义配置创建模型
+    from transformers import AutoModel
+    my_model = AutoModel.from_config(my_config)
+
+Trainer
+^^^^^^^
+
+1. A PreTrainedModel or a torch.nn.Module::
+
+    from transformers import AutoModelForSequenceClassification
+    model = AutoModelForSequenceClassification.from_pretrained("distilbert-base-uncased")
+
+2. TrainingArguments 包含可以更改的模型超参数，例如学习率、批量大小和要训练的周期数::
+
+    from transformers import TrainingArguments
+
+    training_args = TrainingArguments(
+        output_dir="path/to/save/folder/",
+        learning_rate=2e-5,
+        per_device_train_batch_size=8,
+        per_device_eval_batch_size=8,
+        num_train_epochs=2,
+    )
+
+3. 预处理类，如tokenizer, image processor, feature extractor, or processor::
+
+    from transformers import AutoTokenizer
+    tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
+
+4. 加载数据集::
+
+    from datasets import load_dataset
+    dataset = load_dataset("rotten_tomatoes")  # doctest: +IGNORE_RESULT
+
+5. 使用map应用整个数据集::
+
+    def tokenize_dataset(dataset):
+        return tokenizer(dataset["text"])
+
+    dataset = dataset.map(tokenize_dataset, batched=True)
+
+6. 使用DataCollatorWithPadding从数据集创建一批示例::
+
+    from transformers import DataCollatorWithPadding
+    data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
+
+使用Trainer::
+
+    from transformers import Trainer
+
+    trainer = Trainer(
+        model=model,
+        args=training_args,
+        train_dataset=dataset["train"],
+        eval_dataset=dataset["test"],
+        tokenizer=tokenizer,
+        data_collator=data_collator,
+    )  # doctest: +SKIP
+
+开始训练::
+
+    trainer.train()
+
+
+
+
+Installation
+------------
+
+* default install::
+
+    pip install transformers
+
+    # 验证
+    python -c "from transformers import pipeline; print(pipeline('sentiment-analysis')('we love you'))"
+
+* cpu版安装(install Transformers and a deep learning library in one line)::
+
+    pip install 'transformers[torch]'         # 安装 🤗 Transformers 和 PyTorch
+
+    pip install 'transformers[tf-cpu]'        # 安装 🤗 Transformers 和 TensorFlow 2.0
+
+
+* 源码安装::
+
+    pip install git+https://github.com/huggingface/transformers
+
+
+    git clone https://github.com/huggingface/transformers.git
+    cd transformers
+    pip install -e .
+
+
+检查是否安装正确::
+
+    python -c "from transformers import pipeline; print(pipeline('sentiment-analysis')('we love you'))"
+
+    # 查看版本
+    print(transformers.__version__)
+
+附加模块::
+
+    pip install 'transformers[audio]'
+    pip install 'transformers[torch]'
+    pip install 'transformers[tf-cpu]'
+
+
+
+
+
+
+环境变量
+--------
+
+使用conda下载的模型文件地址::
+
+    <env_path>/lib/pythonX.Y/site-packages/transformers/models
+    示例:
+    /home/username/miniconda/envs/myenv/lib/python3.7/site-packages/transformers/models
+
+
+    每个环境都有自己的模型文件副本,并且环境之间相互隔离。
+    可以通过设置`TRANSFORMERS_CACHE`环境变量来覆盖这一默认行为
+
+
+
+
+
+
+
+Fetch models and tokenizers to use offline
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Use the from_pretrained() and save_pretrained() workflow
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+
+1. Download your files ahead of time with PreTrainedModel.from_pretrained()::
+
+    from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+
+    tokenizer = AutoTokenizer.from_pretrained("bigscience/T0_3B")
+    model = AutoModelForSeq2SeqLM.from_pretrained("bigscience/T0_3B")
+
+2. Save your files to a specified directory with PreTrainedModel.save_pretrained()::
+
+    tokenizer.save_pretrained("./your/path/bigscience_t0")
+    model.save_pretrained("./your/path/bigscience_t0")
+
+3. Now when you’re offline, reload your files with PreTrainedModel.from_pretrained() from the specified directory::
+
+
+    tokenizer = AutoTokenizer.from_pretrained("./your/path/bigscience_t0")
+    model = AutoModel.from_pretrained("./your/path/bigscience_t0")
+
+Programmatically download files with the huggingface_hub library
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+1. Install the huggingface_hub library in your virtual environment::
+
+    python -m pip install huggingface_hub
+
+2. Use the hf_hub_download function to download a file to a specific path::
+
+    from huggingface_hub import hf_hub_download
+
+    hf_hub_download(repo_id="bigscience/T0_3B", filename="config.json", cache_dir="./your/path/bigscience_t0")
+
+3. Once your file is downloaded and locally cached, specify it’s local path to load and use it::
+
+    from transformers import AutoConfig
+    config = AutoConfig.from_pretrained("./your/path/bigscience_t0/config.json")
+
+
+
+TUTORIALS
+=========
+
+Pipelines for inference
+-----------------------
+
+Start by creating a pipeline() and specify an inference task::
+
+    from transformers import pipeline
+    generator = pipeline(task="automatic-speech-recognition")
+
+Pass your input text to the pipeline()::
+
+    generator("https://huggingface.co/datasets/Narsil/asr_dummy/resolve/main/mlk.flac")
+    {'text': 'I HAVE A DREAM BUT ONE DAY THIS NATION WILL RISE UP LIVE UP THE TRUE MEANING OF ITS TREES'}
+
+
+
+Load pretrained instances with an AutoClass
+-------------------------------------------
+
+.. note:: Remember, architecture refers to the skeleton of the model and checkpoints are the weights for a given architecture. For example, BERT is an **architecture**, while bert-base-uncased is a **checkpoint**. Model is a general term that can mean either architecture or checkpoint.
+
+
+AutoTokenizer
+^^^^^^^^^^^^^
+
+.. note:: Nearly every NLP task begins with a tokenizer. A tokenizer converts your input into a format that can be processed by the model.
+
+Load a tokenizer with AutoTokenizer.from_pretrained()::
+
+    from transformers import AutoTokenizer
+    tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+
+tokenize your input as shown below::
+
+    >>> sequence = "In a hole in the ground there lived a hobbit."
+    >>> encoded_input=tokenizer(sequence)
+    >>> print(encoded_input)
+    {'input_ids': [101, 1999, 1037, 4920, ...], 
+     'token_type_ids': [0, 0, 0, 0, 0, 0, ...], 
+     'attention_mask': [1, 1, 1, 1, 1, 1, ...]}
+
+Return your input by decoding the input_ids::
+
+    >>> tokenizer.decode(encoded_input["input_ids"])
+    "[CLS] in a hole in the ground there lived a hobbit.[SEP]"
+    # 说明: two special tokens
+    # CLS: classifier
+    # SEP: separator
+
+
+AutoImageProcessor
+^^^^^^^^^^^^^^^^^^
+
+For vision tasks, an image processor processes the image into the correct input format::
+
+    from transformers import AutoImageProcessor
+    image_processor = AutoImageProcessor.from_pretrained("google/vit-base-patch16-224")
+
+
+AutoFeatureExtractor
+^^^^^^^^^^^^^^^^^^^^
+
+For audio tasks, a feature extractor processes the audio signal the correct input format::
+
+    from transformers import AutoFeatureExtractor
+    feature_extractor = AutoFeatureExtractor.from_pretrained("facebook/wav2vec2-base")
+
+
+
+AutoProcessor
+^^^^^^^^^^^^^
+
+* Multimodal tasks require a processor that combines two types of preprocessing tools. 
+* For example, the ``LayoutLMV2`` model requires an image processor to handle images and a tokenizer to handle text; a processor combines both of them.
+
+::
+
+    from transformers import AutoProcessor
+    processor = AutoProcessor.from_pretrained("microsoft/layoutlmv2-base-uncased")
+
+
+AutoModel
+^^^^^^^^^
+
+AutoModelFor classes let you load a pretrained model for a given task(sequence classification)::
+
+    from transformers import AutoModelForSequenceClassification
+    model = AutoModelForSequenceClassification.from_pretrained("distilbert-base-uncased")
+
+reuse the same checkpoint to load an architecture for a different task(token classification)::
+
+    from transformers import AutoModelForTokenClassification
+    model = AutoModelForTokenClassification.from_pretrained("distilbert-base-uncased")
+
+.. note:: Generally, we recommend using the AutoTokenizer class and the AutoModelFor class to load pretrained instances of models. This will ensure you load the correct architecture every time. 
+
+
+
+
+Preprocess data
+---------------
+
+* Before you can train a model on a dataset, it needs to be preprocessed into the expected model input format.
+* Whether your data is text, images, or audio, they need to be converted and assembled into batches of tensors. 
+
+Transformers provides a set of preprocessing classes to help prepare your data for the model::
+
+    1. Text
+        use `Tokenizer` to convert text into a sequence of tokens, and assemble them into tensors.
+    2. Speech and audio
+        use `Feature` extractor to extract sequential features 
+            from audio waveforms and convert them into tensors.
+    3. Image inputs 
+        use `ImageProcessor` to convert images into tensors.
+    4. Multimodal inputs, 
+        use `Processor` to combine a tokenizer and a feature extractor or image processor.
+
+
+.. note:: ``AutoProcessor`` always works and automatically chooses the correct class for the model you’re using, whether you’re using a tokenizer, image processor, feature extractor or processor.
+
+
+Natural Language Processing
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* The main tool for preprocessing textual data is a tokenizer. 
+* A tokenizer splits text into tokens according to a set of rules. 
+* The tokens are converted into numbers and then tensors, which become the model inputs. 
+* Any additional inputs required by the model are added by the tokenizer.
+
+
+Pad
+"""
+
+* Sentences aren’t always the same length which can be an issue because tensors, the model inputs, need to have a uniform shape. 
+* Padding is a strategy for ensuring tensors are rectangular by adding a special padding token to shorter sentences.
+
+示例::
+
+    >>> batch_sentences = [
+    >>>     "But what about second breakfast?",
+    >>>     "Don't think he knows about second breakfast, Pip.",
+    >>>     "What about elevensies?",
+    >>> ]
+    >>> encoded_input = tokenizer(batch_sentences, padding=True)
+    >>> print(encoded_input)
+    {'input_ids': [[101, 1252, 1184, 1164, ..., 0, 0, 0, 0, 0, 0, 0],
+                   [101, 1790, 112, 189, ..., 6462, 117, 21902, 1643, 119, 102],
+                   [101, 1327, 1164, 545, ..., 0, 0, 0, 0, 0, 0, 0, 0]],
+     'token_type_ids': [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]],
+     'attention_mask': [[1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+                        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                        [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0]]}
+
+
+
+Truncation
+""""""""""
+
+* On the other end of the spectrum, sometimes a sequence may be too long for a model to handle. 
+* In this case, you’ll need to truncate the sequence to a shorter length.
+* Set the truncation parameter to True to truncate a sequence to the maximum length accepted by the model
+
+示例::
+
+    >>> batch_sentences = [
+    >>>     "But what about second breakfast?",
+    >>>     "Don't think he knows about second breakfast, Pip.",
+    >>>     "What about elevensies?",
+    >>> ]
+    >>> encoded_input = tokenizer(batch_sentences, padding=True, truncation=True)
+    >>> print(encoded_input)
+    {'input_ids': [[101, 1252, 1184, 1164, ..., 0, 0, 0, 0, 0, 0, 0],
+                   [101, 1790, 112, 189, ..., 6462, 117, 21902, 1643, 119, 102],
+                   [101, 1327, 1164, 545, ..., 0, 0, 0, 0, 0, 0, 0, 0]],
+     'token_type_ids': [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]],
+     'attention_mask': [[1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+                        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                        [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0]]}
+
+Build tensors
+"""""""""""""
+
+* Finally, you want the tokenizer to return the actual tensors that get fed to the model.
+* Set the return_tensors parameter to either pt for PyTorch, or tf for TensorFlow
+
+示例::
+
+    >> batch_sentences = [
+    >>     "But what about second breakfast?",
+    >>     "Don't think he knows about second breakfast, Pip.",
+    >>     "What about elevensies?",
+    >> ]
+    >> encoded_input = tokenizer(batch_sentences, padding=True, truncation=True, return_tensors="pt")
+    >> print(encoded_input)
+    {'input_ids': tensor([[101, 1252, 1184, 1164, 1248, 6462, 136, 102, 0, 0, 0, 0, 0, 0, 0],
+                          [101, 1790, 112, 189, 1341, 1119, 3520, 1164, 1248, 6462, 117, 21902, 1643, 119, 102],
+                          [101, 1327, 1164, 5450, 23434, 136, 102, 0, 0, 0, 0, 0, 0, 0, 0]]),
+     'token_type_ids': tensor([[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]),
+     'attention_mask': tensor([[1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+                               [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                               [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0]])}
+
+
+Audio
+^^^^^
+
+* For audio tasks, you’ll need a ``feature extractor`` to prepare your dataset for the model. 
+* The feature extractor is designed to extract features from raw audio data, and convert them into tensors.
+
+.. note:: Remember you should always resample your audio dataset’s sampling rate to match the sampling rate of the dataset used to pretrain a model!
+
+获取数据::
+
+    from datasets import load_dataset, Audio
+    dataset = load_dataset("PolyAI/minds14", name="en-US", split="train")
+
+    # upsample the sampling rate to 16kHz:
+    dataset = dataset.cast_column("audio", Audio(sampling_rate=16_000))
+
+
+Load the feature extractor::
+
+    from transformers import AutoFeatureExtractor
+    feature_extractor = AutoFeatureExtractor.from_pretrained("facebook/wav2vec2-base")
+
+
+Pass the audio array to the feature extractor::
+
+    audio_input = [dataset[0]["audio"]["array"]]
+    feature_extractor(audio_input, sampling_rate=16000)
+
+
+Pading
+""""""
+
+查看数据长度::
+
+    dataset[0]["audio"]["array"].shape
+    (173398,)
+
+    dataset[1]["audio"]["array"].shape
+    (106496,)
+
+补齐::
+
+    def preprocess_function(examples):
+        audio_arrays = [x["array"] for x in examples["audio"]]
+        inputs = feature_extractor(
+            audio_arrays,
+            sampling_rate=16000,
+            padding=True,
+            max_length=100000,
+            truncation=True,
+        )
+        return inputs
+    processed_dataset = preprocess_function(dataset[:5])
+
+两次查看数据长度::
+
+    dataset[0]["audio"]["array"].shape
+    (100000,)
+
+    dataset[1]["audio"]["array"].shape
+    (100000,)
+
+Computer vision
+^^^^^^^^^^^^^^^
+
+* For computer vision tasks, you’ll need an ``image processor`` to prepare your dataset for the model. 
+* Image preprocessing consists of several steps that convert images into the input expected by the model. 
+* These steps include but are not limited to resizing, normalizing, color channel correction, and converting images to tensors.
+
+载入数据::
+
+    from datasets import load_dataset
+    dataset = load_dataset("food101", split="train[:100]")
+
+查看图片::
+
+    dataset[0]["image"]
+
+
+Load the image processor::
+
+    from transformers import AutoImageProcessor
+    image_processor = AutoImageProcessor.from_pretrained("google/vit-base-patch16-224")
+
+image augmentation
+""""""""""""""""""
+
+.. note:: 这儿用的是torchvision’s transforms module，还可以用其他图像增强方法，如: `Albumentations <https://colab.research.google.com/github/huggingface/notebooks/blob/main/examples/image_classification_albumentations.ipynb>`_ 和 `Kornia <https://colab.research.google.com/github/huggingface/notebooks/blob/main/examples/image_classification_kornia.ipynb>`_
+
+resizing::
+
+    from torchvision.transforms import RandomResizedCrop, ColorJitter, Compose
+
+    size = (
+        image_processor.size["shortest_edge"]
+        if "shortest_edge" in image_processor.size
+        else (image_processor.size["height"], image_processor.size["width"])
+    )
+
+    # 随机裁剪和变化颜色
+    # RandomResizedCrop会随机裁剪图片的区域。
+    # ColorJitter会随机改变图像的亮度、对比度等参数。
+    _transforms = Compose([RandomResizedCrop(size), ColorJitter(brightness=0.5, hue=0.5)])
+
+combines image augmentation and image preprocessing for a batch of images and generates pixel_values::
+
+    # 对每个图像example应用_transforms
+    # 并将转换后的图像保存在example的pixel_values中
+    def transforms(examples):
+        images = [_transforms(img.convert("RGB")) for img in examples["image"]]
+        examples["pixel_values"] = image_processor(images, do_resize=False, return_tensors="pt")["pixel_values"]
+        return examples
+
+apply the transforms on the fly::
+
+    dataset.set_transform(transforms)
+
+
+The image has been randomly cropped and it’s color properties are different::
+
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    img = dataset[0]["pixel_values"]
+    plt.imshow(img.permute(1, 2, 0))
+
+.. note:: dataset[0]["pixel_values"]每次结果不一样。原因是使用了``dataset.set_transform(transforms)``，每次遍历dataset时,这些随机操作都会重新应用,所以同一个样本经过增强之后的pixel_values就会有所不同。这也正是数据增强的目的,通过随机操作创造更多不同的训练样本,提高模型的泛化能力。总结来说,dataset[0]本身不变,但增强后pixel_values不同,是因为随机增强引起的。这对提高模型鲁棒性是有帮助的。
+
+
+Pading
+""""""
+
+::
+
+    def collate_fn(batch):
+        pixel_values = [item["pixel_values"] for item in batch]
+        encoding = image_processor.pad(pixel_values, return_tensors="pt")
+        labels = [item["labels"] for item in batch]
+        batch = {}
+        batch["pixel_values"] = encoding["pixel_values"]
+        batch["pixel_mask"] = encoding["pixel_mask"]
+        batch["labels"] = labels
+        return batch
+
+
+* 在PyTorch中,collate_fn函数的作用是在使用DataLoader加载数据时对一个batch的数据进行预处理。
+* collate_fn会在每个batch被加载后执行,它接受一个batch的数据作为输入,并返回batch的数据作为输出。
+ 
+常见的使用collate_fn的场景有::
+
+    - 当样本的数据格式不同时,collate_fn可以将其转换为相同格式。
+        例如样本包括图像和文本,collate_fn可以将其转换为同样的张量格式。
+    - 当batch中的样本长度不同时,collate_fn可以通过padding将其补齐到相同长度。
+        例如处理NLP任务中的文本数据。
+    - 对batch中的样本进行额外的预处理
+        例如图像增强、文本tokenize等。
+    - 构建自定义的数据结构作为batch的输出
+        例如为检测任务构建(images, targets)的结构。
+    - 在训练语音识别模型时,collate_fn可以将音频样本padding到相同长度,并构建长度变量等。
+
+
+
+Fine-tune a pretrained model
+----------------------------
+
+安装包::
+
+    !pip install datasets transformers accelerate evaluate
+
+load data::
+
+    >>> from datasets import load_dataset
+    >>> dataset = load_dataset("yelp_review_full")
+    >>> dataset["train"][100]
+    {'label': 0,
+     'text': 'My expectations for McDonal...'}
+
+token::
+
+    from transformers import AutoTokenizer
+
+    tokenizer = AutoTokenizer.from_pretrained("bert-base-cased")
+
+model::
+
+    from transformers import AutoModelForSequenceClassification
+    model = AutoModelForSequenceClassification.from_pretrained("bert-base-cased", num_labels=5)
+
+
+取小部分数据以节省时间(可选)::
+
+    from datasets import DatasetDict, Dataset
+
+    small_train_dataset = dataset["train"].shuffle(seed=42).select(range(100))
+    small_test_dataset = dataset["test"].shuffle(seed=42).select(range(100))
+    small_dataset = DatasetDict({
+        'train': small_train_dataset, 
+        'test': small_test_dataset
+    })
+
+批处理token::
+
+    def tokenize_function(examples):
+        return tokenizer(examples["text"], padding="max_length", truncation=True)
+
+    tokenized_datasets = small_dataset.map(tokenize_function, batched=True)
+    small_tokenized_train_dataset = tokenized_datasets["train"]
+    small_tokenized_test_dataset = tokenized_datasets["test"]
+
+
+
+Train with PyTorch Trainer
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Training hyperparameters
+""""""""""""""""""""""""
+
+Specify where to save the checkpoints from your training::
+
+    from transformers import TrainingArguments
+    training_args = TrainingArguments(output_dir="test_trainer")
+
+
+monitor your evaluation metrics during fine-tuning(可选)::
+
+    from transformers import TrainingArguments, Trainer
+    training_args = TrainingArguments(output_dir="test_trainer", evaluation_strategy="epoch")
+
+Evaluate
+""""""""
+
+* ``Trainer`` does not automatically evaluate model performance during training.
+* You should add ``compute_metrics`` param to ``Trainer`` object.
+
+
+`Evaluate <https://huggingface.co/docs/evaluate/index>`_ library provides a simple accuracy function::
+
+    import numpy as np
+    import evaluate
+
+    metric = evaluate.load("accuracy")
+
+convert the predictions to logits (remember all 🤗 Transformers models return logits)::
+
+    def compute_metrics(eval_pred):
+        logits, labels = eval_pred
+        predictions = np.argmax(logits, axis=-1)
+        return metric.compute(predictions=predictions, references=labels)
+
+
+
+Trainer
+"""""""
+
+Create a Trainer object::
+
+    trainer = Trainer(
+        model=model,
+        args=training_args,
+        train_dataset=small_tokenized_train_dataset,
+        eval_dataset=small_tokenized_eval_dataset,
+        compute_metrics=compute_metrics,
+    )
+
+
+fine-tune begin::
+
+    trainer.train()
+
+
+
+
+Train in native PyTorch
+^^^^^^^^^^^^^^^^^^^^^^^
+
+清除环境节省资源::
+
+    del model
+    del trainer
+    torch.cuda.empty_cache()
+
+
+manually postprocess tokenized_dataset to prepare it for training::
+
+    tokenized_datasets = tokenized_datasets.remove_columns(["text"])
+    tokenized_datasets = tokenized_datasets.rename_column("label", "labels")
+
+    # Set the format of the dataset to return PyTorch tensors instead of lists:
+    tokenized_datasets.set_format("torch")
+
+    small_tokenized_train_dataset = tokenized_datasets["train"]
+    small_tokenized_test_dataset = tokenized_datasets["test"]
+
+
+DataLoader
+""""""""""
+
+
+Create a DataLoader::
+
+    from torch.utils.data import DataLoader
+
+    train_dataloader = DataLoader(small_tokenized_train_dataset, shuffle=True, batch_size=8)
+    eval_dataloader = DataLoader(small_tokenized_test_dataset, batch_size=8)
+
+Optimizer and learning rate scheduler
+"""""""""""""""""""""""""""""""""""""
+
+Create an optimizer and learning rate scheduler to fine-tune the model::
+
+    from torch.optim import AdamW
+    optimizer = AdamW(model.parameters(), lr=5e-5)
+
+Create the default learning rate scheduler from Trainer::
+
+    from transformers import get_scheduler
+    num_epochs = 3
+    num_training_steps = num_epochs * len(train_dataloader)
+    lr_scheduler = get_scheduler(
+        name="linear", optimizer=optimizer, num_warmup_steps=0, num_training_steps=num_training_steps
+    )
+
+specify device to use a GPU::
+
+    import torch
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    model.to(device)
+
+
+Training loop
+"""""""""""""
+
+基本的循环训练逻辑::
+
+    from tqdm.auto import tqdm
+
+    progress_bar = tqdm(range(num_training_steps))
+
+    model.train()
+    for epoch in range(num_epochs):
+        for batch in train_dataloader:
+            batch = {k: v.to(device) for k, v in batch.items()}
+            outputs = model(**batch)       # 前向传播
+            loss = outputs.loss
+            loss.backward()                # 反向传播计算梯度
+
+            optimizer.step()               # 使用优化器更新参数
+            lr_scheduler.step()            # 使用学习率调度器更新学习率
+            optimizer.zero_grad()          # 清零优化器的梯度
+            progress_bar.update(1)
+
+
+
+
+Evaluate
+""""""""
+
+
+基本的模型评估逻辑::
+
+    import evaluate
+
+    metric = evaluate.load("accuracy")    # 加载评估指标
+    model.eval()                          # 将模型设置为评估模式
+    for batch in eval_dataloader:
+        batch = {k: v.to(device) for k, v in batch.items()}
+        with torch.no_grad():             # 关闭autograd engine进行推理
+            outputs = model(**batch)      # 模型前向传播计算
+
+        logits = outputs.logits
+        predictions = torch.argmax(logits, dim=-1)        # 计算预测类别
+        metric.add_batch(predictions=predictions, references=batch["labels"])     # 将预测结果和标签传入metric进行指标计算
+
+    metric.compute()                      # 聚合批次结果,得到最终评估指标数量
+
+
+
+
+Train with a script
+-------------------
+
+* 本节主要展示了如何使用现成的脚本来直接实现相应的功能
+* 主要如下面2个由社区贡献的脚本示例 `research projects <https://github.com/huggingface/transformers/tree/main/examples/research_projects>`_ 和 `legacy examples <https://github.com/huggingface/transformers/tree/main/examples/legacy>`_
+
+.. warning:: These scripts are not actively maintained and require a specific version of 🤗 Transformers that will most likely be incompatible with the latest version of the library.
+
+运行脚本示例::
+
+    python examples/pytorch/summarization/run_summarization.py \
+        --model_name_or_path t5-small \
+        --do_train \
+        --do_eval \
+        --dataset_name cnn_dailymail \
+        --dataset_config "3.0.0" \
+        --source_prefix "summarize: " \
+        --output_dir /tmp/tst-summarization \
+        --per_device_train_batch_size=4 \
+        --per_device_eval_batch_size=4 \
+        --overwrite_output_dir \
+        --predict_with_generate
+
+
+Distributed training with Accelerate
+------------------------------------
+
+* 本节主要讲了一个分布式训练的工具: ``Accelerate``
+
+安装::
+
+    pip install accelerate
+
+Backward
+^^^^^^^^
+
+
+使用 ``Accelerate`` 只需要做如下修改::
+
+    + from accelerate import Accelerator
+      from transformers import AdamW, AutoModelForSequenceClassification, get_scheduler
+
+    + accelerator = Accelerator()
+
+      model = AutoModelForSequenceClassification.from_pretrained(checkpoint, num_labels=2)
+      optimizer = AdamW(model.parameters(), lr=3e-5)
+
+    - device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    - model.to(device)
+
+    + train_dataloader, eval_dataloader, model, optimizer = accelerator.prepare(
+    +     train_dataloader, eval_dataloader, model, optimizer
+    + )
+
+      num_epochs = 3
+      num_training_steps = num_epochs * len(train_dataloader)
+      lr_scheduler = get_scheduler(
+          "linear",
+          optimizer=optimizer,
+          num_warmup_steps=0,
+          num_training_steps=num_training_steps
+      )
+
+      progress_bar = tqdm(range(num_training_steps))
+
+      model.train()
+      for epoch in range(num_epochs):
+          for batch in train_dataloader:
+    -         batch = {k: v.to(device) for k, v in batch.items()}
+              outputs = model(**batch)
+              loss = outputs.loss
+    -         loss.backward()
+    +         accelerator.backward(loss)
+
+              optimizer.step()
+              lr_scheduler.step()
+              optimizer.zero_grad()
+              progress_bar.update(1)
+
+
+Transformers Agent
+------------------
+
+.. warning:: Transformers Agent is an experimental API which is subject to change at any time. Results returned by the agents can vary as the APIs or underlying models are prone to change.
+
+* building on the concept of tools and agents.
+* In short, it provides a natural language API on top of transformers: we define a set of curated tools and design an agent to interpret natural language and to use these tools.
+
+示例
+^^^^
+
+命令::
+
+    agent.run("Caption the following image", image=image)
+
+
+.. image:: https://img.zhaoweiguo.com/uPic/2023/08/B49pjD.png
+
+
+命令::
+
+    agent.run("Read the following text out loud", text=text)
+
+
+.. image:: https://img.zhaoweiguo.com/uPic/2023/08/vtKK41.png
+
+
+命令::
+
+    agent.run(
+        "In the following `document`, where will the TRRF Scientific Advisory Council Meeting take place?",
+        document=document,
+    )
+
+
+.. image:: https://img.zhaoweiguo.com/uPic/2023/08/2cLcOq.png
+
+
+Quickstart
+^^^^^^^^^^
+
+安装::
+
+    pip install transformers[agents]
+
+logging in to have access to the Inference API::
+
+    from huggingface_hub import login
+    login("<YOUR_TOKEN>")
+
+instantiate the agent::
+
+    from transformers import HfAgent
+
+    # Starcoder
+    agent = HfAgent("https://api-inference.huggingface.co/models/bigcode/starcoder")
+    # StarcoderBase
+    # agent = HfAgent("https://api-inference.huggingface.co/models/bigcode/starcoderbase")
+    # OpenAssistant
+    # agent = HfAgent(url_endpoint="https://api-inference.huggingface.co/models/OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5")
+
+    ## OpenAI
+    # pip install openai
+    # from transformers import OpenAiAgent
+    # agent = OpenAiAgent(model="text-davinci-003", api_key="<your_api_key>")
+
+
+Single execution (run)
+""""""""""""""""""""""
+
+::
+
+    agent.run("Draw me a picture of rivers and lakes.")
+
+
+    picture = agent.run("Generate a picture of rivers and lakes.")
+    updated_picture = agent.run("Transform the image in `picture` to add an island to it.", picture=picture)
+
+
+Chat-based execution (chat)
+"""""""""""""""""""""""""""
+
+::
+
+    agent.chat("Generate a picture of rivers and lakes")
+    agent.chat("Transform the picture so that there is a rock in there")
+
+
+原理
+^^^^
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/08/1kTPz2.jpg
+
+Agents
+""""""
+
+* The “agent” here is a large language model, and we’re prompting it so that it has access to a specific set of tools.
+
+Tools
+"""""
+
+* Tools are very simple: they’re a single function, with a name, and a description. We then use these tools’ descriptions to prompt the agent. Through the prompt, we show the agent how it would leverage tools to perform what was requested in the query.
+
+Resource
+^^^^^^^^
+
+A curated set of tools
+""""""""""""""""""""""
+
+* Document question answering: given a document (such as a PDF) in image format, answer a question on this document (`Donut <https://huggingface.co/docs/transformers/model_doc/donut>`_)
+* Text question answering: given a long text and a question, answer the question in the text (`Flan_T5 <https://huggingface.co/docs/transformers/model_doc/flan-t5>`_)
+* Unconditional image captioning: Caption the image! (`BLIP <https://huggingface.co/docs/transformers/model_doc/blip>`_)
+* Image question answering: given an image, answer a question on this image (`VILT <https://huggingface.co/docs/transformers/model_doc/vilt>`_)
+* Image segmentation: given an image and a prompt, output the segmentation mask of that prompt (`CLIPSeg <https://huggingface.co/docs/transformers/model_doc/clipseg>`_)
+* Speech to text: given an audio recording of a person talking, transcribe the speech into text (`Whisper <https://huggingface.co/docs/transformers/model_doc/whisper>`_)
+* Text to speech: convert text to speech (`SpeechT5 <https://huggingface.co/docs/transformers/model_doc/speecht5>`_)
+* Zero-shot text classification: given a text and a list of labels, identify to which label the text corresponds the most (`BART <https://huggingface.co/docs/transformers/model_doc/bart>`_)
+* Text summarization: summarize a long text in one or a few sentences (`BART <https://huggingface.co/docs/transformers/model_doc/bart>`_)
+* Translation: translate the text into a given language (`NLLB <https://huggingface.co/docs/transformers/model_doc/nllb>`_)
+
+Custom tools
+""""""""""""
+
+* Text downloader: to download a text from a web URL
+* Text to image: generate an image according to a prompt, leveraging stable diffusion. `huggingface-tools/text-to-image <https://huggingface.co/spaces/huggingface-tools/text-to-image>`_
+* Image transformation: modify an image given an initial image and a prompt, leveraging instruct pix2pix stable diffusion
+* Text to video: generate a small video according to a prompt, leveraging damo-vilab
+
+
+Code generation
+^^^^^^^^^^^^^^^
+
+示例::
+
+    >>> agent.run("Draw me a picture of rivers and lakes", return_code=True)
+
+    ==Code generated by the agent==
+    from transformers import load_tool
+    image_generator = load_tool("huggingface-tools/text-to-image")
+    image = image_generator(prompt="rivers and lakes")
+
+示例::
+
+    >>> agent.run("Draw me a picture of the sea then transform the picture to add an island", return_code=True)
+
+    ==Code generated by the agent==
+    from transformers import load_tool
+    image_transformer = load_tool("huggingface-tools/image-transformation")
+    image_generator = load_tool("huggingface-tools/text-to-image")
+    image = image_generator(prompt="a picture of the sea")
+    image = image_transformer(image, prompt="an island")
+
+示例::
+
+    >>> picture = agent.run("Generate a picture of rivers and lakes.")
+    >>> updated_picture = agent.run("Transform the image in `picture` to add an boat to it.", picture=picture, return_code=True)
+
+    ==Code generated by the agent==
+    image = image_transformer(image=picture, prompt="a boat")
+
+
+Practice
+^^^^^^^^
+
+* https://colab.research.google.com/drive/1c7MHD-T1forUPGcC_jlwsIptOzpG3hSj#scrollTo=Q9rx-nKzDpAW
+
+
+
+
+
+
+
+TASK GUIDES
+===========
+
+NATURAL LANGUAGE PROCESSING
+---------------------------
+
+NLP::
+
+    Text classification
+    Token classification
+      One of the most common token classification tasks is Named Entity Recognition (NER). 
+      NER attempts to find a label for each entity in a sentence, 
+        such as a person, location, or org.
+    Question answering
+    Causal language modeling(There are two types of language modeling: `causal` and `masked`)
+      Causal language models are frequently used for text generation.
+      You can use these models for creative applications 
+        like choosing your own text adventure or an intelligent coding assistant 
+            like Copilot or CodeParrot.
+    Masked language modeling
+      it predicts a masked token in a sequence, and the model can attend to tokens bidirectionally
+      it is great for tasks that require a good contextual understanding of an entire sequence.
+      BERT is an example of a masked language model.
+    Translation
+    Summarization
+    Multiple choice
+
+
+
+AUDIO
+-----
+
+::
+
+    Audio classification
+    Automatic speech recognition
+
+
+COMPUTER VISION
+---------------
+
+::
+
+    Image classification
+    Semantic segmentation
+      Semantic segmentation assigns a label or class to each individual pixel of an image.
+      Common real-world applications of semantic segmentation include:
+          training self-driving cars to identify pedestrians and important traffic information, 
+          identifying cells and abnormalities in medical imagery, 
+          monitoring environmental changes from satellite imagery.
+    Video classification
+    Object detection
+      This task is commonly used in autonomous driving for detecting things 
+        like pedestrians, road signs, and traffic lights. 
+      Other applications include counting objects in images, image search, and more.
+    Zero-shot object detection
+    Zero-shot image classification
+    Depth estimation
+
+    说明:
+    语义分割需要处理所有像素,目标检测只处理感兴趣的目标区域。
+    语义分割侧重对整个场景全面理解,目标检测侧重检测特定感兴趣目标。
+
+
+MULTIMODAL
+----------
+
+::
+
+    Image captioning
+    Document Question Answering
+    Text to speech
+
+
+
+
+
+
+
+DEVELOPER GUIDES
+================
+
+生成文本的模型包括::
+
+    GPT2
+    XLNet
+    OpenAI GPT
+    CTRL
+    TransformerXL
+    XLM
+    Bart
+    T5
+    GIT
+    Whisper
+
+Transformers Notebooks with examples
+------------------------------------
+
+* https://huggingface.co/docs/transformers/notebooks
+
+
+Community resources
+-------------------
+
+* https://huggingface.co/docs/transformers/community
+
+
+
+
+
+
+PERFORMANCE AND SCALABILITY
+===========================
+
+Trainer supports four hyperparameter search backends currently::
+
+     optuna, sigopt, raytune and wandb
+
+
+
+
+CONCEPTUAL GUIDES
+=================
+
+
+Philosophy
+----------
+
+three standard classes required to use each model::
+
+    1. configuration
+    2. models
+    3. a preprocessing class
+
+         1) tokenizer for NLP(AutoTokenizer)
+         2) image processor for vision(AutoImageProcessor)
+         3) feature extractor for audio(AutoFeatureExtractor)
+         4) processor for multimodal inputs(AutoProcessor)
+
+
+On top of those three base classes, the library provides two APIs::
+
+    1. pipeline()
+        for quickly using a model for inference on a given task
+    2. Trainer
+        to quickly train or fine-tune a PyTorch model
+
+
+
+Main concepts
+^^^^^^^^^^^^^
+
+* Model classes can be PyTorch models (torch.nn.Module), Keras models (tf.keras.Model) or JAX/Flax models (flax.linen.Module) that work with the pretrained weights provided in the library.
+* Configuration classes store the hyperparameters required to build a model (such as the number of layers and hidden size). You don’t always need to instantiate these yourself. In particular, if you are using a pretrained model without any modification, creating the model will automatically take care of instantiating the configuration (which is part of the model).
+* Preprocessing classes convert the raw data into a format accepted by the model. A tokenizer stores the vocabulary for each model and provide methods for encoding and decoding strings in a list of token embedding indices to be fed to a model. Image processors preprocess vision inputs, feature extractors preprocess audio inputs, and a processor handles multimodal inputs.
+
+
+All these classes have these three methods::
+
+    from_pretrained()
+    save_pretrained()
+    push_to_hub()
+
+
+Glossary
+--------
+
+::
+
+    attention mask
+        该参数向模型指示哪些标记应该被关注，哪些标记不应该被关注。
+        两个有不同的长度的序列放在同一个张量中时使用
+        注意掩码是一个二进制张量，指示填充索引的位置，以便模型不会关注它们
+
+    autoencoding models
+        See `encoder models` and `masked language modeling`
+
+    autoregressive models
+        See `causal language modeling` and `decoder models`
+
+    backbone
+        backbone is the network (embeddings and layers) that outputs the raw hidden states or features.
+        It is usually connected to a head which accepts the features as its input to make a prediction.
+        For example, 
+            `ViTModel` is a `backbone` without a specific head on top. 
+            Other models can also use `VitModel` as a `backbone` such as DPT.
+
+    causal language modeling
+        预训练任务，模型按顺序读取文本并必须预测下一个单词
+
+    channel
+        彩色图像由红、绿、蓝 (RGB) 三个通道中的值的某种组合组成，而灰度图像只有一个通道
+        在 🤗 Transformers 中，通道可以是图像张量的第一个或最后一个维度：[ n_channels , height , width ] 或 [ height , width , n_channels ]
+
+    connectionist temporal classification (CTC)
+        一种允许模型在不确切知道输入和输出如何对齐的情况下进行学习的算法
+         CTC 通常用于语音识别任务，由于多种原因（例如说话者的语速不同），语音并不总是与文本完全一致。
+
+    convolution
+        神经网络中的一种层，其中输入矩阵与一个较小的矩阵（内核或过滤器）相乘，并将值求和到一个新矩阵中
+        卷积神经网络 (CNN) 常用于计算机视觉
+
+    decoder input IDs
+        This input is specific to encoder-decoder models, and contains the input IDs that will be fed to the decoder. 
+        These inputs should be used for sequence to sequence tasks, such as translation or summarization, and are usually built in a way specific to each model.
+
+    decoder models
+        也叫: autoregressive models
+        decoder models involve a pretraining task (called causal language modeling) where the model reads the texts in order and has to predict the next word. 
+        It’s usually done by reading the whole sentence with a mask to hide future tokens at a certain timestep.
+
+    encoder models
+        也叫: autoencoding models
+        encoder models take an input (such as text or images) and transform them into a condensed(压缩) numerical representation called an embedding. 
+        Oftentimes, encoder models are pretrained using techniques like `masked language modeling`, 
+            which masks parts of the input sequence and forces the model to create more meaningful representations.
+
+    feature extraction
+        The process of selecting and transforming raw data into a set of features that are more informative and useful for machine learning algorithms. 
+        Some examples of feature extraction include 
+            transforming raw text into word embeddings 
+            and extracting important features such as edges or shapes from image/video data.
+
+    feed forward chunking
+        参见下面详解
+
+    finetuned models
+        Finetuning is a form of transfer learning which involves 
+            taking a pretrained model, freezing its weights, and replacing the output layer with a newly added model head. 
+        The model head is trained on your target dataset.
+
+    head
+        The model head refers to the last layer of a neural network that accepts the raw hidden states and projects them onto a different dimension. 
+        There is a different model head for each task. 
+        For example:
+            GPT2ForSequenceClassification is a sequence classification head - a linear layer - on top of the base GPT2Model.
+            ViTForImageClassification is an image classification head - a linear layer on top of the final hidden state of the CLS token - on top of the base ViTModel.
+            Wav2Vec2ForCTC is a language modeling head with CTC on top of the base Wav2Vec2Model.
+
+    image patch
+        参见下面详解
+        Vision-based Transformers models split an image into smaller patches which are linearly embedded, 
+            and then passed as a sequence to the model. 
+        You can find the patch_size - or resolution - of the model in its configuration.
+
+
+    inference
+        Inference is the process of evaluating a model on new data after training is complete. 
+
+    input IDs
+        The input ids are often the only required parameters to be passed to the model as input. 
+        They are token indices, numerical representations of tokens building the sequences that will be used as input by the model.
+
+    labels
+        The labels are an optional argument which can be passed in order for the model to compute the loss itself.
+        These labels should be the expected prediction of the model: 
+            it will use the standard loss in order to compute the loss between its predictions and the expected value (the label).
+
+    masked language modeling (MLM)
+        A pretraining task where the model sees a corrupted version of the texts, 
+            usually done by masking some tokens randomly, and has to predict the original text.
+
+    multimodal
+        A task that combines texts with another kind of inputs (for instance images).
+
+    pipeline
+        Transformers 中的管道是一个抽象，指的是按特定顺序执行的一系列步骤，用于预处理和转换数据并从模型返回预测
+
+    pixel values
+        传递给模型的图像数值表示的张量。
+        pixel values的形状为 [ batch_size , num_channels , height , width ]，由图像处理器生成。
+
+    pooling
+        通过取池化维度的最大值或平均值，将矩阵缩减为更小的矩阵的操作
+        池化层通常位于卷积层之间，用于对特征表示进行下采样
+
+    position IDs
+
+    representation learning
+        机器学习的一个子领域，专注于学习原始数据的有意义的表示。
+        表示学习技术的一些示例包括词嵌入、自动编码器和生成对抗网络 (GAN)。
+
+    self-attention
+        Each element of the input finds out which other elements of the input they should attend to.
+        输入的每个元素都会找出它们应该关注输入的哪些其他元素。
+
+    self-supervised learning
+    semi-supervised learning
+
+    sequence-to-sequence (seq2seq)
+        从输入生成新序列的模型，例如翻译模型或摘要模型
+
+    stride
+        在卷积或池化中，步幅是指内核在矩阵上移动的距离。
+        步幅为 1 表示内核一次移动一个像素，步幅为 2 表示内核一次移动两个像素。
+
+    token
+        A part of a sentence, usually a word, but can also be a subword (non-common words are often split in subwords) or a punctuation symbol.
+
+    token Type IDs
+        这些需要将两个不同的序列连接到单个“input_ids”条目中，这通常是在特殊标记的帮助下执行的，
+        例如分类器（classifier [CLS] ）和分隔符（separator [SEP] ）标记。
+
+    transfer learning
+        一种涉及采用预训练模型并将其适应特定于您的任务的数据集的技术。
+        您可以利用从现有模型获得的知识作为起点，而不是从头开始训练模型。这加快了学习过程并减少了所需的训练数据量。
+
+
+
+feed forward chunking
+^^^^^^^^^^^^^^^^^^^^^
+
+* from llm
+* Feed Forward Chunking 是一种用于减少内存消耗的技术，特别是在 Transformer 模型中的前馈神经网络层（Feed Forward Layers）的计算中
+
+背景：Transformer 模型中的前馈网络::
+
+    在 Transformer 模型的每个残差注意力块（Residual Attention Block）中，通常包含以下两部分：
+        1. 自注意力层（Self-Attention Layer）
+        2. 前馈网络（Feed Forward Network，FFN）
+    前馈网络通常由两层线性层组成：
+        第一层将输入嵌入（embedding）从隐藏层大小（hidden_size）投影到一个更高维度的中间层大小（intermediate_size）
+        第二层将中间层的输出再投影回隐藏层大小。
+
+* 例：对于 BERT 模型，intermediate_size 比 hidden_size 更大，这样做是为了增加模型的表达能力。然而，由于输入的尺寸是 [batch_size, sequence_length, hidden_size]，中间层的尺寸会变为 [batch_size, sequence_length, intermediate_size]，在 intermediate_size 较大的情况下，这会占用大量内存。
+* 【问题：内存开销】当输入有较长的序列长度（sequence_length）时，存储这些中间嵌入会导致巨大的内存占用。对于大型 Transformer 模型，这种内存开销是瓶颈之一。
+* 【解决方案Feed Forward Chunking】主要思想是：不再一次性对整个输入序列的所有位置计算前馈网络的输出，而是将输入序列按块（chunk）进行分割，逐块计算前馈层的输出。
+* 具体步骤如下::
+
+    1. 将输入的 [batch_size, sequence_length, hidden_size] 切分为若干小块，每一小块的大小为 [batch_size, chunk_size, hidden_size]
+    2. 对每个小块单独进行前馈网络的计算，得到对应的输出
+    3. 将这些小块的输出拼接（concat）成完整的输出 [batch_size, sequence_length, hidden_size]
+
+* 【关键点：为什么能这样做】前馈网络的计算是位置独立的，也就是说，序列中每个位置的前馈网络输出只依赖于该位置的输入，而不会受其他位置的影响。因此，将序列按块分割并逐块计算，最终拼接起来的结果和一次性计算整个序列的结果是数学等价的。
+* 【内存与计算时间的权衡】1.减少内存消耗：通过将序列分块，只需要为每个小块分配内存，而不是整个序列，这显著减少了中间嵌入的内存开销。2.增加计算时间：虽然内存开销减少了，但计算时间会增加。原因是，模型不能一次性并行计算所有序列位置，而是需要逐块计算，这会带来额外的时间开销。
+* 【总结】Feed Forward Chunking 是一种通过逐块计算前馈网络来降低内存占用的技术，它在 Transformer 模型中尤为重要，特别是当输入序列较长、隐藏层和中间层较大时。虽然这种方法会增加计算时间，但通过适当选择 chunk_size，可以在计算时间和内存使用之间找到一个平衡。
+
+
+image patch
+^^^^^^^^^^^
+
+* Image patch 是视觉Transformer（Vision Transformers，ViTs）模型中的一个核心概念，用于将输入图像转换为适合 Transformer 处理的序列格式。
+* 在传统的卷积神经网络（CNN）中，输入图像会经过卷积核（filters）逐层提取局部特征。CNN擅长捕捉局部的空间关系，但在建模远距离依赖（long-range dependencies）上存在一定的限制。
+* Vision Transformer 则引入了和自然语言处理中的 Transformer 类似的架构，试图将图像也处理成一种序列化输入，并通过自注意力机制（Self-Attention）来捕捉全局和局部特征。
+* 【定义】在 Vision Transformer 模型中，图像首先被划分为固定大小的小块，称为 image patches，每个小块都是图像的一个局部区域。具体来说：
+
+    * 1.划分图像：Vision Transformer 将一张图像（例如 224x224 的 RGB 图像）按照固定大小（例如 16x16）的网格划分为若干个小块（patches）。如果图像是 224x224，且 patch 大小是 16x16，那么最终会得到 (224 / 16) * (224 / 16) = 14 * 14 = 196 个图像块，每个图像块的尺寸是 16x16x3（RGB 图像有 3 个通道）。
+    * 2. 线性嵌入：每个 16x16x3 的图像块会被展平成一个向量（1D），然后通过一个线性变换（线性层）将其映射到模型的嵌入维度（embedding dimension），这与传统 Transformer 的词向量类似。
+    * 3. 作为序列输入 Transformer：这些嵌入后的图像块（patches）被视为序列的元素，类似于 NLP 中的词向量，作为输入序列传递给 Transformer。每个 patch 相当于输入序列中的一个“词”。
+
+* 因此，Vision Transformer 模型将一张二维图像转换成了一个序列化的表示形式，并通过 Transformer 的自注意力机制进行处理。
+
+* 【1. Patch Size 的选择】Patch size 是指划分图像时每个小块的大小。较大的 patch size 会将更多的局部信息集中到一个 patch 中，但同时也会降低图像的分辨率，可能会丢失一些细节。较小的 patch size 则会增加序列长度（更多的 patches），使得 Transformer 能够捕捉更多的细节，但也增加了计算复杂度。例如，对于 224x224 的图像，使用 16x16 的 patch 会生成 196 个 patches，而使用 8x8 的 patch 则会生成 784 个 patches。
+* 【2. 线性嵌入】每个 image patch 被展平成一维向量，并通过线性层将其映射到一个固定的维度（比如 768 维），这个操作是为了使所有 patches 的表示维度与 Transformer 模型的输入维度匹配。
+* 【3. 自注意力机制如何作用于 Patches】在 Vision Transformer 中，自注意力机制会关注每个 patch 和其他所有 patches 之间的关系，从而建模全局特征。与 CNN 不同，Vision Transformer 不局限于局部感受野（receptive field），它可以直接捕捉图像中远距离的依赖关系。
+* 【4. 配置中的 patch_size】模型的配置文件通常会包含 patch_size，这表示每个 patch 的分辨率（例如 16x16），它直接决定了图像被分割的粒度。可以理解为 patch_size 控制了 Transformer 处理图像的“单位”，类似于在 NLP 中的 token（词元）。
+
+* 【图像块（patches）的重要性】
+
+    * 局部与全局特征结合：图像块在模型中扮演了词元（tokens）的角色，它们代表图像的局部信息，而 Transformer 的自注意力机制可以在这些局部信息之间进行全局建模。这种机制使得 ViTs 能够同时捕捉到图像的细节特征（局部块之间的关系）和整体结构（不同块的远距离关系）。
+    * 减少计算复杂度：通过将图像划分为较大的图像块，ViT 模型能够减少序列长度，从而降低自注意力的计算复杂度。序列长度越短，自注意力机制的计算量越小。
+
+
+* 【总结】Image patch 是 Vision Transformer 将输入图像转换为序列格式的关键步骤。通过将图像划分为小的图像块，并将这些块通过线性嵌入映射到向量表示，ViT 可以利用 Transformer 的自注意力机制来捕捉图像的局部和全局特征。Patch size 的选择会直接影响模型的计算复杂度和对图像细节的捕捉能力。
+
+
+
+
+
+
+How Transformers solve tasks
+----------------------------
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/08/ZNMFdF.png
+
+    处理过程图: Tokenizer-> Model -> Post-Processing
+
+
+* ``Wav2Vec2`` for audio classification and automatic speech recognition (ASR)
+* ``Vision Transformer (ViT)`` and ``ConvNeXT`` for image classification
+* ``DETR`` for object detection
+* ``Mask2Former`` for image segmentation
+* ``GLPN`` for depth estimation
+* ``BERT`` for NLP tasks like text classification, token classification and question answering that use an encoder
+* ``GPT2`` for NLP tasks like text generation that use a decoder
+* ``BART`` for NLP tasks like summarization and translation that use an encoder-decoder
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/08/YtfN6S.jpg
+
+    Vision Transformer
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/08/NiMpg0.jpg
+
+    Object detection
+
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/08/3getUU.jpg
+
+    Image segmentation
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/08/TU69J8.jpg
+
+    Depth estimation
+
+
+
+The Transformer model family
+----------------------------
+
+Computer vision
+^^^^^^^^^^^^^^^
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/08/RYzYvS.jpg
+
+
+Natural language processing
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/08/FB5ONz.jpg
+
+
+Audio
+^^^^^
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/08/2MKAWt.jpg
+
+
+Multimodal
+^^^^^^^^^^
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/08/tnCfmL.jpg
+
+
+Reinforcement learning
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/08/eSDNPe.jpg
+
+
+
+Summary of the tokenizers
+-------------------------
+
+
+3 tokenization algorithms::
+
+    1. word-based
+        very large vocabularies
+        large quantity of out-of-vocabulary tokens
+        loss of meaning across very similar words
+    2. character-based
+        very long sequences
+        less meaningful individual tokens
+    3. subword-based
+        principles:
+            frequently used words should not be split into subwords
+            rare words should be decompose into meaningful subwords
+
+
+Subword tokenization::
+
+    1. Byte-Pair Encoding (BPE)
+        GPT-2
+        RoBERTa
+    2. WordPiece
+        BERT
+        DistilBERT
+        Electra
+    3. Unigram+SentencePiece(适用于非空格分隔的语言)
+        XLNet
+        ALBERT
+        Marian
+        T5
+
+
+
+Padding and truncation
+----------------------
+
+* The following table summarizes the recommended way to setup padding and truncation
+
+padding strategy(boolean or a string)::
+
+    True or 'longest'
+    max_length
+    False or 'do_not_pad
+
+truncation strategy(boolean or a string)::
+
+    True or 'longest_first'
+    only_second
+        当输入模型的是两个序列的配对（例如：句子对，或文本对）
+        这种截断方式适用于需要保持第一个序列完整，而对第二个序列进行裁剪的场景。
+    only_first
+        与only_second相反
+    False or 'do_not_truncate'
+
+
+no truncation::
+
+    +-----------------------------------+-----------------------------------------------------------------+
+    | no padding                        | tokenizer(batch_sentences)                                      |
+    +===================================+=================================================================+
+    | padding to max sequence in batch  | tokenizer(batch_sentences, padding=True) or                     |
+    +-----------------------------------+-----------------------------------------------------------------+
+    |                                   | tokenizer(batch_sentences, padding='longest')                   |
+    +-----------------------------------+-----------------------------------------------------------------+
+    | padding to max model input length | tokenizer(batch_sentences, padding='max_length')                |
+    +-----------------------------------+-----------------------------------------------------------------+
+    | padding to specific length        | tokenizer(batch_sentences, padding='max_length', max_length=42) |
+    +-----------------------------------+-----------------------------------------------------------------+
+    | padding to a multiple of a value  | tokenizer(batch_sentences, padding=True, pad_to_multiple_of=8)  |
+    +-----------------------------------+-----------------------------------------------------------------+
+
+
+truncation to max model input length::
+
+    +-----------------------------------+-----------------------------------------------------------------------+
+    | no padding                        | tokenizer(batch_sentences, truncation=True) or                        |
+    +===================================+=======================================================================+
+    |                                   | tokenizer(batch_sentences, truncation=STRATEGY)                       |
+    +-----------------------------------+-----------------------------------------------------------------------+
+    | padding to max sequence in batch  | tokenizer(batch_sentences, padding=True, truncation=True) or          |
+    +-----------------------------------+-----------------------------------------------------------------------+
+    |                                   | tokenizer(batch_sentences, padding=True, truncation=STRATEGY)         |
+    +-----------------------------------+-----------------------------------------------------------------------+
+    | padding to max model input length | tokenizer(batch_sentences, padding='max_length', truncation=True) or  |
+    +-----------------------------------+-----------------------------------------------------------------------+
+    |                                   | tokenizer(batch_sentences, padding='max_length', truncation=STRATEGY) |
+    +-----------------------------------+-----------------------------------------------------------------------+
+    | padding to specific length        | Not possible                                                          |
+    +-----------------------------------+-----------------------------------------------------------------------+
+
+
+truncation to specific length::
+
+    +-----------------------------------+--------------------------------------------------------------------------------------+
+    | no padding                        | tokenizer(batch_sentences, truncation=True, max_length=42) or                        |
+    +===================================+======================================================================================+
+    |                                   | tokenizer(batch_sentences, truncation=STRATEGY, max_length=42)                       |
+    +-----------------------------------+--------------------------------------------------------------------------------------+
+    | padding to max sequence in batch  | tokenizer(batch_sentences, padding=True, truncation=True, max_length=42) or          |
+    +-----------------------------------+--------------------------------------------------------------------------------------+
+    |                                   | tokenizer(batch_sentences, padding=True, truncation=STRATEGY, max_length=42)         |
+    +-----------------------------------+--------------------------------------------------------------------------------------+
+    | padding to max model input length | Not possible                                                                         |
+    +-----------------------------------+--------------------------------------------------------------------------------------+
+    | padding to specific length        | tokenizer(batch_sentences, padding='max_length', truncation=True, max_length=42) or  |
+    +-----------------------------------+--------------------------------------------------------------------------------------+
+    |                                   | tokenizer(batch_sentences, padding='max_length', truncation=STRATEGY, max_length=42) |
+    +-----------------------------------+--------------------------------------------------------------------------------------+
+
+
+Model training anatomy
+----------------------
+
+* 当模型加载到 GPU 时， ``CUDA 的运行时库和内核（kernels）`` 也会加载，这可能会占用 1-2GB 内存。为了查看它有多少，我们将一个微小的张量加载到 GPU 中，这也会触发内核的加载。
+* 可以用下面语句验证::
+
+    import torch
+    torch.ones((1, 1)).to("cuda")   # 
+    print_gpu_utilization()         # 这儿基本就是内核占用的gpu数
+
+    说明:
+        内核占用多少和GPU型号有关
+        L20(48G):     390M   NVIDIA L20
+        V100(32G):    366M   V100-SXM2
+            Volta 架构
+        V100(8G):     449M   Tesla P4
+            Pascal 架构
+
+
+* 请注意，在较新的 GPU 上，模型有时会占用更多空间，因为权重以优化的方式加载，可以加快模型的使用速度。
+
+
+Anatomy of Model’s Operations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Transformers 架构包括 3 个主要操作组，按计算强度分组如下::
+
+    1. Tensor Contractions
+        多头注意力的线性层和组件都进行批量矩阵-矩阵乘法。这些操作是训练 Transformer 时计算量最大的部分
+    2. Statistical Normalizations
+        Softmax 和层归一化比张量收缩的计算强度要小，并且涉及一个或多个归约操作，然后通过映射应用其结果。
+    3. Element-wise Operators
+        这些是剩余的运算符：偏差、丢失、激活和剩余连接。这些是计算强度最小的操作
+
+
+.. note:: 在分析性能瓶颈时了解这些知识很有帮助。This summary is derived from `Data Movement Is All You Need: A Case Study on Optimizing Transformers 2020 <https://arxiv.org/abs/2007.00072>`_
+
+
+Anatomy of Model’s Memory
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+训练模型使用的内存比仅仅将模型放在 GPU 上要多得多。这是因为训练期间有许多组件使用 GPU 内存。 GPU 内存的组成部分如下::
+
+    1. model weights 模型权重
+    2. optimizer states 优化器状态
+    3. gradients 渐变
+    4. forward activations saved for gradient computation 为梯度计算保存前向激活
+    5. temporary buffers 临时缓冲区
+    6. functionality-specific memory 特定功能存储器
+
+
+details::
+
+    1. Model Weights:
+        4 bytes * number of parameters for fp32 training
+        6 bytes * number of parameters for mixed precision training (maintains a model in fp32 and one in fp16 in memory)
+    2. Optimizer States:
+        8 bytes * number of parameters for normal AdamW (maintains 2 states)
+        2 bytes * number of parameters for 8-bit AdamW optimizers like bitsandbytes
+        4 bytes * number of parameters for optimizers like SGD with momentum (maintains only 1 state)
+    3. Gradients
+        4 bytes * number of parameters for either fp32 or mixed precision training (gradients are always kept in fp32)
+    4. Forward Activations
+        size depends on many factors, the key ones being sequence length, hidden size and batch size.
+    5. Temporary Memory
+        各种临时变量
+    6. Functionality-specific memory
+        特殊的内存需求。例如，当使用集束搜索生成文本时，软件需要维护输入和输出的多个副本
+
+
+
+
+
+
+
+
+
+API
+===
+
+MAIN CLASSES
+------------
+
+Agents
+^^^^^^
+
+three types of Agents::
+
+    1. `HfAgent` uses inference endpoints for opensource models
+    2. `LocalAgent` uses a model of your choice locally
+    3. `OpenAiAgent` uses OpenAI closed models
+
+
+
+Auto Classes
+^^^^^^^^^^^^
+
+Generic classes::
+
+    AutoConfig
+    AutoModel
+    AutoTokenizer
+
+    AutoFeatureExtractor
+    AutoImageProcessor
+    AutoProcessor
+
+Generic pretraining classes::
+
+    AutoModelForPreTraining
+
+Natural Language Processing::
+
+    AutoModelForCausalLM
+    AutoModelForMaskedLM
+    AutoModelForMaskGeneration
+    AutoModelForSeq2SeqLM
+    AutoModelForSequenceClassification
+    AutoModelForMultipleChoice
+    AutoModelForNextSentencePrediction
+    AutoModelForTokenClassification
+    AutoModelForQuestionAnswering
+    AutoModelForTextEncoding
+
+Computer vision::
+
+    AutoModelForDepthEstimation
+    AutoModelForImageClassification
+    AutoModelForVideoClassification
+    AutoModelForMaskedImageModeling
+    AutoModelForObjectDetection
+    AutoModelForImageSegmentation
+    AutoModelForSemanticSegmentation
+    AutoModelForInstanceSegmentation
+    AutoModelForUniversalSegmentation
+    AutoModelForZeroShotImageClassification
+    AutoModelForZeroShotObjectDetection
+
+Audio::
+
+    AutoModelForAudioClassification
+    AutoModelForAudioFrameClassification
+    AutoModelForCTC
+    AutoModelForSpeechSeq2Seq
+    AutoModelForAudioXVector
+
+
+Multimodal::
+
+    AutoModelForTableQuestionAnswering
+    AutoModelForDocumentQuestionAnswering
+    AutoModelForVisualQuestionAnswering
+    AutoModelForVision2Seq
+
+Callbacks
+^^^^^^^^^
+
+* The main class that implements callbacks is TrainerCallback.
+* By default a Trainer will use the following callbacks::
+
+    `DefaultFlowCallback` which handles the default behavior for logging, saving and evaluation.
+    `PrinterCallback` or `ProgressCallback` to display progress and print the logs
+        the first one is used if you deactivate tqdm through the TrainingArguments
+        otherwise it’s the second one
+    ...
+
+Logging
+^^^^^^^
+
+日志默认Warning级别，可以调整成info级别::
+
+    import transformers
+    transformers.logging.set_verbosity_info()
+
+环境变量设置::
+
+    TRANSFORMERS_VERBOSITY
+
+Usage::
+
+    from transformers.utils import logging
+
+    logging.set_verbosity_info()
+    logger = logging.get_logger("transformers")
+    logger.info("INFO")
+    logger.warning("WARN")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

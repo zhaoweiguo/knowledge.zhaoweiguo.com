@@ -1,0 +1,145 @@
+# GPU显存计算
+
+## 获取基本参数
+
+1. 获取参数量
+2. 获取 KV 的 kv_dim 和 num_KV_heads
+3. 获取支持的最大token数(max_position_embeddings)
+
+
+## 算显存占用
+
+* 总公式 
+```
+= <KV缓存大小> * <KV缓存数量>
+```
+
+* 一个 <KV缓存大小> 公式
+```
+= <KV_dim> * <num_KV_heads> * 2
+```
+
+
+## 以 Qwen2.5-7B 为例
+
+### 获取基本参数
+
+config.json 文件内容:
+```json
+{
+  "architectures": [
+    "Qwen2ForCausalLM"
+  ],
+  "attention_dropout": 0.0,
+  "bos_token_id": 151643,
+  "eos_token_id": 151645,
+  "hidden_act": "silu",
+  "hidden_size": 2048,
+  "initializer_range": 0.02,
+  "intermediate_size": 11008,
+  "max_position_embeddings": 32768,
+  "max_window_layers": 70,
+  "model_type": "qwen2",
+  "num_attention_heads": 16,
+  "num_hidden_layers": 36,
+  "num_key_value_heads": 2,
+  "rms_norm_eps": 1e-06,
+  "rope_theta": 1000000.0,
+  "sliding_window": 32768,
+  "tie_word_embeddings": true,
+  "torch_dtype": "bfloat16",
+  "transformers_version": "4.43.1",
+  "use_cache": true,
+  "use_sliding_window": false,
+  "vocab_size": 151936
+}
+```
+
+* 获取关键参数: 
+    * 模型维度相关
+        * "hidden_size": 2048
+        * "intermediate_size": 11008	# FFN 层的中间层维度
+        * "num_hidden_layers": 36	    # Transformer 层数
+        * "num_attention_heads": 16	    # 注意力头数
+        * "num_key_value_heads": 2	    # 启动GQA机制，表示只用 2 个 key/value 头，节省 KV-cache 开销。
+    * 注意力机制与位置编码
+        * "max_position_embeddings": 32768	    # 支持的最大 token 数
+    * Token 配置
+        * "vocab_size": 151936	    # 词表大小
+    * 激活函数
+        * "hidden_act": "silu"	    # 对应的 FFN 乘以 3
+
+* 计算用到的其他参数
+    * group_size: num_attention_heads/num_key_value_heads
+        * = 16/2 = 8
+    * head_dim: hidden_size / config.num_attention_heads
+        * = 2048 / 16 = 128
+    * kv_dim: num_key_value_heads × head_dim
+        * = 2 × 128 = 256
+
+
+
+### 计算参数量
+
+```
+参数量：
+    1. 嵌入层：151936 * 2048
+    2. 注意力层：36 * 2048 * 2048 * (2 + 2/8)
+    3. FFN层：36 * 2048 * 11008 * 3
+    4. 输出层：2048 * 151936
+总参数量：
+    = 151936 * 2048 + 36 * 2048 * 2048 * (2 + 2/8) + 36 * 2048 * 11008 * 3 + 2048 * 151936
+    = 151936 * 2048 * 2 + 36 * 2048 * (2048*2.25 + 3*11008)
+    = 151936 * 4k + 72 * (2048*2.25 + 3*11008)k
+    = 593.5M + 72 * (4.5 + 32.25)M
+    = 3239.5M
+```
+
+### 显存占用
+
+* 以 FP16 为例
+* 模型参数占显存:
+    * = <模型参数量> * 2
+    * = 3239.5M * 2
+    * = 6479M
+* KV缓存占显存:
+    * 总公式 = <KV缓存大小> * <KV缓存数量> * 2
+    * 一个 <KV缓存大小>
+        * = <KV_dim> 
+        * = <KV_head> * <num_KV_heads>
+        * = 128 * 2
+        * = 256
+    * 一个K, 一个V 有
+        * = 2 * 256
+        * =512
+    * 使用FP16
+        * = 512 * 2
+        * = 1024
+    * Transformers 层数为 36
+        * = 36 * 1024
+        * = 36 K
+    * Sequence_size:
+        * 如果序列长度为 1024
+            * = 1024 * 36K
+            * = 36M
+        * 最大max_position_embeddings: 32768
+            * = 32768 * 36K
+            * = 1152M
+            * 约 1.152G
+
+* 说明1：`batch_size`
+    * 如果有 `batch_size` 还要乘以 `batch_size`
+* 说明2：不使用 GQA 的情况
+    * 首先模型参数会增加
+    * KV Cache方面
+        * 一个 <KV缓存大小> = 2048
+        * 比不使用 GQA 占用显存多 8 倍
+
+
+
+
+
+
+
+
+

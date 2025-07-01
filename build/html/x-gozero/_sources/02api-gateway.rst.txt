@@ -1,0 +1,503 @@
+02对最简单的 api gateway 项目并进行源码分析
+###########################################
+
+.. raw:: html
+
+   <details>
+   <summary>目录</summary>
+
+.. sidebar:: 目录
+
+    .. contents::
+
+.. raw:: html
+
+   </details>
+
+.. note:: go-zero 是一个集成了各种工程实践的 web 和 rpc 框架。本文讲解 web 框架的源码分析，下一节讲解 rpc 框架的源码分析。示例是使用最简单的一个功能：传过来一个 url 地址，转化为一个短网址。
+
+
+生成 api gateway 项目
+=====================
+
+编写 `gateway.api <https://github.com/demo-examples/demo-go-zero/blob/master/02api-gateway/gateway.api>`_  文件::
+
+    type (
+      shortenReq {
+        Url string `form:"url"`
+      }
+
+      shortenResp {
+        Shorten string `json:"shorten"`
+      }
+    )
+
+    service shorturl-api {
+      @server(
+        handler: ShortenHandler
+      )
+      get /shorten(shortenReq) returns(shortenResp)
+      
+    }
+
+
+使用 goctl 命令生成项目::
+
+    $ goctl api go -api gateway.api -dir api
+    Done.
+    $ tree
+    ├── etc
+    │    └── shorturl-api.yaml
+    ├── go.mod
+    ├── go.sum
+    ├── internal
+    │    ├── config
+    │    │    └── config.go
+    │    ├── handler
+    │    │    ├── routes.go
+    │    │    └── shortenhandler.go
+    │    ├── logic
+    │    │    └── shortenlogic.go
+    │    ├── svc
+    │    │    └── servicecontext.go
+    │    └── types
+    │         └── types.go
+    ├── main.api
+    └── shorturl.go
+
+    7 directories, 11 files
+
+
+入口文件分析
+============
+
+`入口文件 <https://github.com/demo-examples/demo-go-zero/blob/master/02api-gateway/api/shorturl.go>`_ 分析::
+
+    var configFile = flag.String("f", "etc/shorturl-api.yaml", "the config file")
+
+    func main() {
+      flag.Parse()
+
+      var c config.Config
+      // 把配置文件载入到 config.Config 结构体中
+      conf.MustLoad(*configFile, &c)
+
+      // 把c封装到 svc.ServiceContext 结构体中
+      // ctx 用作上下文通信载体
+      ctx := svc.NewServiceContext(c)
+
+      // 封装出一个 *rest.Server 结构体 [注1]
+      server := rest.MustNewServer(c.RestConf)
+      defer server.Stop()
+
+      // 根据 .api 文件自动生成
+      // 往 server 中增加路由 [注2]
+      handler.RegisterHandlers(server, ctx)
+
+      fmt.Printf("Starting server at %s:%d...\n", c.Host, c.Port)
+
+      // 启动 http server [注3]
+      server.Start()
+    }
+
+.. figure:: https://img.zhaoweiguo.com/knowledge/images/opensources/go-zero/api-gateway1.png
+
+   核心数据结构关系
+
+
+
+小结::
+
+    1. 由配置文件生成配置结构体: config.Config
+    2. 生成上下文: svc.ServiceContext
+    3. 生成 *rest.Server结构体、注册路由并启动服务
+
+    前两步很简单，下面详细说下第3步
+    主要包括:
+    1. server := rest.MustNewServer(c.RestConf)
+    2. handler.RegisterHandlers(server, ctx)
+    3. server.Start()
+
+1. 生成 rest.Server 结构体
+==========================
+
+相关结构体::
+
+    type Server struct {
+      ngin *engine
+      opts runOptions
+    }
+
+    type engine struct {
+      conf                 RestConf
+      routes               []featuredRoutes
+      unauthorizedCallback handler.UnauthorizedCallback
+      unsignedCallback     handler.UnsignedCallback
+      middlewares          []Middleware
+      shedder              load.Shedder
+      priorityShedder      load.Shedder
+    }
+
+    type RunOption func(*Server)
+    type runOptions struct {
+      start func(*engine) error
+    }
+
+`rest.Server <https://github.com/tal-tech/go-zero/blob/5c6a3132ebe96afee256b8ee07c0bf8b8c6e0a39/rest/server.go#L28-L61>`_ 初使化-整体::
+
+    func NewServer(c RestConf, opts ...RunOption) (*Server, error) {
+      // c.SetUp()做一些启动前的准备工作[注: 这部分可暂忽略，以后专门再看]
+      // 现在主要知道它是做:
+      //    1. logx初使化
+      //    2. prometheus 初使化
+      //    3. 开发模式等设置
+      if err := c.SetUp(); err != nil {
+        return nil, err
+      }
+
+      // Server初使化 [注: 待细化]
+      server := &Server{
+        ngin: newEngine(c),
+        opts: runOptions{
+          start: func(srv *engine) error {
+            return srv.Start()
+          },
+        },
+      }
+
+      // 选项模式: 扩展相关功能[注: 这部分可暂忽略，以后专门再看]
+      for _, opt := range opts {
+        opt(server)
+      }
+
+      return server, nil
+    }
+
+`rest.engine <https://github.com/tal-tech/go-zero/blob/5c6a3132ebe96afee256b8ee07c0bf8b8c6e0a39/rest/engine.go#L35-L46>`_ 初使化-细化::
+
+    func newEngine(c RestConf) *engine {
+      // 把 RestConf 类型数据封装到 engine 类型中
+      // 本质: 初使化 engine 的"conf"字段
+      srv := &engine{
+        conf: c,
+      }
+      // 这块主要是"负荷"相关设置 [注: 这部分可暂忽略，以后专门再看]
+      // 本质: 初使化 engine 的"shedder"和"priorityShedder"字段
+      if c.CpuThreshold > 0 {
+        srv.shedder = load.NewAdaptiveShedder(load.WithCpuThreshold(c.CpuThreshold))
+        srv.priorityShedder = load.NewAdaptiveShedder(load.WithCpuThreshold(
+          (c.CpuThreshold + topCpuUsage) >> 1))
+      }
+      return srv
+    }
+
+
+小结::
+
+    本质是: 生成 *rest.Server 类型变量
+    我们忽略了:
+      1. 启动前的准备工作
+      2. 选项模式: 扩展相关功能
+      3. load 模块中有关限流、容错相关内容
+    这些后面文章再细说，现在不是重点
+
+
+2. 注册路由
+===========
+
+调用 `server.AddRoutes <https://github.com/demo-examples/demo-go-zero/blob/master/02api-gateway/api/internal/handler/routes.go>`_  函数注册路由::
+
+    handler.RegisterHandlers(server, ctx)
+    =>
+    func RegisterHandlers(engine *rest.Server, serverCtx *svc.ServiceContext) {
+      engine.AddRoutes(
+        []rest.Route{
+          {
+            Method:  http.MethodGet,
+            Path:    "/shorten",
+            Handler: ShortenHandler(serverCtx),
+          },
+        },
+      )
+    }
+
+    说明:
+      此部分代码是 goctl 命令自动生成的
+      在 .api 文件中配置成什么样，这儿就会自动生成相关代码
+      本质: 调用 engine.AddRoutes 命令增加路由
+
+调用 rest.Server 方法 `AddRoutes <https://github.com/tal-tech/go-zero/blob/5c6a3132ebe96afee256b8ee07c0bf8b8c6e0a39/rest/server.go#L63-L72>`_ ::
+
+    func (e *Server) AddRoutes(rs []Route, opts ...RouteOption) {
+      // 真实的路由存储结构
+      r := featuredRoutes{
+        routes: rs,
+      }
+      // 选项模式 [注: 这部分可暂忽略，以后专门再看]
+      for _, opt := range opts {
+        opt(&r)
+      }
+      // 本质是调用 Server 下 ngin 字段的 AddRoutes 方法[待细化]
+      e.ngin.AddRoutes(r)
+    }
+
+e.ngin.AddRoutes 细化::
+
+    //  本质: 初使化&更新 engine 的 "routes" 字段
+    func (s *engine) AddRoutes(r featuredRoutes) {
+      s.routes = append(s.routes, r)
+    }
+
+现在再看 engine 结构::
+
+    type engine struct {
+      conf                 RestConf
+      routes               []featuredRoutes
+      unauthorizedCallback handler.UnauthorizedCallback
+      unsignedCallback     handler.UnsignedCallback
+      middlewares          []Middleware
+      shedder              load.Shedder
+      priorityShedder      load.Shedder
+    }
+
+    字段分析:
+    conf: 配置信息(host, port, cert...)
+    routes: 路由信息列表
+    shedder, priorityShedder: "负荷"相关暂忽略
+    现在只剩下3个字段没有初使化了: [注: 这部分可暂忽略，以后专门再看]
+    unauthorizedCallback
+    unsignedCallback
+    middlewares
+
+小结::
+
+    路由注册之后得到 *rest.Server 结构体, 现在关注的字段主要是 conf 和 routes
+    conf 信息简单，routes 结构如下图所示
+
+
+3. server 启动
+===================
+
+server 启动::
+
+    server.Start()
+    =>
+    func (s *Server) Start() {
+      handleError(s.opts.start(s.ngin))
+    }
+
+    说明: 
+      handleError 函数使 server 优雅关闭 [注: 这部分可暂忽略，以后专门再看]
+    本质: 
+      server.Start()
+      =>
+      s.opts.start(s.ngin)
+      =>
+      server.ngin.Start()
+      =>
+      server.ngin.StartWithRouter(router.NewRouter())
+
+分为2部分::
+
+    1. router.NewRouter(): 生成 httpx.Router 接口
+    2. s.StartWithRouter: 启动 http 服务
+
+
+
+.. figure:: https://img.zhaoweiguo.com/knowledge/images/opensources/go-zero/api-gateway2.png
+
+   路由存储相关结构关系
+
+
+3.1 生成httpx.Router接口
+------------------------
+
+生成的 `httpx.Router <https://github.com/tal-tech/go-zero/blob/5c6a3132ebe96afee256b8ee07c0bf8b8c6e0a39/rest/router/patrouter.go#L26-L37>`_ 接口分析::
+
+    type Router interface {
+      http.Handler
+      Handle(method, path string, handler http.Handler) error
+    }
+
+分析::
+
+    1. 首先有 http.Handler 接口, 用于启动 http server
+    2. 其次是增加了 Handle 方法
+
+真实初使化::
+
+    func NewRouter() httpx.Router {
+      return &patRouter{
+        trees: make(map[string]*search.Tree),
+      }
+    }
+    type patRouter struct {
+      trees      map[string]*search.Tree
+    }
+
+分析::
+
+    1. 用hashmap树结构做路由, 应该是把路由信息最后存储在这儿, 方便快速查询
+    2. 前面 httpx.Router 接口的 Handle 方法可能是用于赋值patRouter
+    3. 关于 search.Tree 相关代码暂不深入
+
+
+3.2 启动 http 服务
+------------------
+
+`s.StartWithRouter <https://github.com/tal-tech/go-zero/blob/5c6a3132ebe96afee256b8ee07c0bf8b8c6e0a39/rest/router/patrouter.go#L64-L74>`_ 服务启动::
+
+    func (s *engine) StartWithRouter(router httpx.Router) error {
+      if err := s.bindRoutes(router); err != nil {
+        return err
+      }
+
+      if len(s.conf.CertFile) == 0 && len(s.conf.KeyFile) == 0 {
+        return internal.StartHttp(s.conf.Host, s.conf.Port, router)
+      }
+
+      return internal.StartHttps(s.conf.Host, s.conf.Port, s.conf.CertFile, s.conf.KeyFile, router)
+    }
+
+分析::
+
+    1. s.bindRoutes(router): 本质是赋值 router 变量(期间应该会用到 Handler 方法)
+    2. internal.StartHttp: 启动 http server
+    3. internal.StartHttps: 启动 https server[注: 忽略, 暂只需要关注 http]
+
+internal.StartHttp
+^^^^^^^^^^^^^^^^^^
+
+先看 `internal.StartHttp <https://github.com/tal-tech/go-zero/blob/5c6a3132ebe96afee256b8ee07c0bf8b8c6e0a39/rest/internal/starter.go#L12-L41>`_ ::
+
+    // 这是 http，https 类似
+    func StartHttp(host string, port int, handler http.Handler) error {
+      return start(host, port, handler, 
+          func(srv *http.Server) error {
+            return srv.ListenAndServe()
+          }
+      )
+    }
+
+    func start(host string, port int, handler http.Handler, run func(srv *http.Server) error) (err error) {
+      server := &http.Server{
+        Addr:    fmt.Sprintf("%s:%d", host, port),
+        Handler: handler,
+      }
+      return run(server)
+    }
+
+说明::
+
+    本质是执行的 http.Server.ListenAndServe()
+    其中http.Server类型的字段:
+      Addr: host:port
+      Handler: 前面传递过来的 httpx.Router(类型 router.patRouter)
+    所以现在的关键是 router.patRouter 如何生成了
+
+.. note:: 到这儿我们就知道，服务启动后，当一个请求过来时，最后真正处理的是 patRouter 的 ServeHTTP 方法。这块后面细看，先看看这个 patRouter 是如何进行赋值的。
+
+
+s.bindRoutes(router)
+^^^^^^^^^^^^^^^^^^^^
+
+
+一级循环生成 router:`bindRoutes <https://github.com/tal-tech/go-zero/blob/5c6a3132ebe96afee256b8ee07c0bf8b8c6e0a39/rest/engine.go#L132-L142>`_::
+
+    func (s *engine) bindRoutes(router httpx.Router) error {
+      // [一级 for]: 
+      for _, fr := range s.routes {
+        if err := s.bindFeaturedRoutes(router, fr, metrics); err != nil {
+          return err
+        }
+      }
+      return nil
+    }
+
+二级循环生成 router:`bindFeaturedRoutes <https://github.com/tal-tech/go-zero/blob/5c6a3132ebe96afee256b8ee07c0bf8b8c6e0a39/rest/internal/starter.go#L92-L105>`_ ::
+
+    func (s *engine) bindFeaturedRoutes(router httpx.Router, fr featuredRoutes, metrics *stat.Metrics) error {
+      verifier, err := s.signatureVerifier(fr.signature)
+
+      // [二级 for]:
+      for _, route := range fr.routes {
+        if err := s.bindRoute(fr, router, metrics, route, verifier); err != nil {
+          return err
+        }
+      }
+      return nil
+    }
+
+说明::
+
+    通过 2 级 for 循环把 engine.routes 转化为 httpx.Router
+
+最后的本质是对每一个 rest.Route 执行 `bindRoute <https://github.com/tal-tech/go-zero/blob/5c6a3132ebe96afee256b8ee07c0bf8b8c6e0a39/rest/engine.go#L107-L130>`_ ::
+
+    func (s *engine) bindRoute(fr featuredRoutes, router httpx.Router, metrics *stat.Metrics,
+      route Route, verifier func(chain alice.Chain) alice.Chain) error {
+      chain := alice.New(
+        handler.TracingHandler,
+        s.getLogHandler(),
+        handler.PrometheusHandler(route.Path),
+        handler.MaxConns(s.conf.MaxConns),
+        handler.BreakerHandler(route.Method, route.Path, metrics),
+        handler.SheddingHandler(s.getShedder(fr.priority), metrics),
+        handler.TimeoutHandler(time.Duration(s.conf.Timeout)*time.Millisecond),
+        handler.RecoverHandler,
+        handler.MetricHandler(metrics),
+        handler.MaxBytesHandler(s.conf.MaxBytes),
+        handler.GunzipHandler,
+      )
+      chain = s.appendAuthHandler(fr, chain, verifier)
+
+      for _, middleware := range s.middlewares {
+        chain = chain.Append(convertMiddleware(middleware))
+      }
+      handle := chain.ThenFunc(route.Handler)
+
+      return router.Handle(route.Method, route.Path, handle)
+    }
+
+
+.. note:: 这儿用到了 alice，简单介绍下: `alice <https://github.com/justinas/alice>`_ is Painless middleware chaining for Go. In short, it transforms: ``Middleware1(Middleware2(Middleware3(App)))`` to ``alice.New(Middleware1, Middleware2, Middleware3).Then(App)``
+
+说明::
+
+    这块内容比较多，也比较重要，未来会专门介绍这部分
+    现在需要知道的是这里面默认实现了好多中间件[先忽略，未来专门看]
+    除此之外，剩下的本质就是:
+      router.Handle(route.Method, route.Path, handle)
+
+
+`patRouter的Handler <https://github.com/tal-tech/go-zero/blob/5c6a3132ebe96afee256b8ee07c0bf8b8c6e0a39/rest/router/patrouter.go#L39-L57>`_ 实现::
+
+    func (pr *patRouter) Handle(method, reqPath string, handler http.Handler) error {
+      tree, ok := pr.trees[method]
+      if ok {
+        return tree.Add(cleanPath, handler)
+      }
+      tree = search.NewTree()
+      pr.trees[method] = tree
+      return tree.Add(cleanPath, handler)
+    }
+
+    type patRouter struct {
+      trees      map[string]*search.Tree
+    }
+
+小结::
+
+    当一个请求过来时
+
+
+实际 http 请求
+==============
+
+
+
+
+
+
+
+

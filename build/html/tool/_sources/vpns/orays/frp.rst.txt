@@ -1,0 +1,292 @@
+frp: reverse proxy to acrose NAT or firewall
+############################################
+
+* 官网: https://github.com/fatedier/frp
+
+
+Architecture
+============
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/12/renVgw.png
+
+Docker
+======
+
+* 官网不配置，使用这个: https://github.com/snowdreamtech/frp
+
+start frps::
+
+    docker run --restart=always --network host -d -v /etc/frp/frps.toml:/etc/frp/frps.toml --name frps snowdreamtech/frps
+
+start frpc::
+
+    docker run --restart=always --network host -d -v /etc/frp/frpc.toml:/etc/frp/frpc.toml --name frpc snowdreamtech/frpc
+
+
+Examples
+========
+
+
+Access your computer in a LAN network via SSH
+---------------------------------------------
+
+server with a public IP::
+
+    1. 配置文件
+    $ cat frps.toml
+    bindPort = 7000
+
+    2. 启动
+    ./frps -c ./frps.toml
+
+client-server::
+
+    1. 配置文件
+    $ cat frpc.toml
+    serverAddr = "x.x.x.x"
+    serverPort = 7000
+
+    [[proxies]]
+    name = "ssh"
+    type = "tcp"
+    localIP = "127.0.0.1"
+    localPort = 22
+    remotePort = 6000
+
+    2. 启动
+    ./frpc -c ./frpc.toml
+
+client::
+
+    ssh -oPort=6000 <username>@x.x.x.x
+
+.. note:: 注意client连接时用的username是 client-server 的用户名
+
+
+
+Multiple SSH services sharing the same port
+-------------------------------------------
+
+server with a public IP::
+
+    1. 配置文件
+    bindPort = 7000
+    tcpmuxHTTPConnectPort = 5002
+
+
+
+client-server1::
+
+    serverAddr = "x.x.x.x"
+    serverPort = 7000
+
+    [[proxies]]
+    name = "ssh1"
+    type = "tcpmux"
+    multiplexer = "httpconnect"
+    customDomains = ["machine-a.example.com"]
+    localIP = "127.0.0.1"
+    localPort = 22
+
+
+
+client-server2::
+
+    serverAddr = "x.x.x.x"
+    serverPort = 7000
+
+    [[proxies]]
+    name = "ssh2"
+    type = "tcpmux"
+    multiplexer = "httpconnect"
+    customDomains = ["machine-b.example.com"]
+    localIP = "127.0.0.1"
+    localPort = 22
+
+client::
+
+    ssh -o 'proxycommand socat - PROXY:x.x.x.x:machine-a.example.com:22,proxyport=5002' <user1>@machine-a.example.com
+
+    ssh -o 'proxycommand socat - PROXY:x.x.x.x:machine-b.example.com:22,proxyport=5002' <user2>@machine-b.example.com
+
+    需要安装socat：
+    brew install socat
+    sudo apt-get install socat
+
+    验证安装成功:
+    >> socat
+
+
+Accessing Internal Web Services with Custom Domains in LAN
+----------------------------------------------------------
+
+server with a public IP::
+
+    # frps.toml
+    bindPort = 7000
+    vhostHTTPPort = 8080
+
+
+client-server1::
+
+    # frpc.toml
+    serverAddr = "x.x.x.x"
+    serverPort = 7000
+
+    [[proxies]]
+    name = "web"
+    type = "http"
+    localPort = 80
+    customDomains = ["www.example.com"]
+
+
+client::
+
+    Map the A record of www.example.com to the public IP
+    $ curl http://www.example.com:8080
+
+
+Forward Unix Domain Socket
+--------------------------
+
+server with a public IP::
+
+    # frps.toml
+    bindPort = 7000
+
+
+client-server1::
+
+    # frpc.toml
+    serverAddr = "x.x.x.x"
+    serverPort = 7000
+
+    [[proxies]]
+    name = "unix_domain_socket"
+    type = "tcp"
+    remotePort = 6000
+    [proxies.plugin]
+    type = "unix_domain_socket"
+    unixPath = "/var/run/docker.sock"
+
+
+client::
+
+    curl http://x.x.x.x:6000/version
+
+
+
+Expose a simple HTTP file server
+--------------------------------
+
+server with a public IP::
+
+    # frps.toml
+    bindPort = 7000
+
+
+client-server1::
+
+    # frpc.toml
+    serverAddr = "x.x.x.x"
+    serverPort = 7000
+
+    [[proxies]]
+    name = "test_static_file"
+    type = "tcp"
+    remotePort = 6000
+    [proxies.plugin]
+    type = "static_file"
+    localPath = "/tmp/files"
+    stripPrefix = "static"
+    httpUser = "abc"
+    httpPassword = "pwd"
+
+
+client::
+
+    curl http://x.x.x.x:6000/static
+
+Dashboard
+=========
+
+Server Dashboard
+----------------
+
+server::
+
+    webServer.port = 7500
+
+    # dashboard's username and password are both optional
+    webServer.user = "admin"
+    webServer.password = "admin"
+
+    webServer.tls.certFile = "server.crt"
+    webServer.tls.keyFile = "server.key"
+
+client::
+
+    curl https://[serverAddr]:7500
+
+
+Client Admin UI
+---------------
+
+client-server::
+
+    webServer.addr = "127.0.0.1"
+    webServer.port = 7400
+    webServer.user = "admin"
+    webServer.password = "admin"
+
+client::
+
+    curl http://127.0.0.1:7400
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

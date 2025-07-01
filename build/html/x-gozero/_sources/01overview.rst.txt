@@ -1,0 +1,259 @@
+01整体源码分析
+##############
+
+.. raw:: html
+
+   <details>
+   <summary>目录</summary>
+
+.. sidebar:: 目录
+
+    .. contents::
+
+.. raw:: html
+
+   </details>
+
+说明::
+
+     1. 以最新的稳定版 tag: v1.1.10 为讲解实例
+     2. 前提条件: 
+          a. 你已经熟练使用 go-zero 进行开发
+          b. 熟练使用 goctl 命令做最常用操作
+          c. 对 grpc 有简单了解
+          d. 对 Golang 语言有一定了解
+
+
+
+整体分析
+========
+
+查看源码规模::
+
+     ➜ cloc .
+          758 text files.
+          758 unique files.
+           22 files ignored.
+
+     github.com/AlDanial/cloc v 1.86  T=0.63 s (1186.3 files/s, 131911.8 lines/s)
+     -------------------------------------------------------------------------------
+     Language                     files          blank        comment           code
+     -------------------------------------------------------------------------------
+     Go                             706          11812           2774          64908
+     Markdown                        11            537              0           1545
+     YAML                             6             39             30            477
+     XML                              5              0              0            136
+     Protocol Buffers                 9             46             11            116
+     ANTLR Grammar                    2             16             10             93
+     SQL                              1              1              1             28
+     make                             2              6              2             27
+     JSON                             1              0              0              6
+     -------------------------------------------------------------------------------
+     SUM:                           743          12457           2828          67336
+     -------------------------------------------------------------------------------
+
+.. note:: `cloc <https://github.com/AlDanial/cloc>`_ 是一个非常实用的工具，有兴趣的同学可以安装用用。
+
+整个 ``go-zero`` 项目一共有700多个文件，64k 行代码，代码量不大不小，正好适合拿来分析学习。而且 ``go-zero`` 项目从18年开源到现在，在 Github 上已经超过10k的star量，里面的很多代码都是特别优秀的。
+
+
+目录结构
+========
+
+一级目录
+--------
+
+::
+
+     ➜ ls
+     CONTRIBUTING.md    code-of-conduct.md go.sum             rest
+     LICENSE            core               readme-cn.md       tools
+     ROADMAP.md         go.mod             readme.md          zrpc
+
+文档相关的几个文件::
+
+     CONTRIBUTING.md
+     ROADMAP.md
+     code-of-conduct.md
+     readme-cn.md
+     readme.md
+
+     这几个文件在看源码之前最好先仔细看看
+
+
+各个关键的文件夹::
+
+     core: 这是最核心的内容
+     tools: 这个是 goctl 命令
+     rest: http 服务相关
+     zrpc: grpc 服务相关
+
+core 目录
+---------
+
+core 源码规模::
+
+     ➜ cloc core
+          388 text files.
+          388 unique files.
+            0 files ignored.
+
+     github.com/AlDanial/cloc v 1.86  T=0.31 s (1249.4 files/s, 137478.3 lines/s)
+     -------------------------------------------------------------------------------
+     Language                     files          blank        comment           code
+     -------------------------------------------------------------------------------
+     Go                             385           6033           1432          34788
+     YAML                             3             22              0            419
+     -------------------------------------------------------------------------------
+     SUM:                           388           6055           1432          35207
+     -------------------------------------------------------------------------------
+
+.. note:: 一共34k，占总代码量的一多半，是最核心的部分，里面有很多的类库，未来会一点点的解锁各子目录
+
+子目录列表::
+
+     ➜ ls core
+     bloom      discov     iox        mapping    prof       stores     utils
+     breaker    errorx     jsontype   mathx      prometheus stringx
+     cmdline    executors  jsonx      metric     queue      syncx
+     codec      filex      lang       mr         rescue     sysx
+     collection fs         limit      naming     search     threading
+     conf       fx         load       netx       service    timex
+     contextx   hash       logx       proc       stat       trace
+
+从名字上看，可以猜出很多内容，如::
+
+     mr: mapreduce
+     queue: 队列
+     utils: 工具库
+     breaker: 断路器
+     conf: 配置文件相关
+     hash: hash 算法相关
+     threading: 线程相关
+     stat: 指标相关
+     prof: 优化相关
+     prometheus: prometheus相关
+
+     contextx: 封装 context库
+     errorx: 封装 error
+     filex: 封装 file
+     iox: 封装 io
+     jsonx: 封装 json
+     logx: 封装 log
+     mathx: 封装 math
+     netx: 封装 net
+     stringx: 封装 string
+     sysx: 封装 sys
+     timex: 封装 time
+
+.. note:: 更多详细内容后面会一点点解锁。
+
+
+
+rest 目录
+---------
+
+core 源码规模::
+
+     ➜ cloc rest
+           57 text files.
+           57 unique files.
+            0 files ignored.
+
+     github.com/AlDanial/cloc v 1.86  T=0.07 s (817.6 files/s, 83625.0 lines/s)
+     -------------------------------------------------------------------------------
+     Language                     files          blank        comment           code
+     -------------------------------------------------------------------------------
+     Go                              57            852            147           4831
+     -------------------------------------------------------------------------------
+     SUM:                            57            852            147           4831
+     -------------------------------------------------------------------------------
+
+.. note:: 代码量级是4.8k，应该实现了一个类似 gin 的 http server
+
+
+
+子目录列表::
+
+     ➜ ls rest
+     config.go        handlers.go      router           types.go
+     engine.go        handlers_test.go server.go
+     engine_test.go   httpx            server_test.go
+     handler          internal         token
+
+
+
+zrpc 目录
+---------
+
+core 源码规模::
+
+     ➜ cloc zrpc
+           69 text files.
+           69 unique files.
+            0 files ignored.
+
+     github.com/AlDanial/cloc v 1.86  T=0.06 s (1173.6 files/s, 65939.9 lines/s)
+     -------------------------------------------------------------------------------
+     Language                     files          blank        comment           code
+     -------------------------------------------------------------------------------
+     Go                              68            533            133           3196
+     Protocol Buffers                 1              4              0             11
+     -------------------------------------------------------------------------------
+     SUM:                            69            537            133           3207
+     -------------------------------------------------------------------------------
+
+.. note:: 代码量级是3.1k，应该对 grpc 进行了封装，并做了一些工作
+
+子目录列表::
+
+     ➜ ls zrpc
+     client.go      config.go      internal       proxy_test.go  server_test.go
+     client_test.go config_test.go proxy.go       server.go
+
+
+
+
+tools 目录
+----------
+
+core 源码规模::
+
+     ➜ cloc tools
+          225 text files.
+          225 unique files.
+           15 files ignored.
+
+     github.com/AlDanial/cloc v 1.86  T=0.23 s (945.1 files/s, 128296.9 lines/s)
+     -------------------------------------------------------------------------------
+     Language                     files          blank        comment           code
+     -------------------------------------------------------------------------------
+     Go                             196           4394           1062          22093
+     Markdown                         6            349              0           1076
+     Protocol Buffers                 8             42             11            105
+     ANTLR Grammar                    2             16             10             93
+     SQL                              1              1              1             28
+     make                             2              6              2             27
+     JSON                             1              0              0              6
+     -------------------------------------------------------------------------------
+     SUM:                           216           4808           1086          23428
+     -------------------------------------------------------------------------------
+
+子目录列表::
+
+     ➜ ls tools
+     goctl
+
+.. note:: 这个是占了1/3以上的代码量，只实现了生成 goctl 命令，说明在 go-zero 中 goctl 命令的重要程度。
+
+
+相关链接
+========
+
+* ``go-zero`` 官网: https://go-zero.dev/cn/
+* ``go-zero GitHub`` 地址: https://github.com/tal-tech/go-zero
+
+
+
+
+

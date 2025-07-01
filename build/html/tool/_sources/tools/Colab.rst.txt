@@ -1,0 +1,88 @@
+Colab
+#####
+
+* 官网: https://colab.research.google.com/
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2023/07/BwtXzm.jpg
+
+	在 Colab 里使用 GPU
+
+
+安装路径都设置到 mount的google drive里
+======================================
+
+1. Mount Google Drive::
+
+	from google.colab import drive 
+	drive.mount('/content/gdrive') 
+
+	import os, sys 
+	nb_path = '/content/notebooks'
+	os.symlink('/content/gdrive/My Drive/Colab Notebooks', nb_path)
+	sys.path.insert(0, nb_path)  # or append(nb_path)
+
+
+2. Install the module in the notebook folder permanently::
+
+	!pip install --target=$nb_path spacy
+
+
+3. 【Usage】Mount your Google drive::
+
+	from google.colab import drive
+	drive.mount('/content/gdrive')
+
+	import sys
+	sys.path.append('/content/gdrive/My Drive/Colab Notebooks')
+
+
+
+log in Huggingface to access
+============================
+
+现象::
+
+	Cannot access gated repo for url https://huggingface.co/mistralai/Mistral-7B-v0.1/resolve/main/config.json.
+	Access to model mistralai/Mistral-7B-v0.1 is restricted. You must have access to it and be authenticated to access it. Please log in.
+
+分析::
+
+	有些模型需要先同意什么协议才能下载
+
+
+解决::
+
+	方法1:
+	from huggingface_hub import login
+	login('<your_hugging_face_token>', add_to_git_credential=True)
+
+	方法2:
+	import os
+	os.environ['HF_TOKEN'] = 'your_hugging_face_token'
+
+获取 huggingface token方法::
+
+	首先，前往 Hugging Face 网站 并登录你的账号。
+	进入个人资料设置，找到“Tokens”部分。
+	点击“New token”，创建一个新的读取权限的Token
+
+
+参考
+====
+
+
+* 把安装路径都设置到 mount的google drive里，这样以后每次都只需要配置一下路径，不需要再重新安装pip包了: https://ayoolafelix.hashnode.dev/how-to-permanently-install-a-module-on-google-colab-ckixqrvs40su044s187y274tc
+
+
+
+
+
+
+
+
+
+
+
+
+

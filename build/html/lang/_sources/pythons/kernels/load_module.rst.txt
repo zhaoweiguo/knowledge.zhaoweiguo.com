@@ -1,0 +1,303 @@
+模块加载
+########
+
+.. note:: 相关参考: ``pep 420``
+
+
+模块
+====
+
+模块通常为单独的.py文件，可以用import直接引用，可以作为模块的文件类型有::
+
+    .py、.pyo、.pyc、.pyd、.so、.dll
+
+
+几种导入方式::
+
+    import subpackage1.a 
+        # 将模块subpackage.a导入全局命名空间，例如访问a中属性时用subpackage1.a.attr
+    from subpackage1 import a 
+        #　将模块a导入全局命名空间，例如访问a中属性时用a.attr_a
+    from subpackage.a import attr_a 
+        # 将模块a的属性直接导入到命名空间中，例如访问a中属性时直接用attr_a
+
+
+
+
+
+.. important:: 模块搜索路径(import命令)的第一个条目：如果存在输入脚本的话，是包含输入脚本的目录。 否则，第一个条目将是当前目录，当执行交互式 shell, -c 命令, 或 -m 模块时都属于这种情况。python 程序运行时，考虑相对路径时，考虑的是``运行文件所在目录``的相对路径，而``不是工作目录``的路径。
+
+.. important:: sys.path 是``相对工作目录``而言的，而不是``相对文件所在目录``。因此我们在当前目录运行时：使用``sys.append('..')``；在父目录运行程序，工作目录变化了，使用``sys.append('.')``
+
+
+
+
+__init__.py文件
+===============
+
+* python3中，有没有``__init__.py``文件程序都能正常导入运行
+* python2中，没有``__init__.py``的话则不能导入moda.py模块下的funa函数
+
+
+导入需要的模块
+--------------
+
+在 ``my_package/__init__.py`` 中，输入以下代码::
+
+    from .file1 import func_1
+    from .file2 import func_2
+
+在package目录下，创建1个 ``main.py`` ::
+
+    import my_package  # this imports the entire module 
+
+    # 调用 
+    my_package.func_1() 
+    my_package.func_2()
+
+
+设置 ``__all__`` 参数
+---------------------
+
+* 如果 __init__.py中设置__all__ 列表变量, 则 from package import * 语句导入__all__中包含的所有模块或全局变量。
+
+``__init__.py`` 代码::
+
+    __all__ = ["func_1", "func_2", "func_3"]
+
+然后在 main.py 中::
+
+    from my_package import * # 执行时，最终只有3个模块被导入
+    func_1()
+    func_2()
+    func_3()
+
+.. warning:: 在实际编写代码时，尽量不要用import * 来导入包中所有模块与全局变量，以避免未知的命名冲突。
+
+导入子目录下的包
+----------------
+
+* 如果想直接import包(package)中的方法，而不是import包下模块(module)中的方法，就需要在 ``__init__.py`` 文件中先引入
+
+
+
+
+
+
+
+
+直接运行 和 模块运行
+====================
+
+* 直接运行: python folder/module.py (sys.path 指的是运行文件对应的目录)
+* 模块运行: python -m folder.module (sys.path 指的是当前运行目录)
+
+.. note:: 详细验证文件参见: ``demo-python`` 项目中的 ``0module_loading``
+
+
+示例讲解
+--------
+
+
+项目结构::
+
+    statistics
+        ->activity
+            -> stat.py
+        ->base
+            ->connection.py
+            ->__init__.py
+
+直接运行的情况
+""""""""""""""
+
+* 如果我们想在stat.py 里面import activity目录上一个文件夹的其他模块是不可以的
+* 比如我想导入base.connection里面的db_mongo, 这是不可以的
+* 因为sys.path 就是在activity目录，根目录statictis 没有在sys.path里面
+
+    from base.connection import db_mongo
+    会报错：
+    ImportError: No module named base.connection
+
+
+通过相对路径引入(直接执行py文件的话，是不可以使用相对引入的)::
+
+    from ..base.connection import db_mongo
+    报另外一个报错：
+    ValueError: Attempted relative import in non-package
+
+用模块运行的情况
+""""""""""""""""
+
+::
+
+    from base.connection import db_mongo
+    报
+    ValueError: Attempted relative import beyond toplevel package
+
+
+
+
+
+
+PYTHONPATH环境变量
+==================
+
+默认情况::
+
+    $ echo $PYTHONPATH
+    $ python 
+    >>> import sys
+    >>> sys.path
+    ['', ...]
+
+
+指定PYTHONPATH::
+
+    $ export PYTHONPATH=/home/zhaoweiguo/lib 
+    $ python 
+    >>> import sys
+    >>> sys.path
+    ['', '/home/zhaoweiguo/lib', ...]
+
+
+
+
+
+The Module Search Path
+======================
+
+the interpreter::
+
+    1. searche for a `built-in module` with that name
+        sys.builtin_module_names
+    2. searches for a file named xxxx.py in a list of directories given by the variable `sys.path`
+        sys.path
+
+
+sys.builtin_module_names::
+
+    ('_abc',
+     '_ast',
+     '_codecs',
+     '_collections',
+     '_functools',
+     '_imp',
+     '_io',
+     '_locale',
+     '_operator',
+     '_peg_parser',
+     '_signal',
+     '_sre',
+     '_stat',
+     '_string',
+     '_symtable',
+     '_thread',
+     '_tracemalloc',
+     '_warnings',
+     '_weakref',
+     'atexit',
+     'builtins',
+     'errno',
+     'faulthandler',
+     'gc',
+     'itertools',
+     'marshal',
+     'posix',
+     'pwd',
+     'sys',
+     'time',
+     'xxsubtype')
+
+
+sys.path::
+
+    ['/data/anaconda3/envs/<name>/bin',
+     '/data/anaconda3/envs/<name>/lib/python39.zip',
+     '/data/anaconda3/envs/<name>/lib/python3.9',
+     '/data/anaconda3/envs/<name>/lib/python3.9/lib-dynload',
+     '',
+     '/data/anaconda3/envs/<name>/lib/python3.9/site-packages']
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+示例
+====
+
+
+
+
+示例2
+-----
+
+加载上级目录的库文件::
+
+    import sys
+    sys.path.append('..')
+    from common.utils import load_data
+
+
+修改库文件后重新加载::
+
+    import importlib
+    from common import utils
+    importlib.reload(utils)
+
+    # 重新导入修改后的函数
+    from common.utils import mape
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

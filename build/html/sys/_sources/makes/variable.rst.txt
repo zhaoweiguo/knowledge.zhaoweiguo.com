@@ -1,0 +1,231 @@
+变量
+###############
+
+多行变量
+========
+
+.. note:: 通过 define 关键字设置多行变量，变量中允许换行
+
+格式::
+
+    define 变量名
+    变量内容
+    ...
+    endef
+
+示例::
+
+    define USAGE_OPTIONS
+    Options:
+      DEBUG        Whether to generate debug symbols. Default is 0.
+      BINS         The binaries to build. Default is all of cmd.
+      ...
+      V            Set to 1 enable verbose build. Default is 0.
+    endef
+
+
+特殊变量
+========
+
+.. note:: 特殊变量是 make 提前定义好的，可以在 makefile 中直接引用
+
+.. figure:: https://img.zhaoweiguo.com/knowledge/images/sys/makes/variable1.png
+
+   特殊变量列表
+
+
+内置变量-Implicit Variables
+===========================
+
+* [内置变量清单手册]10.3 Variables Used by Implicit Rules: https://www.gnu.org/software/make/manual/html_node/Implicit-Variables.html
+
+ ::
+
+    Make命令提供一系列内置变量，比如:
+    $(CC) 指向当前使用的编译器
+
+    这主要是为了跨平台的兼容性
+    output:
+        $(CC) -o output input.c
+
+自动变量-Automatic Variables
+============================
+
+* [清单手册]10.5.3 Automatic Variables: https://www.gnu.org/software/make/manual/html_node/Automatic-Variables.html
+
+.. note:: 所谓自动化变量，就是这种变量会把模式中所定义的一系列的文件自动地挨个取出，一直到所有符合模式的文件都取完为止。这种自动化变量只应出现在规则的命令中
+
+.. figure:: https://img.zhaoweiguo.com/knowledge/images/sys/makes/variable2.png
+
+   Makefile 中支持的自动化变量
+
+
+1. $@::
+
+    $@指代当前目标，就是Make命令当前构建的那个目标
+    比如:
+    make foo        // $@ 就指代foo
+
+    a.txt b.txt: 
+        touch $@
+
+    等同于下面的写法:
+    a.txt:
+        touch a.txt
+    b.txt:
+        touch b.txt
+
+2. $<::
+
+    $< 指代第一个前置条件
+    比如: 
+    t: p1 p2        // $< 就指代p1
+
+    a.txt: b.txt c.txt
+        cp $< $@ 
+
+    等同于下面的写法
+    a.txt: b.txt c.txt
+        cp b.txt a.txt 
+
+3. $?::
+
+    $? 指代比目标更新的所有前置条件，之间以空格分隔
+    比如:
+    t: p1 p2        // 其中 p2 的时间戳比 t 新，$?就指代p2
+
+4. $^::
+
+    $^ 指代所有前置条件，之间以空格分隔
+    比如:
+    t: p1 p2        // $^ 就指代 p1 p2
+
+5. $\*::
+
+    $* 指代匹配符 % 匹配的部分
+    比如:
+    % 匹配 f1.txt 中的f1 ，$* 就表示 f1
+
+    这个变量表示目标模式中“%”及其之前的部分
+    如果目标是“dir/a.foo.b”，并且目标的模式是“a.%.b”那么:“$*”的值就是“dir/a.foo”
+    这个变量对于构造有关联的文件名是比较有较
+    如果目标中没有模式的定义，那么“$*”也就不能被推导出，
+    但是，如果目标文件的后缀是make所识别的，那么“$*”就是除了后缀的那一部分
+    例如:
+      如果目标是“foo.c”，因为“.c”是make所能识别的后缀名，所以，“$*”的值就是“foo”
+      这个特性是GNU make的，很有可能不兼容于其它版本的make
+      所以，你应该尽量避免使用“$*”，除非是在隐含规则或是静态模式中
+      如果目标中的后缀是make所不能识别的，那么“$*”就是空值。
+
+
+
+6. $(@D) 和 $(@F)::
+
+    $(@D) 和 $(@F) 分别指向 $@ 的目录名和文件名
+    比如:
+    $@是 src/input.c
+    那么: 
+        $(@D) 的值为 src
+        $(@F) 的值为 input.c
+
+7. $(<D) 和 $(<F)::
+
+    $(<D) 和 $(<F) 分别指向 $< 的目录名和文件名
+
+    例子:
+    dest/%.txt: src/%.txt
+        @[ -d dest ] || mkdir dest
+        cp $< $@
+
+
+8. $%::
+
+    仅当目标是函数库文件中，表示规则中的目标成员名
+    例如:
+      如果一个目标是“foo.a(bar.o)”，那么，“$%”就是“bar.o”，“$@”就是“foo.a”。
+      如果目标不是函数库文件（Unix下是[.a]，Windows下是[.lib]），那么，其值为空。
+
+9. $+::
+
+    这个变量很像“$^”，也是所有依赖目标的集合。只是它不去除重复的依赖目标。
+
+实战
+----
+
+原始Makefile::
+
+    main: main.o mytool1.o mytool2.o 
+    gcc -o main main.o mytool1.o mytool2.o 
+    main.o: main.c mytool1.h mytool2.h 
+    gcc -c main.c 
+    mytool1.o: mytool1.c mytool1.h 
+    gcc -c mytool1.c 
+    mytool2.o: mytool2.c mytool2.h 
+    gcc -c mytool2.c
+
+简化后::
+
+    main：main.o mytool1.o mytool2.o 
+    gcc -o $@ $^ 
+    main.o：main.c mytool1.h mytool2.h 
+    gcc -c $< 
+    mytool1.o：mytool1.c mytool1.h 
+    gcc -c $< 
+    mytool2.o：mytool2.c mytool2.h 
+    gcc -c $< 
+
+
+
+预定义的环境变量
+================
+
+* Makefile 中指定目标MAKECMDGOALS: https://blog.csdn.net/eddy_liu/article/details/8217835
+
+MAKECMDGOALS ::
+
+    存放你所指定的终极目标的列表
+    如:
+    make clean   # MAKECMDGOALS就是clean
+    # 你没有指定目标，那么，这个变量是空值
+
+    这个变量可以让你使用在一些比较特殊的情形下:
+    sources = foo.c bar.c  
+    ifneq ( $(MAKECMDGOALS),clean)  
+    include $(sources:.c=.d)  
+    endif
+    # 只要我们输入的命令不是“make clean”，那么 makefile 会自动包含“foo.d”和“bar.d”这两个 makefile
+
+* 关于 BASH_SOURCE: https://blog.csdn.net/zhaozhencn/article/details/21103367
+
+BASH_SOURCE::
+    
+    // BASH_SOURCE[0] 等价于 BASH_SOURCE, 取得当前执行的shell文件所在的路径及文件名
+    // 实例:
+    $> cat /home/abc/test.sh
+    #!/bin/sh
+    echo "${BASH_SOURCE[0]}"
+    echo "${BASH_SOURCE]}"
+    echo "$( dirname "${BASH_SOURCE[0]}" )"
+    DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+    echo $DIR
+
+    $> cd /home
+    $> source ./abc/test.sh
+    ./abc/test.sh
+    ./abc/test.sh
+    ./abc/
+    /home/abc
+
+
+
+自定义的环境变量
+================
+
+.. note:: 自定义的环境变量可以覆盖 Makefile 预定义的环境变量。默认情况下，Makefile 中定义的环境变量只在当前 Makefile 有效，如果想向下层传递（Makefile 中调用另一个 Makefile），需要使用 export 关键字来声明。
+
+
+
+
+
+
+

@@ -1,0 +1,114 @@
+Strategy-策略模式
+#################
+
+.. note:: allows one of a family of algorithms to be selected on-the-fly at runtime. Define a family of algorithms, encapsulate each one, and make them interchangeable. Strategy lets the algorithm vary independently from clients that use it. 需要使用策略模式，定义一些独立的类来封装不同的算法，每一个类封装一个具体的算法（即策略）。
+
+
+工厂模式是解耦对象的创建和使用，观察者模式是解耦观察者和被观察者。策略模式跟两者类似，也能起到解耦的作用，不过，它解耦的是策略的定义、创建、使用这三部分。
+
+策略模式包含一组可选策略，客户端代码一般是通过运行时动态确定使用哪种策略，这也是策略模式最典型的应用场景。这里的 “运行时动态” 指的是，我们事先并不知道会使用哪个策略，而是在程序运行期间，根据配置、用户输入、计算结果等这些不确定因素，动态决定使用哪种策略。
+
+策略模式用来解耦策略的定义、创建、使用。实际上，一个完整的策略模式就是由这三个部分组成的::
+
+    1. 策略类的定义:
+        比较简单，包含一个策略接口和一组实现这个接口的策略类。
+    2. 策略的创建:
+        由工厂类来完成，封装策略创建的细节。
+    3. 策略模式的使用:
+        包含一组策略可选，客户端代码如何选择使用哪个策略，有两种确定方法：
+        编译时静态确定和运行时动态确定。
+        其中，“运行时动态确定” 才是策略模式最典型的应用场景。
+
+
+
+
+示例
+====
+
+::
+
+    package strategy
+
+    // 策略模式
+
+    // 定义一个策略类
+    type IStrategy interface {
+      do(int, int) int
+    }
+
+    // 1. 策略实现：加
+    type add struct{}
+
+    func (*add) do(a, b int) int {
+      return a + b
+    }
+
+    // 2. 策略实现：减
+    type reduce struct{}
+
+    func (*reduce) do(a, b int) int {
+      return a - b
+    }
+
+    // 具体策略的执行者
+    type Operator struct {
+      strategy IStrategy
+    }
+
+    // 设置策略
+    func (operator *Operator) setStrategy(strategy IStrategy) {
+      operator.strategy = strategy
+    }
+
+    // 调用策略中的方法
+    func (operator *Operator) calculate(a, b int) int {
+      return operator.strategy.do(a, b)
+    }
+
+使用::
+
+
+    func TestStrategy(t *testing.T) {
+      operator := Operator{}
+
+      // 1. 加
+      operator.setStrategy(&add{})
+      result := operator.calculate(1, 2)
+      fmt.Println("add:", result)
+
+      // 2. 减
+      operator.setStrategy(&reduce{})
+      result = operator.calculate(2, 1)
+      fmt.Println("reduce:", result)
+    }
+
+
+实战
+====
+
+根据参数不同使用不同的认证策略（Basic 或 Bearer）::
+
+    switch authHeader[0] {
+    case "Basic":
+      operator.SetStrategy(a.basic)
+    case "Bearer":
+      operator.SetStrategy(a.jwt)
+      ...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

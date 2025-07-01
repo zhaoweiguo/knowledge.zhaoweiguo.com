@@ -1,0 +1,246 @@
+设计方法
+========
+
+一个优雅的 Go 应该具备的特点::
+
+    1. 符合 Go 编码规范和最佳实践
+    2. 易阅读、易理解，易维护
+    3. 易测试、易扩展
+    4. 代码质量高
+
+编写高质量的 Go 应用::
+
+    1. 代码结构
+    2. 代码规范
+    3. 代码质量
+    4. 编程哲学
+    5. 软件设计方法
+
+.. figure:: https://img.zhaoweiguo.com/knowledge/images/soft-engineerings/standard-code1.png
+
+   如何编写一个高质量的 Go 应用
+
+
+.. figure:: https://img.zhaoweiguo.com/knowledge/images/soft-engineerings/standard-code2.png
+
+   开发一个优雅的 Go 项目，其实就是编写高质量的 Go 应用、高效管理项目和编写高质量的项目文档
+
+
+1. 代码结构
+-----------
+
+两个手段来组织代码结构::
+
+    1. 组织一个好的目录结构
+    2. 选择一个好的模块拆分方法
+        做好模块拆分，可以使项目内模块职责分明，做到低耦合高内聚
+
+
+模块拆分方法::
+
+    1. 按层拆分
+    2. 按功能拆分
+
+
+2. 代码规范
+-----------
+
+遵循代码规范::
+
+    1. 编码规范
+    2. 最佳实践
+
+
+几篇介绍 Go 语言最佳实践的文章:
+
+    1. Effective Go
+        高效 Go 编程，由 Golang 官方编写，里面包含了编写 Go 代码的一些建议，也可以理解为最佳实践
+    2. Go Code Review Comments
+        Golang 官方编写的 Go 最佳实践，作为 Effective Go 的补充
+    3. Style guideline for Go packages
+        包含了如何组织 Go 包、如何命名 Go 包、如何写 Go 包文档的一些建议
+
+* Uber Go 语言编码规范: https://github.com/uber-go/guide/blob/master/style.md
+
+
+3. 代码质量
+-----------
+
+确保我们开发出的是一个高质量的代码::
+
+    单元测试
+    Code Review
+
+单元测试环境的特点::
+
+    可能无法连接数据库
+    可能无法访问第三方服务
+
+.. note:: 如果函数 A 依赖数据库连接、第三方服务，那么在单元测试环境下执行单元测试就会失败，函数就没法测试，函数是不可测的。解决方法也很简单：将依赖的数据库、第三方服务等抽象成接口，在被测代码中调用接口的方法，在测试时传入 mock 类型，从而将数据库、第三方服务等依赖从具体的被测函数中解耦出去。
+
+为了提高代码的可测性，降低单元测试的复杂度，对 function 和 mock 的要求是::
+
+    1. 要尽可能减少 function 中的依赖，让 function 只依赖必要的模块
+        编写一个功能单一、职责分明的函数，会有利于减少依赖
+    2. 依赖模块应该是易 Mock 的
+
+示例
+^^^^
+
+不可测代码::
+
+    package post
+    import "google.golang.org/grpc"
+    type Post struct {
+      Name    string
+      Address string
+    }
+    func ListPosts(client *grpc.ClientConn) ([]*Post, error) {
+      return client.ListPosts()
+    }
+
+.. note:: 这段代码中的 ListPosts 函数是不可测试的。因为 ListPosts 函数中调用了 client.ListPosts() 方法，该方法依赖于一个 gRPC 连接。而我们在做单元测试时，可能因为没有配置 gRPC 服务的地址、网络隔离等原因，导致没法建立 gRPC 连接，从而导致 ListPosts 函数执行失败。
+
+可测代码::
+
+    package main
+    type Post struct {
+      Name    string
+      Address string
+    }
+    type Service interface {
+      ListPosts() ([]*Post, error)
+    }
+    func ListPosts(svc Service) ([]*Post, error) {
+      return svc.ListPosts()
+    }
+
+.. note:: ListPosts 函数入参为 Service 接口类型，只要我们传入一个实现了 Service 接口类型的实例，ListPosts 函数即可成功运行。因此，我们可以在单元测试中可以实现一个不依赖任何第三方服务的 fake 实例，并传给 ListPosts
+
+测试代码::
+
+    package main
+    import "testing"
+    type fakeService struct {
+    }
+    func NewFakeService() Service {
+      return &fakeService{}
+    }
+    func (s *fakeService) ListPosts() ([]*Post, error) {
+      posts := make([]*Post, 0)
+      posts = append(posts, &Post{
+        Name:    "colin",
+        Address: "Shenzhen",
+      })
+      posts = append(posts, &Post{
+        Name:    "alex",
+        Address: "Beijing",
+      })
+      return posts, nil
+    }
+    func TestListPosts(t *testing.T) {
+      fake := NewFakeService()
+      if _, err := ListPosts(fake); err != nil {
+        t.Fatal("list posts failed")
+      }
+    }
+
+.. note:: 代码可测之后，就可以借助一些工具来 Mock 需要的接口了
+
+工具
+^^^^
+
+常用的 Mock 工具::
+
+    1. golang/mock，是官方提供的 Mock 框架
+        它实现了基于 interface 的 Mock 功能，能够与 Golang 内置的 testing 包做很好的集成，是最常用的 Mock 工具。
+        golang/mock 提供了 mockgen 工具用来生成 interface 对应的 Mock 源文件。
+    2. sqlmock，可以用来模拟数据库连接
+        数据库是项目中比较常见的依赖，在遇到数据库依赖时都可以用它。
+    3. httpmock，可以用来 Mock HTTP 请求。
+    4. bouk/monkey，猴子补丁，能够通过替换函数指针的方式来修改任意函数的实现。
+        如果 golang/mock、sqlmock 和 httpmock 这几种方法都不能满足我们的需求，
+        我们可以尝试通过猴子补丁的方式来 Mock 依赖。
+        可以这么说，猴子补丁提供了单元测试 Mock 依赖的最终解决方案。
+
+单元测试覆盖率
+^^^^^^^^^^^^^^
+
+两个建议::
+
+    1. 使用 gotests 工具自动生成单元测试代码，减少编写单元测试用例的工作量，将你从重复的劳动中解放出来
+    2. 定期检查单元测试覆盖率。你可以通过以下方法来检查:
+        $ go test -race -cover  -coverprofile=./coverage.out -timeout=10m -short -v ./...
+        $ go tool cover -func ./coverage.out
+
+.. note:: 可以先提高单元测试覆盖率低的函数，之后再检查项目的单元测试覆盖率；如果项目的单元测试覆盖率仍然低于期望的值，可以再次提高单元测试覆盖率低的函数的覆盖率，然后再检查。以此循环，最终将项目的单元测试覆盖率优化到预期的值为止。
+
+.. note:: 对于一些可能经常会变动的函数单元测试，覆盖率要达到 100%
+
+Code Review
+^^^^^^^^^^^
+
+建立 Code Review 机制很简单，主要有 3 点::
+
+    1. 确保我们使用的代码托管平台有 Code Review 的功能。
+        比如，GitHub、GitLab 这类代码托管平台都具备这种能力
+    2. 建立一套 Code Review 规范，规定如何进行 Code Review
+    3. 也是最重要的，每次代码变更，相关开发人员都要去落实 Code Review 机制，并形成习惯，直到最后形成团队文化
+
+
+
+4. 编程哲学
+-----------
+
+.. note:: 组织一个合理的代码结构、编写符合 Go 代码规范的代码、保证代码质量，在我看来都是编写高质量 Go 代码的外功。那内功是什么呢？就是编程哲学和软件设计方法。
+
+Go 语言有很多设计哲学，对代码质量影响比较大的，我认为有两个::
+
+    1. 面向接口编程
+    2. 面向 “对象” 编程
+
+使用接口的好处::
+
+    1. 代码扩展性更强了
+        例如，同样的 Bird，可以有不同的实现。
+        在开发中用的更多的是，将数据库的 CURD 操作抽象成接口，从而可以实现同一份代码对接不同数据库的目的
+    2. 可以解耦上下游的实现
+        例如，LetItFly 不用关注 Bird 是如何 Fly 的，只需要调用 Bird 提供的方法即可
+    3. 提高了代码的可测性
+        因为接口可以解耦上下游实现，我们在单元测试需要依赖第三方系统 / 数据库的代码时
+        可以利用接口将具体实现解耦，实现 fake 类型
+    4. 代码更健壮、更稳定了
+        例如，如果要更改 Fly 的方式，只需要更改相关类型的 Fly 方法即可，完全影响不到 LetItFly 函数
+
+面向对象编程（OOP）有很多优点::
+
+    例如可以使我们的代码变得易维护、易扩展，并能提高开发效率等，
+    所以一个高质量的 Go 应用在需要时，也应该采用面向对象的方法去编程。
+
+    面向对象编程中，有几个核心特性:
+    类、实例、抽象，封装、继承、多态、构造函数、析构函数、方法重载、this 指针
+
+    Go 语言不支持面向对象编程，但可以通过以下几个方式来实现类似的效果:
+    1. 类、抽象、封装通过结构体来实现。
+    2. 实例通过结构体变量来实现。
+    3. 继承通过组合来实现。
+    4. 多态通过接口来实现。
+
+
+5. 软件设计方法
+---------------
+
+.. note:: 继续学习编写高质量 Go 代码的第二项内功，也就是让编写的代码遵循一些业界沉淀下来的，优秀的软件设计方法。
+
+优秀的软件设计方法中最重要的两类方法是::
+
+    1. 设计模式（Design pattern）
+        理解为业界针对一些特定的场景总结出来的最佳实现方式。
+        它的特点是解决的场景比较具体，实施起来会比较简单
+    2. SOLID 原则
+        理解为业界针对一些特定的场景总结出来的最佳实现方式。
+        它的特点是解决的场景比较具体，实施起来会比较简单
+
+
+
+

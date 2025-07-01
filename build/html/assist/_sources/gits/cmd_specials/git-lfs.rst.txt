@@ -1,0 +1,127 @@
+git-lfs
+#######
+
+* git-lfs(Git Large File Storage)是Git的一个扩展,用于管理和版本控制Git仓库中的大文件。
+* 总之,git-lfs使得管理Git中的大文件变得简单高效,可以极大改善包含大文件的版本控制体验。它已经成为Git的一个流行和重要的扩展工具。
+
+主要功能和特点::
+
+	- 将大文件从Git仓库中分离出来,只存储指向大文件的指针,而实际文件存储在远程服务器上,这样可以显著缩小Git仓库的大小。
+	- 支持管理二进制文件等类型的大文件,如音频、视频、图形文件等。
+	- 通过在提交前将大文件替换成文本指针,避免每次提交大文件都要完整拷贝一次。
+	- 指定文件类型和大小阈值,超过自动识别为大文件并由LFS管理。
+	- 调用Git LFS命令替换指针,获取版本历史中不同版本的大文件。
+	- 支持主流代码托管平台如GitHub, GitLab, Bitbucket等。
+	- 开源且免费使用。
+
+安装::
+
+	apt install git-lfs
+	brew install git-lfs
+
+
+Git LFS工作原理
+===============
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/04/5MCvfo.png
+
+	【Git LFS】针对jpg格式的图片利用Git LFS的存储功能，在推送过程中将其上传至大文件存储服务。同时，与大文件对应的指针文件将与其他普通代码文件一并推送到远端Git仓库中。
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/04/rYCQ2i.png
+
+	【Git】对应的Git工作原理
+
+Git LFS处理流程
+---------------
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/04/1aAEVF.png
+
+
+
+
+
+
+
+实战
+====
+
+* 让本地新仓库支持Git LFS
+
+
+跟踪大文件
+----------
+
+指定需要被 Git LFS 管理的文件/文件类型::
+
+	# 跟踪特定类型的文件（如 .psd 文件）
+	git lfs track "*.psd"
+
+	# 跟踪单个文件
+	git lfs track "large_file.bin"
+
+
+查看当前的跟踪规则::
+
+	git lfs track
+
+查看跟踪的文件类型::
+
+	git lfs ls-files
+
+
+
+
+本地的Git LFS文件是如何存储的::
+
+	$tree .git/lfs
+	.git/lfs
+	├── objects
+	│    └── 49
+	│         └── bc
+	│             └── 49bc20df15e412a64472421e13fe86ff1c5165e18b2afccf160d4dc19fe68a14
+	└── tmp
+	4 directories, 1 file
+
+
+
+撤销LFS跟踪
+-----------
+
+::
+
+	git lfs untrack "*.bigfile"
+	git rm --cached "*.bigfile"
+
+
+
+
+
+
+
+
+其他
+====
+
+* BFG Repo-Cleaner: https://rtyley.github.io/bfg-repo-cleaner/
+* 作用: remove any large files from your history. BFG Repo-Cleaner will keep a local copy of your repository as a backup.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

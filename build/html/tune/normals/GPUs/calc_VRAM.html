@@ -1,0 +1,586 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="zh-CN" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="zh-CN" > <!--<![endif]-->
+<head>
+
+
+<!-- start added 2025-04-14   增加对markdown中公式的支持 -->
+<script>
+window.MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+    },
+    options: {
+        ignoreHtmlClass: "tex2jax_ignore|mathjax_ignore",
+        processHtmlClass: "tex2jax_process|mathjax_process|math|output_area"
+    }
+};
+</script>
+<script defer="defer" src="https://fastly.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<!-- end added 2025-04-14   增加对markdown中公式的支持 -->
+
+
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>GPU显存计算 &mdash; 新溪-gordon V2025.06 文档</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+    <link rel="index" title="索引" href="../../genindex.html" />
+    <link rel="search" title="搜索" href="../../search.html" />
+    <link rel="next" title="HTTP" href="../HTTP.html" />
+    <link rel="prev" title="TOPS计算" href="calc_TOPS.html" /> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+  <script src="../../_static/js/jquery.min.js"></script>
+
+
+<!-- 评论插件 gittalk start -->
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script> -->
+<!-- 评论插件 gittalk end -->
+
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> 新溪-gordon
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                V2025.06
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">性能&amp;调优</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../normal.html">常用</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../indicator.html">常见指标</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../normal.html">常用</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../GPU.html">GPU</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="normal.html">通用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="calc_param.html">模型参数计算</a></li>
+<li class="toctree-l3"><a class="reference internal" href="calc_TOPS.html">TOPS计算</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">GPU显存计算</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../HTTP.html">HTTP</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../sla.html">SLA</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../stress_testing.html">压力测试</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../stress_testings/normal.html">常用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../stress_testings/normals/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../stress_testings/normals/concept.html">压测定义</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../stress_testings/normals/qps.html">QPS</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../system.html">系统级别优化相关</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../systems/tune_file.html">性能相关</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../systems/tune_tool.html">优化工具</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../systems/tools/SystemTap.html">SystemTap</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../systems/tune_tmp.html">优化相关临时</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../tool.html">工具</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../tools/simple.html">简单工具</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/simples/webbench.html">webbench的使用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/simples/ab.html">Apache Bench(ab)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/simples/http_load.html">http_load命令使用方法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/simples/siege.html">siege命令的使用方法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/simples/locust.html">Locust</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/simples/wrk.html">wrk命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/simples/hey.html">hey 命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/simples/ali.html">ali</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/simples/ali.html#vegeta">vegeta</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../tools/tsung.html">Tsung使用文档</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/tsungs/tsung_introduce.html">简单介绍</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/tsungs/tsung_usage.html">简单用法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/tsungs/tsung_advance.html">高级配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/tsungs/tsung_config.html">tsung参考文档说明</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/tsungs/tsung_report.html">tsung参考文档——报告图表含义说明</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/tsungs/tsung_practice.html">Tsung压测实践</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/tsungs/tsung-1.0-dtd.html">tsung-1.0.dtd</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/tsungs/tsung_question.html">常见问题</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/tsungs/tsung_other.html">其他压测工具</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../tools/jmeter.html">Apache JMeter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tools/loadRunner.html">LoadRunner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tools/TCPBurn.html">TCPBurn</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tools/cloudPlatform.html">云平台</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tools/other.html">其他</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/others/k6.html">k6</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../observe.html">性能观察</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../observes/cpu.html">CPU&amp;内存使用情况查看</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">新溪-gordon</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../normal.html">常用</a> &raquo;</li>
+        
+          <li><a href="../GPU.html">GPU</a> &raquo;</li>
+        
+      <li>GPU显存计算</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/normals/GPUs/calc_VRAM.md.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            <nav id="local-table-of-contents" role="navigation" aria-labelledby="local-table-of-contents-title">
+              <h4 id="local-table-of-contents-title">On This Page</h4>
+              <ul>
+<li><a class="reference internal" href="#">GPU显存计算</a><ul>
+<li><a class="reference internal" href="#id1">获取基本参数</a></li>
+<li><a class="reference internal" href="#id2">算显存占用</a></li>
+<li><a class="reference internal" href="#qwen2-5-7b">以 Qwen2.5-7B 为例</a><ul>
+<li><a class="reference internal" href="#id3">获取基本参数</a></li>
+<li><a class="reference internal" href="#id4">计算参数量</a></li>
+<li><a class="reference internal" href="#id5">显存占用</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            </nav>
+  <section class="tex2jax_ignore mathjax_ignore" id="gpu">
+<h1>GPU显存计算<a class="headerlink" href="#gpu" title="此标题的永久链接">¶</a></h1>
+<section id="id1">
+<h2>获取基本参数<a class="headerlink" href="#id1" title="此标题的永久链接">¶</a></h2>
+<ol class="arabic simple">
+<li><p>获取参数量</p></li>
+<li><p>获取 KV 的 kv_dim 和 num_KV_heads</p></li>
+<li><p>获取支持的最大token数(max_position_embeddings)</p></li>
+</ol>
+</section>
+<section id="id2">
+<h2>算显存占用<a class="headerlink" href="#id2" title="此标题的永久链接">¶</a></h2>
+<ul class="simple">
+<li><p>总公式</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">=</span> <span class="o">&lt;</span><span class="n">KV缓存大小</span><span class="o">&gt;</span> <span class="o">*</span> <span class="o">&lt;</span><span class="n">KV缓存数量</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>一个 &lt;KV缓存大小&gt; 公式</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">=</span> <span class="o">&lt;</span><span class="n">KV_dim</span><span class="o">&gt;</span> <span class="o">*</span> <span class="o">&lt;</span><span class="n">num_KV_heads</span><span class="o">&gt;</span> <span class="o">*</span> <span class="mi">2</span>
+</pre></div>
+</div>
+</section>
+<section id="qwen2-5-7b">
+<h2>以 Qwen2.5-7B 为例<a class="headerlink" href="#qwen2-5-7b" title="此标题的永久链接">¶</a></h2>
+<section id="id3">
+<h3>获取基本参数<a class="headerlink" href="#id3" title="此标题的永久链接">¶</a></h3>
+<p>config.json 文件内容:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;architectures&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="s2">&quot;Qwen2ForCausalLM&quot;</span>
+<span class="w">  </span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;attention_dropout&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;bos_token_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">151643</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;eos_token_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">151645</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;hidden_act&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;silu&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;hidden_size&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2048</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;initializer_range&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.02</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;intermediate_size&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">11008</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;max_position_embeddings&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">32768</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;max_window_layers&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">70</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;model_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;qwen2&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;num_attention_heads&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">16</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;num_hidden_layers&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">36</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;num_key_value_heads&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;rms_norm_eps&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">1e-06</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;rope_theta&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">1000000.0</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;sliding_window&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">32768</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;tie_word_embeddings&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;torch_dtype&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;bfloat16&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;transformers_version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;4.43.1&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;use_cache&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;use_sliding_window&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;vocab_size&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">151936</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>获取关键参数:</p>
+<ul>
+<li><p>模型维度相关</p>
+<ul>
+<li><p>“hidden_size”: 2048</p></li>
+<li><p>“intermediate_size”: 11008	# FFN 层的中间层维度</p></li>
+<li><p>“num_hidden_layers”: 36	    # Transformer 层数</p></li>
+<li><p>“num_attention_heads”: 16	    # 注意力头数</p></li>
+<li><p>“num_key_value_heads”: 2	    # 启动GQA机制，表示只用 2 个 key/value 头，节省 KV-cache 开销。</p></li>
+</ul>
+</li>
+<li><p>注意力机制与位置编码</p>
+<ul>
+<li><p>“max_position_embeddings”: 32768	    # 支持的最大 token 数</p></li>
+</ul>
+</li>
+<li><p>Token 配置</p>
+<ul>
+<li><p>“vocab_size”: 151936	    # 词表大小</p></li>
+</ul>
+</li>
+<li><p>激活函数</p>
+<ul>
+<li><p>“hidden_act”: “silu”	    # 对应的 FFN 乘以 3</p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>计算用到的其他参数</p>
+<ul>
+<li><p>group_size: num_attention_heads/num_key_value_heads</p>
+<ul>
+<li><p>= 16/2 = 8</p></li>
+</ul>
+</li>
+<li><p>head_dim: hidden_size / config.num_attention_heads</p>
+<ul>
+<li><p>= 2048 / 16 = 128</p></li>
+</ul>
+</li>
+<li><p>kv_dim: num_key_value_heads × head_dim</p>
+<ul>
+<li><p>= 2 × 128 = 256</p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="id4">
+<h3>计算参数量<a class="headerlink" href="#id4" title="此标题的永久链接">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>参数量：
+    1. 嵌入层：151936 * 2048
+    2. 注意力层：36 * 2048 * 2048 * (2 + 2/8)
+    3. FFN层：36 * 2048 * 11008 * 3
+    4. 输出层：2048 * 151936
+总参数量：
+    = 151936 * 2048 + 36 * 2048 * 2048 * (2 + 2/8) + 36 * 2048 * 11008 * 3 + 2048 * 151936
+    = 151936 * 2048 * 2 + 36 * 2048 * (2048*2.25 + 3*11008)
+    = 151936 * 4k + 72 * (2048*2.25 + 3*11008)k
+    = 593.5M + 72 * (4.5 + 32.25)M
+    = 3239.5M
+</pre></div>
+</div>
+</section>
+<section id="id5">
+<h3>显存占用<a class="headerlink" href="#id5" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>以 FP16 为例</p></li>
+<li><p>模型参数占显存:</p>
+<ul>
+<li><p>= &lt;模型参数量&gt; * 2</p></li>
+<li><p>= 3239.5M * 2</p></li>
+<li><p>= 6479M</p></li>
+</ul>
+</li>
+<li><p>KV缓存占显存:</p>
+<ul>
+<li><p>总公式 = &lt;KV缓存大小&gt; * &lt;KV缓存数量&gt; * 2</p></li>
+<li><p>一个 &lt;KV缓存大小&gt;</p>
+<ul>
+<li><p>= &lt;KV_dim&gt;</p></li>
+<li><p>= &lt;KV_head&gt; * &lt;num_KV_heads&gt;</p></li>
+<li><p>= 128 * 2</p></li>
+<li><p>= 256</p></li>
+</ul>
+</li>
+<li><p>一个K, 一个V 有</p>
+<ul>
+<li><p>= 2 * 256</p></li>
+<li><p>=512</p></li>
+</ul>
+</li>
+<li><p>使用FP16</p>
+<ul>
+<li><p>= 512 * 2</p></li>
+<li><p>= 1024</p></li>
+</ul>
+</li>
+<li><p>Transformers 层数为 36</p>
+<ul>
+<li><p>= 36 * 1024</p></li>
+<li><p>= 36 K</p></li>
+</ul>
+</li>
+<li><p>Sequence_size:</p>
+<ul>
+<li><p>如果序列长度为 1024</p>
+<ul>
+<li><p>= 1024 * 36K</p></li>
+<li><p>= 36M</p></li>
+</ul>
+</li>
+<li><p>最大max_position_embeddings: 32768</p>
+<ul>
+<li><p>= 32768 * 36K</p></li>
+<li><p>= 1152M</p></li>
+<li><p>约 1.152G</p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>说明1：<code class="docutils literal notranslate"><span class="pre">batch_size</span></code></p>
+<ul>
+<li><p>如果有 <code class="docutils literal notranslate"><span class="pre">batch_size</span></code> 还要乘以 <code class="docutils literal notranslate"><span class="pre">batch_size</span></code></p></li>
+</ul>
+</li>
+<li><p>说明2：不使用 GQA 的情况</p>
+<ul>
+<li><p>首先模型参数会增加</p></li>
+<li><p>KV Cache方面</p>
+<ul>
+<li><p>一个 &lt;KV缓存大小&gt; = 2048</p></li>
+<li><p>比不使用 GQA 占用显存多 8 倍</p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../HTTP.html" class="btn btn-neutral float-right" title="HTTP" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="calc_TOPS.html" class="btn btn-neutral" title="TOPS计算" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+  
+  <div id="gitalk-container"></div>
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2010-2025, 新溪-gordon.
+
+    </p>
+  </div>
+  <div>备案号 <a href="http://www.beian.miit.gov.cn">京ICP备16018553号</a></div><div>Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a></div>. 
+
+
+</footer>
+
+<script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?042289284b8eb33866001347a3e0b129";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>     
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'V2025.06',
+            LANGUAGE:'zh-CN',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../_static/sphinx_highlight.js"></script>
+      <script type="text/javascript" src="../../_static/clipboard.min.js"></script>
+      <script type="text/javascript" src="../../_static/copybutton.js"></script>
+      <script type="text/javascript" src="../../_static/translations.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+
+  
+
+  <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+
+
+      // var gitalk = new Gitalk({
+      //         clientID: '565177626b5d46427009',
+      //         clientSecret: 'b2a36e67e1d2a73e43667f46d571c2624f8e1026',
+      //         repo: 'knowledge',
+      //         owner: 'zhaoweiguo',
+      //         admin: ['zhaoweiguo'],
+      //         id: location.pathname,      // Ensure uniqueness and length less than 50
+      //         distractionFreeMode: false  // Facebook-like distraction free mode
+      //       })
+      // gitalk.render('gitalk-container')
+
+  </script>
+
+
+<script type="text/javascript" src="../../_static/js/table-of-contents-sidebar.js"></script>
+<!-- <script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script> -->
+<script type="text/javascript">
+    window.onload = function(e){
+        TableOfContents.init({
+            basePath: "https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/",
+            querySelector: "body" // or other css querySelector
+        });
+    }
+</script> 
+
+</body>
+</html>

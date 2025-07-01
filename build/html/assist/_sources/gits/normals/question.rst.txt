@@ -1,0 +1,160 @@
+git常见问题
+#######################
+
+1.clone奇怪的失败原因::
+
+  权限755目录下clone项目中有soft link为777的会失败
+  
+git status 中文文件名不能正常显示::
+
+    $ git config --global core.quotepath false
+
+
+
+git old mode 100755 new mode 100644
+============================================
+
+* 新环境下 git status 显示一大堆 modified 文件，文件权限问题
+
+解决办法::
+
+    $ git config core.filemode false
+
+
+
+
+
+error: invalid path
+======================
+
+文件名兼容问题::
+
+    windows不支持文件名以字符":"或字符"*"
+
+    windows不支持文件名有: aux
+         NTFS 有个路径保护机制，防止文件系统出错
+         解决:  git config core.protectNTFS false
+
+    windows不支持文件名有: com1
+
+
+
+fatal: the remote end hung up unexpectedly
+==========================================
+
+现象::
+
+    $ git push origin -u master
+    Enumerating objects: 31425, done.
+    Counting objects: 100% (31425/31425), done.
+    Delta compression using up to 16 threads
+    Compressing objects: 100% (7393/7393), done.
+    error: RPC failed; HTTP 500 curl 22 The requested URL returned error: 500
+    send-pack: unexpected disconnect while reading sideband packet
+    Writing objects: 100% (31425/31425), 25.25 MiB | 65.29 MiB/s, done.
+    Total 31425 (delta 23854), reused 31425 (delta 23854), pack-reused 0
+    fatal: the remote end hung up unexpectedly
+    Everything up-to-date
+
+    $ du -hs
+    160M
+
+原因::
+
+    git仓库太大，push不上去
+
+
+解决::
+
+    git config http.postBuffer 524288000
+
+
+
+
+CRLF换行符问题
+======================
+
+* 换行符::
+
+    CR回车:\r
+    LF换行:\n
+    Windows/Dos CRLF \r\n
+    Linux/Unix LF \n
+    MacOS CR \r
+
+* AutoCRLF::
+
+    #提交时转换为LF，检出时转换为CRLF
+    git config --global core.autocrlf true
+
+    #提交时转换为LF，检出时不转换
+    git config --global core.autocrlf input
+
+    #提交检出均不转换
+    git config --global core.autocrlf false
+
+* SafeCRLF::
+
+    #拒绝提交包含混合换行符的文件
+    git config --global core.safecrlf true
+
+    #允许提交包含混合换行符的文件
+    git config --global core.safecrlf false
+
+    #提交包含混合换行符的文件时给出警告
+    git config --global core.safecrlf warn
+
+
+* 问题::
+
+    如果你的源文件中是换行符是LF,而autocrlf=true
+    此时git add就会遇到 fatal: LF would be replaced by CRLF 的错误.
+    有两个解决办法:
+    1. 将你的源文件中的LF转为CRLF即可【推荐】
+    2. 将autocrlf 设置为 false
+
+    如果你的源文件中是换行符是CRLF,而autocrlf=input
+    此时git add也会遇到 fatal: CRLF would be replaced by LF 的错误.有两个解决办法:
+    1. 将你源文件中的CRLF转为LF【推荐】
+    2. 将autocrlf 设置为true 或者 false
+
+
+
+    在Mac上设置 autocrlf = input
+    在Windows上设置autocrlf = true(默认值)
+
+    Windows:(true)
+    提交时,将CRLF 转成 LF再提交
+    切出时,自动将LF 转为 CRLF;
+
+    MAC/Linux:(input)
+    提交时,将CRLF 转成 LF再提交
+    切出时,保持LF即可
+
+    这样即可保证仓库中永远都是LF
+
+
+http://greyfocus.com/2015/05/line-breaks-with-git/::
+
+  //core.autocrlf
+  # Sets the value of the eol configuration property to CRLF. During the
+  # normalization process, all line breaks will be converted to CRLF
+  git config core.eol CRLF
+  //core.autocrlf
+  
+
+
+
+
+
+
+参考
+====
+
+
+* 中文乱码_git 显示中文和解决中文乱码: https://blog.csdn.net/weixin_35316459/article/details/112540330
+  
+
+
+
+

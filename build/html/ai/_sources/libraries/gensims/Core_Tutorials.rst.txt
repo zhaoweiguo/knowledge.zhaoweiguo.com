@@ -1,0 +1,148 @@
+Core Tutorials
+##############
+
+.. note:: 参见项目 demo_python
+
+
+
+Core Concepts
+=============
+
+* https://radimrehurek.com/gensim/auto_examples/core/run_core_concepts.html
+
+关键定义::
+
+    1. Document: some text.
+        文档(字符串)
+    2. Corpus: a collection of documents.
+        文集(字符串列表)
+    3. Vector: a mathematically convenient representation of a document.
+        using Vector to represent each document as a vector of features.
+        文档和向量之间的区别在于前者是文本，后者是文本在数学上方便的表示
+    4. Model: an algorithm for transforming vectors from one representation to another.
+        将向量从一种表示形式转换为另一种表示形式的算法
+
+.. note:: 根据表示的获取方式，两个不同的文档可能具有相同的向量表示。
+
+
+
+* 当内容太多时不可能一次将 corpus 加载到内存
+* 所以使用 *streaming* 处理，参见 ``Corpus Streaming – One Document at a Time`` 相关模块``corpus_streaming_tutorial``
+
+
+Corpora and Vector Spaces
+=========================
+
+* Demonstrates transforming text into a vector space representation.
+
+save a corpus in the Matrix Market format::
+
+    corpus = [[(1, 0.5)], []]  # make one document empty, for the heck of it
+    corpora.MmCorpus.serialize('/tmp/corpus.mm', corpus)
+
+    ## save in other formats
+    # corpora.SvmLightCorpus.serialize('/tmp/corpus.svmlight', corpus)
+    # corpora.BleiCorpus.serialize('/tmp/corpus.lda-c', corpus)
+    # corpora.LowCorpus.serialize('/tmp/corpus.low', corpus)
+
+
+
+load a corpus iterator from a Matrix Market file::
+
+    corpus = corpora.MmCorpus('/tmp/corpus.mm')
+
+
+
+Topics and Transformations
+==========================
+
+
+Gensim implements several popular Vector Space Model algorithms::
+
+    1. Tf-Idf can normalize the resulting vectors to (Euclidean) unit length
+        model = models.TfidfModel(corpus, normalize=True)
+
+    2. Okapi_BM25是搜索引擎用来估计文档与给定搜索查询的相关性的标准排名函数
+        model = models.OkapiBM25Model(corpus)
+
+    3. LSI（or LSA）将文档从 bag-of-words 或 TfIdf(最好) 加权空间转换为较低维度的潜在空间
+        LSI: Latent Semantic Indexing
+        model = models.LsiModel(tfidf_corpus, id2word=dictionary, num_topics=300)
+        参数:
+            主题数目 (num_topics=300)： 这是 LSI 模型要生成的主题的数量
+            LSI 是一种基于奇异值分解（Singular Value Decomposition，SVD）的主题建模方法，通过降维将文档表示为主题空间中的向量
+
+        LSI training 的独特之处在于，我们可以随时继续 “training”，只需提供更多培训文档即可:
+            model.add_documents(another_tfidf_corpus)  # now LSI has been trained on tfidf_corpus + another_tfidf_corpus
+            lsi_vec = model[tfidf_vec]  # convert some new document into the LSI space, without affecting the model
+
+            model.add_documents(more_documents)  # tfidf_corpus + another_tfidf_corpus + more_documents
+            lsi_vec = model[tfidf_vec]
+    4. RP 旨在降低向量空间维数。这是一种非常有效（内存和 CPU 友好）的方法，通过引入一点随机性来近似文档之间的 TfIdf 距离
+        model = models.RpModel(tfidf_corpus, num_topics=500)
+
+    5. LDA 是从词袋计数到较低维度主题空间的另一种转换
+        LDA 是 LSA 的概率扩展
+        model = models.LdaModel(corpus, id2word=dictionary, num_topics=100)
+
+    6. HDP 是一种非参数贝叶斯方法
+        model = models.HdpModel(corpus, id2word=dictionary)
+
+
+
+* Term Frequency * Inverse Document Frequency, Tf-Idf: https://en.wikipedia.org/wiki/Tf%E2%80%93idf
+* Okapi Best Matching, Okapi BM25: https://en.wikipedia.org/wiki/Okapi_BM25
+* Latent Semantic Indexing, LSI (or sometimes LSA): https://en.wikipedia.org/wiki/Latent_semantic_indexing
+* Random Projections, RP: http://www.cis.hut.fi/ella/publications/randproj_kdd.pdf
+* Latent Dirichlet Allocation, LDA: https://en.wikipedia.org/wiki/Latent_Dirichlet_allocation
+* Hierarchical Dirichlet Process, HDP: http://jmlr.csail.mit.edu/proceedings/papers/v15/wang11a/wang11a.pdf
+
+
+
+
+Similarity Queries
+==================
+
+Demonstrates querying a corpus for similar documents.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,167 @@
+# inxi命令
+
+
+`inxi` 是 Linux 和类 Unix 系统下一个**高度人性化、结构清晰**的系统信息工具，它可以快速输出简洁、漂亮的硬件与系统配置摘要
+
+
+## 基本信息
+
+* **开发语言**：Perl
+* **特点**：输出结构清晰、颜色友好、内容全面、适合终端查看
+
+
+### 🔧 安装方式
+
+```bash
+# Debian / Ubuntu
+sudo apt install inxi
+
+# RHEL / CentOS / Fedora
+sudo dnf install inxi
+
+# Arch / Manjaro
+sudo pacman -S inxi
+```
+
+
+### 📋 常用命令和选项
+
+| 命令          | 功能说明                        |
+| ----------- | --------------------------- |
+| `inxi`      | 简要系统信息（推荐用 `-F`）            |
+| `inxi -F`   | 显示完整系统摘要（常用）                |
+| `inxi -Fxz` | 显示完整信息 + 屏蔽MAC/UUID（适合发帖求助） |
+| `inxi -C`   | 显示 CPU 信息                   |
+| `inxi -G`   | 显示 GPU / 显卡信息               |
+| `inxi -N`   | 显示网络设备                      |
+| `inxi -d`   | 显示硬盘、磁盘设备信息                 |
+| `inxi -m`   | 显示内存信息                      |
+| `inxi -S`   | 显示系统版本、内核、桌面环境等             |
+| `inxi -b`   | 快速摘要（简洁模式）                  |
+| `inxi -A`   | 显示音频设备信息                    |
+| `inxi -v 7` | 超详细输出（v等级越高越详细，最多 `-v 7`）   |
+
+---
+
+
+
+
+
+## 📦 示例输出
+
+* 默认输出
+
+```shell
+$ inxi
+CPU: 16-core AMD EPYC 9K84 (-MT MCP MCM-) speed: 2600 MHz Kernel: 5.15.0-130-generic x86_64
+Up: 64d 23h 37m Mem: 5455.1/94270.4 MiB (5.8%) Storage: 600 GiB (74.3% used) Procs: 486
+Shell: Zsh inxi: 3.3.13
+
+```
+
+* GPU示例
+
+```shell
+$ inxi -G
+Graphics:
+  Device-1: Cirrus Logic GD 5446 driver: cirrus v: kernel
+  Device-2: NVIDIA driver: nvidia v: 535.216.01
+  Display: server: No display server data found. Headless machine? tty: 230x63
+  Message: GL data unavailable in console. Try -G --display
+
+```
+
+* 分析
+    * 显卡信息
+        | 设备编号     | 显卡型号                 | 驱动                  |
+        | -------- | -------------------- | ------------------- |
+        | Device-1 | Cirrus Logic GD 5446 | `cirrus`（内核驱动）      |
+        | Device-2 | NVIDIA（具体型号未标明）      | `nvidia` 535.216.01 |
+    * 显示信息
+        * `Display: server: No display server data found.`
+            * → 系统没有安装图形桌面环境（如 X11 / Wayland），属于 **headless（无头）服务器**。
+
+        * `tty: 230x63`
+            * → 当前只运行在终端控制台（tty），即纯命令行界面。
+
+        * `Message: GL data unavailable in console. Try -G --display`
+            * → 无法获取 OpenGL 信息，因为当前无 GUI 环境，建议在有图形界面下运行。
+
+
+
+
+
+
+
+* 显示完整信息
+
+```shell
+$ inxi -F
+System:
+  Host: VM-135-79-ubuntu Kernel: 5.15.0-130-generic x86_64 bits: 64 Console: pty pts/1
+    Distro: Ubuntu 22.04 (Jammy Jellyfish)
+Machine:
+  Type: Kvm System: Tencent Cloud product: CVM v: 3.0 serial: <superuser required>
+  Mobo: N/A model: N/A serial: N/A BIOS: SeaBIOS v: seabios-1.9.1-qemu-project.org
+    date: 04/01/2014
+CPU:
+  Info: 16-core model: AMD EPYC 9K84 bits: 64 type: MT MCP MCM cache: L2: 16 MiB
+  Speed (MHz): avg: 2600 min/max: N/A cores: 1: 2600 2: 2600 3: 2600 4: 2600 5: 2600 6: 2600
+    7: 2600 8: 2600 9: 2600 10: 2600 11: 2600 12: 2600 13: 2600 14: 2600 15: 2600 16: 2600 17: 2600
+    18: 2600 19: 2600 20: 2600 21: 2600 22: 2600 23: 2600 24: 2600 25: 2600 26: 2600 27: 2600
+    28: 2600 29: 2600 30: 2600 31: 2600 32: 2600
+Graphics:
+  Device-1: Cirrus Logic GD 5446 driver: cirrus v: kernel
+  Device-2: NVIDIA driver: nvidia v: 535.216.01
+  Display: server: No display server data found. Headless machine? tty: 230x63
+  Message: GL data unavailable in console. Try -G --display
+Audio:
+  Device-1: Intel 82801FB/FBM/FR/FW/FRW High Definition Audio driver: snd_hda_intel
+  Sound Server-1: ALSA v: k5.15.0-130-generic running: yes
+Network:
+  Device-1: Red Hat Virtio network driver: virtio-pci
+  IF: eth0 state: up speed: -1 duplex: unknown mac: 52:54:00:84:61:cd
+  IF-ID-1: docker0 state: down mac: 4a:22:5a:ad:98:0a
+Drives:
+  Local Storage: total: 600 GiB used: 445.73 GiB (74.3%)
+  ID-1: /dev/vda model: N/A size: 100 GiB
+  ID-2: /dev/vdb model: N/A size: 500 GiB
+Partition:
+  ID-1: / size: 98.31 GiB used: 70.62 GiB (71.8%) fs: ext4 dev: /dev/vda2
+Swap:
+  Alert: No swap data was found.
+Sensors:
+  System Temperatures: cpu: N/A mobo: N/A gpu: nvidia temp: 35 C
+  Fan Speeds (RPM): N/A
+Info:
+  Processes: 485 Uptime: 64d 23h 38m Memory: 92.06 GiB used: 5.3 GiB (5.8%) Init: systemd
+  runlevel: 5 Shell: Zsh inxi: 3.3.13
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

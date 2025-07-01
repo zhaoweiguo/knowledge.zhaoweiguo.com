@@ -1,0 +1,104 @@
+常用
+####
+
+* GitHub: https://github.com/unbit/uwsgi/
+* 官网: https://projects.unbit.it/uwsgi
+* 英文版: https://uwsgi-docs.readthedocs.io/en/latest/
+* 中文版: https://uwsgi-docs-zh.readthedocs.io/zh-cn/latest/
+
+
+
+Included components
+===================
+
+::
+
+    1. The Core
+        implements:
+        configuration, processes management, sockets creation, monitoring, logging, 
+        shared memory areas, ipc, cluster membership and the uWSGI Subscription Server
+    2. Request plugins
+        implement:
+        application server interfaces for various languages and platforms: WSGI, PSGI, Rack, Lua WSAPI, CGI, PHP, Go …
+    3. Gateways
+        implement:
+        load balancers, proxies and routers
+    4. The Emperor(多应用部署)
+        implements massive instances management and monitoring
+        https://uwsgi-docs-zh.readthedocs.io/zh-cn/latest/Emperor.html
+    5. Loop engines
+        implement:
+        events and concurrency, components can be run in preforking, threaded, asynchronous/evented and green thread/coroutine modes. 
+        Various technologies are supported, including uGreen, Greenlet, Stackless, Gevent, Coro::AnyEvent, Tornado, Goroutines and Fibers
+
+
+
+uwsgi 协议
+==========
+
+* uwsgi 协议是 uWSGI 服务器使用的本地协议。
+* 它是一个二进制协议，可以携带任何类型的数据。一个 uwsgi 分组的头 4 个字节描述了这个分组包含的数据类型。
+* 每个 uwsgi 请求生成一个 uwsgi 格式的响应。
+* 该协议主要通过 TCP 工作，但是 master 经常可以为 内嵌 SNMP 服务器 或者集群管理 / 消息请求绑定到一个 UDP 单播 / 组播。
+
+
+uwsgi 包头::
+
+    struct uwsgi_packet_header {
+        uint8_t modifier1;
+        uint16_t datasize;
+        uint8_t modifier2;
+    };
+
+
+关键定义
+========
+
+* harakiri: uWSGI 的一个特性，中止那些过长时间处理请求的 worker。使用选项的 harakiri 族来配置。每一个会耗费比 harakiri timeout 指定的秒数长的请求都将会被丢弃，而对应的 worker 会被回收。
+* master: uWSGI 内置的预派生 + 线程 多 worker 管理模式，通过打开 master 开关激活。对于所有实际的服务部署，不 使用 master 模式，真的不是个好主意。
+
+
+三方插件
+========
+
+* 参见: https://uwsgi-docs-zh.readthedocs.io/zh-cn/latest/ThirdPartyPlugins.html
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

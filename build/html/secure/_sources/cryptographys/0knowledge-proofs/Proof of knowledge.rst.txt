@@ -1,0 +1,156 @@
+Proof of knowledge
+##################
+
+
+
+* In cryptography, a ``proof of knowledge`` is an ``interactive proof`` in which the prover succeeds in 'convincing' a verifier that the prover knows something.
+* What it means for a machine to 'know something' is defined in terms of computation.
+* As the program of the prover does not necessarily spit out the knowledge itself (as is the case for zero-knowledge proofs), a machine with a different program, called the knowledge extractor is introduced to capture this idea.
+* We are mostly interested in what can be proven by ``polynomial time bounded machines``. In this case the set of knowledge elements is limited to a set of witnesses of some language in NP.
+
+
+A proof of knowledge for relation ``R`` with knowledge error ``k``  is a two party protocol with a prover ``P`` and a verifier ``V`` with the following two properties:
+
+    1. Completeness: If ``(x,w) in R``, then the prover ``P`` who knows witness ``w`` for ``x`` succeeds in convincing the verifier ``V`` of his knowledge.
+    2. Validity: Validity requires that the success probability of a knowledge extractor ``E`` in extracting the witness, given oracle access to a possibly malicious prover ``P``, must be at least as high as the success probability of the prover ``P`` in convincing the verifier. This property guarantees that no prover that doesn't know the witness can succeed in convincing the verifier.
+
+
+术语
+====
+
+* Witness: the value being proven knowledge of。待证明的信息，仅 Prover 知道，不对 Verifier 泄露。
+* Instance: 描述关系中除 witness 外的所有其它元素，均统称为 instance。instance 为 public information，对于 Prover 和 Verifier 均已知。
+* Prover: the entity proving the knowledge of the witness。用于证明其知道 witness 的一方叫做 Prover，Prover 提供 proof。
+* Verifier: the other party that the prover needs to convince of the knowledge of witness。验证 proof 的一方叫做 Verifier。
+
+
+
+
+Protocols
+=========
+
+
+Schnorr protocol
+----------------
+
+* One of the simplest and frequently used proofs of knowledge, the proof of knowledge of a discrete logarithm, is due to Schnorr.
+* The protocol is defined for a cyclic group G_q of order q with generator g.
+
+
+
+
+Sigma protocols
+---------------
+
+* Protocols which have the above three-move structure (``commitment``, ``challenge`` and ``response``) are called sigma protocols.
+* The Greek letter ``Sigma`` visualizes the flow of the protocol. 
+* Sigma protocols exist for proving various statements, such as those pertaining to discrete logarithms. 
+* Using these proofs, the prover can not only prove the knowledge of the discrete logarithm, but also that the discrete logarithm is of a specific form. 
+
+
+* 又称为 3 phase protocols，用于证明 knowledge of values in some relation，但是又不泄露 values 的具体值。
+* 如用于证明 knowledge of discrete log：given ``g`` and ``y``，prove knowledge of ``x`` 满足 ``g^x=y`` without revealing x。
+
+
+Sigma protocol 可分三步描述::
+
+    1. Commitment:
+      The prover generates a random number, creates a commitment to that randomness 
+        and sends the commitment to the verifier.
+
+    2. Challenge:
+      After getting the commitment, the verifier generates a random number as a challenge and sends it to the prover. 
+      It is important that the verifier does not send the challenge before getting the commitment or else the prover can cheat.
+
+    3. Response:
+      The prover takes the challenge and creates a response using the `random number chosen in step 1)`, the `challenge` and the `witness`. 
+      The prover will then send the response to the verifier who will do some computation and will or will not be convinced of the knowledge of the `witness`.
+
+以 proof of knowledge of discrete log 为例：(y=g^x) ::
+
+    该协议也可称为 Schnorr identification protocol 或 Schnorr protocol
+    1. Commitment:
+    Prover 选择随机数 `r`，创建 commitment `t=g^r`，将 `t` 值发送给 Verifier
+
+    2. Challenge:
+    Verifier 存储`t`值，生成随机 challenge `c`，将`c`值发送给 Prover
+
+    3. Response:
+    Prover 根据收到的 challenge `c` 值，创建 response `s = r + x ∗ c`，将`s`值发送给 Verifier
+
+
+    Verifier:
+    Verifier 只需要验证 `g^s = y^c ∗ t` 成立，即可相信 Prover 确实知道相应的 `x` 使得`y = g^x ` 成立
+
+
+* 注意事项一：Prover 应每次使用新的``随机数r``
+* 注意事项二：Prover 应无法预测 ``challenge c``
+
+
+
+基于 Sigma protocol 实现基础协议
+--------------------------------
+
+Equality of discrete logs
+'''''''''''''''''''''''''
+
+.. note:: 证明 Prover 知道 ``witness x``，使得 ``g^x = y`` 且 ``h^x = z``
+
+Prover::
+
+    1. 生成随机数r，采用相同的r 创建 2 个 commitment `t_1=g^r`, `t_2=h^rt`
+    2. 以 g,h,y,z,t_1,t_2为输入，生成 challenge `c=Hash(g,h,y,z,t_1,t_2)`
+    3. 创建 response `s=r+c*x`
+    4. 发送 (t_1,t_2,s)给 Verifier
+
+Verifier::
+
+    验证 `g^s=y^c*t` 和 `h^s=z^c*t` 是否同时成立即可
+
+
+Conjunction (AND) of discrete logs
+''''''''''''''''''''''''''''''''''
+
+证明 Prover 知道 witness ``a, b`` 使得 ``g^a=P`` 且 ``h^b=Q``
+
+
+Disjunction (OR) of discrete logs
+'''''''''''''''''''''''''''''''''
+
+证明 Prover 知道 witness ``a`` 使得 ``g^a=P``，或者，知道 witness ``b`` 使得 ``h^b=Q``，但是，无法同时知道 a,b 使得 g^a=P 且 h^b=Q 同时成立。不能暴露 Prover 到底知道的是a 还是b。
+
+Knowledge of the opening of Pedersen commitment
+'''''''''''''''''''''''''''''''''''''''''''''''
+
+``P=Com(m;r)=g^m*h^r``，其中``(m,r)`` 称为 the opening of the commitment。证明 Prover 知道 witness(m,r)，使得P = g^m*h^r
+
+Equality of the opening of 2 Pedersen commitment
+''''''''''''''''''''''''''''''''''''''''''''''''
+
+证明 Prover 知道 ``witness(a,b)``，使得 ``P=g_1^a*h_1^b`` 且 ``Q=g_2^a*h_2^b``
+
+Equality of message in 2 Pedersen commitment
+''''''''''''''''''''''''''''''''''''''''''''
+
+证明 Prover 知道 ``witness(a,b,d)``，使得 ``P=g_1^a*h_1^b`` 且 ``Q=g_2^a*h_2^d``
+
+Inequality of discrete logs
+'''''''''''''''''''''''''''
+
+* 该协议首次在 Jan Camenisch 和 Victor Shoup 2003 年论文`《Practical Verifiable Encryption and Decryption of Discrete Logarithms∗》 <https://www.shoup.net/papers/verenc.pdf>`_中第 6 节提及
+* 证明 Prover 知道 ``witness(a)``，使得``P=g^a``，``Q=h^b``，且 ``a!=b``
+
+
+
+参考
+====
+
+* https://en.wikipedia.org/wiki/Proof_of_knowledge
+* 基于 Sigma protocol 实现的零知识证明 protocol 集锦: https://blog.csdn.net/mutourend/article/details/106391126
+
+
+
+
+
+
+

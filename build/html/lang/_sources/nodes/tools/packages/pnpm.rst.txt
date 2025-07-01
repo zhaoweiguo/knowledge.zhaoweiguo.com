@@ -1,0 +1,126 @@
+pnpm简介
+##################
+
+* pnpm（Performant npm）是一个高性能、节省磁盘空间的 JavaScript 包管理工具，兼容 npm 和 yarn。
+* 它通过硬链接和符号链接高效管理 node_modules，避免重复安装相同的依赖，显著提升安装速度并减少磁盘占用。
+
+
+核心特点
+===========
+
+* 节省磁盘空间：相同的依赖只会存储一份，避免 npm 和 yarn 复制多个冗余的包。
+* 安装速度快：采用并行下载和增量更新，大幅减少依赖安装时间。
+* 严格依赖隔离：默认使用 hoist=false，确保项目中的 node_modules 结构更加稳定，避免幽灵依赖问题（phantom dependencies）。
+* 自动缓存：已安装的包会存入全局缓存 (~/.pnpm-store)，加速未来的安装。
+* 支持 Monorepo：内置 workspaces，适用于管理多个包的项目（如 Lerna）。
+* 更好的安全性：防止 node_modules 中出现不必要的依赖，减少供应链攻击的风险。
+
+
+设置环境变量
+============
+
+手工设置::
+
+	PNPM_HOME="~/.pnpm"
+	PATH="$PNPM_HOME:$PATH"
+
+
+自动执行(自动修改~/.zshrc文件)::
+
+	$ pnpm setup
+	Appended new lines to /Users/zhaoweiguo/.zshrc
+
+	Next configuration changes were made:
+	export PNPM_HOME="/Users/zhaoweiguo/Library/pnpm"
+	case ":$PATH:" in
+	  *":$PNPM_HOME:"*) ;;
+	  *) export PATH="$PNPM_HOME:$PATH" ;;
+	esac
+
+	To start using pnpm, run:
+	source /Users/zhaoweiguo/.zshrc
+
+
+.. note:: 设置好 PNPM_HOME 和 PATH 后才能执行 pnpm add -g <package>
+
+
+基本使用
+==============
+
+安装::
+
+	npm install -g pnpm
+
+
+基本使用::
+
+	# 初始化项目
+	pnpm init
+
+	# 安装依赖
+	pnpm install
+
+
+	# 添加依赖
+	pnpm add <package>
+
+	# 全局安装：
+	pnpm add -g <package>
+
+	# 删除依赖：
+	pnpm remove <package>
+
+
+	# 运行脚本
+	pnpm run <script>
+
+
+
+
+
+
+pnpm vs npm vs yarn::
+
+	对比项			pnpm		npm			yarn
+	磁盘占用			🥇 最低		高			中等
+	安装速度			🥇 最高		低			中等
+	依赖管理			严格			宽松			宽松
+	Monorepo支持		  内置 		无	 		有
+	并行下载			✅ 是		❌ 否		✅ 是
+	全局缓存			✅ 是		❌ 否		✅ 是
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

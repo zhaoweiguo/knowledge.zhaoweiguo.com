@@ -1,0 +1,107 @@
+cffi
+#####
+
+
+
+* cffi模块可以通过定义C函数的接口来调用共享对象文件中的函数。
+
+安装::
+
+    pip install cffi
+
+cffi 提供了两种主要的使用模式::
+
+    ABI（Application Binary Interface）模式
+    API（Application Programming Interface）模式
+
+
+
+
+ABI 模式
+========
+
+* ABI 模式使用现有的 C 库，不需要任何编译步骤。它主要用于直接调用现有的动态链接库。
+
+::
+
+    from cffi import FFI
+
+    ffi = FFI()
+
+    # 定义 C 函数原型
+    ffi.cdef("""
+        int printf(const char *format, ...);
+    """)
+
+    # 加载 C 标准库
+    C = ffi.dlopen(None)
+
+    # 调用 C 函数
+    C.printf(b"Hello, %s!\n", b"world")
+
+
+API 模式
+========
+
+* API 模式更为灵活，它允许你编写和编译自己的 C 代码，这种模式需要一个编译步骤。
+
+::
+
+    from cffi import FFI
+
+    ffi = FFI()
+
+    # 定义 C 函数和类型
+    ffi.cdef("""
+        int add(int, int);
+    """)
+
+    # 编写 C 代码
+    ffi.set_source("_example", """
+        int add(int a, int b) {
+            return a + b;
+        }
+    """)
+
+    # 编译 C 代码
+    ffi.compile()
+
+    # 使用编译好的模块
+    from _example import ffi, lib
+
+    print(lib.add(3, 4))  # 输出 7
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

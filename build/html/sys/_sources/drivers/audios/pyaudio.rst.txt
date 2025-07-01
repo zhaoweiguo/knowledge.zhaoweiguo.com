@@ -1,0 +1,138 @@
+pyaudio
+#######
+
+* PyAudio 底层使用的音频库是 PortAudio,PortAudio 是跨平台的开源音频 I/O 库。PyAudio 封装了 PortAudio 的 API,提供更友好的 Python 接口。
+
+安装::
+
+	pip install pyaudio
+
+	sudo apt install python3-pyaudio
+
+
+* PyAudio官网: https://people.csail.mit.edu/hubert/pyaudio/
+* PyAudio Documentation: https://people.csail.mit.edu/hubert/pyaudio/docs/
+* https://pypi.org/project/PyAudio/
+
+
+
+PortAudio
+=========
+
+* http://www.portaudio.com/
+* PortAudio 是 PyAudio 底层使用的跨平台开源音频 I/O 库。它提供统一的音频 I/O 接口,可以在许多平台上工作,如 Windows、Mac OS X、Linux 等。
+
+PortAudio 主要功能::
+
+	- 统一的 API,支持跨平台开发
+	-  full-duplex(全双工)音频 I/O
+	- 多种音频格式支持:PCM,float,各种压缩格式等
+	- 同时支持多个音频接口(Host API):
+		Windows 的 DirectSound(首选)、MME(Multimedia Extensions)
+		Mac 的 CoreAudio
+		Linux的
+			- ALSA(Advanced Linux Sound Architecture, 首选)
+			- OSS(Open Sound System)
+			- JACK(Jack Audio Connection Kit)
+		- iOS: Audio Unit
+		- Android: AAudio
+
+
+工作原理::
+
+	1. Host API
+		PortAudio 支持许多平台的 Host API,如 Windows 的 DirectSound,Mac 的 CoreAudio 等。
+		Host API 是 PortAudio 与底层音频硬件通信的接口。
+
+	2. 设备(Device)
+		一个设备对应一个音频接口或一个音频卡。
+		可以通过 PortAudio 枚举可用的输入输出设备。
+
+	3. 流(Stream)
+		流代表一个音频 I/O 通道。
+		可以打开输入流捕获音频,或者打开输出流播放音频。
+		一个设备可能会有多个流同时打开。
+
+	4. 回调(Callback)
+		需要注册一个回调函数来接收或发送音频数据。
+		当 PortAudio 从输入设备捕获新音频或者需要发送更多数据到输出设备时,回调函数会被调用。
+
+	5. 线程
+		PortAudio 使用后台线程读取和发送音频数据,同时调用我们注册的回调函数。
+		这使得音频处理可以同时进行而不会数据丢失。
+	
+	6. 采样格式(Sample Format)
+		PortAudio 支持不同采样深度(8/16/24/32 位)和采样率的 PCM 流。
+		PortAudio 通过定义一个简单但抽象的 API,来支持跨平台录制和播放音频流,这为上层库如 PyAudio 提供了很好的基础。
+
+
+
+
+
+
+
+
+PCM
+===
+
+* PCM 是脉冲编码调制(Pulse Code Modulation)的缩写,是一种数字表示音频信号的方式。
+
+常用的 PCM 采样率有::
+
+	- 8000 Hz 用于电话
+	- 44100 Hz 用于 CD 音质
+	- 48000 Hz 用于 DVD 音质
+
+
+常见的 PCM 格式有::
+
+	- 8位无符号 char: format=paUInt8
+	- 16位有符号 short: format=paInt16 (默认格式)
+	- 32位有符号 int: format=paInt32
+
+
+
+
+
+常见问题
+========
+
+权限问题::
+
+	PyAudio 打开音频设备需要权限
+	需要确保 Python 脚本有读写 /dev/snd/* 等音频设备的权限
+
+	sudo adduser $USER audio
+	sudo chmod a+rw /dev/snd/*
+
+
+设备busy::
+
+	lsof /dev/snd/*
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

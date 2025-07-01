@@ -1,0 +1,233 @@
+配置文件
+########
+
+加载配置文件::
+
+    uwsgi --ini http://uwsgi.it/configs/myapp.ini # HTTP
+    uwsgi --xml - # standard input
+    uwsgi --yaml fd://0 # file descriptor
+    uwsgi --json 'exec://nc 192.168.11.2:33000' # arbitrary executable
+
+
+
+‘@’魔法
+=======
+
+* 可以使用 @(filename) 形式来包含一个文件的内容
+* ’@’可以读取来自所有支持的 uwsgi 方案的内容::
+
+    [uwsgi]
+    ; read from a symbol
+    foo = @(sym://uwsgi_funny_function)
+    ; read from binary appended data
+    bar = @(data://0)
+    ; read from http
+    test = @(http://example.com/hello)
+    ; read from a file descriptor
+    content = @(fd://3)
+    ; read from a process stdout
+    body = @(exec://foo.pl)
+    ; call a function returning a char *
+    characters = @(call://uwsgi_func)
+
+
+核心配置选项
+============
+
+socket相关选项::
+
+    --socket/-s: 使用默认协议绑定到指定 UNIX/TCP socket 上
+    --uwsgi-socket/-s: 使用 uwsgi 协议绑定到指定 UNIX/TCP socket 上
+    --http-socket: 使用 HTTP 协议绑定到指定 UNIX/TCP socket 上
+    --https-socket: 使用 HTTPS 协议绑定到指定 UNIX/TCP socket 上
+    --ssl-socket: 使用 SSL 之上的 uwsgi 协议绑定到指定的 UNIX/TCP socket
+    --fastcgi-socket: 使用 FastCGI 协议绑定到指定 UNIX/TCP socket 上
+
+
+protocol相关选项::
+
+    --protocol: 对默认 socket 强制使用指定的协议
+    --socket-protocol: 对默认 socket 强制使用指定的协议
+    --shared-socket: 为高级 jailing 或者 ipc 创建一个共享 socket
+
+
+并发进程相关::
+
+    --processes/-p: 生成指定数目的 进程/worker
+    --workers/-p: 生成指定数目的 进程/worker
+    --threads: 在 prethreaded 模式下运行每个 worker，使用指定数目的线程
+    --harakiri/-t: 设置 harakiri 超时(单位s)
+        一个请求花费的时间超过了这个 harakiri 超时时间，那么这个请求都会被丢弃
+        并且当前处理这个请求的工作进程会被回收再利用（即重启）
+    --harakiri-verbose: 对 harakiri 启用 verbose 模式
+
+    --enable-threads: 启用线程
+
+    --post-buffering: 启用后缓冲（post buffering），即在请求体被完全接收之前开始处理请求
+        示例:
+        post-buffering = true
+        注:
+        好像启用harakiri就要启用post-buffering
+        但启用了还是报下面错误: 
+            *** WARNING: you have enabled harakiri without post buffering. Slow upload could be rejected on post-unbuffered webservers ***
+        可能的解释: 
+            https://stackoverflow.com/questions/20208572/uwsgi-what-is-the-fix-for-you-have-enabled-harakiri-without-post-buffering
+    --buffering-bufsize: 设置 post buffering 模式下，read () 的缓冲大小
+
+
+指定配置文件格式::
+
+    --xml/-x: 
+    --ini
+    --yaml/-y: 
+    --yml/-y: 
+    --json/-j: 
+    --js/-j: 
+    --config: 使用可插拔系统加载配置
+
+emperor 进程管理::
+
+    --emperor: 运行 Emperor
+    --heartbeat: 向 emperor 宣告健康
+
+log::
+
+    --logto: 设置 logfile/udp 地址
+    --logto2: 在移除特权之后记录日志到指定的文件或者 udp 地址
+    --log-format: 为请求日志记录设置高级格式
+        log-format = [pid: %(pid)|app: %(wid)|req: %(serial)/%(requests)] %(addr) (%(vars)) [%(ftz)] %(method) %(uri) => generated %(size) bytes in %(msecs) msecs (HTTP/%(proto) %(status)) %(headers) (%(switches) switches on core %(core))
+
+    --logger: 设置 / 附加一个记录器
+    --log-truncate: 启动时清除日志
+
+    --log-maxsize: 设置最大日志文件大小
+    --disable-logging/-L: 禁用请求日志记录
+
+统计/调优::
+
+    --stats: 在指定的地址上启用统计信息服务器
+    --stats-http: 给统计信息服务器的 json 输出加上 http 头部前缀
+
+    --memory-report: 启用内存报告
+    --profiler: 启用指定的 profiler
+
+
+
+其他::
+
+    --daemonize/-d: 守护进程
+    --listen/-l: 设置 socket 监听队列大小
+    --buffer-size: 设置内部缓冲大小(默认4k)
+    --master/-M: 启用 master 进程
+
+    --queue: 启用共享队列
+    --uid: 
+    --gid: 
+
+    --udp: 在指定的地址上运行 udp 服务器
+    --stats: 在指定的地址上启用统计信息服务器
+
+    --chdir: 应用加载前 chdir 到指定目录
+
+    --mode: 设置 uWSGI custom 模式
+    --env: 设置环境变量
+
+
+    --cron: 新增一个 cron 任务
+
+
+
+
+    --chdir: 应用加载前 chdir 到指定目录
+    --lazy-apps: 在每个 worker 而不是 master 中加载应用
+
+    --vacuum: 尝试移除所有生成的文件 /socket
+    --pidfile: 创建 pid 文件 (在移除特权之前)
+    --pidfile2: 创建 pid 文件 (在移除特权之后)
+
+    --reload-mercy: 设置 the maximum time (以秒为单位) we wait for workers and other processes to die during reload/shutdown
+    --max-requests: 在指定数量的管理请求后重载 worker
+    --limit-as: 限制 uWSGI 的进程占用虚拟内存(单位M)
+
+    --connect-and-read: 连接到一个 socket，并且等待来自它的数据
+
+
+
+
+plugin: python
+--------------
+
+指定文件适合于简单的、非模块化的 Python 项目::
+
+    --wsgi-file: 加载.wsgi 文件
+    --file: 加载.wsgi 文件
+
+指定模块适合于使用框架提供的路由、视图函数等结构化的开发(如，使用 Flask、Django 等框架开发的应用)::
+
+    --module/-w: load a WSGI module
+    --wsgi/-w: load a WSGI module
+    --callable:  设置 default WSGI callable name
+
+    示例:
+        module = appm:appf
+        相当于=>
+        module = appm
+        callable = appf
+
+
+
+
+
+
+其他::
+
+    --test/-J: test a module import
+
+    --home/-H: set PYTHONHOME/virtualenv
+    --virtualenv/-H: set PYTHONHOME/virtualenv
+    --venv/-H: set PYTHONHOME/virtualenv
+    --pyhome/-H: set PYTHONHOME/virtualenv
+
+
+    --py-tracebacker: 启用 uWSGI python tracebacker
+
+    --py-autoreload: 监控 python 模块 mtime 来触发重载(开发专用)
+    --py-autoreload:
+    --python-auto-reload:
+    --python-autoreload:
+    --py-auto-reload-ignore: 自动重载扫描期间，忽略指定的模块 (可以多次指定)
+
+
+
+
+
+plugin: http
+------------
+
+::
+
+    --http: 在指定地址上添加一个 http 路由器 / 服务器
+    --https: 在指定地址上添加一个 https 路由器 / 服务器，使用指定的证书和密钥
+    --https2: 使用键值选项添加一个 https/spdy 路由器 / 服务器
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,443 @@
+# 2112.15093_CTR: Benchmarking Chinese Text Recognition: Datasets, Baselines, and an Empirical Study
+
+
+* [https://arxiv.org/abs/2112.15093](https://arxiv.org/abs/2112.15093)
+* GitHub: [https://github.com/FudanVI/benchmarking-chinese-text-recognition](https://github.com/FudanVI/benchmarking-chinese-text-recognition)
+* 组织: 上海智能信息处理重点实验室 复旦大学计算机科学学院
+
+## Abstract
+
+* 首先从公开竞赛、论文和项目中得出现有的 CTR 数据集，从而产生四类， 即场景、网络、文档和手写
+* 我们对评估协议进行了标准化，以公平地比较现有的文本识别方法。
+* 根据收集的数据集和标准化评估协议，我们重现了一系列基线的结果，然后详细分析了基线的性能。
+* 在 CTR 中引入了激进级别的监督，以普遍提高现有基于注意力的识别器的性能。
+
+
+## 1. Introduction
+
+
+![](https://img.zhaoweiguo.com/uPic/2025/05/oCFhPC.png)
+
+Figure 1:Some samples in the scene, web, document, and handwriting datasets.
+
+* 中文文本识别关注不足的三个潜在原因：
+* 1） 缺乏合理的数据集构建标准
+  * 理想的数据处理方式是：根据标注的四边形框（quadrangle boxes），**先裁剪出文本区域**，再进行**图像校正（rectification）**，使其变成**水平方向的图像**。
+  * 这样做的好处是：可以有效去除无用背景，比起直接使用**最小外接水平矩形框（min circumscribed horizontal boxes）** 更准确。
+  * 问题在于：不同的方法使用不同的裁剪方式，导致模型评估**不公平**。
+  * 此外，不同环境采集的数据在外观上差异很大（如字体、背景等），**如何划分训练集和测试集（splitting strategy）** 也会影响实验效果。
+  * 因此，需要制定**统一、合理的数据集构建标准**。
+
+* 2） 缺乏统一的评估协议
+  * 英文识别通常默认将大写字母转换为小写，但**中文没有这样的统一规则**。
+  * 举例：研究者会困惑于以下问题：
+    * 全角字符和半角字符是否视为相同？
+    * 简体字和繁体字是否应该统一？
+  * 另外，**评估指标也不统一**，比如：
+    * 有的论文用**归一化编辑距离（Normalized Edit Distance）**
+    * 有的用**准确率（Accuracy）**
+  * 所以，为了公平比较不同方法，需要建立**统一的评估协议**。
+
+* 3） 缺乏现有基线的实验结果
+  * 现有的文本识别方法大多是在英文数据集上评估的，比如：IIIT5K、IC03、IC13。
+  * 虽然有少数工作尝试在中文数据集上实验，但：
+
+    * **数据集构建过程没有详细说明**
+    * 使得其他研究者**难以复现实验或作为基线方法使用**
+  * 这限制了该领域的进一步研究。
+
+* 总结：作者指出，中文文本识别研究不够深入，主要是因为：数据集构建不规范、评估标准不统一、缺少可信的基线实验结果。这三个问题共同导致难以公平比较方法，阻碍了研究发展。
+
+
+## 2. Preliminaries
+
+### 2.1 Hierarchical Representations for Chinese Characters
+
+![](https://img.zhaoweiguo.com/uPic/2025/05/oxWMCn.png)
+
+Figure 2:The preliminary knowledge of representing Chinese characters.
+
+* 汉字的三种表示形式（见图 2（a） 中的示例“奇”）， 即汉字级别、部首级别和笔画级别
+* 汉字级别: 根据中国国家标准 [GB18030-2005](https://zh.wikipedia.org/wiki/GB_18030) ，汉字总数为 70,244 个，其中 3,755 个字符为 1 级常用字符
+* 部首级别: 根据 [Unicode 惯义描述字符](https://unicode.org/charts/PDF/U2FF0.pdf) 标准，一级常用汉字有 12 个部首结构（见图 2（b））和 514 个部首。对于 3,755 个常用的汉字，部首级表示可以有效地将字母的大小从 3,755 个减少到 526 个。
+* 笔画级别: 根据 [Unicode 汉文数据库](http://www.unicode.org) ，每个汉字都可以分解成一个笔画序列。笔画有五个基本类别（例如 ，水平、垂直、左下、右下和转弯），每个类别都包含多个实例（参见图 2（c））
+
+### 2.2 Characteristics of Chinese Texts
+
+![](https://img.zhaoweiguo.com/uPic/2025/05/fC8QfA.png)
+
+Figure 3:Characteristics of Chinese texts that are distinct from English texts.
+
+
+* Large amount of characters(大量字符, 图3.a)
+* Similar appearance(相似的外观, 图3.b)
+* Complicated sequential patterns(复杂的顺序模式, 图3.c)
+* Commonly-seen vertical texts(常见的垂直文本, 图3.d)
+* Complex inner structures(复杂的内部结构, 图2.a)
+
+
+## 3. Datasets
+
+### 3.1 Details of Datasets
+
+#### 🏙 场景类数据集（Scene Dataset）
+
+来自多个竞赛和项目，涵盖真实场景中的中文文本：最终合并这五个数据集，共得 **636,455 个样本**，按 8:1:1 分为训练、测试和验证集
+
+| 数据集                | 来源           | 样本量                                       | 特点            |
+| ------------------ | ------------ | ----------------------------------------- | ------------- |
+| **RCTW**  | 自然场景图像       | 提取 44,420 个文本图像用于 benchmark（原始为12,263张图像） | 测试集未用（无文本标签）  |
+| **ReCTS** | 街景招牌图像       | 裁剪出 107,657 个文本样本                         | 只使用训练集        |
+| **LSVT**  | 中英文场景文本      | 使用全标注的 50,000 样本裁剪出 243,063 个文本图像         | 未使用部分标注的40万样本 |
+| **ArT**   | 自然场景中弯曲/旋转文本 | 从训练集中裁剪 49,951 个文本图像                      | 多样化布局（旋转、曲线）  |
+| **CTW**   | 街景图像         | 裁剪出 191,364 个文本图像                         | 提供字符级标注和属性信息  |
+
+
+
+#### 🌐 网页类数据集（Web Dataset）
+
+* **MTWI**：包含淘宝17类网页中的中英文图像，共提取 140,589 个文本图像。
+* 分配为：训练集112,471，验证集14,059，测试集14,059（8:1:1）。
+
+
+#### 📄 文档类数据集（Document Dataset）
+
+* 基于开源工具 **Text Renderer** \[[GitHub](https://github.com/Sanster/text_renderer)] 合成文档风格图像。
+* 文本长度 1–15，语料来自 Wiki、电影、亚马逊和百科。
+* 共生成 500,000 个样本，分为：训练40万、验证5万、测试5万。
+
+#### ✍️ 手写类数据集（Handwriting Dataset）
+
+* 基于 [SCUT-HCCDoc](https://github.com/HCIILAB/SCUT-HCCDoc_Dataset_Release)，拍摄自自然场景中的中文手写。
+* 总体样本：93,254（训练），23,389（测试）
+* 将原训练集按 4:1 划分，得：
+
+  * 训练集：74,603
+  * 验证集：18,651
+  * 测试集：原始测试集（不变）
+
+---
+
+#### 🔒 数据集许可信息（Licenses）
+
+| 数据集                          | 许可情况                           |
+| ---------------------------- | ------------------------------ |
+| RCTW, ReCTS, ArT, LSVT, MTWI | 无明确开源许可，但作者已确认可用于学术研究          |
+| CTW                          | CC BY-NC-SA 4.0（署名-非商业-相同方式共享） |
+| SCUT-HCCDoc                  | 可用于非商业研究，已获作者授权用于学术研究          |
+
+
+
+
+
+### 3.2 Preprocessing
+
+
+
+![](https://img.zhaoweiguo.com/uPic/2025/05/L5a9nb.png)
+
+Figure 6:Steps to preprocess the collected datasets.
+
+
+* 对收集到的四类中文文本识别（CTR）数据集进行预处理（preprocessing）的策略。作者提出了四个步骤，目标是提升数据质量、避免噪声干扰，并为后续训练和评估打下更严谨的基础。
+* 如图6所示：
+    - a.保留包含其他语言的文本图像
+    - b.删除注释为 “###” 的样品: 这些样本中存在严重的模糊或遮挡，即使是人眼也很难识别。考虑到这些样本可能会给训练过程带来噪声，决定将它们从数据集中删除
+    - c.构建单独的验证集
+- 还有就是:仅收集具有可用文本标签的样本
+
+
+### 3.3 Analysis of Datasets
+
+#### Alphabet size and amount of characters
+
+![](https://img.zhaoweiguo.com/uPic/2025/05/0EDFgh.png)
+
+Table 1:The statistical results of the alphabet size and the amount of characters. “Chinese”, “All”, “Proportion” denote the number of Chinese characters, all characters, the proportion of Chinese characters, respectively. “ZS” represents the number of zero-shot characters in the testing sets.
+
+
+#### Distributions of text length and aspect ratio
+
+* 文本长度：手写数据中长文本（≥10字符）较多，对识别模型挑战大；而场景文本和网页文本更短，可能是为了便于行人、顾客快速阅读。
+* 宽高比（宽/高）：
+    * 场景数据中垂直文本多（如对联、招牌），宽高比 ≤ 1。
+    * 手写数据多为横向排布
+
+
+
+#### Character and word frequency
+
+![](https://img.zhaoweiguo.com/uPic/2025/05/uhzXZD.png)
+
+Table 2:Top six high-frequency characters and words in each dataset (frequency in parentheses).
+
+
+
+#### Recognizability calibration by humans
+
+![](https://img.zhaoweiguo.com/uPic/2025/05/GxQhBu.png)
+
+Table 3:The statistical results of recognizability calibrated by humans (BG for background).
+
+
+* 评估的五种干扰因素：
+  1. 遮挡（Occlusion）
+  2. 倾斜/弯曲（Oblique or Curved）
+  3. 背景干扰（BG Confusion）
+  4. 潦草（Scribble）
+  5. 模糊（Blur）
+
+| 数据集             | 主要识别障碍         | 说明              |
+| --------------- | -------------- | --------------- |
+| **Scene**       | 模糊 > 背景干扰 > 遮挡 | 来源于自然环境，拍摄时干扰多  |
+| **Web**         | 倾斜/弯曲最多        | 生成方式多样，设计上有意做变化 |
+| **Document**    | 几乎无明显障碍        | 图像质量好，文字规整      |
+| **Handwriting** | 潦草最多           | 书写笔迹问题，字迹粘连影响识别 |
+
+
+## 4. Baselines
+
+
+### 1. **CTC-based 方法：**
+
+* **CRNN**
+
+  * 用 CNN 提取图像特征，再用 LSTM 编码时序信息，最后用 CTC 解码器输出文本。
+  * 工业界广泛使用，结构简单但实用。
+
+### 2. **Rectification-based 方法（图像矫正类）：**
+
+* **ASTER**
+  * 引入 STN（空间变换网络）来“拉直”文本图像，处理弯曲或不规则文字。
+  * 使用 attention 解码。
+
+* **MORAN**
+  * 使用 MORN（多目标矫正网络）来生成矫正像素偏移，比 ASTER 更弱监督。
+  * 搭配 ASRN（基于注意力的解码器）识别文字。
+
+### 3. **2D 特征解码方法：**
+
+* **SAR**
+  * 不压缩为 1D 序列，而保留 2D 空间信息，使用空间注意力机制进行解码。
+  * 更适合弯曲或倾斜文本。
+
+### 4. **语义先验引导的方法：**
+
+* **SEED**
+
+  * 引入语义模块获取全局语义向量，作为解码器初始状态，提升低质量图像的识别效果。
+
+### 5. **纯 Attention（自注意力）方法：**
+
+* **MASTER**
+
+  * 基于 Transformer 的方法，使用自注意力提取强鲁棒表示。
+  * 支持并行训练，推理速度快。
+
+### 6. **融合视觉与语言模型的方法：**
+
+* **ABINet**
+  * 提出三个原则：
+    * *Autonomous*：视觉模型与语言模型分开训练；
+    * *Bidirectional*：使用双向信息；
+    * *Iterative*：迭代优化识别结果。
+  * 支持自训练（能从无标签数据中学习）。
+
+### 7. **Transformer 架构：**
+
+* **TransOCR**
+  * 用 ResNet-34 编码器 + Transformer 解码器。
+  * 起初为超分辨率任务设计，也适合文本识别。
+  * 比 RNN 更高效捕捉语义。
+
+
+
+### PRAB(Pluggable Radical-Aware Branch)
+
+
+* 这些方法在中文文本识别任务上的表现普遍不如英文任务
+    * 主要原因是中文字符的结构复杂度更高（参见第2.2节）。
+* 作者提出的改进方法：**PRAB（Pluggable Radical-Aware Branch）**
+    * 中文字符由多个“偏旁部首”（radicals）构成。
+    * 作者提出在现有 **attention-based 识别器** 中插入一个**支持偏旁部首级别监督的模块（PRAB）**。
+    * 通过多任务学习方式引入部首知识，增强模型对中文结构的理解与泛化能力。
+    * 具体细节见论文附录。
+
+
+
+## 5. An Empirical Study
+
+
+### 5.1 Experiments
+
+![](https://img.zhaoweiguo.com/uPic/2025/05/tWXuwH.png)
+
+Table 4:The results of the baselines on four datasets. ACC / NED follows the percentage format and decimal format, respectively.
+
+
+* 结果:
+    * **TransOCR** 在所有数据集上表现最好（尤其在场景和网页图像上），但参数最多、速度较慢。
+    * **CRNN** 虽性能不顶尖，但参数最少，速度最快，说明它适合对效率要求高的应用。
+    * **SEED** 表现最差，推测是因为其依赖 fastText 学习语义，但中文语义复杂，效果不佳。
+    * 手写数据集上所有模型表现都差，原因是其中 40% 的样本是潦草（Scribble）书写，结构模糊。
+
+
+
+
+### 5.2 Discussions
+
+
+![](https://img.zhaoweiguo.com/uPic/2025/05/WYa2KR.png)
+
+Table 5:The results of the baselines on hard cases. ACC / NED follows the percentage format and decimal format, respectively.
+
+
+
+* 五类困难场景：遮挡、倾斜或弯曲、背景混乱、模糊、竖排文字。
+* 结果显示：
+
+  * **TransOCR** 在所有困难场景中表现最优，尤其在背景混乱和竖排文字方面有明显优势，得益于其 Transformer 的自注意力机制。
+  * **ASTER** 在某些场景中 NED 高于 TransOCR，主要因为其使用了 STN（空间变换网络），能改善倾斜图像的识别。
+  * **CRNN** 在竖排文字上表现最差，因为它将图像简单转换为 1D 特征，不适合处理竖排布局。
+
+
+
+
+## 6. Conclusions
+
+
+* 🔍 背景问题
+    * 中文文本识别（Chinese Text Recognition，CTR）相比英文受到的关注较少。
+    * 作者首先分析了**为什么CTR发展缓慢**，例如：数据资源缺乏、评估标准不统一、语言复杂性更高等。
+
+* 📦 数据集建设
+    * 作者收集了多个公开的中文文本识别数据集，并将其分类为四种场景：
+        1. **Scene（场景文字）**：自然场景中的文字，如街道招牌。
+        2. **Web（网页文字）**：网页截图中的文本。
+        3. **Document（文档文字）**：例如PDF、书籍扫描。
+        4. **Handwriting（手写文字）**：人工书写的中文。
+* 🧪 评估标准统一
+    * 作者对评估流程进行了**标准化**，例如：
+        * 简繁体是否视为同一字符；
+        * 是否忽略大小写、空格；
+        * 使用统一的准确率（ACC）和归一化编辑距离（NED）作为指标。
+    * 目的：**降低入门门槛**，使非中文背景的研究者也能参与CTR研究。
+
+* 🧪 基准方法实验
+    * 作者选用了8种主流的文本识别方法（如 CRNN、ASTER、TransOCR 等），在四类数据集上进行了系统评测。
+    * 结果表明：**结合中文字符知识（如部首信息）** 对提升识别性能是有帮助的。
+
+* 🧭 未来指导意义
+    * 未来CTR研究可以考虑：
+        * 利用中文特有的语言结构（如部首、偏旁）；
+        * 构建更全面的评估框架；
+        * 增加对困难样本（如手写、竖排、弯曲文字）的鲁棒性研究。
+
+
+
+
+## Appendix A Details of PRAB
+
+
+![](https://img.zhaoweiguo.com/uPic/2025/05/fL7kgA.png)
+
+Figure 7:The framework of our method. The data flow indicated by red arrows is only used in the training phase.
+
+
+
+* 介绍了作者提出的一个新方法 PRAB（Pluggable Radical-Aware Branch，可插拔的部首感知分支），用于提升中文文本识别（CTR）性能。
+* 背景与动机
+    * 观察到现有模型在中文数据集上的性能不如在英文数据集上。
+    * 这是因为中文字符和拉丁字母差异很大：一个汉字更复杂，包含多种笔画和部件（如部首）。
+    * **核心想法**：中文字符可以拆解成部首序列（radicals），如果识别模型也能学习到部首层级的细粒度特征，识别性能可能会提升。
+
+
+### A.1 Shared Feature Extractor
+
+* 使用 ResNet-34 提取图像特征。
+* 为了保留更多空间信息（有助于部首定位），**去掉了 ResNet 的三个下采样层**，输出特征图的尺寸是原图的 1/4。
+
+---
+
+### A.2 Recognition Branch(基于注意力)
+
+* 用的是 TransOCR（一个 2D attention 的中文识别模型）。
+* 注意：为了兼容非 attention-based 方法（如 ASTER、MORAN），可以将它们的 decoder 替换成 2D attentional decoder，以便与 PRAB 联动。
+
+---
+
+### A.3 Pluggable Radical-Aware Branch（训练时使用）
+
+1. **利用注意力图**，从特征图中“抠出”每个字符对应的特征区域。
+2. 然后通过 `1×1` 卷积进行压缩，去除无关区域（如背景干扰）。
+3. 压缩后的特征送入 Transformer 解码器，解码成部首序列（这类 supervision 可从现有工具获得，无需额外人工标注）。
+4. 这个过程 **只在训练阶段使用**，不增加推理时间（模型部署时不会调用 PRAB 分支）。
+
+
+
+
+## Appendix C Visualization of Failure Cases.
+
+
+![](https://img.zhaoweiguo.com/uPic/2025/05/Z2mRv4.png)
+
+Figure 8:Failure cases in the scene dataset.
+
+
+
+![](https://img.zhaoweiguo.com/uPic/2025/05/jTnlXz.png)
+
+Figure 9:Failure cases in the web dataset.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

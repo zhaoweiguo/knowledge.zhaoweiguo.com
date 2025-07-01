@@ -1,0 +1,147 @@
+Singleton-单例模式
+##################
+
+.. note:: 因为单例模式保证了实例的全局唯一性，而且只被初始化一次，所以比较适合全局共享一个实例，且只需要被初始化一次的场景，例如数据库实例、全局配置、全局任务池等。
+
+单例模式又分为饿汉方式和懒汉方式::
+
+    饿汉方式: 全局的单例实例在包被加载时创建
+    懒汉方式: 全局的单例实例在第一次被使用时创建
+
+    双重检测
+    静态内部类
+    枚举
+
+.. image:: https://img.zhaoweiguo.com/knowledge/images/architectures/design-modes/Creationals/singleton1.png
+
+单例这种设计模式存在哪些问题？为什么会被称为反模式::
+
+    1. 单例这种设计模式对于 OOP 的四大特征中的抽象、继承、多态都支持得不好
+        违背了基于接口而非实现的设计原则，也就违背了广义上理解的 OOP 的抽象特性。
+        一旦你选择将某个类设计成到单例类，也就意味着放弃了继承和多态这两个强有力的面向对象特性，
+        也就相当于损失了可以应对未来需求变化的扩展性。
+    2. 单例会隐藏类之间的依赖关系
+        单例类不需要显示创建、不需要依赖参数传递，在函数中直接调用就可以了。
+        如果代码比较复杂，这种调用关系就会非常隐蔽。
+    3. 单例对代码的扩展性不友好
+        数据库连接池设计成单例类
+        当在系统中创建两个数据库连接池:
+            慢 SQL 独享一个数据库连接池
+            其他 SQL 独享另外一个数据库连接池
+        单例类在某些情况下会影响代码的扩展性、灵活性。
+        所以，数据库连接池、线程池这类的资源池，最好还是不要设计成单例类。
+    4. 单例对代码的可测试性不友好
+        单例类这种硬编码式的使用方式，导致无法实现 mock 替换
+    5. 单例不支持有参数的构造函数
+
+
+
+饿汉方式
+========
+
+实例::
+
+    package singleton
+    
+    type singleton struct {
+    }
+    
+    var ins *singleton = &singleton{}
+    
+    func GetInsOr() *singleton {
+        return ins
+    }
+
+缺点::
+
+    因为实例是在包被导入时初始化的，所以如果初始化耗时，会导致程序加载时间比较长
+
+
+懒汉方式
+========
+
+缺点::
+
+    非并发安全，在实际使用时需要加锁
+
+不加锁的一个实现::
+
+    package singleton
+    
+    type singleton struct {
+    }
+    
+    var ins *singleton
+    
+    func GetInsOr() *singleton {
+        if ins == nil {
+            ins = &singleton{}
+        }
+        
+        return ins
+    }
+
+    问题: 在创建 ins 时，如果 ins==nil，就会再创建一个 ins 实例，这时候单例就会有多个实例
+
+带检查锁的一个实现::
+
+
+    import "sync"
+
+    type singleton struct {
+    }
+
+    var ins *singleton
+    var mu sync.Mutex
+
+    func GetIns() *singleton {
+      if ins == nil {
+        mu.Lock()
+        if ins == nil {
+          ins = &singleton{}
+        }
+        mu.Unlock()
+      }
+      return ins
+    }
+
+在 Go 开发中，还有一种更优雅的实现方式::
+
+
+    package singleton
+
+    import (
+        "sync"
+    )
+
+    type singleton struct {
+    }
+
+    var ins *singleton
+    var once sync.Once
+
+    func GetInsOr() *singleton {
+        if ins == nil {
+            once.Do(func() {
+                ins = &singleton{}
+            })
+        }
+        return ins
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

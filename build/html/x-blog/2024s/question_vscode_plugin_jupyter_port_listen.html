@@ -1,0 +1,396 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="zh-CN" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="zh-CN" > <!--<![endif]-->
+<head>
+
+
+<!-- start added 2025-04-14   增加对markdown中公式的支持 -->
+<script>
+window.MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+    },
+    options: {
+        ignoreHtmlClass: "tex2jax_ignore|mathjax_ignore",
+        processHtmlClass: "tex2jax_process|mathjax_process|math|output_area"
+    }
+};
+</script>
+<script defer="defer" src="https://fastly.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<!-- end added 2025-04-14   增加对markdown中公式的支持 -->
+
+
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>怪异问题：一个由vscode jupyter插件占用端口引起的问题 &mdash; 新溪-gordon V2025.06 文档</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="实践：快速搭建一个可运行的docker gpu环境" href="practice_docker_gpu_environment.html" />
+    <link rel="prev" title="个人博客" href="../index.html" /> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+  <script src="../_static/js/jquery.min.js"></script>
+
+
+<!-- 评论插件 gittalk start -->
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script> -->
+<!-- 评论插件 gittalk end -->
+
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> 新溪-gordon
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                V2025.06
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">个人博客</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">怪异问题：一个由vscode jupyter插件占用端口引起的问题</a></li>
+<li class="toctree-l1"><a class="reference internal" href="practice_docker_gpu_environment.html">实践：快速搭建一个可运行的docker gpu环境</a></li>
+<li class="toctree-l1"><a class="reference internal" href="practice_python_PyPI_package_twine.html">实践：如何打包你的Python项目并分发到TestPyPI</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">新溪-gordon</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>怪异问题：一个由vscode jupyter插件占用端口引起的问题</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/2024s/question_vscode_plugin_jupyter_port_listen.md.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            <nav id="local-table-of-contents" role="navigation" aria-labelledby="local-table-of-contents-title">
+              <h4 id="local-table-of-contents-title">On This Page</h4>
+              <ul>
+<li><a class="reference internal" href="#">怪异问题：一个由vscode jupyter插件占用端口引起的问题</a><ul>
+<li><a class="reference internal" href="#id1">前言</a></li>
+<li><a class="reference internal" href="#id2">定位问题过程</a></li>
+<li><a class="reference internal" href="#id3">找到原因</a></li>
+<li><a class="reference internal" href="#id4">根因定位</a></li>
+<li><a class="reference internal" href="#id5">总结</a></li>
+</ul>
+</li>
+</ul>
+
+            </nav>
+  <section class="tex2jax_ignore mathjax_ignore" id="vscode-jupyter">
+<h1>怪异问题：一个由vscode jupyter插件占用端口引起的问题<a class="headerlink" href="#vscode-jupyter" title="此标题的永久链接">¶</a></h1>
+<section id="id1">
+<h2>前言<a class="headerlink" href="#id1" title="此标题的永久链接">¶</a></h2>
+<ul>
+<li><p>今天在运行一个 uwsgi 的python服务时，发现和预想不一致，最开始以为是我的服务有问题，查了好长时间始终不得要领。</p></li>
+<li><p>表现上看是一个很奇怪的问题：</p>
+<p>➜ curl http://localhost:9000
+curl: (1) Received HTTP/0.9 when not allowed</p>
+</li>
+<li><p>怎么修改代码都不管用</p></li>
+</ul>
+</section>
+<section id="id2">
+<h2>定位问题过程<a class="headerlink" href="#id2" title="此标题的永久链接">¶</a></h2>
+<ul class="simple">
+<li><p>最开始以为代码的问题（今天上线时遇到各种问题，正在复盘定位问题），但试了各种修改都不管用，开始怀疑人生的时候，我知道可能不是程序的问题。</p></li>
+<li><p>于是，我开启了一个最简单的 uwsgi 服务，一样有这种问题。</p></li>
+<li><p>于是怀疑是不是uwsgi的问题，比如版本之类的、依赖问题啥的，毕竟对这个东西不太熟，但发现我直接使用 python -m http.server 9000 也有这种问题</p></li>
+<li><p>这就……我怀疑是不是python的问题，于是使用node的http-server也有问题</p></li>
+<li><p>那会不会是端口的问题，我使用 netstat -nlp tcp | grep 9000 发现没被占，所以不是端口被占的原因（记住我这个结论1）</p></li>
+<li><p>实在找不到原因了，换个端口试试吧，9001 怎么样，再试试9002 9003…9100，一样的问题，看来真不是端口的问题（记住这个结论2）</p></li>
+<li><p>我指定端口启动服务器时，也没问题，启动成功了，所以应该不是端口问题（结论3）</p></li>
+<li><p>实在找不到原因了，吃个饭休息下吧。吃饭时想起，我的知识体系是在本机占的的8888端口，好像没有问题，因为一直在用</p></li>
+<li><p>吃完回来试试，咦！！！居然是好的，再试试8000也是好的，试试9010，9100……都不行，难道9xxx端口集体罢工了？</p></li>
+</ul>
+</section>
+<section id="id3">
+<h2>找到原因<a class="headerlink" href="#id3" title="此标题的永久链接">¶</a></h2>
+<ul class="simple">
+<li><p>mac下的 netstat -nlp tcp 命令没有发现 9000 被占，但使用 netstat -anlp tcp 命令发现 9000 被占::</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">netstat</span> <span class="o">-</span><span class="n">anlp</span> <span class="n">tcp</span> <span class="o">|</span> <span class="n">grep</span> <span class="mi">90</span> <span class="o">|</span> <span class="n">grep</span> <span class="n">LISTEN</span>
+<span class="n">tcp4</span>       <span class="mi">0</span>      <span class="mi">0</span>  <span class="mf">127.0.0.1.9002</span>                                <span class="o">*.*</span>                                           <span class="n">LISTEN</span>
+<span class="n">tcp4</span>       <span class="mi">0</span>      <span class="mi">0</span>  <span class="mf">127.0.0.1.9006</span>                                <span class="o">*.*</span>                                           <span class="n">LISTEN</span>
+<span class="n">tcp4</span>       <span class="mi">0</span>      <span class="mi">0</span>  <span class="mf">127.0.0.1.9003</span>                                <span class="o">*.*</span>                                           <span class="n">LISTEN</span>
+<span class="n">tcp4</span>       <span class="mi">0</span>      <span class="mi">0</span>  <span class="mf">127.0.0.1.9005</span>                                <span class="o">*.*</span>                                           <span class="n">LISTEN</span>
+<span class="n">tcp4</span>       <span class="mi">0</span>      <span class="mi">0</span>  <span class="mf">127.0.0.1.9004</span>                                <span class="o">*.*</span>                                           <span class="n">LISTEN</span>
+<span class="n">tcp4</span>       <span class="mi">0</span>      <span class="mi">0</span>  <span class="mf">127.0.0.1.9006</span>                                <span class="o">*.*</span>                                           <span class="n">LISTEN</span>
+<span class="n">tcp4</span>       <span class="mi">0</span>      <span class="mi">0</span>  <span class="mf">127.0.0.1.9000</span>                                <span class="o">*.*</span>                                           <span class="n">LISTEN</span>
+<span class="n">tcp4</span>       <span class="mi">0</span>      <span class="mi">0</span>  <span class="mf">127.0.0.1.9007</span>                                <span class="o">*.*</span>                                           <span class="n">LISTEN</span>
+<span class="n">tcp4</span>       <span class="mi">0</span>      <span class="mi">0</span>  <span class="mf">127.0.0.1.9001</span>                                <span class="o">*.*</span>                                           <span class="n">LISTEN</span>
+<span class="o">...</span> <span class="o">...</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>netstat -anlp tcp 会把不活跃的也列出来，所以这些9xxx都是不活跃的端口(上面结论1被推翻)</p></li>
+<li><p>原来 9xxx 端口都被占了，所以前面我试了9001 9002 9100 等都没成功很正常，因为这些端口都被占了(上面结论2被推翻)</p></li>
+</ul>
+</section>
+<section id="id4">
+<h2>根因定位<a class="headerlink" href="#id4" title="此标题的永久链接">¶</a></h2>
+<ul class="simple">
+<li><p>这是什么原因导致的，先用 lsof ，找到进程id:</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">lsof</span> <span class="o">-</span><span class="n">i</span> <span class="p">:</span><span class="mi">9004</span>
+<span class="n">COMMAND</span>     <span class="n">PID</span>       <span class="n">USER</span>   <span class="n">FD</span>   <span class="n">TYPE</span>             <span class="n">DEVICE</span> <span class="n">SIZE</span><span class="o">/</span><span class="n">OFF</span> <span class="n">NODE</span> <span class="n">NAME</span>
+<span class="n">Code</span>\<span class="n">x20H</span> <span class="mi">81199</span> <span class="n">zhaoweiguo</span>   <span class="mi">91</span><span class="n">u</span>  <span class="n">IPv4</span> <span class="mh">0xebef57f874d0a779</span>      <span class="mi">0</span><span class="n">t0</span>  <span class="n">TCP</span> <span class="n">localhost</span><span class="p">:</span><span class="mi">52223</span><span class="o">-&gt;</span><span class="n">localhost</span><span class="p">:</span><span class="mi">9004</span> <span class="p">(</span><span class="n">ESTABLISHED</span><span class="p">)</span>
+<span class="n">python3</span><span class="mf">.8</span> <span class="mi">84139</span> <span class="n">zhaoweiguo</span>   <span class="mi">33</span><span class="n">u</span>  <span class="n">IPv4</span> <span class="mh">0xebef57f871014e69</span>      <span class="mi">0</span><span class="n">t0</span>  <span class="n">TCP</span> <span class="n">localhost</span><span class="p">:</span><span class="mi">9004</span> <span class="p">(</span><span class="n">LISTEN</span><span class="p">)</span>
+<span class="n">python3</span><span class="mf">.8</span> <span class="mi">84139</span> <span class="n">zhaoweiguo</span>   <span class="mi">66</span><span class="n">u</span>  <span class="n">IPv4</span> <span class="mh">0xebef57f871095789</span>      <span class="mi">0</span><span class="n">t0</span>  <span class="n">TCP</span> <span class="n">localhost</span><span class="p">:</span><span class="mi">9004</span><span class="o">-&gt;</span><span class="n">localhost</span><span class="p">:</span><span class="mi">52223</span> <span class="p">(</span><span class="n">ESTABLISHED</span><span class="p">)</span>
+
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>看下这个进程到底是啥</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>➜ ps aux | grep 87666
+zhaoweiguo       87666   0.0  0.0 35936004   7720   ??  S    Sat10AM   0:00.97 python -m ipykernel_launcher --f=~/Library/Jupyter/runtime/kernel-v2-81196VlEbiD59vsvM.json
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>原来是 jupyter 的问题，看下vscode 中的jupyter插件，翻文档可知:</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>默认端口：通常情况下，Jupyter插件会尝试使用默认的端口，比如8888端口。
+动态分配端口：如果默认端口被占用，Jupyter插件会尝试动态地选择一个空闲的端口。它会从一系列预定义的端口中选择一个未被占用的端口，通常是从9000到9999之间的端口。
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>vscode 的 jupyter 插件监听的是 localhost的端口，所以启动服务时如果监听 :port 是没有问题(结论3也被推翻)</p></li>
+</ul>
+</section>
+<section id="id5">
+<h2>总结<a class="headerlink" href="#id5" title="此标题的永久链接">¶</a></h2>
+<ul class="simple">
+<li><p>未来的生活是不确定的</p></li>
+<li><p>工作遇到奇怪的问题也正常，但总能找到解释的方法</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="practice_docker_gpu_environment.html" class="btn btn-neutral float-right" title="实践：快速搭建一个可运行的docker gpu环境" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="../index.html" class="btn btn-neutral" title="个人博客" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+  
+  <div id="gitalk-container"></div>
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2010-2025, 新溪-gordon.
+
+    </p>
+  </div>
+  <div>备案号 <a href="http://www.beian.miit.gov.cn">京ICP备16018553号</a></div><div>Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a></div>. 
+
+
+</footer>
+
+<script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?042289284b8eb33866001347a3e0b129";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>     
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'V2025.06',
+            LANGUAGE:'zh-CN',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="../_static/sphinx_highlight.js"></script>
+      <script type="text/javascript" src="../_static/clipboard.min.js"></script>
+      <script type="text/javascript" src="../_static/copybutton.js"></script>
+      <script type="text/javascript" src="../_static/translations.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+
+  
+
+  <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+
+
+      // var gitalk = new Gitalk({
+      //         clientID: '565177626b5d46427009',
+      //         clientSecret: 'b2a36e67e1d2a73e43667f46d571c2624f8e1026',
+      //         repo: 'knowledge',
+      //         owner: 'zhaoweiguo',
+      //         admin: ['zhaoweiguo'],
+      //         id: location.pathname,      // Ensure uniqueness and length less than 50
+      //         distractionFreeMode: false  // Facebook-like distraction free mode
+      //       })
+      // gitalk.render('gitalk-container')
+
+  </script>
+
+
+<script type="text/javascript" src="../_static/js/table-of-contents-sidebar.js"></script>
+<!-- <script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script> -->
+<script type="text/javascript">
+    window.onload = function(e){
+        TableOfContents.init({
+            basePath: "https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/",
+            querySelector: "body" // or other css querySelector
+        });
+    }
+</script> 
+
+</body>
+</html>

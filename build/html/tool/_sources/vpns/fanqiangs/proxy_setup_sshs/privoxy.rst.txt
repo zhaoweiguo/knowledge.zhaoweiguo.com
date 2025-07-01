@@ -1,0 +1,217 @@
+privoxy-socks转http代理
+#######################
+
+* 官网: http://www.privoxy.org/
+* 文档: https://www.privoxy.org/user-manual/index.html
+
+
+Mac版本使用
+===========
+
+安装::
+
+    下载pkg包安装
+
+    相关目录:
+    /usr/local/sbin/privoxy
+    /usr/local/etc/privoxy
+
+
+启动&关闭::
+
+    启动方法一:
+        $ /usr/local/sbin/privoxy /usr/local/etc/privoxy/config
+
+
+    启动方法二:
+
+    默认启动，想关闭需要:
+        remove or rename the file /Library/LaunchDaemons/org.ijbswa.privoxy.plist
+
+    To manually start or stop the privoxy service, 
+        use the scripts startPrivoxy.sh and stopPrivoxy.sh supplied in /Applications/Privoxy.
+
+    说明1: 
+        不知为啥，移动.plist不管用，还是自动重启；另外，startPrivoxy.sh也不起作用
+        进展: 
+            startPrivoxy.sh 和 stopPrivoxy.sh 不起作用原因已经知道，需要修改一下代码
+            因为现在mac已经是2x版本了，所以需要把 `9|1*` 改为 `9|1*|2*`
+    说明2:
+        启动方法一报没有/usr/lib/libcrypto.3.dylib库 ——2024-02-21
+        进展:
+            原因是我brew根目录修改过，所以加个软链就行
+            ➜ sudo ln -s /usr/local/Homebrew/Cellar/openssl@3 /usr/local/Cellar/openssl@3
+
+
+
+Linux版本使用
+=============
+
+安装::
+
+    apt install privoxy
+
+    配置文件目录: /etc/privoxy
+
+
+
+配置文件 ``/etc/privoxy`` 关键内容 ::
+
+    listen-address  [ADDRESS]:[PORT] 
+    默认值是
+    listen-address  127.0.0.1:8118
+
+
+    forward-socks5t   /       118.193.225.166:9150 .
+    forward-socks5t   /       127.0.0.1:9050 .
+
+    // 失败转发重试
+    forwarded-connect-retries  1
+
+    // 配置最大客户端的连接(默认128)
+    max-client-connections 256
+
+
+    // HTTP 代理转发: Privoxy 把自己收到的 HTTP 请求转给另一个 HTTP 代理
+    forward target_pattern http_proxy:port
+    // 示例: 把所有的 HTTP 请求都转发给本机8080端口
+    forward  /  127.0.0.1:8080
+    // 示例: 如果 HTTP 请求是发送给 .google.com 这个域名的下级域名，就把该 HTTP 请求转发给本机8080
+    forward  .google.com/  127.0.0.1:8080
+
+
+    forward-socks5 .onion localhost:9050 .
+    // 把顶级域名为 .onion 的 HTTP 请求都转发给本机的 TOR SOCKS 端口
+
+
+原理
+====
+
+示意图1(先转发到 SOCKS 代理，然后转到目标站)::
+
+    | 　　　｜＝＝＝＝＞｜　　　　　　　｜＝＝＝＝＞｜　　　　　　　｜＝＝＝＝＞｜
+    | 浏览器｜　　　　　｜Ｐｒｉｖｏｘｙ｜　　　　　｜ＳＯＣＫＳ代理｜　　　　　｜目标网站
+    | 　　　｜＜＝＝＝＝｜　　　　　　　｜＜＝＝＝＝｜　　　　　　　｜＜＝＝＝＝｜
+    |      ｜此阶段是　｜　　　　　　　｜此阶段是　｜　　　　　　　｜此阶段是　｜
+    |      ｜ＨＴＴＰ　｜　　　　　　　｜ＳＯＣＫＳ｜　　　　　　　｜ＨＴＴＰ　｜
+
+示意图2(先转发到 SOCKS 代理，再转发到某个 HTTP 代理，最后才转到目标站)::
+
+    | 　　　｜＝＝＝＝＞｜　　　　　　　｜＝＝＝＝＞｜　　　　　　　｜＝＝＝＝＞｜　　　　　　｜＝＝＝＝＞｜
+    | 浏览器｜　　　　　｜Ｐｒｉｖｏｘｙ｜　　　　　｜ＳＯＣＫＳ代理｜　　　　　｜ＨＴＴＰ代理｜　　　　　｜目标网站
+    | 　　　｜＜＝＝＝＝｜　　　　　　　｜＜＝＝＝＝｜　　　　　　　｜＜＝＝＝＝｜　　　　　　｜＜＝＝＝＝｜
+    |      ｜此阶段是　｜　　　　　　　｜此阶段是　｜　　　　　　　｜此阶段是　｜　　　　　　｜此阶段是　｜
+    |      ｜ＨＴＴＰ　｜　　　　　　　｜ＳＯＣＫＳ｜　　　　　　　｜ＨＴＴＰ　｜　　　　　　｜ＨＴＴＰ　｜
+
+
+
+SOCKS 代理转发，包括如下几种语法::
+
+    forward-socks4   target_pattern  socks_proxy:port  http_proxy:port
+    forward-socks4a  target_pattern  socks_proxy:port  http_proxy:port
+    forward-socks5   target_pattern  socks_proxy:port  http_proxy:port
+    forward-socks5t  target_pattern  socks_proxy:port  http_proxy:port
+
+    第1列是以 forward 开头的，表示 SOCKS 转发的类型。目前支持 4 种类型：
+        前面3种（forward-socks4 forward-socks4a forward-socks5）分别对应不同版本的 SOCKS 协议。
+        最后一种 forward-socks5t 比较特殊，是基于 SOCKS5 协议版本，但是加入针对 TOR 的扩展支持（优化了性能）。
+        只有转发给 TOR 的 SOCKS 代理，才需要用这个类型。
+    第2列的 target_pattern 是个变量，表示：这次转发只针对特定模式的 HTTP 访问目标
+    第3列的 socks_proxy:port 也是变量，表示：要转发给某个 SOCKS 代理（IP 冒号 端口）
+    第4列的 http_proxy:port 也是变量，表示：在经由前面的 SOCKS 代理之后，再转发给某个 HTTP 代理（IP 冒号 端口）
+
+
+示例-根据“访问的网站”分流到不同的FQ通道::
+
+    forward  /  .
+    forward  .youtube.com  127.0.0.1:8000
+    forward-socks5  program-think.blogspot.com  127.0.0.1:9150  .
+
+    第1行表示：因为匹配的目标是 / 表示匹配“所有的网址”。所以这条可以看成是“默认规则”。
+        （在 Privoxy 里面，“后面的规则”会覆盖“前面的规则”，所以“默认规则”总是写在开头）。
+    第2行表示：凡是 .youtube.com 的下级域名都走 127.0.0.1:8000 的 HTTP 代理。
+    第3行表示：访问 program-think.blogspot.com 站点都走 127.0.0.1:9150 的 SOCKS 代理
+
+
+
+代理切换
+--------
+
+::
+
+    如果想把不同的网址切换到不同的代理，就使用action功能，可以使用:
+    user.action文件
+    或者自定义一个文件，在config中添加下文，这表示添加一个动作文件，文件名是pac.action
+        actionsfile pac.action
+
+
+示例::
+
+    {{alias}}
+    direct      = +forward-override{forward .}
+    ssh         = +forward-override{forward-socks5 127.0.0.1:7000 .}
+    gae         = +forward-override{forward 127.0.0.1:8000} 
+    default     = direct
+    #==========默认代理==========
+    {default}
+    /
+    #==========直接连接==========
+    {direct} 
+    .edu.cn
+    202.117.255.
+    222.24.211.70
+    #==========SSH代理==========
+    {ssh}
+    .launchpad.net
+    #==========GAE代理==========
+    {gae}
+    .webupd8.org
+    222.24.211.70
+
+
+
+
+
+实践使用
+========
+
+修改文件 ``/etc/privoxy/config`` 并重启服务 ::
+
+    前提:
+        ssh -D 7777 <server>
+    增加配置项:
+        forward-socks5t   /               127.0.0.1:7777 .
+    作用:
+        启动http 代理，并把代理请求转给ssh 建立的sock5代理
+
+
+
+
+配置说明
+========
+
+
+.. literalinclude:: /files/config/privoxy.config
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

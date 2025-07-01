@@ -1,0 +1,273 @@
+Serving
+#######
+
+
+OpenAI Compatible Server
+========================
+
+::
+
+    vllm serve NousResearch/Meta-Llama-3-8B-Instruct --dtype auto --api-key token-abc123
+
+normal format::
+
+    {"role": "user", "content": "Hello!"}
+
+Supported APIs
+--------------
+
+* OpenAI APIs:
+    * Completions API (/v1/completions)
+    * Chat Completions API (/v1/chat/completions)
+    * Embeddings API (/v1/embeddings)
+
+
+* custom APIs
+    * Tokenizer API (/tokenize, /detokenize)
+    * Pooling API (/pooling)
+    * Score API (/score)
+
+
+
+
+Chat Template
+-------------
+
+::
+
+    vllm serve <model> --chat-template ./path-to-chat-template.jinja
+
+
+OpenAI spec accept a new format which specifies both a type and a text field.::
+
+    {"role": "user", "content": [{"type": "text", "text": "Classify this sentiment: vLLM is wonderful!"}]}
+
+
+
+CLI Reference
+-------------
+
+
+Configuration file
+^^^^^^^^^^^^^^^^^^
+
+config.yaml::
+
+    host: "127.0.0.1"
+    port: 6379
+    uvicorn-log-level: "info"
+
+指定 yaml 文件::
+
+    vllm serve SOME_MODEL --config config.yaml
+
+
+
+
+Deploying with Docker
+=====================
+
+
+Use vLLM’s Official Docker Image
+--------------------------------
+
+::
+
+    docker run --runtime nvidia --gpus all \
+        -v ~/.cache/huggingface:/root/.cache/huggingface \
+        --env "HUGGING_FACE_HUB_TOKEN=<secret>" \
+        -p 8000:8000 \
+        --ipc=host \
+        vllm/vllm-openai:latest \
+        --model mistralai/Mistral-7B-v0.1
+
+
+.. note:: You can either use the ipc=host flag or --shm-size flag to allow the container to access the host’s shared memory. vLLM uses PyTorch, which uses shared memory to share data between processes under the hood, particularly for tensor parallel inference.
+
+
+Building vLLM’s Docker Image from Source
+----------------------------------------
+
+optionally specifies: --build-arg max_jobs=8 --build-arg nvcc_threads=2::
+
+    DOCKER_BUILDKIT=1 docker build . --target vllm-openai --tag vllm/vllm-openai
+
+
+Deploying with Kubernetes
+=========================
+
+.. code-block::yaml
+
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: mistral-7b
+      namespace: default
+      labels:
+        app: mistral-7b
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: mistral-7b
+      template:
+        metadata:
+          labels:
+            app: mistral-7b
+        spec:
+          volumes:
+          - name: cache-volume
+            persistentVolumeClaim:
+              claimName: mistral-7b
+          # vLLM needs to access the host's shared memory for tensor parallel inference.
+          - name: shm
+            emptyDir:
+              medium: Memory
+              sizeLimit: "2Gi"
+          containers:
+          - name: mistral-7b
+            image: vllm/vllm-openai:latest
+            command: ["/bin/sh", "-c"]
+            args: [
+              "vllm serve mistralai/Mistral-7B-Instruct-v0.3 --trust-remote-code --enable-chunked-prefill --max_num_batched_tokens 1024"
+            ]
+            env:
+            - name: HUGGING_FACE_HUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: hf-token-secret
+                  key: token
+            ports:
+            - containerPort: 8000
+            resources:
+              limits:
+                cpu: "10"
+                memory: 20G
+                nvidia.com/gpu: "1"
+              requests:
+                cpu: "2"
+                memory: 6G
+                nvidia.com/gpu: "1"
+            volumeMounts:
+            - mountPath: /root/.cache/huggingface
+              name: cache-volume
+            - name: shm
+              mountPath: /dev/shm
+            livenessProbe:
+              httpGet:
+                path: /health
+                port: 8000
+              initialDelaySeconds: 60
+              periodSeconds: 10
+            readinessProbe:
+              httpGet:
+                path: /health
+                port: 8000
+              initialDelaySeconds: 60
+              periodSeconds: 5
+
+
+
+
+Distributed Inference and Serving
+=================================
+
+How to decide the distributed inference strategy?
+-------------------------------------------------
+
+* Single GPU (no distributed inference): If your model fits in a single GPU, you probably don’t need to use distributed inference. Just use the single GPU to run the inference.
+
+* Single-Node Multi-GPU (tensor parallel inference): If your model is too large to fit in a single GPU, but it can fit in a single node with multiple GPUs, you can use tensor parallelism. The tensor parallel size is the number of GPUs you want to use. For example, if you have 4 GPUs in a single node, you can set the tensor parallel size to 4.
+
+* Multi-Node Multi-GPU (tensor parallel plus pipeline parallel inference): If your model is too large to fit in a single node, you can use tensor parallel together with pipeline parallelism. The tensor parallel size is the number of GPUs you want to use in each node, and the pipeline parallel size is the number of nodes you want to use. For example, if you have 16 GPUs in 2 nodes (8GPUs per node), you can set the tensor parallel size to 8 and the pipeline parallel size to 2.
+
+
+Details for Distributed Inference and Serving
+---------------------------------------------
+
+run API server on 4 GPUs::
+
+    vllm serve facebook/opt-13b --tensor-parallel-size 4
+
+run API server on 8 GPUs with pipeline parallelism and tensor parallelism::
+
+    vllm serve gpt2 \
+        --tensor-parallel-size 4 \
+        --pipeline-parallel-size 2
+
+Multi-Node Inference and Serving
+--------------------------------
+
+.. note:: It is important to make sure the execution environment is the same on all nodes, including the model path, the Python environment. The recommended way is to use docker images to ensure the same environment, and hide the heterogeneity of the host machines via mapping them into the same docker configuration.
+
+
+.. note:: Administrative privileges are needed when to access GPU performance counters when running profiling and tracing tools.
+
+Pick a node as the head node, and run the following command::
+
+    bash run_cluster.sh \
+                      vllm/vllm-openai \
+                      <ip_of_head_node> \
+                      --head \
+                      /path/to/the/huggingface/home/in/this/node
+
+
+On the rest of the worker nodes, run the following command::
+
+    bash run_cluster.sh \
+                      vllm/vllm-openai \
+                      <ip_of_head_node> \
+                      --worker \
+                      /path/to/the/huggingface/home/in/this/node
+
+
+进入容器::
+
+    docker exec -it node /bin/bash
+
+像在一个node上一样执行(set the tensor parallel size to the number of GPUs in each node, and the pipeline parallel size to the number of nodes)::
+
+    vllm serve /path/to/the/model/in/the/container \
+        --tensor-parallel-size 8 \
+        --pipeline-parallel-size 2
+
+
+Production Metrics
+==================
+
+get the latest metrics from the server::
+
+    $ curl http://0.0.0.0:8000/metrics
+    vllm:iteration_tokens_total_sum{model_name="unsloth/Llama-3.2-1B-Instruct"} 0.0
+    vllm:iteration_tokens_total_bucket{le="1.0",model_name="unsloth/Llama-3.2-1B-Instruct"} 3.0
+    ...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

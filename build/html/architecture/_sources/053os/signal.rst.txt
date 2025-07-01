@@ -1,0 +1,222 @@
+signal信号
+##########
+
+分类::
+
+    1. 程序不可捕获、阻塞或忽略的信号有
+        SIGKILL,SIGSTOP
+    2. 不能恢复至默认动作的信号有
+        SIGILL,SIGTRAP
+    3. 默认会导致进程流产的信号有
+        SIGABRT,SIGBUS,SIGFPE,SIGILL,SIGIO,SIGQUIT,SIGSEGV,SIGTRAP,SIGXCPU,SIGXFSZ
+    4. 默认会导致进程退出的信号有
+        SIGALRM,SIGHUP,SIGINT,SIGKILL,SIGPIPE,SIGPOLL,SIGPROF,SIGSYS,SIGTERM,SIGUSR1,SIGUSR2,SIGVTALRM
+    5. 默认会导致进程停止的信号有
+        SIGSTOP,SIGTSTP,SIGTTIN,SIGTTOU
+    6. 默认进程忽略的信号有
+        SIGCHLD,SIGPWR,SIGURG,SIGWINCH
+
+    SIGIO 在 SVR4 是退出，在 4.3BSD 中是忽略
+    SIGCONT 在进程挂起时是继续，否则是忽略，不能被阻塞
+
+信号类型::
+
+    1) SIGHUP       2) SIGINT       3) SIGQUIT     4) SIGILL        5) SIGTRAP
+    6) SIGABRT      7) SIGBUS       8) SIGFPE      9) SIGKILL      10) SIGUSR1
+    11) SIGSEGV     12) SIGUSR2     13) SIGPIPE     14) SIGALRM     15) SIGTERM
+    16) SIGSTKFLT   17) SIGCHLD     18) SIGCONT     19) SIGSTOP     20) SIGTSTP
+    21) SIGTTIN     22) SIGTTOU     23) SIGURG      24) SIGXCPU     25) SIGXFSZ
+    26) SIGVTALRM   27) SIGPROF     28) SIGWINCH    29) SIGIO       30) SIGPWR
+    31) SIGSYS      34) SIGRTMIN    35) SIGRTMIN+1  36) SIGRTMIN+2  37) SIGRTMIN+3
+    38) SIGRTMIN+4  39) SIGRTMIN+5  40) SIGRTMIN+6  41) SIGRTMIN+7  42) SIGRTMIN+8
+    43) SIGRTMIN+9  44) SIGRTMIN+10 45) SIGRTMIN+11 46) SIGRTMIN+12 47) SIGRTMIN+13
+    48) SIGRTMIN+14 49) SIGRTMIN+15 50) SIGRTMAX-14 51) SIGRTMAX-13 52) SIGRTMAX-12
+    53) SIGRTMAX-11 54) SIGRTMAX-10 55) SIGRTMAX-9  56) SIGRTMAX-8  57) SIGRTMAX-7
+    58) SIGRTMAX-6  59) SIGRTMAX-5  60) SIGRTMAX-4  61) SIGRTMAX-3  62) SIGRTMAX-2
+    63) SIGRTMAX-1  64) SIGRTMAX
+
+
+
+SIGINT
+======
+
+* interrupt
+* 程序终止 (interrupt) 信号，在用户键入 INTR 字符 (通常是 Ctrl+C) 时发出，用于通知前台进程组终止进程。
+
+SIGQUIT
+=======
+
+和 SIGINT 类似，但由 QUIT 字符 (通常是 Ctrl+<x>) 来控制。进程在因收到 SIGQUIT 退出时会产生 core 文件 , 在这个意义上类似于一个程序错误信号。
+
+SIGILL
+======
+
+* illegal instr. (not reset when caught)
+* SIGILL，illeage，非法的。执行了非法指令， 通常是因为可执行文件本身出现错误 , 或者试图执行数据段。堆栈溢出也有可能产生这个信号。
+
+SIGTRAP
+=======
+
+* 由断点指令或其它陷阱（trap）指令产生。由 debugger 使用。
+
+SIGABRT
+=======
+
+* 调用 abort 函数生成的信号。
+
+SIGBUS
+======
+
+* 非法地址，包括内存地址对齐 (alignment) 出错。比如访问一个四个字长的整数，但其地址不是 4 的倍数。它与 SIGSEGV 的区别在于后者是由于对合法存储地址的非法访问触发的 (如访问不属于自己存储空间或只读存储空间)。
+
+SIGFPE
+======
+
+* FPE 是 floating-point exception（浮点异常）的首字母缩略字。在发生致命的 算术运算错误时发出。不仅包括浮点运算错误 , 还包括溢出及除数为 0 等其它所有的算术的错误。SIGFPE 的符号常量在头文件 signal.h 中定义。
+
+SIGKILL
+=======
+
+* 用来立即结束程序的运行。本信号不能被阻塞、处理和忽略。如果管理员发现某个进程终止不了，可尝试发送这个信号，终极大招。
+
+SIGUSR1
+=======
+
+* 留给用户使用
+
+SIGSEGV
+=======
+
+* 试图访问未分配给自己的内存，或试图往没有写权限的内存地址写数据.
+
+SIGUSR2
+=======
+
+* 留给用户使用
+
+SIGHUP
+======
+
+SIGHUP 信号在用户终端连接 (正常或非正常) 结束时发出，通常是在终端的控制进程结束时，通知同一 session 内的各个作业，这时它们与控制终端不再关联。系统对 SIGHUP 信号的默认处理是终止收到该信号的进程。所以若程序中没有捕捉该信号，当收到该信号时，进程就会退出。
+
+
+SIGPIPE
+=======
+
+在网络编程中，SIGPIPE 这个信号是很常见的。当往一个写端关闭的管道或 socket 连接中连续写入数据时会引发 SIGPIPE 信号，引发 SIGPIPE 信号的写操作将设置 errno 为 EPIPE。在 TCP 通信中，当通信的双方中的一方 close 一个连接时，若另一方接着发数据，根据 TCP 协议的规定，会收到一个 RST 响应报文，若再往这个服务器发送数据时，系统会发出一个 SIGPIPE 信号给进程，告诉进程这个连接已经断开了，不能再写入数据。
+
+
+SIGURG
+======
+
+内核通知应用程序带外数据到达的方式有两种：一种就是利用ＩＯ复用技术的系统调用（如 select）在接受到带外数据时将返回，并向应用程序报告 socket 上的异常事件；另一种方法就是使用 SIGURG 信号。
+
+SIGALRM
+=======
+
+时钟定时信号，计算的是实际的时间或时钟时间. alarm 函数使用该信号.
+
+SIGTERM
+=======
+
+程序结束 (terminate) 信号，与 SIGKILL 不同的是该信号可以被阻塞和处理。通常用来要求程序自己正常退出，shell 命令 kill 缺省产生这个信号。如果进程终止不了，我们才会尝试 SIGKILL。
+
+
+SIGCHLD
+=======
+
+子进程（child）结束时，父进程会收到这个信号。如果父进程没有处理这个信号，也没有等待 (wait) 子进程，子进程虽然终止，但是还会在内核进程表中占有表项，这 时的子进程称为僵尸进程。这种情 况我们应该避免 (父进程或者忽略 SIGCHILD 信号，或者捕捉它，或者 wait 它派生的子进程，或者父进程先终止，这时子进程的终止自动由 init 进程 来接管)。
+
+SIGCONT
+=======
+
+让一个停止 (stopped) 的进程继续执行。本信号不能被阻塞. 可以用一个 handler 来让程序在由 stopped 状态变为继续执行时完成特定的工作。例如，重新显示提示符
+
+SIGSTOP
+=======
+
+暂停 (stopped) 进程的执行。注意它和 terminate 以及 interrupt 的区别：该进程还未结束，只是暂停执行。本信号不能被阻塞，处理或忽略.
+
+SIGTSTP
+=======
+
+停止进程的运行，但该信号可以被处理和忽略. 用户键入 SUSP 字符时 (通常是 Ctrl+Z) 发出这个信号
+
+SIGTTIN
+=======
+
+* 当后台作业要从用户终端读数据时，该作业中的所有进程会收到 SIGTTIN 信号。缺省时这些进程会停止执行.
+* Unix 环境下，当一个进程以后台形式启动，但尝试去读写控制台终端时，将会触发 SIGTTIN（读）和 SIGTTOU（写）信号量，接着，进程将会暂停（linux 默认情况下），read/write 将会返回错误。这个时候，shell 将会发送通知给用户，提醒用户切换此进程为前台进程，以便继续执行。由后台切换至前台的方式是 fg 命令，前台转为后台则为 CTRL+Z 快捷键。
+* 那么问题来了，如何才能在不把进程切换至前台的情况下，读写控制器不会被暂停？答案：只要忽略 SIGTTIN 和 SIGTTOU 信号量即可：signal(SIGTTOU, SIG_IGN)。
+* stty stop/-stop 命令是用于设置收到 SIGTTOU 信号量后是否执行暂停，因为有些系统的默认行为不一致，比如 mac 是默认忽略，而 linux 是默认启用。stty -a 可以查看当前 tty 的配置参数。
+
+
+SIGTTOU
+=======
+
+* 类似于 SIGTTIN, 但在写终端 (或修改终端模式) 时收到。具体见上面 SIGTTIN
+
+SIGURG
+======
+
+* SIGURG, urgent, 紧急的。有” 紧急” 数据或 out-of-band 数据到达 socket 时产生.
+
+SIGXCPU
+=======
+
+* 超过 CPU 时间资源限制. 这个限制可以由 getrlimit/setrlimit 来读取 / 改变。
+
+SIGXFSZ
+=======
+
+* 当进程企图扩大文件以至于超过文件大小资源限制。
+
+SIGVTALRM
+=========
+
+* 虚拟时钟信号。类似于 SIGALRM, 但是计算的是该进程占用的 CPU 时间.
+
+SIGPROF
+=======
+
+* 类似于 SIGALRM/SIGVTALRM, 但包括该进程用的 CPU 时间以及系统调用的时间.
+
+SIGWINCH
+========
+
+* Windows Change, 窗口大小改变时发出.
+
+SIGIO
+=====
+
+* 文件描述符准备就绪，可以开始进行输入 / 输出操作.
+
+SIGPWR
+======
+
+* Power failure
+
+SIGSYS
+======
+
+* 非法的系统调用。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

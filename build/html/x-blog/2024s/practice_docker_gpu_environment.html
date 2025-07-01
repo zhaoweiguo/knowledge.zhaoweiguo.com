@@ -1,0 +1,394 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="zh-CN" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="zh-CN" > <!--<![endif]-->
+<head>
+
+
+<!-- start added 2025-04-14   增加对markdown中公式的支持 -->
+<script>
+window.MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+    },
+    options: {
+        ignoreHtmlClass: "tex2jax_ignore|mathjax_ignore",
+        processHtmlClass: "tex2jax_process|mathjax_process|math|output_area"
+    }
+};
+</script>
+<script defer="defer" src="https://fastly.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<!-- end added 2025-04-14   增加对markdown中公式的支持 -->
+
+
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>实践：快速搭建一个可运行的docker gpu环境 &mdash; 新溪-gordon V2025.06 文档</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="实践：如何打包你的Python项目并分发到TestPyPI" href="practice_python_PyPI_package_twine.html" />
+    <link rel="prev" title="怪异问题：一个由vscode jupyter插件占用端口引起的问题" href="question_vscode_plugin_jupyter_port_listen.html" /> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+  <script src="../_static/js/jquery.min.js"></script>
+
+
+<!-- 评论插件 gittalk start -->
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script> -->
+<!-- 评论插件 gittalk end -->
+
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> 新溪-gordon
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                V2025.06
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">个人博客</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="question_vscode_plugin_jupyter_port_listen.html">怪异问题：一个由vscode jupyter插件占用端口引起的问题</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">实践：快速搭建一个可运行的docker gpu环境</a></li>
+<li class="toctree-l1"><a class="reference internal" href="practice_python_PyPI_package_twine.html">实践：如何打包你的Python项目并分发到TestPyPI</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">新溪-gordon</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>实践：快速搭建一个可运行的docker gpu环境</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/2024s/practice_docker_gpu_environment.md.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            <nav id="local-table-of-contents" role="navigation" aria-labelledby="local-table-of-contents-title">
+              <h4 id="local-table-of-contents-title">On This Page</h4>
+              <ul>
+<li><a class="reference internal" href="#">实践：快速搭建一个可运行的docker gpu环境</a><ul>
+<li><a class="reference internal" href="#dockernvidia-docker">安装Docker和NVIDIA Docker</a></li>
+<li><a class="reference internal" href="#gpu">检查GPU驱动程序</a></li>
+<li><a class="reference internal" href="#nvidia-container-toolkit">安装NVIDIA Container Toolkit</a><ul>
+<li><a class="reference internal" href="#id1">备选安装</a></li>
+<li><a class="reference internal" href="#id2">安装</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            </nav>
+  <section class="tex2jax_ignore mathjax_ignore" id="docker-gpu">
+<h1>实践：快速搭建一个可运行的docker gpu环境<a class="headerlink" href="#docker-gpu" title="此标题的永久链接">¶</a></h1>
+<section id="dockernvidia-docker">
+<h2>安装Docker和NVIDIA Docker<a class="headerlink" href="#dockernvidia-docker" title="此标题的永久链接">¶</a></h2>
+<p>安装</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">update</span>
+<span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">docker</span><span class="o">.</span><span class="n">io</span>
+</pre></div>
+</div>
+<p>验证</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span> <span class="n">docker</span> <span class="n">info</span>
+</pre></div>
+</div>
+</section>
+<section id="gpu">
+<h2>检查GPU驱动程序<a class="headerlink" href="#gpu" title="此标题的永久链接">¶</a></h2>
+<p>nvidia-smi</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mf">2.1</span><span class="o">.</span> <span class="n">Verify</span> <span class="n">You</span> <span class="n">Have</span> <span class="n">a</span> <span class="n">CUDA</span><span class="o">-</span><span class="n">Capable</span> <span class="n">GPU</span>
+<span class="n">lspci</span> <span class="o">|</span> <span class="n">grep</span> <span class="o">-</span><span class="n">i</span> <span class="n">nvidia</span>
+<span class="mi">00</span><span class="p">:</span><span class="mf">09.0</span> <span class="mi">3</span><span class="n">D</span> <span class="n">controller</span><span class="p">:</span> <span class="n">NVIDIA</span> <span class="n">Corporation</span> <span class="n">GP104GL</span> <span class="p">[</span><span class="n">Tesla</span> <span class="n">P4</span><span class="p">]</span> <span class="p">(</span><span class="n">rev</span> <span class="n">a1</span><span class="p">)</span>
+
+<span class="mf">2.2</span><span class="o">.</span> <span class="n">Verify</span> <span class="n">You</span> <span class="n">Have</span> <span class="n">a</span> <span class="n">Supported</span> <span class="n">Version</span> <span class="n">of</span> <span class="n">Linux</span>
+</pre></div>
+</div>
+<p>uname -m &amp;&amp; cat /etc/*release</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
+<span class="mf">2.3</span><span class="o">.</span> <span class="n">Verify</span> <span class="n">the</span> <span class="n">System</span> <span class="n">Has</span> <span class="n">gcc</span> <span class="n">Installed</span>
+<span class="n">gcc</span> <span class="o">--</span><span class="n">version</span>
+</pre></div>
+</div>
+</section>
+<section id="nvidia-container-toolkit">
+<h2>安装NVIDIA Container Toolkit<a class="headerlink" href="#nvidia-container-toolkit" title="此标题的永久链接">¶</a></h2>
+<p>检查是否安装 nvidia-container-toolkit 软件包：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ dpkg -l | grep nvidia-container-toolkit
+ii  nvidia-container-toolkit               1.13.5-1                                amd64        NVIDIA Container toolkit
+ii  nvidia-container-toolkit-base          1.13.5-1                                amd64        NVIDIA Container Toolkit Base
+</pre></div>
+</div>
+<p>添加 NVIDIA Container Toolkit APT 仓库</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
+curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker-$distribution.list
+
+
+curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
+  &amp;&amp; curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+    sed &#39;s#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g&#39; | \
+    sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+</pre></div>
+</div>
+<section id="id1">
+<h3>备选安装<a class="headerlink" href="#id1" title="此标题的永久链接">¶</a></h3>
+<p>Configure the production repository:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">curl</span> <span class="o">-</span><span class="n">fsSL</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">nvidia</span><span class="o">.</span><span class="n">github</span><span class="o">.</span><span class="n">io</span><span class="o">/</span><span class="n">libnvidia</span><span class="o">-</span><span class="n">container</span><span class="o">/</span><span class="n">gpgkey</span> <span class="o">|</span> <span class="n">sudo</span> <span class="n">gpg</span> <span class="o">--</span><span class="n">dearmor</span> <span class="o">-</span><span class="n">o</span> <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">share</span><span class="o">/</span><span class="n">keyrings</span><span class="o">/</span><span class="n">nvidia</span><span class="o">-</span><span class="n">container</span><span class="o">-</span><span class="n">toolkit</span><span class="o">-</span><span class="n">keyring</span><span class="o">.</span><span class="n">gpg</span> \
+  <span class="o">&amp;&amp;</span> <span class="n">curl</span> <span class="o">-</span><span class="n">s</span> <span class="o">-</span><span class="n">L</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">nvidia</span><span class="o">.</span><span class="n">github</span><span class="o">.</span><span class="n">io</span><span class="o">/</span><span class="n">libnvidia</span><span class="o">-</span><span class="n">container</span><span class="o">/</span><span class="n">stable</span><span class="o">/</span><span class="n">deb</span><span class="o">/</span><span class="n">nvidia</span><span class="o">-</span><span class="n">container</span><span class="o">-</span><span class="n">toolkit</span><span class="o">.</span><span class="n">list</span> <span class="o">|</span> \
+    <span class="n">sed</span> <span class="s1">&#39;s#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g&#39;</span> <span class="o">|</span> \
+    <span class="n">sudo</span> <span class="n">tee</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">apt</span><span class="o">/</span><span class="n">sources</span><span class="o">.</span><span class="n">list</span><span class="o">.</span><span class="n">d</span><span class="o">/</span><span class="n">nvidia</span><span class="o">-</span><span class="n">container</span><span class="o">-</span><span class="n">toolkit</span><span class="o">.</span><span class="n">list</span>
+
+<span class="n">Optionally</span><span class="p">,</span> <span class="n">configure</span> <span class="n">the</span> <span class="n">repository</span> <span class="n">to</span> <span class="n">use</span> <span class="n">experimental</span> <span class="n">packages</span><span class="p">:</span>
+<span class="n">sed</span> <span class="o">-</span><span class="n">i</span> <span class="o">-</span><span class="n">e</span> <span class="s1">&#39;/experimental/ s/^#//g&#39;</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">apt</span><span class="o">/</span><span class="n">sources</span><span class="o">.</span><span class="n">list</span><span class="o">.</span><span class="n">d</span><span class="o">/</span><span class="n">nvidia</span><span class="o">-</span><span class="n">container</span><span class="o">-</span><span class="n">toolkit</span><span class="o">.</span><span class="n">list</span>
+</pre></div>
+</div>
+</section>
+<section id="id2">
+<h3>安装<a class="headerlink" href="#id2" title="此标题的永久链接">¶</a></h3>
+<p>更新 APT 软件包索引:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">update</span>
+</pre></div>
+</div>
+<p>安装 NVIDIA Container Toolkit 软件包</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="o">-</span><span class="n">y</span> <span class="n">nvidia</span><span class="o">-</span><span class="n">container</span><span class="o">-</span><span class="n">toolkit</span>
+</pre></div>
+</div>
+<p>重新启动 Docker 服务：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">systemctl</span> <span class="n">restart</span> <span class="n">docker</span>
+</pre></div>
+</div>
+<p>验证安装：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">docker</span> <span class="n">run</span> <span class="o">--</span><span class="n">rm</span> <span class="o">--</span><span class="n">gpus</span> <span class="nb">all</span> <span class="n">nvidia</span><span class="o">/</span><span class="n">cuda</span><span class="p">:</span><span class="mf">11.4</span><span class="o">-</span><span class="n">base</span> <span class="n">nvidia</span><span class="o">-</span><span class="n">smi</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="practice_python_PyPI_package_twine.html" class="btn btn-neutral float-right" title="实践：如何打包你的Python项目并分发到TestPyPI" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="question_vscode_plugin_jupyter_port_listen.html" class="btn btn-neutral" title="怪异问题：一个由vscode jupyter插件占用端口引起的问题" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+  
+  <div id="gitalk-container"></div>
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2010-2025, 新溪-gordon.
+
+    </p>
+  </div>
+  <div>备案号 <a href="http://www.beian.miit.gov.cn">京ICP备16018553号</a></div><div>Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a></div>. 
+
+
+</footer>
+
+<script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?042289284b8eb33866001347a3e0b129";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>     
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'V2025.06',
+            LANGUAGE:'zh-CN',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="../_static/sphinx_highlight.js"></script>
+      <script type="text/javascript" src="../_static/clipboard.min.js"></script>
+      <script type="text/javascript" src="../_static/copybutton.js"></script>
+      <script type="text/javascript" src="../_static/translations.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+
+  
+
+  <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+
+
+      // var gitalk = new Gitalk({
+      //         clientID: '565177626b5d46427009',
+      //         clientSecret: 'b2a36e67e1d2a73e43667f46d571c2624f8e1026',
+      //         repo: 'knowledge',
+      //         owner: 'zhaoweiguo',
+      //         admin: ['zhaoweiguo'],
+      //         id: location.pathname,      // Ensure uniqueness and length less than 50
+      //         distractionFreeMode: false  // Facebook-like distraction free mode
+      //       })
+      // gitalk.render('gitalk-container')
+
+  </script>
+
+
+<script type="text/javascript" src="../_static/js/table-of-contents-sidebar.js"></script>
+<!-- <script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script> -->
+<script type="text/javascript">
+    window.onload = function(e){
+        TableOfContents.init({
+            basePath: "https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/",
+            querySelector: "body" // or other css querySelector
+        });
+    }
+</script> 
+
+</body>
+</html>

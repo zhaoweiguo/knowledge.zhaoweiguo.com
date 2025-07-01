@@ -1,0 +1,87 @@
+# CPU&内存使用情况查看
+
+
+## ✅ 方法一：`top` + 过滤进程名或 PID
+
+```bash
+top -p <PID>
+```
+
+> 示例：`top -p 12345`  
+实时查看 PID 为 12345 的进程资源占用。
+
+你也可以直接用 `top`，然后在界面中按：
+- `M`：按内存使用排序
+- `P`：按 CPU 使用排序
+- `/关键词`：搜索某个进程名
+
+---
+
+## ✅ 方法二：`ps` 命令
+
+```bash
+ps -p <PID> -o pid,ppid,cmd,%mem,%cpu
+```
+
+> 示例：`ps -p 12345 -o pid,ppid,cmd,%mem,%cpu`
+
+输出会显示：
+- 进程号（PID）
+- 父进程号（PPID）
+- 命令（CMD）
+- 内存使用率（%MEM）
+- CPU 使用率（%CPU）
+
+---
+
+## ✅ 方法三：用 `htop`（比 `top` 更友好）
+
+```bash
+htop
+```
+
+然后：
+- 用 **F3** 搜索进程名
+- 或 **F6** 更改排序列（如 CPU 或 MEM）
+
+> 如果没有安装：`sudo apt install htop` 或 `brew install htop`
+
+---
+
+## ✅ 方法四：`pidstat`（进阶分析工具）
+
+```bash
+pidstat -p <PID> 1
+```
+
+每 1 秒输出一次该进程的 CPU 使用率（包括用户态、系统态分布）等。
+
+---
+
+## ✅ 方法五：Python 脚本（如果你要做程序监控）
+
+```python
+import psutil
+
+pid = 12345  # 替换成你的进程 ID
+p = psutil.Process(pid)
+print(f"CPU使用率: {p.cpu_percent(interval=1)}%")
+print(f"内存占用: {p.memory_info().rss / 1024 / 1024:.2f} MB")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,970 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="zh-CN" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="zh-CN" > <!--<![endif]-->
+<head>
+
+
+<!-- start added 2025-04-14   增加对markdown中公式的支持 -->
+<script>
+window.MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+    },
+    options: {
+        ignoreHtmlClass: "tex2jax_ignore|mathjax_ignore",
+        processHtmlClass: "tex2jax_process|mathjax_process|math|output_area"
+    }
+};
+</script>
+<script defer="defer" src="https://fastly.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<!-- end added 2025-04-14   增加对markdown中公式的支持 -->
+
+
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>模型参数计算 &mdash; 新溪-gordon V2025.06 文档</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+    <link rel="index" title="索引" href="../../genindex.html" />
+    <link rel="search" title="搜索" href="../../search.html" />
+    <link rel="next" title="TOPS计算" href="calc_TOPS.html" />
+    <link rel="prev" title="通用" href="normal.html" /> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+  <script src="../../_static/js/jquery.min.js"></script>
+
+
+<!-- 评论插件 gittalk start -->
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script> -->
+<!-- 评论插件 gittalk end -->
+
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> 新溪-gordon
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                V2025.06
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">性能&amp;调优</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../normal.html">常用</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../indicator.html">常见指标</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../normal.html">常用</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../GPU.html">GPU</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="normal.html">通用</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">模型参数计算</a></li>
+<li class="toctree-l3"><a class="reference internal" href="calc_TOPS.html">TOPS计算</a></li>
+<li class="toctree-l3"><a class="reference internal" href="calc_VRAM.html">GPU显存计算</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../HTTP.html">HTTP</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../sla.html">SLA</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../stress_testing.html">压力测试</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../stress_testings/normal.html">常用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../stress_testings/normals/normal.html">常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../stress_testings/normals/concept.html">压测定义</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../stress_testings/normals/qps.html">QPS</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../system.html">系统级别优化相关</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../systems/tune_file.html">性能相关</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../systems/tune_tool.html">优化工具</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../systems/tools/SystemTap.html">SystemTap</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../systems/tune_tmp.html">优化相关临时</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../tool.html">工具</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../tools/simple.html">简单工具</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/simples/webbench.html">webbench的使用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/simples/ab.html">Apache Bench(ab)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/simples/http_load.html">http_load命令使用方法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/simples/siege.html">siege命令的使用方法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/simples/locust.html">Locust</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/simples/wrk.html">wrk命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/simples/hey.html">hey 命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/simples/ali.html">ali</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/simples/ali.html#vegeta">vegeta</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../tools/tsung.html">Tsung使用文档</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/tsungs/tsung_introduce.html">简单介绍</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/tsungs/tsung_usage.html">简单用法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/tsungs/tsung_advance.html">高级配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/tsungs/tsung_config.html">tsung参考文档说明</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/tsungs/tsung_report.html">tsung参考文档——报告图表含义说明</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/tsungs/tsung_practice.html">Tsung压测实践</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/tsungs/tsung-1.0-dtd.html">tsung-1.0.dtd</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/tsungs/tsung_question.html">常见问题</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/tsungs/tsung_other.html">其他压测工具</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../tools/jmeter.html">Apache JMeter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tools/loadRunner.html">LoadRunner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tools/TCPBurn.html">TCPBurn</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tools/cloudPlatform.html">云平台</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tools/other.html">其他</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../tools/others/k6.html">k6</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../observe.html">性能观察</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../observes/cpu.html">CPU&amp;内存使用情况查看</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">新溪-gordon</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../normal.html">常用</a> &raquo;</li>
+        
+          <li><a href="../GPU.html">GPU</a> &raquo;</li>
+        
+      <li>模型参数计算</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/normals/GPUs/calc_param.md.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            <nav id="local-table-of-contents" role="navigation" aria-labelledby="local-table-of-contents-title">
+              <h4 id="local-table-of-contents-title">On This Page</h4>
+              <ul>
+<li><a class="reference internal" href="#">模型参数计算</a><ul>
+<li><a class="reference internal" href="#id2">📌 通用说明</a></li>
+<li><a class="reference internal" href="#id3">📌 估算级参数计算</a><ul>
+<li><a class="reference internal" href="#id4">公式</a></li>
+<li><a class="reference internal" href="#id5">示例</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id6">📌 标准参数计算</a><ul>
+<li><a class="reference internal" href="#id7">参数计算公式</a><ul>
+<li><a class="reference internal" href="#id8">总公式结构</a></li>
+<li><a class="reference internal" href="#embedding">1.词嵌入层（Embedding）</a></li>
+<li><a class="reference internal" href="#transformer-block-n">2.Transformer Block × N 层</a><ul>
+<li><a class="reference internal" href="#a-self-attention">A.注意力机制（Self-Attention）</a></li>
+<li><a class="reference internal" href="#b-feed-forward-network-ffn">B.前馈网络（Feed-Forward Network, FFN）</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#lm-head">3.输出层（LM Head）</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#mistral-7b">示例：Mistral 7B 参数计算</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#gqa">📌 使用GQA时的参数计算</a><ul>
+<li><a class="reference internal" href="#id9">定义：GQA 是什么</a></li>
+<li><a class="reference internal" href="#id10">为什么使用 GQA？</a></li>
+<li><a class="reference internal" href="#id11">GQA 在参数计算中的体现</a></li>
+<li><a class="reference internal" href="#id12">示例讲解——以上面的 Mistral 7B 示例分析</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#qwen2-5-3b">示例-Qwen2.5-3B</a><ul>
+<li><a class="reference internal" href="#id13">模型结构</a></li>
+<li><a class="reference internal" href="#id14">参数分析</a></li>
+<li><a class="reference internal" href="#id15">参数计算</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            </nav>
+  <section class="tex2jax_ignore mathjax_ignore" id="id1">
+<h1>模型参数计算<a class="headerlink" href="#id1" title="此标题的永久链接">¶</a></h1>
+<section id="id2">
+<h2>📌 通用说明<a class="headerlink" href="#id2" title="此标题的永久链接">¶</a></h2>
+<ul class="simple">
+<li><p>基本参数：</p>
+<ul>
+<li><p>H: hidden_size(隐藏层大小)</p></li>
+<li><p>L: num_layers(Transformer层数)</p></li>
+<li><p>V: vocab_size(词表大小)</p></li>
+<li><p>M: ffn_mult: FFN 中间层与隐藏层之间的系数</p>
+<ul>
+<li><p>ffn_dim: FFN 中间层的维度大小</p>
+<ul>
+<li><p>ffn_dim = M × H</p></li>
+</ul>
+</li>
+<li><p>说明</p>
+<ul>
+<li><p>GPT 系列模型中 ffn_mult 通常为 4.0</p></li>
+<li><p>LLaMA 系列中一般使用 3.5</p></li>
+<li><p>一些轻量化模型可能会使用更小的值（如 2.0）</p></li>
+<li><p>说明：但qwen好像是5.375, 而deepseek是2.6875</p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Self Attention 参数:</p>
+<ul>
+<li><p>多头注意力</p>
+<ul>
+<li><p>head_dim: 多头注意力的单Head 维度</p></li>
+<li><p>num_heads: 多头注意力的Head数</p></li>
+<li><p>说明：</p>
+<ul>
+<li><p>H = head_dim * num_heads</p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>K/V Cache</p>
+<ul>
+<li><p>普通(MHA)情况</p>
+<ul>
+<li><p>num_kv_heads: K/V 的Head数</p></li>
+<li><p>kv_dim: K/V 维度</p>
+<ul>
+<li><p>= num_kv_heads × head_dim</p></li>
+</ul>
+</li>
+<li><p>说明：</p>
+<ul>
+<li><p>H = kv_dim * num_kv_heads</p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>GQA的情况</p>
+<ul>
+<li><p>说明：</p>
+<ul>
+<li><p>Q 使用所有的 attention heads（如 32）</p></li>
+<li><p>K/V 只用部分 heads（如 8）</p></li>
+<li><p>这样就降低了 KV-cache 的存储需求和读取开销</p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="id3">
+<h2>📌 估算级参数计算<a class="headerlink" href="#id3" title="此标题的永久链接">¶</a></h2>
+<section id="id4">
+<h3>公式<a class="headerlink" href="#id4" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>那么总参数(不考虑GQA)近似为：</p></li>
+</ul>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Total ≈ V × H                  （词嵌入）
+            + L × 4H²      （Transformer层 Self-Attention）
+            + L × 3MH²     （Transformer层 FFN)
+       + V × H                 （输出层）
+</pre></div>
+</div>
+</section>
+<section id="id5">
+<h3>示例<a class="headerlink" href="#id5" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>参数</p>
+<ul>
+<li><p>H = 4096</p></li>
+<li><p>V = 32000</p></li>
+<li><p>L = 32</p></li>
+<li><p>ffn_dim = M*H = 3.5 * 4096= 14336</p></li>
+</ul>
+</li>
+<li><p>总参数</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>= 32000 * 4096 + 32 *(4*4096^2 + 3*4096^2*3.5) + 4096*32000
+= 2 * 32000 * 4096 + 32 *(4*4096^2 + 3*4096^2*3.5)
+= 2 * 32000 * 4096 + 32 * 4096^2 * (4 + 3*3.5)
+= 2 * 32000 * 4096 + 32 * 4096^2 * 14.5
+= 250M + 7.25B
+= 7.5B
+注意: 
+    1. 只有在存储时，单位B才用 1024 * 1024 * 1024
+    2. 计算参数量时，单位B应该是1000*1000*1000
+所以: 7.5B = 7.5 * (1024*1024*1024)/ (1000*1000*1000)
+          ≈ 8.053B
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id6">
+<h2>📌 标准参数计算<a class="headerlink" href="#id6" title="此标题的永久链接">¶</a></h2>
+<section id="id7">
+<h3>参数计算公式<a class="headerlink" href="#id7" title="此标题的永久链接">¶</a></h3>
+<section id="id8">
+<h4>总公式结构<a class="headerlink" href="#id8" title="此标题的永久链接">¶</a></h4>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>一个 LLM 的总参数量 ≈
+词嵌入层 + Transformer层(Attention + FFN) + 输出层
+</pre></div>
+</div>
+</section>
+<section id="embedding">
+<h4>1.词嵌入层（Embedding）<a class="headerlink" href="#embedding" title="此标题的永久链接">¶</a></h4>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>词嵌入矩阵参数量 = V × H
+</pre></div>
+</div>
+</section>
+<section id="transformer-block-n">
+<h4>2.Transformer Block × N 层<a class="headerlink" href="#transformer-block-n" title="此标题的永久链接">¶</a></h4>
+<section id="a-self-attention">
+<h5>A.注意力机制（Self-Attention）<a class="headerlink" href="#a-self-attention" title="此标题的永久链接">¶</a></h5>
+<ul class="simple">
+<li><p>多头注意力需要生成 Q、K、V 以及一个输出映射：</p>
+<ul>
+<li><p>如果有多头 attention，通常 <code class="docutils literal notranslate"><span class="pre">head_dim</span> <span class="pre">×</span> <span class="pre">num_heads</span> <span class="pre">=</span> <span class="pre">hidden_size</span></code></p></li>
+<li><p>在未使用GQA时，Attention参数只与hidden_size有关，与head_dim × num_heads无关。</p></li>
+</ul>
+</li>
+</ul>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Attention参数 = 3 × H × H  （Q, K, V 权重）
+              + H × H      （输出投影）
+    = 4 × H²
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>注意：使用 GQA 参见后面</p></li>
+</ul>
+</section>
+<section id="b-feed-forward-network-ffn">
+<h5>B.前馈网络（Feed-Forward Network, FFN）<a class="headerlink" href="#b-feed-forward-network-ffn" title="此标题的永久链接">¶</a></h5>
+<ul class="simple">
+<li><p>通常结构是：</p></li>
+</ul>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>hidden_size → intermediate_size → hidden_size
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>且 intermediate_size 常为：</p></li>
+</ul>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>intermediate_size = M × H （如 4x 或 3.5x）
+</pre></div>
+</div>
+<ul>
+<li><p>FFN 结构有两种情况：</p>
+<ul>
+<li><p>普通版</p>
+<ul class="simple">
+<li><p>FFN 部分乘以 3</p></li>
+<li><p>计算公式</p></li>
+</ul>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>FFN参数量 = H × intermediate_size （第一层）
+        + intermediate_size × H （第二层）
+        = 2 × H × intermediate_size
+</pre></div>
+</div>
+</li>
+<li><p>使用 Gated FFN（如 SwiGLU）结构(如 LLaMA 系列)</p>
+<ul class="simple">
+<li><p>使用 SwiGLU，所以 FFN 部分乘以 3</p></li>
+<li><p>因为：</p>
+<ul>
+<li><p>第一层 Linear 输出的不是一个向量，而是 两个 intermediate_size 向量拼接在一起</p></li>
+<li><p>所以第一层的参数是： <code class="docutils literal notranslate"><span class="pre">Linear1:</span> <span class="pre">hidden_size</span> <span class="pre">×</span> <span class="pre">(2</span> <span class="pre">×</span> <span class="pre">intermediate_size)</span></code></p></li>
+</ul>
+</li>
+<li><p>计算公式</p></li>
+</ul>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>FFN参数量 = 3 × H × intermediate_size
+= 3 × H × (M × H)
+= 3 × M × H^2
+</pre></div>
+</div>
+</li>
+</ul>
+</li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
+
+##### C.总 Transformer 层参数量
+
+* 对于使用 SwiGLU 的结构（如 LLaMA、Mistral），每层 Transformer 层参数量：
+
+```text
+params_per_layer = 4 × hidden_size²           ← Attention部分
+                 + 3 × hidden_size × ffn_dim  ← FFN部分
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>L 层总参数量：</p></li>
+</ul>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>transformer_params = L × params_per_layer
+</pre></div>
+</div>
+</section>
+</section>
+<section id="lm-head">
+<h4>3.输出层（LM Head）<a class="headerlink" href="#lm-head" title="此标题的永久链接">¶</a></h4>
+<p>结构与 embedding 类似：</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>输出层参数 = vocab_size × hidden_size
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>如果共享权重（weight tying，输出层 = embedding 权重），这部分参数可省略。</p></li>
+</ul>
+</section>
+</section>
+<section id="mistral-7b">
+<h3>示例：Mistral 7B 参数计算<a class="headerlink" href="#mistral-7b" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>参数</p>
+<ul>
+<li><p>hidden_size = 4096</p></li>
+<li><p>vocab_size = 32000</p></li>
+<li><p>num_layers = 32</p></li>
+<li><p>ffn_dim = 14336 = 3.5 × hidden_size</p></li>
+</ul>
+</li>
+<li><p>1.词嵌入层</p></li>
+</ul>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>embedding = 32000 × 4096 = 131M
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>2.Transformer 总参数</p></li>
+</ul>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>每层 = 4 × 4096² + 3 × 4096 × 14336
+    = 4096² × (4 + 3 × 3.5)
+    = 4096² × 14.5
+    = 232M
+32 层 = 32 × 232M = 7.25B
+</pre></div>
+</div>
+<ul>
+<li><p>其中</p>
+<ul class="simple">
+<li><p>Self-Attention参数为</p></li>
+</ul>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>每层 = 4 × 4096²
+    = 64M
+32层 = 32 × 64M = 2B
+</pre></div>
+</div>
+</li>
+</ul>
+<blockquote>
+<div><p>实际中稍多，因为还有 LayerNorm 等少量偏置项，但可以忽略</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>3.输出层</p></li>
+</ul>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>= 32000 × 4096 = 131M（如果不 weight tie）
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>4.总计：</p></li>
+</ul>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>131M + 7.25B + 131M ≈ 7.51B （仅近似）
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>但是实际 Mistral 7B 是 7.2B，因为：</p>
+<ul>
+<li><p>使用了多组 Attention（grouped QKV）</p></li>
+<li><p>更多细节优化（RMSNorm，bias，rotary embedding 等）</p></li>
+</ul>
+</li>
+</ul>
+</section>
+</section>
+<section id="gqa">
+<h2>📌 使用GQA时的参数计算<a class="headerlink" href="#gqa" title="此标题的永久链接">¶</a></h2>
+<section id="id9">
+<h3>定义：GQA 是什么<a class="headerlink" href="#id9" title="此标题的永久链接">¶</a></h3>
+<ul>
+<li><p>GQA: Grouped Query Attention(分组查询注意力)</p></li>
+<li><p>在标准多头注意力（Multi-Head Attention，MHA）中：</p>
+<ul>
+<li><p>每个 head 都有自己的一套 Q（查询）、K（键）、V（值）：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Q_head_i = X × W_q_i
+K_head_i = X × W_k_i
+V_head_i = X × W_v_i
+</pre></div>
+</div>
+</li>
+<li><p>参数说明</p></li>
+</ul>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>符号</p></th>
+<th class="head"><p>含义</p></th>
+<th class="head"><p>维度</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">X</span></code></p></td>
+<td><p>当前 token 的表示（输入张量）</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[T,</span> <span class="pre">H]</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">W_q_i</span></code></p></td>
+<td><p>第 i 个头的 Query 投影矩阵</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[H,</span> <span class="pre">head_dim]</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">W_k_i</span></code></p></td>
+<td><p>第 i 个头的 Key 投影矩阵</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[H,</span> <span class="pre">head_dim]</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">W_v_i</span></code></p></td>
+<td><p>第 i 个头的 Value 投影矩阵</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[H,</span> <span class="pre">head_dim]</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Q_head_i</span></code></p></td>
+<td><p>第 i 个头的 Query 向量</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[T,</span> <span class="pre">head_dim]</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">K_head_i</span></code></p></td>
+<td><p>第 i 个头的 Key 向量</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[T,</span> <span class="pre">head_dim]</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">V_head_i</span></code></p></td>
+<td><p>第 i 个头的 Value 向量</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[T,</span> <span class="pre">head_dim]</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</li>
+<li><p>而在 GQA 中：</p>
+<ul class="simple">
+<li><p>每个 head 有自己的 Q（Query）</p></li>
+<li><p>但多个 head 共享同一组 K 和 V</p></li>
+</ul>
+</li>
+<li><p>示例：</p>
+<ul class="simple">
+<li><p>如果</p>
+<ul>
+<li><p>模型总共有 32 个 Attention heads</p></li>
+<li><p>使用 GQA 分成 <strong>8 组</strong></p></li>
+<li><p>每组 4 个头共享一套 K/V</p></li>
+</ul>
+</li>
+<li><p>那么：</p>
+<ul>
+<li><p>有 32 套 Q 权重</p></li>
+<li><p>但只有 <strong>8 套 K 权重</strong> 和 <strong>8 套 V 权重</strong></p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>类型</p></th>
+<th class="head"><p>Q 权重数</p></th>
+<th class="head"><p>K/V 权重数</p></th>
+<th class="head"><p>总参数量</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>MHA</strong></p></td>
+<td><p>32</p></td>
+<td><p>32</p></td>
+<td><p>Q: 4096×4096, K/V: 4096×4096</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>GQA</strong></p></td>
+<td><p>32</p></td>
+<td><p><strong>8</strong></p></td>
+<td><p>Q: 4096×4096, K/V: 4096×1024</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>MQA</strong></p></td>
+<td><p>32</p></td>
+<td><p><strong>1</strong></p></td>
+<td><p>Q: 4096×4096, K/V: 4096×128</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id10">
+<h3>为什么使用 GQA？<a class="headerlink" href="#id10" title="此标题的永久链接">¶</a></h3>
+<ol class="arabic simple">
+<li><p><strong>减少参数数量</strong>（尤其适合大模型）</p></li>
+<li><p><strong>节省显存和带宽</strong></p></li>
+<li><p><strong>对模型性能影响很小，甚至提升稳定性</strong></p></li>
+<li><p><strong>比 MQA（Multi-Query Attention）更灵活</strong></p>
+<ul class="simple">
+<li><p>MQA 是 GQA 的极端版本，所有 head 共享同一套 K/V（只有 1 套）</p></li>
+</ul>
+</li>
+</ol>
+</section>
+<section id="id11">
+<h3>GQA 在参数计算中的体现<a class="headerlink" href="#id11" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>新增参数</p>
+<ul>
+<li><p>n_head:Attention head 数</p></li>
+<li><p>n_head_kv: K/V的Attention head 数</p></li>
+<li><p>group_size: 共享一套 K/V Group 的数量</p></li>
+<li><p>d_head: 每个 head 的维度</p></li>
+</ul>
+</li>
+<li><p>参数关系</p>
+<ul>
+<li><p>H = d_head * n_head</p></li>
+<li><p>n_head = n_head_kv * group_size</p></li>
+</ul>
+</li>
+<li><p>公式</p></li>
+</ul>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span># 单层 Self Attention 参数计算
+= H*d_head*n_head + H*d_head*n_head_kv*2 + H*d_head * n_head)
+= 2* H^2 + 2*H*d_head*n_head_kv
+= 2*H^2 + 2H^2/group_size
+= H^2 (2 + 2/group_size)
+</pre></div>
+</div>
+</section>
+<section id="id12">
+<h3>示例讲解——以上面的 Mistral 7B 示例分析<a class="headerlink" href="#id12" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>说明：与前面示例相比，只有计算 Self Attention 的参数量不同</p></li>
+<li><p>参数</p>
+<ul>
+<li><p>H = 4096</p></li>
+<li><p>n_head = 32</p></li>
+<li><p>n_head_kv = 8</p></li>
+<li><p>group_size = 4</p></li>
+<li><p>d_head = 128</p></li>
+<li><p>L = 32</p></li>
+</ul>
+</li>
+<li><p>计算</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>单层Self Attention 参数量
+    = H^2 (2 + 2/group_size)
+    = (4096 × 4096) × (2 + 2/4)
+    = 40M
+32层Self Attention 参数量
+    = 32 * 40M
+    = 1.25G
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>相比不用 GQA, self attention 的参数量从 <strong>2G</strong> 降低到 <strong>1.25G</strong></p>
+</div>
+</section>
+</section>
+<section id="qwen2-5-3b">
+<h2>示例-Qwen2.5-3B<a class="headerlink" href="#qwen2-5-3b" title="此标题的永久链接">¶</a></h2>
+<section id="id13">
+<h3>模型结构<a class="headerlink" href="#id13" title="此标题的永久链接">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">Qwen2ForCausalLM</span><span class="p">(</span>
+  <span class="p">(</span><span class="n">model</span><span class="p">):</span> <span class="n">Qwen2Model</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">embed_tokens</span><span class="p">):</span> <span class="n">Embedding</span><span class="p">(</span><span class="mi">151936</span><span class="p">,</span> <span class="mi">2048</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">layers</span><span class="p">):</span> <span class="n">ModuleList</span><span class="p">(</span>
+      <span class="p">(</span><span class="mi">0</span><span class="o">-</span><span class="mi">35</span><span class="p">):</span> <span class="mi">36</span> <span class="n">x</span> <span class="n">Qwen2DecoderLayer</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">self_attn</span><span class="p">):</span> <span class="n">Qwen2Attention</span><span class="p">(</span>
+          <span class="p">(</span><span class="n">q_proj</span><span class="p">):</span> <span class="n">Linear</span><span class="p">(</span><span class="n">in_features</span><span class="o">=</span><span class="mi">2048</span><span class="p">,</span> <span class="n">out_features</span><span class="o">=</span><span class="mi">2048</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+          <span class="p">(</span><span class="n">k_proj</span><span class="p">):</span> <span class="n">Linear</span><span class="p">(</span><span class="n">in_features</span><span class="o">=</span><span class="mi">2048</span><span class="p">,</span> <span class="n">out_features</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+          <span class="p">(</span><span class="n">v_proj</span><span class="p">):</span> <span class="n">Linear</span><span class="p">(</span><span class="n">in_features</span><span class="o">=</span><span class="mi">2048</span><span class="p">,</span> <span class="n">out_features</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+          <span class="p">(</span><span class="n">o_proj</span><span class="p">):</span> <span class="n">Linear</span><span class="p">(</span><span class="n">in_features</span><span class="o">=</span><span class="mi">2048</span><span class="p">,</span> <span class="n">out_features</span><span class="o">=</span><span class="mi">2048</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="p">(</span><span class="n">mlp</span><span class="p">):</span> <span class="n">Qwen2MLP</span><span class="p">(</span>
+          <span class="p">(</span><span class="n">gate_proj</span><span class="p">):</span> <span class="n">Linear</span><span class="p">(</span><span class="n">in_features</span><span class="o">=</span><span class="mi">2048</span><span class="p">,</span> <span class="n">out_features</span><span class="o">=</span><span class="mi">11008</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+          <span class="p">(</span><span class="n">up_proj</span><span class="p">):</span> <span class="n">Linear</span><span class="p">(</span><span class="n">in_features</span><span class="o">=</span><span class="mi">2048</span><span class="p">,</span> <span class="n">out_features</span><span class="o">=</span><span class="mi">11008</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+          <span class="p">(</span><span class="n">down_proj</span><span class="p">):</span> <span class="n">Linear</span><span class="p">(</span><span class="n">in_features</span><span class="o">=</span><span class="mi">11008</span><span class="p">,</span> <span class="n">out_features</span><span class="o">=</span><span class="mi">2048</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+          <span class="p">(</span><span class="n">act_fn</span><span class="p">):</span> <span class="n">SiLU</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="p">(</span><span class="n">input_layernorm</span><span class="p">):</span> <span class="n">Qwen2RMSNorm</span><span class="p">((</span><span class="mi">2048</span><span class="p">,),</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-06</span><span class="p">)</span>
+        <span class="p">(</span><span class="n">post_attention_layernorm</span><span class="p">):</span> <span class="n">Qwen2RMSNorm</span><span class="p">((</span><span class="mi">2048</span><span class="p">,),</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-06</span><span class="p">)</span>
+      <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="p">(</span><span class="n">norm</span><span class="p">):</span> <span class="n">Qwen2RMSNorm</span><span class="p">((</span><span class="mi">2048</span><span class="p">,),</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-06</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">rotary_emb</span><span class="p">):</span> <span class="n">Qwen2RotaryEmbedding</span><span class="p">()</span>
+  <span class="p">)</span>
+  <span class="p">(</span><span class="n">lm_head</span><span class="p">):</span> <span class="n">Linear</span><span class="p">(</span><span class="n">in_features</span><span class="o">=</span><span class="mi">2048</span><span class="p">,</span> <span class="n">out_features</span><span class="o">=</span><span class="mi">151936</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="id14">
+<h3>参数分析<a class="headerlink" href="#id14" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>H: 2048</p></li>
+<li><p>V: 151936</p></li>
+<li><p>L: 36</p></li>
+<li><p>ffn_hidden: 11008</p></li>
+<li><p>M: 11008/2048=5.375</p></li>
+<li><p>K/V的 out_features: 256</p></li>
+<li><p>查 config.json 文件</p>
+<ul>
+<li><p>num_heads = 16</p></li>
+<li><p>num_KV_heads = 2  (GQA 机制，表示只用 2 个 key/value 头，节省 KV-cache 开销)</p></li>
+</ul>
+</li>
+<li><p>则</p>
+<ul>
+<li><p>head_dim = 2048 / 16 = 128  (每个 head 是 128 维)</p></li>
+<li><p>num_group = 256 / 2 = 128</p></li>
+<li><p>group_size: 一个kv组有8(=16/2)个query head</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="id15">
+<h3>参数计算<a class="headerlink" href="#id15" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>词嵌入层: 151936 × 2048 = 311,205,888 = 296.75M</p></li>
+<li><p>Transformer Block</p>
+<ul>
+<li><p>Attention 模块: L * H^2 (2 + 2/group_size)</p>
+<ul>
+<li><p>= 36 * 2048^2 * (2 + 2/2)</p></li>
+<li><p>= 324M</p></li>
+</ul>
+</li>
+<li><p>FFN 模块: L × 3 × M × H^2</p>
+<ul>
+<li><p>= 36 × 3 × 5.375 × 2048^2</p></li>
+<li><p>= 2322M</p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>输出层: 151936 × 2048 = 296.75M</p></li>
+<li><p>总计算: 2322M + 324M +296.75M*2</p>
+<ul>
+<li><p>= 3.16G</p></li>
+</ul>
+</li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="calc_TOPS.html" class="btn btn-neutral float-right" title="TOPS计算" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="normal.html" class="btn btn-neutral" title="通用" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+  
+  <div id="gitalk-container"></div>
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2010-2025, 新溪-gordon.
+
+    </p>
+  </div>
+  <div>备案号 <a href="http://www.beian.miit.gov.cn">京ICP备16018553号</a></div><div>Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a></div>. 
+
+
+</footer>
+
+<script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?042289284b8eb33866001347a3e0b129";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>     
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'V2025.06',
+            LANGUAGE:'zh-CN',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../_static/sphinx_highlight.js"></script>
+      <script type="text/javascript" src="../../_static/clipboard.min.js"></script>
+      <script type="text/javascript" src="../../_static/copybutton.js"></script>
+      <script type="text/javascript" src="../../_static/translations.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+
+  
+
+  <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+
+
+      // var gitalk = new Gitalk({
+      //         clientID: '565177626b5d46427009',
+      //         clientSecret: 'b2a36e67e1d2a73e43667f46d571c2624f8e1026',
+      //         repo: 'knowledge',
+      //         owner: 'zhaoweiguo',
+      //         admin: ['zhaoweiguo'],
+      //         id: location.pathname,      // Ensure uniqueness and length less than 50
+      //         distractionFreeMode: false  // Facebook-like distraction free mode
+      //       })
+      // gitalk.render('gitalk-container')
+
+  </script>
+
+
+<script type="text/javascript" src="../../_static/js/table-of-contents-sidebar.js"></script>
+<!-- <script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script> -->
+<script type="text/javascript">
+    window.onload = function(e){
+        TableOfContents.init({
+            basePath: "https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/",
+            querySelector: "body" // or other css querySelector
+        });
+    }
+</script> 
+
+</body>
+</html>

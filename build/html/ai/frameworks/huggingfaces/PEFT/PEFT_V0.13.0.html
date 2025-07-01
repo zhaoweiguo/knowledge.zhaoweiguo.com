@@ -1,0 +1,1543 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="zh-CN" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="zh-CN" > <!--<![endif]-->
+<head>
+
+
+<!-- start added 2025-04-14   增加对markdown中公式的支持 -->
+<script>
+window.MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+    },
+    options: {
+        ignoreHtmlClass: "tex2jax_ignore|mathjax_ignore",
+        processHtmlClass: "tex2jax_process|mathjax_process|math|output_area"
+    }
+};
+</script>
+<script defer="defer" src="https://fastly.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<!-- end added 2025-04-14   增加对markdown中公式的支持 -->
+
+
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>PEFT 0.13.0 &mdash; 新溪-gordon V2025.06 文档</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+    <link rel="index" title="索引" href="../../../genindex.html" />
+    <link rel="search" title="搜索" href="../../../search.html" />
+    <link rel="next" title="7.3.5. Accelerate" href="../Accelerate.html" />
+    <link rel="prev" title="PEFT" href="PEFT.html" /> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+  <script src="../../../_static/js/jquery.min.js"></script>
+
+
+<!-- 评论插件 gittalk start -->
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script> -->
+<!-- 评论插件 gittalk end -->
+
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> 新溪-gordon
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                V2025.06
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">AI</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../normal.html">1. 常用</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../normals/normal.html">1.1. 常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../normals/AIGC.html">1.2. AIGC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../normals/ml.html">1.3. 机器学习machine learning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../normals/bi.html">1.4. BI(Business Intelligence)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../normals/deep_learning.html">1.5. 深度学习</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../normals/deep_learnings/normal.html">1.5.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../normals/deep_learnings/history.html">1.5.2. 历史</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../normals/monitor.html">1.6. monitor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../normals/algorithm.html">1.7. 相关算法</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../normals/tool.html">1.8. 工具</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../normals/question.html">1.9. 常见问题</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../normals/%E6%9C%BA%E5%99%A8%E4%BA%BA.html">1.10. 机器人领域</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory.html">2. 理论</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../theories/tmp.html">2.1. 临时</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../theories/tmps/ReAct.html">2.1.1. ReAct框架</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../theories/tmps/Reflection.html">2.1.2. Reflection反思</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../theories/tmps/math.html">2.1.3. 数学</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../theories/tmps/bag-of-words.html">2.1.4. bag-of-words</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../theories/tmps/word2vec.html">2.1.5. Word2Vec</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../theories/tmps/doc2vec.html">2.1.6. Doc2Vec</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../theories/tmps/FastText.html">2.1.7. FastText</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../theories/tmps/LDA.html">2.1.8. LDA-Latent Dirichlet Allocation(潜在狄利克雷分配)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../theories/tmps/overfitting-underfitting.html">2.1.9. overfitting&amp;underfitting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../theories/tmps/RAG.html">2.1.10. RAG</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../theories/tmps/Agent.html">2.1.11. Agent</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../theories/tmps/LLM.html">2.1.12. LLM</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../theories/tmps/RL.html">2.1.13. RL-强化学习</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../theories/tmps/prompt_engineering.html">2.1.14. Prompt Engineering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../theories/tmps/finetune.html">2.1.15. LLM调优(finetune)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../theories/tmps/Workflow.html">2.1.16. Workflow</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../LLM.html">3. 大模型</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../LLMs/normal.html">3.1. 常用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/normals/normal.html">3.1.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/normals/package.html">3.1.2. 依赖安装</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/normals/encoder.html">3.1.3. 编码-解码器</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/normals/usage.html">3.1.4. 使用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/normals/tmp.html">3.1.5. 临时</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../LLMs/model.html">3.2. 著名模型</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/models/Qwen3.html">3.2.1. Qwen3</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/models/DeepSeek.html">3.2.2. DeepSeek-R1-推理模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/models/LLaMA.html">3.2.3. LLaMA</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/models/ChatGLM.html">3.2.4. ChatGLM</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/models/BERT.html">3.2.5. BERT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/models/OpenAI.html">3.2.6. OpenAI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/models/BART.html">3.2.7. BART</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/models/T5.html">3.2.8. T5</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/models/ChatRWKV.html">3.2.9. ChatRWKV</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/models/Open-Assistant.html">3.2.10. Open-Assistant</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/models/OpenGVLab.html">3.2.11. OpenGVLab</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../LLMs/finetune.html">3.3. 调优</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../LLMs/Quantization%E9%87%8F%E5%8C%96.html">3.4. 模型量化(Quantization)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/Quantizations/normal.html">3.4.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/Quantizations/GGUF.html">3.4.2. GGUF 文件</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../LLMs/fileformat.html">3.5. 文件格式</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/fileformats/normal.html">3.5.1. 通用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/fileformats/GGML.html">3.5.2. GGML系列文件格式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/fileformats/ONNX.html">3.5.3. ONNX</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../LLMs/fileformats/ONNXs/normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../LLMs/fileformats/ONNXs/ONNX.html">ONNX</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../LLMs/fileformats/ONNXs/onnxruntime.html">onnxruntime</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../LLMs/fileformats/ONNXs/skl2onnx.html">skl2onnx</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/fileformats/NCNN.html">3.5.4. NCNN</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../LLMs/openai.html">3.6. 商业项目</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/openais/normal.html">3.6.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/openais/openai.html">3.6.2. OpenAI</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../LLMs/prompt.html">3.7. Prompt 提示词</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/prompts/demo_chinese.html">3.7.1. 中文</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/prompts/demo_english.html">3.7.2. English</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/prompts/skill.html">3.7.3. 示例</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../LLMs/Android.html">3.8. Android版LLM相关</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/Androids/normal.html">3.8.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/Androids/Android%E7%89%88%E9%83%A8%E7%BD%B2.html">3.8.2. Android版部署</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/Androids/GPU.html">3.8.3. GPU</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../RAG.html">4. RAG相关</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../NLP.html">5. NLP</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../NLPs/normal.html">5.1. 常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../NLPs/preprocess.html">5.2. 预处理</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../NLPs/preprocesses/normal.html">5.2.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../NLPs/preprocesses/%E5%85%B3%E9%94%AE%E8%AF%8D%E6%8F%90%E5%8F%96.html">5.2.2. 关键词提取</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../NLPs/preprocesses/%E5%88%86%E8%AF%8D.html">5.2.3. 分词</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../NLPs/preprocesses/%E6%83%85%E6%84%9F%E5%88%86%E6%9E%90.html">5.2.4. 情感分析</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../NLPs/preprocesses/%E6%96%87%E6%9C%AC%E8%A1%A8%E7%A4%BA.html">5.2.5. 文本表示</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../NLPs/preprocesses/%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6.html">5.2.6. 注意力机制</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../NLPs/preprocesses/%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.html">5.2.7. 语言模型</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../NLPs/NER.html">5.3. NER-命名实体识别</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../NLPs/NERs/normal.html">5.3.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../NLPs/NERs/seq-label.html">5.3.2. 序列标注</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../NLPs/NERs/BiLSTM%2BCRF.html">5.3.3. BiLSTM+CRF</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../NLPs/NERs/history.html">5.3.4. 历史</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../NLPs/summary.html">5.4. 总结-摘要</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../NLPs/summarys/normal.html">5.4.1. 通用</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../library.html">6. 函数库</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../libraries/normal.html">6.1. 常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../libraries/Image.html">6.2. Image图像处理</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../libraries/Video.html">6.3. Video视频</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../libraries/IPython.html">6.4. IPython</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/IPythons/normal.html">6.4.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/IPythons/magic.html">6.4.2. 魔法命令 </a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/IPythons/display.html">6.4.3. display函数</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../libraries/Jupyter.html">6.5. Jupyter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../libraries/NumPy.html">6.6. NumPy</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/NumPys/normal.html">6.6.1. 通用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/NumPys/Ndarray.html">6.6.2. Ndarray 对象</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/NumPys/function.html">6.6.3. 通用函数</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../libraries/Pandas.html">6.7. Pandas</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Pandas/normal.html">6.7.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Pandas/example_subset.html">6.7.2. 实例-subset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Pandas/example_analysis.html">6.7.3. 实例-统计分析</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Pandas/example_sql.html">6.7.4. 利用pandas实现SQL操作</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Pandas/example_default_value.html">6.7.5. 实例-缺失值的处理</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Pandas/example_multi_index.html">6.7.6. 多层索引的使用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Pandas/practice.html">6.7.7. 实践</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../libraries/Pandas/practices/practice_2012ObamaElect.html">实践-2012年奥巴马总统连任选举</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Pandas/api_input_output.html">6.7.8. API-输入输出</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Pandas/api_General.html">6.7.9. API-General functions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Pandas/api_Series.html">6.7.10. API-Series</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Pandas/api_DataFrame.html">6.7.11. API-DataFrame</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Pandas/api_Index.html">6.7.12. API-index</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../libraries/Matplotlib.html">6.8. Matplotlib</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Matplotlibs/normal.html">6.8.1. 基本</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Matplotlibs/install.html">6.8.2. 安装</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Matplotlibs/pyplot.html">6.8.3. pyplot </a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Matplotlibs/matplotlib.patches.html">6.8.4. matplotlib.patches</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Matplotlibs/example.html">6.8.5. 实例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../libraries/Matplotlibs/examples/plot.html">折线图plot</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../libraries/Matplotlibs/examples/bar.html">条形图bar</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../libraries/Matplotlibs/examples/hist.html">直方图hist</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../libraries/Matplotlibs/examples/scatter.html">散点图scatter</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../libraries/Matplotlibs/examples/stackplot.html">面积图stackplot</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../libraries/Matplotlibs/examples/pie.html">饼图pie</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../libraries/Matplotlibs/examples/box.html">箱型图box</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../libraries/Matplotlibs/examples/multi.html">多图合并multi</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Matplotlibs/pylab.html">6.8.6. pylab子包</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../libraries/SciPy.html">6.9. SciPy</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/SciPys/normal.html">6.9.1. 常用</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../libraries/sklearn.html">6.10. sklearn</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/sklearns/normal.html">6.10.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/sklearns/supervised.html">6.10.2. 监督学习</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../libraries/sklearns/superviseds/glm.html">广义线性模型</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/sklearns/unsupervised.html">6.10.3. 无监督学习</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../libraries/statsmodels.html">6.11. statsmodels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../libraries/OpenCV.html">6.12. OpenCV</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/OpenCVs/normal.html">6.12.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/OpenCVs/example.html">6.12.2. 实例</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/OpenCVs/struct.html">6.12.3. 代码类结构</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../libraries/Seaborn.html">6.13. Seaborn</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Seaborns/normal.html">6.13.1. 常用</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../libraries/jieba.html">6.14. jieba中文分词</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../libraries/gensim.html">6.15. gensim: 文本主题建模和相似性分析</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/gensims/normal.html">6.15.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/gensims/Core_Tutorials.html">6.15.2. Core Tutorials</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/gensims/Tutorials.html">6.15.3. Tutorials: Learning Oriented Lessons</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/gensims/How-to_Guides.html">6.15.4. How-to Guides: Solve a Problem</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../libraries/LAC.html">6.16. LAC-百度词法分析工具</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../../framework.html">7. 学习框架</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../normal.html">7.1. 常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../pytorch.html">7.2. PyTorch</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../pytorchs/normal.html">7.2.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../pytorchs/nn.html">7.2.2. nn模块</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../pytorchs/PyTorch.html">7.2.3. PyTorch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../pytorchs/ExecuTorch.html">7.2.4. ExecuTorch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../pytorchs/torchrun.html">7.2.5. torchrun (Elastic Launch)</a></li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../huggingface.html">7.3. huggingface</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../normal.html">7.3.1. 常用</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../normals/huggingface_hub.html">Hugging Face Hub</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../normals/lib_python.html">Hub Python Library</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../normals/Datasets.html">Datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../normals/Text_Generation_Inference_main.html">TGI: Text Generation Inference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../normals/Evaluate.html">Evaluate</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../Transformers.html">7.3.2. Transformers</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../Transformers/Transformers.html">Transformers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../Transformers/Transformers_V4.45.2.html">Transformers 4.45.2</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../Tokenizers_V0.13.3.html">7.3.3. Tokenizers</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="../PEFT.html">7.3.4. PEFT</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="PEFT.html">PEFT</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">PEFT 0.13.0</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../Accelerate.html">7.3.5. Accelerate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../TRL.html">7.3.6. TRL - Transformer Reinforcement Learning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../collect.html">7.3.7. 收集</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../collects/resources.html">resources</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../collects/model.html">model</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../collects/blog_decoding-methods.html">博文: decoding methods of LLM with transformers</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../vLLM.html">7.4. vLLM</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../vLLMs/normal.html">7.4.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vLLMs/vLLM_doc.html">7.4.2. vLLM官方文档</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../llama.cpp.html">7.5. llama.cpp框架</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../llama.cpps/normal.html">7.5.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../llama.cpps/llama-cpp-python.html">7.5.2. Python bindings for llama.cpp</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../DeepSpeed.html">7.6. DeepSpeed</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../DeepSpeeds/huggingface.html">7.6.1. huggingface</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../DeepSpeeds/ZeRO.html">7.6.2. Zero Redundancy Optimizer (ZeRO)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../DeepSpeeds/deepspeed_doc.html">7.6.3. DeepSpeed</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../mxnet.html">7.7. mxnet库</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../mxnets/ndarray.html">7.7.1. nd模块</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../mxnets/ndarrays/ndarray.html">ndarray</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../mxnets/ndarrays/ndarray.random.html">ndarray.random</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../mxnets/gluon.html">7.7.2. gluon模块</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mxnets/autograd.html">7.7.3. autograd模块</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../tensorflow.html">7.8. tensorflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../Keras.html">7.9. Keras</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../Keras/normal.html">7.9.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../Keras/demo.html">7.9.2. 实例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../Keras/demos/binary_classification.html">二分类问题</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../Keras/demos/multiclass_classification.html">多分类问题</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../Keras/demos/regression.html">回归问题</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../other.html">7.10. 其他</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../website.html">8. 关键网站</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../websites/Papers%20with%20Code.html">8.1. Papers with Code</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../websites/Kaggle.html">8.2. Kaggle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../websites/ArXiv.html">8.3. ArXiv 学术论文预印本平台</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../websites/video.html">8.4. 视频相关</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../websites/normal.html">8.5. 通用</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../practice.html">9. 实践</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../practices/OCR.html">9.1. OCR</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../practices/OCRs/normal.html">9.1.1. 常用</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../practices/AIML.html">9.2. AIML</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../practices/AIMLs/normal.html">9.2.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../practices/AIMLs/spec.html">9.2.2. AIML 2.1 Documentation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../opensource.html">10. 开源项目</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../opensources/Agent.html">10.1. Agent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../opensources/RAG.html">10.2. RAG</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../opensources/normal.html">10.3. 常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../opensources/ui.html">10.4. UI界面</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../opensources/finetune.html">10.5. 调优</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../opensources/search.html">10.6. 搜索</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../opensources/LLM-Inference-Engine.html">10.7. LLM Inference Engines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../opensources/LLM-Inference-Tool.html">10.8. 模型推理平台</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../opensources/LLM-inference-accelerate.html">10.9. LLM推理加速</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../opensources/Evaluate.html">10.10. LLM评估</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../opensources/platform.html">10.11. AI平台</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dataset.html">11. 数据集</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../datasets/normal.html">11.1. 常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../datasets/chinese.html">11.2. 中文数据集</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../datasets/chinese_image.html">11.3. 中文图片相关数据集</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../datasets/huggingface.html">11.4. dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../datasets/website.html">11.5. 数据集相关网站</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../model.html">12. 常见模型</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cuda.html">13. 图形&amp;计算加速技术</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../cudas/normal.html">13.1. 常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../cudas/cuda.html">13.2. cuda</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Evaluate.html">14. Evaluate评测</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../Evaluates/normal.html">14.1. 通用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Evaluates/TruLens.html">14.2. TruLens</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Evaluates/Ragas.html">14.3. Ragas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Evaluates/DeepEval.html">14.4. DeepEval</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Evaluates/UpTrain.html">14.5. UpTrain</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Evaluates/huggingface.html">14.6. evaluate</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../%E4%BC%A0%E7%BB%9FAI.html">15. 传统AI</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">新溪-gordon</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../framework.html"><span class="section-number">7. </span>学习框架</a> &raquo;</li>
+        
+          <li><a href="../../huggingface.html"><span class="section-number">7.3. </span>huggingface</a> &raquo;</li>
+        
+          <li><a href="../PEFT.html"><span class="section-number">7.3.4. </span>PEFT</a> &raquo;</li>
+        
+      <li>PEFT 0.13.0</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../../_sources/frameworks/huggingfaces/PEFT/PEFT_V0.13.0.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            <nav id="local-table-of-contents" role="navigation" aria-labelledby="local-table-of-contents-title">
+              <h4 id="local-table-of-contents-title">On This Page</h4>
+              <ul>
+<li><a class="reference internal" href="#">PEFT 0.13.0</a><ul>
+<li><a class="reference internal" href="#get-started">GET STARTED</a><ul>
+<li><a class="reference internal" href="#quicktour">Quicktour</a><ul>
+<li><a class="reference internal" href="#train-with-the-trainer-class">train with the Trainer class</a></li>
+<li><a class="reference internal" href="#inference">Inference</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#peft-method-guides">PEFT method guides</a><ul>
+<li><a class="reference internal" href="#ia3">IA3</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#developer-guides">Developer guides</a><ul>
+<li><a class="reference internal" href="#model-merging">Model merging</a><ul>
+<li><a class="reference internal" href="#merge-method">Merge method</a></li>
+<li><a class="reference internal" href="#merging-ia-3-models">Merging (IA)³ Models</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#quantization">Quantization</a></li>
+<li><a class="reference internal" href="#lora">LoRA</a><ul>
+<li><a class="reference internal" href="#initialization">Initialization</a></li>
+<li><a class="reference internal" href="#optimizers">Optimizers</a></li>
+<li><a class="reference internal" href="#merge-lora-weights-into-the-base-model">Merge LoRA weights into the base model</a></li>
+<li><a class="reference internal" href="#load-adapters">Load adapters</a></li>
+<li><a class="reference internal" href="#inference-with-different-lora-adapters-in-the-same-batch">Inference with different LoRA adapters in the same batch</a><ul>
+<li><a class="reference internal" href="#id3">注意事项</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#custom-models">Custom models</a><ul>
+<li><a class="reference internal" href="#multilayer-perceptron">Multilayer perceptron</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#adapter-injection">Adapter injection</a><ul>
+<li><a class="reference internal" href="#creating-a-new-peft-model">Creating a new PEFT model</a></li>
+<li><a class="reference internal" href="#saving-the-model">Saving the model</a></li>
+<li><a class="reference internal" href="#loading-the-model">Loading the model</a></li>
+<li><a class="reference internal" href="#fromgpt">查看相关参数-fromGPT</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#mixed-adapter-types">Mixed adapter types</a></li>
+<li><a class="reference internal" href="#torch-compile">torch.compile</a></li>
+<li><a class="reference internal" href="#peft-checkpoint-format">PEFT checkpoint format</a><ul>
+<li><a class="reference internal" href="#peft-files">PEFT files</a></li>
+<li><a class="reference internal" href="#convert-to-peft-format">Convert to PEFT format</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#accelerate-integrations">Accelerate integrations</a><ul>
+<li><a class="reference internal" href="#deepspeed">DeepSpeed</a></li>
+<li><a class="reference internal" href="#fully-sharded-data-parallel">Fully Sharded Data Parallel</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#conceptual-guides">Conceptual guides</a><ul>
+<li><a class="reference internal" href="#adapters">Adapters</a><ul>
+<li><a class="reference internal" href="#low-rank-adaptation-lora">Low-Rank Adaptation (LoRA)</a></li>
+<li><a class="reference internal" href="#mixture-of-lora-experts-x-lora">Mixture of LoRA Experts (X-LoRA)</a></li>
+<li><a class="reference internal" href="#low-rank-hadamard-product-loha">Low-Rank Hadamard Product (LoHa)</a></li>
+<li><a class="reference internal" href="#low-rank-kronecker-product-lokr">Low-Rank Kronecker Product (LoKr)</a></li>
+<li><a class="reference internal" href="#orthogonal-finetuning-oft">Orthogonal Finetuning (OFT)</a></li>
+<li><a class="reference internal" href="#orthogonal-butterfly-boft">Orthogonal Butterfly (BOFT)</a></li>
+<li><a class="reference internal" href="#adaptive-low-rank-adaptation-adalora">Adaptive Low-Rank Adaptation (AdaLoRA)</a></li>
+<li><a class="reference internal" href="#llama-adapter">Llama-Adapter</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#soft-prompts">Soft prompts</a><ul>
+<li><a class="reference internal" href="#multitask-prompt-tuning">Multitask prompt tuning</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id4">IA3</a><ul>
+<li><a class="reference internal" href="#id5">优点</a></li>
+<li><a class="reference internal" href="#common-ia3-parameters-in-peft">Common IA3 parameters in PEFT</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id6">参考</a></li>
+</ul>
+</li>
+</ul>
+
+            </nav>
+  <table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="../../../genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../../py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../../search.html"><span class="std std-ref">搜索页面</span></a></p></td>
+</tr>
+</tbody>
+</table>
+<section id="peft-0-13-0">
+<h1>PEFT 0.13.0<a class="headerlink" href="#peft-0-13-0" title="此标题的永久链接">¶</a></h1>
+<ul class="simple">
+<li><p>GitHub: <a class="reference external" href="https://github.com/huggingface/peft">https://github.com/huggingface/peft</a></p></li>
+</ul>
+<section id="get-started">
+<h2>GET STARTED<a class="headerlink" href="#get-started" title="此标题的永久链接">¶</a></h2>
+<section id="quicktour">
+<h3>Quicktour<a class="headerlink" href="#quicktour" title="此标题的永久链接">¶</a></h3>
+<section id="train-with-the-trainer-class">
+<h4>train with the Trainer class<a class="headerlink" href="#train-with-the-trainer-class" title="此标题的永久链接">¶</a></h4>
+<p>TrainingArguments:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">training_args</span> <span class="o">=</span> <span class="n">TrainingArguments</span><span class="p">(</span>
+    <span class="n">output_dir</span><span class="o">=</span><span class="s2">&quot;your-name/bigscience/mt0-large-lora&quot;</span><span class="p">,</span>
+    <span class="n">learning_rate</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span>
+    <span class="n">per_device_train_batch_size</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
+    <span class="n">per_device_eval_batch_size</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
+    <span class="n">num_train_epochs</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="n">weight_decay</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>
+    <span class="n">eval_strategy</span><span class="o">=</span><span class="s2">&quot;epoch&quot;</span><span class="p">,</span>
+    <span class="n">save_strategy</span><span class="o">=</span><span class="s2">&quot;epoch&quot;</span><span class="p">,</span>
+    <span class="n">load_best_model_at_end</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Trainer:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">trainer</span> <span class="o">=</span> <span class="n">Trainer</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+    <span class="n">args</span><span class="o">=</span><span class="n">training_args</span><span class="p">,</span>
+    <span class="n">train_dataset</span><span class="o">=</span><span class="n">tokenized_datasets</span><span class="p">[</span><span class="s2">&quot;train&quot;</span><span class="p">],</span>
+    <span class="n">eval_dataset</span><span class="o">=</span><span class="n">tokenized_datasets</span><span class="p">[</span><span class="s2">&quot;test&quot;</span><span class="p">],</span>
+    <span class="n">tokenizer</span><span class="o">=</span><span class="n">tokenizer</span><span class="p">,</span>
+    <span class="n">data_collator</span><span class="o">=</span><span class="n">data_collator</span><span class="p">,</span>
+    <span class="n">compute_metrics</span><span class="o">=</span><span class="n">compute_metrics</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">trainer</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="inference">
+<h4>Inference<a class="headerlink" href="#inference" title="此标题的永久链接">¶</a></h4>
+<p>load any PEFT-trained model for inference with the AutoPeftModel class:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">peft</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoPeftModelForCausalLM</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoTokenizer</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">AutoPeftModelForCausalLM</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s2">&quot;ybelkada/opt-350m-lora&quot;</span><span class="p">)</span>
+<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s2">&quot;facebook/opt-350m&quot;</span><span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+<span class="n">inputs</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="p">(</span><span class="s2">&quot;Preheat the oven to 350 degrees and place the cookie dough&quot;</span><span class="p">,</span> <span class="n">return_tensors</span><span class="o">=</span><span class="s2">&quot;pt&quot;</span><span class="p">)</span>
+
+<span class="n">outputs</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">input_ids</span><span class="o">=</span><span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;input_ids&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">),</span> <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">batch_decode</span><span class="p">(</span><span class="n">outputs</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="n">skip_special_tokens</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+
+<span class="s2">&quot;Preheat the oven to 350 degrees and place .........&quot;</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="peft-method-guides">
+<h2>PEFT method guides<a class="headerlink" href="#peft-method-guides" title="此标题的永久链接">¶</a></h2>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>本节内容，原始版本都有讲，只不过放在「TASK GUIDES」节，顺序有调整</p>
+</div>
+<section id="ia3">
+<h3>IA3<a class="headerlink" href="#ia3" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>IA3将模型的激活（自注意力和编码器-解码器注意力块中的键和值，以及位置前馈网络的中间激活）乘以三个学习向量</p></li>
+<li><p>与引入权重矩阵而不是向量的 LoRA 相比，这种 PEFT 方法引入的可训练参数数量甚至更少</p></li>
+<li><p>原始模型的参数保持冻结，仅更新这些向量。因此，对新的下游任务进行微调会更快、更便宜、更高效</p></li>
+</ul>
+<p>示例:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">peft</span><span class="w"> </span><span class="kn">import</span> <span class="n">IA3Config</span><span class="p">,</span> <span class="n">get_peft_model</span>
+
+<span class="n">peft_config</span> <span class="o">=</span> <span class="n">IA3Config</span><span class="p">(</span><span class="n">task_type</span><span class="o">=</span><span class="s2">&quot;SEQ_2_SEQ_LM&quot;</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">get_peft_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">peft_config</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">print_trainable_parameters</span><span class="p">()</span>
+<span class="s2">&quot;trainable params: 282,624 || all params: 1,229,863,936 || trainable%: 0.022980103060766553&quot;</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="developer-guides">
+<h2>Developer guides<a class="headerlink" href="#developer-guides" title="此标题的永久链接">¶</a></h2>
+<section id="model-merging">
+<h3>Model merging<a class="headerlink" href="#model-merging" title="此标题的永久链接">¶</a></h3>
+<ul>
+<li><p>PEFT 提供了多种合并模型的方法，例如线性或 SVD 组合</p></li>
+<li><p>两种通过消除冗余参数更有效地合并 LoRA 适配器的方法:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>TIES - TrIm、Elect 和 Merge (TIES)
+    1. 首先，修剪冗余参数
+    2. 然后将冲突符号分解为聚合向量
+    3. 最后对符号与聚合符号相同的参数进行平均
+    此方法考虑到某些值（冗余和符号不一致）可能会降低合并模型的性能
+
+DARE - Drop And REscale
+    一种可用于为 TIES 等其他模型合并方法做准备的方法
+    工作原理是根据丢弃率随机丢弃参数并重新调整剩余参数
+    这有助于减少多个模型之间冗余和潜在干扰参数的数量
+</pre></div>
+</div>
+</li>
+</ul>
+<section id="merge-method">
+<h4>Merge method<a class="headerlink" href="#merge-method" title="此标题的永久链接">¶</a></h4>
+<p>合并三个微调的 <code class="docutils literal notranslate"><span class="pre">TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T</span></code> 模型： <code class="docutils literal notranslate"><span class="pre">tinyllama_lora_norobots</span></code> 、 <code class="docutils literal notranslate"><span class="pre">tinyllama_lora_sql</span></code> 和 <code class="docutils literal notranslate"><span class="pre">tinyllama_lora_adcopy</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">peft</span><span class="w"> </span><span class="kn">import</span> <span class="n">PeftConfig</span><span class="p">,</span> <span class="n">PeftModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoModelForCausalLM</span><span class="p">,</span> <span class="n">AutoTokenizer</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="n">PeftConfig</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s2">&quot;smangrul/tinyllama_lora_norobots&quot;</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">AutoModelForCausalLM</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">base_model_name_or_path</span><span class="p">,</span> <span class="n">load_in_4bit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">device_map</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s2">&quot;smangrul/tinyllama_lora_norobots&quot;</span><span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">PeftModel</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;smangrul/tinyllama_lora_norobots&quot;</span><span class="p">,</span> <span class="n">adapter_name</span><span class="o">=</span><span class="s2">&quot;norobots&quot;</span><span class="p">)</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">load_adapter</span><span class="p">(</span><span class="s2">&quot;smangrul/tinyllama_lora_sql&quot;</span><span class="p">,</span> <span class="n">adapter_name</span><span class="o">=</span><span class="s2">&quot;sql&quot;</span><span class="p">)</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">load_adapter</span><span class="p">(</span><span class="s2">&quot;smangrul/tinyllama_lora_adcopy&quot;</span><span class="p">,</span> <span class="n">adapter_name</span><span class="o">=</span><span class="s2">&quot;adcopy&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>使用 <code class="docutils literal notranslate"><span class="pre">add_weighted_adapter()</span></code> 方法设置(TIES方法):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">adapters</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;norobots&quot;</span><span class="p">,</span> <span class="s2">&quot;adcopy&quot;</span><span class="p">,</span> <span class="s2">&quot;sql&quot;</span><span class="p">]</span>
+<span class="n">weights</span> <span class="o">=</span> <span class="p">[</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]</span>
+<span class="n">adapter_name</span> <span class="o">=</span> <span class="s2">&quot;merge&quot;</span>
+<span class="n">density</span> <span class="o">=</span> <span class="mf">0.2</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_weighted_adapter</span><span class="p">(</span><span class="n">adapters</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">adapter_name</span><span class="p">,</span> <span class="n">combination_type</span><span class="o">=</span><span class="s2">&quot;ties&quot;</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="n">density</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>使用 <code class="docutils literal notranslate"><span class="pre">add_weighted_adapter()</span></code> 方法设置2(DARE方法):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">adapters</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;norobots&quot;</span><span class="p">,</span> <span class="s2">&quot;adcopy&quot;</span><span class="p">,</span> <span class="s2">&quot;sql&quot;</span><span class="p">]</span>
+<span class="n">weights</span> <span class="o">=</span> <span class="p">[</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">]</span>
+<span class="n">adapter_name</span> <span class="o">=</span> <span class="s2">&quot;merge&quot;</span>
+<span class="n">density</span> <span class="o">=</span> <span class="mf">0.2</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_weighted_adapter</span><span class="p">(</span><span class="n">adapters</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">adapter_name</span><span class="p">,</span> <span class="n">combination_type</span><span class="o">=</span><span class="s2">&quot;dare_ties&quot;</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="n">density</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>使用set_adapter()方法将新合并的模型设置为活动模型:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">set_adapter</span><span class="p">(</span><span class="s2">&quot;merge&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="merging-ia-3-models">
+<h4>Merging (IA)³ Models<a class="headerlink" href="#merging-ia-3-models" title="此标题的永久链接">¶</a></h4>
+<p>将三个 (IA)³ 适配器合并到 PEFT 模型中:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">adapters</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;adapter1&quot;</span><span class="p">,</span> <span class="s2">&quot;adapter2&quot;</span><span class="p">,</span> <span class="s2">&quot;adapter3&quot;</span><span class="p">]</span>
+<span class="n">weights</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">]</span>
+<span class="n">adapter_name</span> <span class="o">=</span> <span class="s2">&quot;merge&quot;</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_weighted_adapter</span><span class="p">(</span><span class="n">adapters</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">adapter_name</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>将合并的模型设置为活动模型:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">set_adapter</span><span class="p">(</span><span class="s2">&quot;merge&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="quantization">
+<h3>Quantization<a class="headerlink" href="#quantization" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>量化相关基本参见: <code class="docutils literal notranslate"><span class="pre">transformer_4.45.2</span></code></p></li>
+<li><p>QLoRA 是一种将模型量化为 4 位，然后使用 LoRA 对其进行训练的方法。此方法允许您在单个 48GB GPU 上微调 65B 参数模型！</p></li>
+</ul>
+</section>
+<section id="lora">
+<h3>LoRA<a class="headerlink" href="#lora" title="此标题的永久链接">¶</a></h3>
+<section id="initialization">
+<h4>Initialization<a class="headerlink" href="#initialization" title="此标题的永久链接">¶</a></h4>
+<ul class="simple">
+<li><p>LoRA权重的初始化由LoraConfig中的参数init_lora_weights控制。</p></li>
+<li><p>默认情况下，PEFT 使用权重 A 的 Kaiming-uniform 和权重 B 的零来初始化 LoRA 权重</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mf">1.</span> <span class="n">PiSSA</span>
+<span class="mf">2.</span> <span class="n">OLoRA</span>
+<span class="mf">3.</span> <span class="n">LoftQ</span>
+<span class="mf">4.</span> <span class="n">Rank</span><span class="o">-</span><span class="n">stabilized</span> <span class="n">LoRA</span>
+<span class="mf">5.</span> <span class="n">Weight</span><span class="o">-</span><span class="n">Decomposed</span> <span class="n">Low</span><span class="o">-</span><span class="n">Rank</span> <span class="n">Adaptation</span> <span class="p">(</span><span class="n">DoRA</span><span class="p">)</span>
+<span class="mf">6.</span> <span class="n">QLoRA</span><span class="o">-</span><span class="n">style</span> <span class="n">training</span>
+<span class="mf">7.</span> <span class="n">Memory</span> <span class="n">efficient</span> <span class="n">Layer</span> <span class="n">Replication</span> <span class="k">with</span> <span class="n">LoRA</span>
+</pre></div>
+</div>
+</section>
+<section id="optimizers">
+<h4>Optimizers<a class="headerlink" href="#optimizers" title="此标题的永久链接">¶</a></h4>
+<ul>
+<li><p>LoRA 训练可以使用 <a class="reference external" href="https://arxiv.org/abs/2402.12354">LoRA+</a> 进行优化，LoRA+ 对适配器矩阵 A 和 B 使用不同的学习率，可将微调速度提高 2 倍，性能提高 1-2%。</p></li>
+<li><p>示例:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">peft</span><span class="w"> </span><span class="kn">import</span> <span class="n">LoraConfig</span><span class="p">,</span> <span class="n">get_peft_model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">peft.optimizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_loraplus_optimizer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">Trainer</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">bitsandbytes</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">bnb</span>
+
+<span class="n">base_model</span> <span class="o">=</span> <span class="o">...</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">LoraConfig</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">get_peft_model</span><span class="p">(</span><span class="n">base_model</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">create_loraplus_optimizer</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+    <span class="n">optimizer_cls</span><span class="o">=</span><span class="n">bnb</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam8bit</span><span class="p">,</span>
+    <span class="n">lr</span><span class="o">=</span><span class="mf">5e-5</span><span class="p">,</span>
+    <span class="n">loraplus_lr_ratio</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">scheduler</span> <span class="o">=</span> <span class="kc">None</span>
+
+<span class="o">...</span>
+<span class="n">trainer</span> <span class="o">=</span> <span class="n">Trainer</span><span class="p">(</span>
+    <span class="o">...</span><span class="p">,</span>
+    <span class="n">optimizers</span><span class="o">=</span><span class="p">(</span><span class="n">optimizer</span><span class="p">,</span> <span class="n">scheduler</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</section>
+<section id="merge-lora-weights-into-the-base-model">
+<h4>Merge LoRA weights into the base model<a class="headerlink" href="#merge-lora-weights-into-the-base-model" title="此标题的永久链接">¶</a></h4>
+<figure class="align-default" id="id8">
+<img alt="https://img.zhaoweiguo.com/uPic/2024/11/B4t46d.png" src="https://img.zhaoweiguo.com/uPic/2024/11/B4t46d.png" />
+<figcaption>
+<p><span class="caption-text">LoRA 适配器合并的示意图</span><a class="headerlink" href="#id8" title="此图像的永久链接">¶</a></p>
+</figcaption>
+</figure>
+<p>how to run that using PEFT:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">base_model</span> <span class="o">=</span> <span class="o">...</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">peft</span><span class="w"> </span><span class="kn">import</span> <span class="n">PeftModel</span>
+<span class="n">peft_model_id</span> <span class="o">=</span> <span class="s2">&quot;alignment-handbook/zephyr-7b-sft-lora&quot;</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">PeftModel</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">base_model</span><span class="p">,</span> <span class="n">peft_model_id</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">merge_and_unload</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>keep a copy of the weights so you can unmerge the adapter later or delete and load different ones:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">PeftModel</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">base_model</span><span class="p">,</span> <span class="n">peft_model_id</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">merge_adapter</span><span class="p">()</span>
+
+<span class="c1"># unmerge the LoRA layers from the base model</span>
+<span class="n">model</span><span class="o">.</span><span class="n">unmerge_adapter</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>根据用户在weights参数中提供的权重方案将多个 LoRA 合并到新适配器中:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># 加载第一个适配器</span>
+<span class="n">peft_model_id</span> <span class="o">=</span> <span class="s2">&quot;alignment-handbook/zephyr-7b-sft-lora&quot;</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">PeftModel</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">base_model</span><span class="p">,</span> <span class="n">peft_model_id</span><span class="p">,</span> <span class="n">adapter_name</span><span class="o">=</span><span class="s2">&quot;sft&quot;</span><span class="p">)</span>
+
+<span class="c1"># 加载另一个适配器并将其与第一个适配器合并</span>
+<span class="n">weighted_adapter_name</span> <span class="o">=</span> <span class="s2">&quot;sft-dpo&quot;</span>
+<span class="n">model</span><span class="o">.</span><span class="n">load_adapter</span><span class="p">(</span><span class="s2">&quot;alignment-handbook/zephyr-7b-dpo-lora&quot;</span><span class="p">,</span> <span class="n">adapter_name</span><span class="o">=</span><span class="s2">&quot;dpo&quot;</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_weighted_adapter</span><span class="p">(</span>
+    <span class="n">adapters</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;sft&quot;</span><span class="p">,</span> <span class="s2">&quot;dpo&quot;</span><span class="p">],</span>
+    <span class="n">weights</span><span class="o">=</span><span class="p">[</span><span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">],</span>
+    <span class="n">adapter_name</span><span class="o">=</span><span class="n">weighted_adapter_name</span><span class="p">,</span>
+    <span class="n">combination_type</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span>
+<span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">set_adapter</span><span class="p">(</span><span class="n">weighted_adapter_name</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="load-adapters">
+<h4>Load adapters<a class="headerlink" href="#load-adapters" title="此标题的永久链接">¶</a></h4>
+<p>使用load_adapter()将适配器加载到预训练模型上:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">peft_model_id</span> <span class="o">=</span> <span class="s2">&quot;alignment-handbook/zephyr-7b-sft-lora&quot;</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">PeftModel</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">base_model</span><span class="p">,</span> <span class="n">peft_model_id</span><span class="p">)</span>
+
+<span class="c1"># load different adapter</span>
+<span class="n">model</span><span class="o">.</span><span class="n">load_adapter</span><span class="p">(</span><span class="s2">&quot;alignment-handbook/zephyr-7b-dpo-lora&quot;</span><span class="p">,</span> <span class="n">adapter_name</span><span class="o">=</span><span class="s2">&quot;dpo&quot;</span><span class="p">)</span>
+
+<span class="c1"># set adapter as active</span>
+<span class="n">model</span><span class="o">.</span><span class="n">set_adapter</span><span class="p">(</span><span class="s2">&quot;dpo&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>切回基本模型:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># unload adapter(卸载所有 LoRA 模块)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">unload</span><span class="p">()</span>
+
+<span class="c1"># delete adapter(完全删除适配器)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">delete_adapter</span><span class="p">(</span><span class="s2">&quot;dpo&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="inference-with-different-lora-adapters-in-the-same-batch">
+<h4>Inference with different LoRA adapters in the same batch<a class="headerlink" href="#inference-with-different-lora-adapters-in-the-same-batch" title="此标题的永久链接">¶</a></h4>
+<ul>
+<li><p>通常，每个推理批次必须在 PEFT 中使用相同的适配器。</p></li>
+<li><p>可以使用adapter_name参数在同一批次中混合不同的LoRA适配器:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># load the LoRA adapter for French</span>
+<span class="n">peft_model</span> <span class="o">=</span> <span class="n">PeftModel</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">path</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">adapter_name</span><span class="o">=</span><span class="s2">&quot;adapter_fr&quot;</span><span class="p">)</span>
+<span class="c1"># next, load the LoRA adapter for German</span>
+<span class="n">peft_model</span><span class="o">.</span><span class="n">load_adapter</span><span class="p">(</span><span class="o">&lt;</span><span class="n">path</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">adapter_name</span><span class="o">=</span><span class="s2">&quot;adapter_de&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p>可以使用adapter_names参数来指定每个样本使用哪个适配器:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">inputs</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="s2">&quot;Hello, my dog is cute&quot;</span><span class="p">,</span>            <span class="c1"># 英语</span>
+        <span class="s2">&quot;Salut, mon chien est mignon&quot;</span><span class="p">,</span>      <span class="c1"># 法语</span>
+        <span class="s2">&quot;Hallo, mein Hund ist süß&quot;</span><span class="p">,</span>         <span class="c1"># 德语</span>
+    <span class="p">],</span>
+    <span class="n">return_tensors</span><span class="o">=</span><span class="s2">&quot;pt&quot;</span><span class="p">,</span>
+    <span class="n">padding</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">adapter_names</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;__base__&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;adapter_fr&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;adapter_de&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+<span class="c1"># 对每一个input指定adapter</span>
+<span class="n">output</span> <span class="o">=</span> <span class="n">peft_model</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="o">**</span><span class="n">inputs</span><span class="p">,</span> <span class="n">adapter_names</span><span class="o">=</span><span class="n">adapter_names</span><span class="p">,</span> <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<section id="id3">
+<h5>注意事项<a class="headerlink" href="#id3" title="此标题的永久链接">¶</a></h5>
+<ul class="simple">
+<li><p>它仅适用于推理，不适用于训练。</p></li>
+<li><p>看看 <a class="reference external" href="https://github.com/predibase/lorax">LoRAX</a> 、 <a class="reference external" href="https://github.com/punica-ai/punica">punica</a> 或 <a class="reference external" href="https://github.com/S-LoRA/S-LoRA">S_LoRA</a> 等替代实现，它们专门用于与大量不同的适配器配合使用。</p></li>
+</ul>
+</section>
+</section>
+</section>
+<section id="custom-models">
+<h3>Custom models<a class="headerlink" href="#custom-models" title="此标题的永久链接">¶</a></h3>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>一些微调技术（例如prompt tuning）特定于语言模型。这意味着在 🤗 PEFT 中，默认使用 🤗 Transformers 模型。然而，其他微调技术（例如LoRA ）并不局限于特定的模型类型。</p>
+</div>
+<section id="multilayer-perceptron">
+<h4>Multilayer perceptron<a class="headerlink" href="#multilayer-perceptron" title="此标题的永久链接">¶</a></h4>
+<p>简单的多层感知器，具有输入层、隐藏层和输出层</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MLP</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_units_hidden</span><span class="o">=</span><span class="mi">2000</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">seq</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="n">num_units_hidden</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">num_units_hidden</span><span class="p">,</span> <span class="n">num_units_hidden</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">num_units_hidden</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">LogSoftmax</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">seq</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>在此示例中，我们选择了大量的隐藏单元(num_units_hidden=2000)来突出 PEFT 的效率增益</p>
+</div>
+<p>在多层感知器中，需要我们作为用户来选择要调整的层:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># 打印所有的层</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="nb">print</span><span class="p">([(</span><span class="n">n</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">m</span><span class="p">))</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">MLP</span><span class="p">()</span><span class="o">.</span><span class="n">named_modules</span><span class="p">()])</span>
+<span class="p">[(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">__main__</span><span class="o">.</span><span class="n">MLP</span><span class="p">),</span>
+ <span class="p">(</span><span class="s1">&#39;seq&#39;</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">container</span><span class="o">.</span><span class="n">Sequential</span><span class="p">),</span>
+ <span class="p">(</span><span class="s1">&#39;seq.0&#39;</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">linear</span><span class="o">.</span><span class="n">Linear</span><span class="p">),</span>
+ <span class="p">(</span><span class="s1">&#39;seq.1&#39;</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">activation</span><span class="o">.</span><span class="n">ReLU</span><span class="p">),</span>
+ <span class="p">(</span><span class="s1">&#39;seq.2&#39;</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">linear</span><span class="o">.</span><span class="n">Linear</span><span class="p">),</span>
+ <span class="p">(</span><span class="s1">&#39;seq.3&#39;</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">activation</span><span class="o">.</span><span class="n">ReLU</span><span class="p">),</span>
+ <span class="p">(</span><span class="s1">&#39;seq.4&#39;</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">linear</span><span class="o">.</span><span class="n">Linear</span><span class="p">),</span>
+ <span class="p">(</span><span class="s1">&#39;seq.5&#39;</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">activation</span><span class="o">.</span><span class="n">LogSoftmax</span><span class="p">)]</span>
+
+
+<span class="c1"># 示例：将 LoRA 应用于输入层和隐藏层，即&#39;seq.0&#39;和&#39;seq.2&#39;，要在没有 LoRA 的情况下更新输出层，即&#39;seq.4&#39;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">peft</span><span class="w"> </span><span class="kn">import</span> <span class="n">LoraConfig</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">LoraConfig</span><span class="p">(</span>
+    <span class="n">target_modules</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;seq.0&quot;</span><span class="p">,</span> <span class="s2">&quot;seq.2&quot;</span><span class="p">],</span>
+    <span class="n">modules_to_save</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;seq.4&quot;</span><span class="p">],</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>创建 PEFT 模型并检查训练参数的比例:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">peft</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_peft_model</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">MLP</span><span class="p">()</span>
+<span class="n">peft_model</span> <span class="o">=</span> <span class="n">get_peft_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+<span class="n">peft_model</span><span class="o">.</span><span class="n">print_trainable_parameters</span><span class="p">()</span>
+<span class="c1"># prints trainable params: 56,164 || all params: 4,100,164 || trainable%: 1.369798866581922</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="adapter-injection">
+<h3>Adapter injection<a class="headerlink" href="#adapter-injection" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>使用 PEFT，您可以将可训练适配器注入到任何torch模块中，这允许您使用适配器方法，而无需依赖 PEFT 中的建模类。目前，PEFT 支持将LoRA 、 AdaLoRA和IA3注入模型中，因为对于这些适配器，模型的就地修改足以对其进行微调。</p></li>
+<li><p>缺点：一是需要手动编写 Hugging Face 中的from_pretrained和save_pretrained实用函数来保存和加载适配器；二是不适用于PeftModel提供的任何实用方法，例如禁用和合并适配器</p></li>
+<li><p>优点：一是模型就地修改，保留所有原始属性和方法；二是适用于任何torch模块和模式</p></li>
+</ul>
+<section id="creating-a-new-peft-model">
+<h4>Creating a new PEFT model<a class="headerlink" href="#creating-a-new-peft-model" title="此标题的永久链接">¶</a></h4>
+<ul class="simple">
+<li><p>要执行适配器注入，请使用inject_adapter_in_model()方法。此方法采用 3 个参数：PEFT 配置、模型和可选的适配器名称。如果您使用不同的适配器名称多次调用inject_adapter_in_model()，您还可以将多个适配器附加到模型。</p></li>
+</ul>
+<p>将 LoRA 适配器注入到DummyModel模块的linear子模块:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">..</span> <span class="n">code</span><span class="o">-</span><span class="n">block</span><span class="p">::</span> <span class="n">python</span>
+</pre></div>
+</div>
+<blockquote>
+<div><p>import torch
+from peft import inject_adapter_in_model, LoraConfig</p>
+<dl class="simple">
+<dt>class DummyModel(torch.nn.Module):</dt><dd><dl class="simple">
+<dt>def __init__(self):</dt><dd><p>super().__init__()
+self.embedding = torch.nn.Embedding(10, 10)
+self.linear = torch.nn.Linear(10, 10)
+self.lm_head = torch.nn.Linear(10, 10)</p>
+</dd>
+<dt>def forward(self, input_ids):</dt><dd><p>x = self.embedding(input_ids)
+x = self.linear(x)
+x = self.lm_head(x)
+return x</p>
+</dd>
+</dl>
+</dd>
+<dt>lora_config = LoraConfig(</dt><dd><p>lora_alpha=16,
+lora_dropout=0.1,
+r=64,
+bias=”none”,
+target_modules=[“linear”],  # 注入了这个modules
+)</p>
+</dd>
+</dl>
+<p>model = DummyModel()
+model = inject_adapter_in_model(lora_config, model)      # 使用inject_adapter_in_model注入(会生成随机参数的状态字典/权重)</p>
+<p>dummy_inputs = torch.LongTensor([[0, 1, 2, 3, 4, 5, 6, 7]])
+dummy_outputs = model(dummy_inputs)</p>
+</div></blockquote>
+<p>打印模型以查看适配器是否已正确注入:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># 注入前</span>
+<span class="n">DummyModel</span><span class="p">(</span>
+  <span class="p">(</span><span class="n">embedding</span><span class="p">):</span> <span class="n">Embedding</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+  <span class="p">(</span><span class="n">linear</span><span class="p">):</span> <span class="n">Linear</span><span class="p">(</span><span class="n">in_features</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">out_features</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+  <span class="p">(</span><span class="n">lm_head</span><span class="p">):</span> <span class="n">Linear</span><span class="p">(</span><span class="n">in_features</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">out_features</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="c1"># 注入后</span>
+<span class="n">DummyModel</span><span class="p">(</span>
+  <span class="p">(</span><span class="n">embedding</span><span class="p">):</span> <span class="n">Embedding</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+  <span class="p">(</span><span class="n">linear</span><span class="p">):</span> <span class="n">Linear</span><span class="p">(</span>
+    <span class="n">in_features</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">out_features</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">(</span><span class="n">lora_dropout</span><span class="p">):</span> <span class="n">ModuleDict</span><span class="p">(</span>
+      <span class="p">(</span><span class="n">default</span><span class="p">):</span> <span class="n">Dropout</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="p">(</span><span class="n">lora_A</span><span class="p">):</span> <span class="n">ModuleDict</span><span class="p">(</span>
+      <span class="p">(</span><span class="n">default</span><span class="p">):</span> <span class="n">Linear</span><span class="p">(</span><span class="n">in_features</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">out_features</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="p">(</span><span class="n">lora_B</span><span class="p">):</span> <span class="n">ModuleDict</span><span class="p">(</span>
+      <span class="p">(</span><span class="n">default</span><span class="p">):</span> <span class="n">Linear</span><span class="p">(</span><span class="n">in_features</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">out_features</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="p">(</span><span class="n">lora_embedding_A</span><span class="p">):</span> <span class="n">ParameterDict</span><span class="p">()</span>
+    <span class="p">(</span><span class="n">lora_embedding_B</span><span class="p">):</span> <span class="n">ParameterDict</span><span class="p">()</span>
+  <span class="p">)</span>
+  <span class="p">(</span><span class="n">lm_head</span><span class="p">):</span> <span class="n">Linear</span><span class="p">(</span><span class="n">in_features</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">out_features</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="saving-the-model">
+<h4>Saving the model<a class="headerlink" href="#saving-the-model" title="此标题的永久链接">¶</a></h4>
+<p>使用 <code class="docutils literal notranslate"><span class="pre">get_peft_model_state_dict</span></code> 获取model适配层的具体权重:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">peft</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_peft_model_state_dict</span>
+<span class="n">peft_state_dict</span> <span class="o">=</span> <span class="n">get_peft_model_state_dict</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">peft_state_dict</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="loading-the-model">
+<h4>Loading the model<a class="headerlink" href="#loading-the-model" title="此标题的永久链接">¶</a></h4>
+<p>使用 <code class="docutils literal notranslate"><span class="pre">set_peft_model_state_dict</span></code> 加载适配层的具体权重:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">peft</span><span class="w"> </span><span class="kn">import</span> <span class="n">set_peft_model_state_dict</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">DummyModel</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">inject_adapter_in_model</span><span class="p">(</span><span class="n">lora_config</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>             <span class="c1"># 会生成随机参数的状态字典/权重</span>
+<span class="n">outcome</span> <span class="o">=</span> <span class="n">set_peft_model_state_dict</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">peft_state_dict</span><span class="p">)</span>     <span class="c1"># 指定使用保存的参数的状态字典/权重</span>
+<span class="c1"># check that there were no wrong keys</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">outcome</span><span class="o">.</span><span class="n">unexpected_keys</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="fromgpt">
+<h4>查看相关参数-fromGPT<a class="headerlink" href="#fromgpt" title="此标题的永久链接">¶</a></h4>
+<p>查看适配器参数的初始状态和更新后的状态:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># 检查适配器参数的状态</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Before set_peft_model_state_dict:&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">named_parameters</span><span class="p">():</span>
+    <span class="k">if</span> <span class="s1">&#39;lora&#39;</span> <span class="ow">in</span> <span class="n">name</span><span class="p">:</span>  <span class="c1"># 假设适配器层参数包含 &#39;lora&#39; 字段</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> - Mean: </span><span class="si">{</span><span class="n">param</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">}</span><span class="s2">, Std: </span><span class="si">{</span><span class="n">param</span><span class="o">.</span><span class="n">std</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>比较模型的输出变化:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># 使用相同的输入数据来比较输出</span>
+<span class="n">input_ids</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+
+<span class="n">output_before</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">input_ids</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Output before set_peft_model_state_dict:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">output_before</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>检查参数是否被加载（哈希值验证）:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">get_params_hash</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">()</span> <span class="k">if</span> <span class="s1">&#39;lora&#39;</span> <span class="ow">in</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">md5</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span><span class="o">.</span><span class="n">tobytes</span><span class="p">())</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+
+<span class="c1"># 计算适配器参数的哈希值</span>
+<span class="n">hash_before</span> <span class="o">=</span> <span class="n">get_params_hash</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Hash before: </span><span class="si">{</span><span class="n">hash_before</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="mixed-adapter-types">
+<h3>Mixed adapter types<a class="headerlink" href="#mixed-adapter-types" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>通常，在🤗 PEFT 中混合不同类型的适配器是不可能的。您可以使用两个不同的 LoRA 适配器（可以有不同的配置选项）创建 PEFT 模型，但无法组合 LoRA 和 LoHa 适配器。然而，对于PeftMixedModel ，只要适配器类型兼容，这就可以工作。允许混合适配器类型的主要目的是组合经过训练的适配器进行推理。虽然可以训练混合适配器模型，但尚未经过测试，因此不建议这样做。</p></li>
+</ul>
+</section>
+<section id="torch-compile">
+<h3>torch.compile<a class="headerlink" href="#torch-compile" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>在 PEFT 中， torch.compile适用于某些功能，但不是所有功能。</p></li>
+<li><p>它并不总是有效的原因是 PEFT 在某些地方是高度动态的（例如在多个适配器之间加载和切换），这可能会给torch.compile带来麻烦。</p></li>
+</ul>
+</section>
+<section id="peft-checkpoint-format">
+<h3>PEFT checkpoint format<a class="headerlink" href="#peft-checkpoint-format" title="此标题的永久链接">¶</a></h3>
+<section id="peft-files">
+<h4>PEFT files<a class="headerlink" href="#peft-files" title="此标题的永久链接">¶</a></h4>
+<p>When you call <code class="docutils literal notranslate"><span class="pre">save_pretrained()</span></code> on a PEFT model, the PEFT model saves three files:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. adapter_model.safetensors or adapter_model.bin
+    默认情况下，模型以safetensors格式保存，这是bin格式的安全替代方案
+    bin格式已知容易受到安全漏洞的影响，因为它在底层使用了 pickle 实用程序
+    两种格式都存储相同的state_dict ，并且可以互换
+
+2. adapter_config.json
+    包含适配器模块的配置，这是加载模型所必需的
+    包含:
+        存储的适配器模块类型， &quot;peft_type&quot;: &quot;IA3&quot;
+        基础模型的信息，如 &quot;base_model_name_or_path&quot;: &quot;bert-base-uncased&quot;
+        模型的修订版（如果有）， &quot;revision&quot;: null
+
+3. README.md
+</pre></div>
+</div>
+<p>IA³ 适配器的 <code class="docutils literal notranslate"><span class="pre">adapter_config.json</span></code> 示例:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;auto_mapping&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;base_model_class&quot;</span><span class="p">:</span> <span class="s2">&quot;BertModel&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;parent_library&quot;</span><span class="p">:</span> <span class="s2">&quot;transformers.models.bert.modeling_bert&quot;</span>
+  <span class="p">},</span>
+  <span class="s2">&quot;base_model_name_or_path&quot;</span><span class="p">:</span> <span class="s2">&quot;bert-base-uncased&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;fan_in_fan_out&quot;</span><span class="p">:</span> <span class="n">false</span><span class="p">,</span>
+  <span class="s2">&quot;feedforward_modules&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="s2">&quot;output.dense&quot;</span>
+  <span class="p">],</span>
+  <span class="s2">&quot;inference_mode&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span>
+  <span class="s2">&quot;init_ia3_weights&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span>
+  <span class="s2">&quot;modules_to_save&quot;</span><span class="p">:</span> <span class="n">null</span><span class="p">,</span>
+  <span class="s2">&quot;peft_type&quot;</span><span class="p">:</span> <span class="s2">&quot;IA3&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;revision&quot;</span><span class="p">:</span> <span class="n">null</span><span class="p">,</span>
+  <span class="s2">&quot;target_modules&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="s2">&quot;key&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;value&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;output.dense&quot;</span>
+  <span class="p">],</span>
+  <span class="s2">&quot;task_type&quot;</span><span class="p">:</span> <span class="n">null</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="convert-to-peft-format">
+<h4>Convert to PEFT format<a class="headerlink" href="#convert-to-peft-format" title="此标题的永久链接">¶</a></h4>
+<p>adapter_model:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 默认情况，对于 BERT 模型，LoRA 应用于注意力模块的query层和value层
+    这就是为什么您会在每层的键名称中看到attention.self.query和attention.self.value
+2. LoRA 将权重分解为两个低秩矩阵： lora_A和lora_B
+3. LoRA 矩阵被实现为nn.Linear层，因此参数存储在.weight属性中
+4. 默认情况下，LoRA 不应用于 BERT 的嵌入层，因此没有lora_A_embedding和lora_B_embedding的条目
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">adapter_config.json</span></code> 至少应包含以下条目:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;target_modules&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;query&quot;</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">],</span>
+  <span class="s2">&quot;peft_type&quot;</span><span class="p">:</span> <span class="s2">&quot;LORA&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="accelerate-integrations">
+<h2>Accelerate integrations<a class="headerlink" href="#accelerate-integrations" title="此标题的永久链接">¶</a></h2>
+<section id="deepspeed">
+<h3>DeepSpeed<a class="headerlink" href="#deepspeed" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>DeepSpeed是一个专为具有数十亿参数的大型模型的分布式训练的速度和规模而设计的库。</p></li>
+<li><p>其核心是零冗余优化器 (ZeRO)，它将优化器状态 (ZeRO-1)、梯度 (ZeRO-2) 和参数 (ZeRO-3) 跨数据并行进程进行分片。</p></li>
+<li><p>这大大减少了内存使用量，使您能够将训练扩展到十亿个参数模型。为了释放更高的内存效率，ZeRO-Offload 在优化过程中利用 CPU 资源来减少 GPU 计算和内存。</p></li>
+</ul>
+</section>
+<section id="fully-sharded-data-parallel">
+<h3>Fully Sharded Data Parallel<a class="headerlink" href="#fully-sharded-data-parallel" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>全分片数据并行(FSDP) 专为高达 1T 参数的大型预训练模型的分布式训练而开发。</p></li>
+<li><p>FSDP 通过跨数据并行进程对模型参数、梯度和优化器状态进行分片来实现这一点，并且它还可以将分片的模型参数卸载到 CPU。</p></li>
+<li><p>FSDP 提供的内存效率允许您将训练扩展到更大的批次或模型大小。</p></li>
+</ul>
+</section>
+</section>
+<section id="conceptual-guides">
+<h2>Conceptual guides<a class="headerlink" href="#conceptual-guides" title="此标题的永久链接">¶</a></h2>
+<section id="adapters">
+<h3>Adapters<a class="headerlink" href="#adapters" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>基于适配器的方法在冻结预训练模型的注意力层(attention)和全连接层(fully-connected)之后添加额外的可训练参数，以减少内存使用并加快训练速度。</p></li>
+<li><p>该方法因适配器而异，它可能只是一个额外的附加层，也可能将权重更新 ΔW 表示为权重矩阵的低秩分解。</p></li>
+<li><p>无论哪种方式，适配器通常都很小，但表现出与完全微调的模型相当的性能，并且能够用更少的资源训练更大的模型。</p></li>
+</ul>
+<section id="low-rank-adaptation-lora">
+<h4>Low-Rank Adaptation (LoRA)<a class="headerlink" href="#low-rank-adaptation-lora" title="此标题的永久链接">¶</a></h4>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>LoRA 是最流行的 PEFT 方法之一，如果您刚刚开始使用 PEFT，那么这是一个很好的起点。它最初是为大型语言模型开发的，但由于其效率和有效性，它是扩散模型的一种非常流行的训练方法。</p>
+</div>
+<figure class="align-default" id="id9">
+<img alt="https://img.zhaoweiguo.com/uPic/2024/11/lora_animated.gif" src="https://img.zhaoweiguo.com/uPic/2024/11/lora_animated.gif" />
+<figcaption>
+<p><span class="caption-text">LoRA 通过低秩分解用两个较小的矩阵（称为更新矩阵）表示权重更新 ΔW。可以训练这些新矩阵以适应新数据，同时保持较低的参数总数。原始权重矩阵保持冻结状态，不会收到任何进一步的更新。为了产生最终结果，将原始权重和额外调整的权重相结合。您还可以将适配器权重与基本模型合并，以消除推理延迟。</span><a class="headerlink" href="#id9" title="此图像的永久链接">¶</a></p>
+</figcaption>
+</figure>
+<p>优点:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. LoRA 通过大幅减少可训练参数的数量来提高微调的效率。
+2. 原始预训练权重保持冻结状态，这意味着您可以拥有多个轻量级便携式 LoRA 模型，用于在其之上构建的各种下游任务。
+3. LoRA 与其他参数有效的方法正交，并且可以与其中许多方法组合。
+4. 使用 LoRA 微调的模型的性能与完全微调的模型的性能相当。
+</pre></div>
+</div>
+</section>
+<section id="mixture-of-lora-experts-x-lora">
+<h4>Mixture of LoRA Experts (X-LoRA)<a class="headerlink" href="#mixture-of-lora-experts-x-lora" title="此标题的永久链接">¶</a></h4>
+<ul>
+<li><p><a class="reference external" href="https://arxiv.org/abs/2402.07148">https://arxiv.org/abs/2402.07148</a></p></li>
+<li><p>X-LoRA是 LoRA 的混合专家方法，它通过使用密集或稀疏门控来动态激活 LoRA 专家。</p></li>
+<li><p>LoRA 专家以及基础模型在训练期间被冻结，导致参数数量较低，因为只有门控层必须进行训练。</p></li>
+<li><p>特别是，门控层输出缩放（取决于配置）在层和令牌级别上是细粒度的。此外，在推理过程中，X-LoRA 动态激活 LoRA 适配器来回忆知识并有效地混合它们</p></li>
+<li><p>对于每个步骤，X-LoRA 要求基本模型运行两次:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. 首先，在没有任何 LoRA 适配器的情况下获取hidden states
+2. 其次，用hidden states计算scalings(应用于 LoRA 适配器)并第二次运行模型。
+第二次运行的输出是模型步骤的结果。
+</pre></div>
+</div>
+</li>
+</ul>
+</section>
+<section id="low-rank-hadamard-product-loha">
+<h4>Low-Rank Hadamard Product (LoHa)<a class="headerlink" href="#low-rank-hadamard-product-loha" title="此标题的永久链接">¶</a></h4>
+<ul class="simple">
+<li><p><a class="reference external" href="https://huggingface.co/papers/2108.06098">https://huggingface.co/papers/2108.06098</a></p></li>
+<li><p>低秩分解会影响性能，因为权重更新仅限于低秩空间，这会限制模型的表达能力。</p></li>
+<li><p>但是，您不一定要使用更大的Rank(秩)，因为它会增加可训练参数的数量。</p></li>
+<li><p>为了解决这个问题， LoHa （一种最初为计算机视觉开发的方法）被应用于扩散模型(diffusion models)，其中生成不同图像的能力是一个重要的考虑因素。</p></li>
+<li><p>LoHa 还应该适用于一般模型类型，但嵌入层目前尚未在 PEFT 中实现。</p></li>
+<li><p>LoHa 使用Hadamard 乘积（逐元素乘积）而不是矩阵乘积。 ΔW 由四个较小的矩阵表示，而不是 LoRA 中的两个矩阵，并且每对这些低秩矩阵都与 Hadamard 乘积相结合。因此，ΔW 可以具有相同数量的可训练参数，但具有更高的秩和表达能力。</p></li>
+</ul>
+</section>
+<section id="low-rank-kronecker-product-lokr">
+<h4>Low-Rank Kronecker Product (LoKr)<a class="headerlink" href="#low-rank-kronecker-product-lokr" title="此标题的永久链接">¶</a></h4>
+<ul class="simple">
+<li><p><a class="reference external" href="https://hf.co/papers/2309.14859">https://hf.co/papers/2309.14859</a></p></li>
+<li><p>LoKr与 LoRA 和 LoHa 非常相似，它也主要应用于扩散模型(diffusion models)，尽管您也可以将它与其他模型类型一起使用。</p></li>
+<li><p>LoKr 将矩阵乘积替换为克罗内克乘积。</p></li>
+<li><p>克罗内克乘积分解创建一个块矩阵，该矩阵保留原始权重矩阵的秩。克罗内克乘积的另一个好处是它可以通过堆叠矩阵列来矢量化。这可以加快该过程，因为您可以避免完全重建 ΔW。</p></li>
+</ul>
+</section>
+<section id="orthogonal-finetuning-oft">
+<h4>Orthogonal Finetuning (OFT)<a class="headerlink" href="#orthogonal-finetuning-oft" title="此标题的永久链接">¶</a></h4>
+<ul class="simple">
+<li><p><a class="reference external" href="https://hf.co/papers/2306.07280">https://hf.co/papers/2306.07280</a></p></li>
+<li><p>OFT是一种主要关注在微调模型中保留预训练模型的生成性能(generative performance)的方法。</p></li>
+<li><p>它试图在一层中所有成对神经元之间保持相同的余弦相似性（超球面能量），因为这样可以更好地捕获神经元之间的语义信息。</p></li>
+<li><p>这意味着OFT更能保存主题，并且更适合可控生成（类似于ControlNet ）。</p></li>
+</ul>
+</section>
+<section id="orthogonal-butterfly-boft">
+<h4>Orthogonal Butterfly (BOFT)<a class="headerlink" href="#orthogonal-butterfly-boft" title="此标题的永久链接">¶</a></h4>
+<ul class="simple">
+<li><p><a class="reference external" href="https://hf.co/papers/2311.06243">https://hf.co/papers/2311.06243</a></p></li>
+<li><p>应该类似 OFT</p></li>
+</ul>
+</section>
+<section id="adaptive-low-rank-adaptation-adalora">
+<h4>Adaptive Low-Rank Adaptation (AdaLoRA)<a class="headerlink" href="#adaptive-low-rank-adaptation-adalora" title="此标题的永久链接">¶</a></h4>
+<ul class="simple">
+<li><p><a class="reference external" href="https://hf.co/papers/2303.10512">https://hf.co/papers/2303.10512</a></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">AdaLoRA</span></code> 通过为更适合任务的重要权重矩阵分配更多参数（即更高的秩 r）并修剪不太重要的权重矩阵来管理从 LoRA 引入的参数预算。</p></li>
+<li><p>秩由类似于奇异值分解 (SVD, singular value decomposition) 的方法控制。</p></li>
+<li><p>∆W 通过两个正交矩阵和一个包含奇异值的对角矩阵进行参数化。</p></li>
+<li><p>这种参数化方法避免了迭代应用计算成本高昂的 SVD。</p></li>
+<li><p>基于此方法，∆W 的秩根据重要性分数进行调整。</p></li>
+<li><p>∆W 被分为三元组，每个三元组根据其对模型性能的贡献进行评分。重要性分数低的三元组被修剪，重要性分数高的三元组保留以进行微调。</p></li>
+</ul>
+</section>
+<section id="llama-adapter">
+<h4>Llama-Adapter<a class="headerlink" href="#llama-adapter" title="此标题的永久链接">¶</a></h4>
+<ul class="simple">
+<li><p><a class="reference external" href="https://hf.co/papers/2303.16199">https://hf.co/papers/2303.16199</a></p></li>
+<li><p>Llama-Adapter 是一种将 Llama 模型调整为能够理解和执行指令（instruction-following）的方法。</p></li>
+<li><p>为了使模型能够适应这种“指令跟随”的任务，研究人员对 Llama-Adapter 进行了训练，使用的数据集包含 52,000 条指令及其相应的输出。</p></li>
+</ul>
+</section>
+</section>
+<section id="soft-prompts">
+<h3>Soft prompts<a class="headerlink" href="#soft-prompts" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>参见前版本的 Conceptual guides -&gt; Prompting</p></li>
+</ul>
+<section id="multitask-prompt-tuning">
+<h4>Multitask prompt tuning<a class="headerlink" href="#multitask-prompt-tuning" title="此标题的永久链接">¶</a></h4>
+<figure class="align-default">
+<img alt="https://img.zhaoweiguo.com/uPic/2024/11/n6SoOG.png" src="https://img.zhaoweiguo.com/uPic/2024/11/n6SoOG.png" />
+</figure>
+<ul>
+<li><p>Multitask prompt tuning (MPT) 从多个任务类型的数据中学习单个提示，这些任务类型可以为不同的目标任务共享。其他现有方法为每个任务学习一个单独的软提示，需要检索或聚合这些提示以适应目标任务。</p></li>
+<li><p>MPT由两个阶段组成:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. source training
+    对于每个任务，其soft prompt被分解为特定于任务的向量。
+    将特定于任务的向量相乘以形成另一个矩阵W，并且在W和共享提示矩阵P之间使用Hadamard乘积来生成特定于任务的提示矩阵。
+    特定于任务的提示被提炼成在所有任务之间共享的单个提示矩阵。该提示是通过多任务训练进行训练的。
+2. target adaptation
+    为了适应目标任务的单个提示，目标提示被初始化并表示为共享提示矩阵和特定于任务的低秩提示矩阵的Hadamard乘积。
+</pre></div>
+</div>
+</li>
+</ul>
+</section>
+</section>
+<section id="id4">
+<h3>IA3<a class="headerlink" href="#id4" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>一种参数高效的微调技术，旨在改进LoRA 。</p></li>
+<li><p>为了使微调更加有效，IA3（通过抑制和放大内部激活的注入式适配器Infused Adapter by Inhibiting and Amplifying Inner Activations）使用学习向量(learned vectors)重新调整内部激活。</p></li>
+<li><p>这些学习到的向量被注入到典型的基于变压器的架构中的注意力和前馈模块(attention and feedforward modules)中。</p></li>
+<li><p>这些学习到的向量是微调期间唯一可训练的参数，因此原始权重保持冻结。</p></li>
+<li><p>处理学习向量（与学习 LoRA 等权重矩阵的低秩更新相反）可以使可训练参数的数量少得多。</p></li>
+</ul>
+<section id="id5">
+<h4>优点<a class="headerlink" href="#id5" title="此标题的永久链接">¶</a></h4>
+<ul class="simple">
+<li><p>IA3 通过大幅减少可训练参数的数量，使微调更加高效。 （对于 T0，IA3 模型只有大约 0.01% 可训练参数，而即使 LoRA 也有 &gt; 0.1%）</p></li>
+<li><p>原始的预训练权重保持冻结状态，这意味着您可以拥有多个轻量级便携式 IA3 模型，用于在其之上构建的各种下游任务。</p></li>
+<li><p>使用 IA3 微调的模型的性能与完全微调的模型的性能相当。</p></li>
+<li><p>IA3 不会增加任何推理延迟，因为适配器权重可以与基本模型合并。</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>上述优点与 LoRA 类似</p>
+</div>
+<ul class="simple">
+<li><p>原则上，IA3 可以应用于神经网络中权重矩阵的任何子集，以减少可训练参数的数量。根据作者的实现，IA3 权重被添加到 Transformer 模型的键、值和前馈层(key, value and feedforward layers)。具体来说，对于 Transformer 模型，IA3 权重被添加到键层和值层(key and value layers)的输出以及每个 Transformer 块中第二前馈层的输入。</p></li>
+<li><p>给定注入 IA3 参数的目标层，可训练参数的数量可以根据权重矩阵的大小确定。</p></li>
+</ul>
+</section>
+<section id="common-ia3-parameters-in-peft">
+<h4>Common IA3 parameters in PEFT<a class="headerlink" href="#common-ia3-parameters-in-peft" title="此标题的永久链接">¶</a></h4>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>target_modules
+    应用 IA3 向量的模块（例如，注意力块, attention blocks）
+feedforward_modules
+    在target_modules中被视为前馈层的模块列表
+    虽然学习向量(learned vectors)与注意力块的输出激活(output activation for attention blocks)相乘，但向量与经典前馈层的输入相乘
+    请注意， feedforward_modules必须是target_modules的子集
+modules_to_save
+    除了 IA3 层之外的模块列表，要设置为可训练并保存在最终检查点中。这些通常包括模型的自定义头，该头是为微调任务随机初始化的
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="id6">
+<h2>参考<a class="headerlink" href="#id6" title="此标题的永久链接">¶</a></h2>
+<ul class="simple">
+<li><p>实践: notebook collection: <a class="reference external" href="https://huggingface.co/spaces/PEFT/causal-language-modeling">https://huggingface.co/spaces/PEFT/causal-language-modeling</a></p></li>
+</ul>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="../../../genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../../py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../../search.html"><span class="std std-ref">搜索页面</span></a></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../Accelerate.html" class="btn btn-neutral float-right" title="7.3.5. Accelerate" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="PEFT.html" class="btn btn-neutral" title="PEFT" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+  
+  <div id="gitalk-container"></div>
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2010-2025, 新溪-gordon.
+
+    </p>
+  </div>
+  <div>备案号 <a href="http://www.beian.miit.gov.cn">京ICP备16018553号</a></div><div>Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a></div>. 
+
+
+</footer>
+
+<script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?042289284b8eb33866001347a3e0b129";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>     
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'V2025.06',
+            LANGUAGE:'zh-CN',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../../_static/sphinx_highlight.js"></script>
+      <script type="text/javascript" src="../../../_static/clipboard.min.js"></script>
+      <script type="text/javascript" src="../../../_static/copybutton.js"></script>
+      <script type="text/javascript" src="../../../_static/translations.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+
+  
+
+  <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+
+
+      // var gitalk = new Gitalk({
+      //         clientID: '565177626b5d46427009',
+      //         clientSecret: 'b2a36e67e1d2a73e43667f46d571c2624f8e1026',
+      //         repo: 'knowledge',
+      //         owner: 'zhaoweiguo',
+      //         admin: ['zhaoweiguo'],
+      //         id: location.pathname,      // Ensure uniqueness and length less than 50
+      //         distractionFreeMode: false  // Facebook-like distraction free mode
+      //       })
+      // gitalk.render('gitalk-container')
+
+  </script>
+
+
+<script type="text/javascript" src="../../../_static/js/table-of-contents-sidebar.js"></script>
+<!-- <script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script> -->
+<script type="text/javascript">
+    window.onload = function(e){
+        TableOfContents.init({
+            basePath: "https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/",
+            querySelector: "body" // or other css querySelector
+        });
+    }
+</script> 
+
+</body>
+</html>

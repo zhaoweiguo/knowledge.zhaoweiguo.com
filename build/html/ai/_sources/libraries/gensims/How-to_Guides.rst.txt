@@ -1,0 +1,168 @@
+How-to Guides: Solve a Problem
+##############################
+
+
+
+How to download pre-trained models and corpora
+==============================================
+
+* corpora and pretrained models are stored in `gensim_data <https://github.com/RaRe-Technologies/gensim-data>`_ project's `release_attachments <https://github.com/piskvorky/gensim-data/releases>`_
+* There's no need for you to use this repository directly. Instead, simply install Gensim and use its download API (see the Quickstart below). It will "talk" to this repository automagically.
+* When you use the Gensim download API, all data is stored in your ~/gensim-data home folder.
+
+
+Example: load a pre-trained model (gloVe word vectors)::
+
+    import gensim.downloader as api
+
+    info = api.info()  # show info about available models/datasets
+    model = api.load("glove-twitter-25")  # download the model and return as object ready for use
+    model.most_similar("cat")
+
+    output:
+    [(u'dog', 0.9590819478034973),
+     (u'monkey', 0.9203578233718872),
+
+
+Example: load a corpus and use it to train a Word2Vec model::
+
+    from gensim.models.word2vec import Word2Vec
+    import gensim.downloader as api
+
+    corpus = api.load('text8')  # download the corpus and return it opened as an iterable
+    model = Word2Vec(corpus)  # train a model from the corpus
+    model.most_similar("car")
+
+    output:
+    [(u'driver', 0.8273754119873047),
+    (u'motorcycle', 0.769528865814209),
+
+
+
+Example: only download a dataset and return the local file path (no opening)::
+
+    import gensim.downloader as api
+
+    print(api.load("20-newsgroups", return_path=True))  
+        # output: /home/user/gensim-data/20-newsgroups/20-newsgroups.gz
+    print(api.load("glove-twitter-25", return_path=True))  
+        # output: /home/user/gensim-data/glove-twitter-25/glove-twitter-25.gz
+
+CLI & python command::
+
+    $ python -m gensim.downloader -i text8
+    =>
+    >>> api.info('text8')
+
+
+    python -m gensim.downloader --info
+        # show info about available models/datasets
+    =>
+    >>> print(api.info())
+
+
+    # load a corpus
+    python -m gensim.downloader --download text8  
+        # download text8 dataset to ~/gensim-data/text8
+    =>
+    >>> text8_corpus = api.load('text8')
+
+    # load a pre-trained model
+    python -m gensim.downloader --download glove-twitter-25  
+        # download model to ~/gensim-data/glove-twitter-50/
+    =>
+    >>> glove_model = api.load('glove-twitter-200')
+
+
+
+How to reproduce the doc2vec ‘Paragraph Vector’ paper
+=====================================================
+
+* 本文主要讲的是用 ``Gensim`` 对 `论文_ <https://arxiv.org/pdf/1405.4053.pdf>`_ 3.2节的实现
+
+
+steps::
+
+    1. Load the IMDB dataset
+    2. Train a variety of Doc2Vec models on the dataset
+    3. Evaluate the performance of each model using a logistic regression
+    4. Examine some of the results directly:
+
+`IMDB <http://ai.stanford.edu/~amaas/data/sentiment/>`_ 简介::
+
+    大小: 84MB
+    it contains several thousand movie reviews.
+    Each review is a single line of text containing multiple sentences
+
+There are 100 thousand reviews in total::
+
+    25k reviews for training (12.5k positive, 12.5k negative)
+    25k reviews for testing (12.5k positive, 12.5k negative)
+    50k unlabeled reviews
+
+
+define a convenient datatype for holding data for a single document::
+
+    words: The text of the document, as a list of words.
+    tags: Used to keep the index of the document in the entire dataset.
+    split: one of train, test or extra. Determines how the document will be used (for training, testing, etc).
+    sentiment: either 1 (positive), 0 (negative) or None (unlabeled document).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+How to Compare LDA Models
+=========================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,255 @@
+安装包
+#############
+
+* CUDA ToolKit Documentssss: https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html
+* CUDA® is a parallel computing platform and programming model invented by NVIDIA. It enables dramatic increases in computing performance by harnessing the power of the graphics processing unit (GPU).
+* 官网下载: https://developer.nvidia.com/cuda-downloads
+
+NVIDIA Drivers
+==============
+
+Verify that your NVIDIA GPU is at least Turing or newer generation::
+
+    lspci | grep VGA
+
+Starting in the 545 driver release, it no longer required to manually enable support for GeForce and Quadro SKUs with::
+
+    echo "options nvidia NVreg_OpenRmEnableUnsupportedGpus=1" | sudo tee /etc/modprobe.d/nvidia-gsp.conf
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/08/52iPpE.png
+
+    Package manager installation recommendations
+
+
+安装::
+
+    sudo apt-get install -V nvidia-open-<driver_branch>
+    例:
+    sudo apt-get install -V nvidia-open
+    # 指定版本
+    sudo apt-get install -V nvidia-open-560
+
+To remove NVIDIA Drivers::
+
+    sudo apt-get --purge remove "*nvidia*" "libxnvctrl*"
+    sudo apt-get autoremove
+
+
+legacy kernel module flavor
+---------------------------
+
+安装::
+
+    # 说明与上面的 apt-get install nvidia-open 二选一
+    sudo apt-get install -y cuda-drivers
+
+
+
+* nvidia-open:是 NVIDIA 的开源 GPU 驱动程序包。NVIDIA 开始发布开源驱动程序，称为 nvidia-open，该驱动程序使用了开源代码，并且通常适用于数据中心和其他特定用例。
+* cuda-drivers:是 NVIDIA CUDA 工具包中提供的官方闭源驱动程序。
+* nvidia-open: 这个包可能仅安装了开源驱动及其依赖项，不包括完整的 CUDA 工具包及其相关的库和工具。
+* cuda-drivers: 这个包安装了闭源驱动程序，并可能包括与 CUDA 相关的一些必要组件，比如编译器、库和工具，使得系统能够支持 CUDA 开发和运行环境。
+
+
+.. note:: For older GPUs from the Maxwell, Pascal, or Volta architectures, the open-source GPU kernel modules are not compatible with your platform. Continue to use the NVIDIA proprietary driver.
+
+* 两个驱动切换方法参见: https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#switching-between-driver-module-flavors
+
+
+区分两种驱动的方法::
+
+    $ dpkg -l | grep nvidia
+    如果你看到类似 nvidia-open 的包名，说明你安装的是开源驱动。
+    如果看到类似 nvidia-driver 或 cuda-drivers 的包名，说明你安装的是闭源驱动。
+
+    # centos用
+    rpm -qa | grep nvidia
+
+
+.. note:: 注意: 有可能不是系统自带的命令安装的
+
+定位驱动步骤
+------------
+
+::
+
+    # 检查正在使用的内核模块验证驱动的类型
+    $ lsmod | grep nvidia
+    开源驱动: 如果你看到类似 nvidia_open 的模块，说明你正在使用开源驱动。
+    闭源驱动: 如果看到的是 nvidia，没有 open 标记，则说明你使用的是闭源驱动。
+
+    # 如果还找不到可以用下面方法
+    # 查找 CUDA 目录
+    $ find / -type d -name "cuda*"
+    ...
+    /opt/conda/pkgs/cuda-nvrtc-11.7.99-0
+    /opt/conda/pkgs/cuda-nvtx-11.7.91-0
+    /opt/conda/pkgs/cuda-cupti-11.7.101-0
+    ...
+ 
+    # 找到是: 仅依赖于 Conda 环境中的 CUDA 组件
+    $ conda list | grep cuda
+    cuda-cudart               11.7.99                       0    nvidia
+    cuda-cupti                11.7.101                      0    nvidia
+    cuda-libraries            11.7.1                        0    nvidia
+    cuda-nvrtc                11.7.99                       0    nvidia
+    cuda-nvtx                 11.7.91                       0    nvidia
+    cuda-runtime              11.7.1                        0    nvidia
+
+    # 说明
+    cuda-cudart: CUDA Runtime Library
+        说明: 提供 CUDA 程序的运行时环境，用于执行 CUDA 代码。
+    cuda-cupti: CUDA Performance Tools Interface (CUPTI)
+        说明: 用于性能分析和性能工具的接口，帮助分析 CUDA 程序的性能。
+    cuda-libraries: CUDA Libraries
+        说明: 提供其他 CUDA 库，例如 cuBLAS、cuFFT、cuSPARSE 等。
+    cuda-nvrtc: CUDA Runtime Compilation
+        说明: 提供 CUDA 运行时编译功能，使得在运行时编译 CUDA 代码成为可能。
+    cuda-nvtx: NVIDIA Tools Extension (NVTX)
+        说明: 提供用于性能分析和调试的标记和工具。
+    cuda-runtime: CUDA Runtime
+        说明: 提供基础的 CUDA 运行时支持，包含执行 CUDA 程序所需的库和工具。
+
+
+
+
+
+
+Cuda Toolkit
+============
+
+System Requirements::
+
+    CUDA-capable GPU
+    A supported version of Linux with a gcc compiler and toolchain
+    CUDA Toolkit
+
+
+Pre-installation Actions::
+
+    1. Verify the system has a CUDA-capable GPU.
+        lspci | grep -i nvidia
+
+    2. Verify the system is running a supported version of Linux.
+        uname -m && cat /etc/*release
+
+    3. Verify the system has gcc installed.
+        gcc --version
+
+    4. Verify the system has the correct kernel headers and development packages installed.
+        uname -r    # 正在运行的内核版本
+
+    5. Download the NVIDIA CUDA Toolkit.
+        The NVIDIA CUDA Toolkit is available at https://developer.nvidia.com/cuda-downloads
+
+    6. Handle conflicting installation methods.
+        sudo apt-get --purge remove <package_name>          # Ubuntu
+        例:
+        sudo apt-get --purge remove "*cublas*" "cuda*"
+        sudo apt-get autoremove
+
+
+
+最新安装(随时有更新，具体参见 `这儿 <https://developer.nvidia.com/cuda-downloads>`_ )::
+
+    wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
+    sudo dpkg -i cuda-keyring_1.1-1_all.deb
+    sudo apt-get update
+    sudo apt-get -y install cuda-toolkit-12-6  # 根据情况安装不同版本
+
+    # 默认安装(ubunu自带，版本较低)
+    sudo apt install nvidia-cuda-toolkit
+
+
+检测安装是否成功::
+
+    # 使用 dpkg 检查 CUDA 安装包
+    dpkg -l | grep cuda
+
+
+    // 检查 nvcc 是否可用
+    nvcc --version
+
+    # 如不可用，记得配置环境变量
+    export PATH=/usr/local/cuda/bin:$PATH
+    export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+
+To remove CUDA Toolkit::
+
+    sudo apt-get --purge remove "*cuda*" "*cublas*" "*cufft*" "*cufile*" "*curand*" \
+    "*cusolver*" "*cusparse*" "*gds-tools*" "*npp*" "*nvjpeg*" "nsight*" "*nvvm*"
+    sudo apt-get autoremove
+
+
+
+cuDNN
+=====
+
+* cuDNN（CUDA Deep Neural Network library）是由 NVIDIA 提供的一个 GPU 加速库，专门用于深度学习神经网络的高效计算。它是 CUDA 的一个扩展，旨在为深度神经网络（DNN）提供高度优化的实现，特别是在卷积操作、池化操作、归一化、激活函数等常见神经网络操作方面。
+
+
+功能和特点
+----------
+
+* 高效的卷积操作：卷积操作是深度学习模型（特别是卷积神经网络，CNN）中的核心计算。cuDNN 提供了对卷积操作的高度优化，使得它们能够在 NVIDIA GPU 上高效执行。这包括前向传播（convolution）、反向传播（backpropagation）、以及权重更新（weight update）等操作。
+* 优化的池化（Pooling）和激活（Activation）操作：cuDNN 提供了优化的最大池化（max pooling）、平均池化（average pooling）以及常见的激活函数如 ReLU、Sigmoid、Tanh 等的实现，能够加速这些操作的执行。
+* 归一化操作：cuDNN 包含批归一化（Batch Normalization）等归一化操作的高效实现，这些操作在训练深度神经网络时非常重要。
+* RNN 和 LSTM 支持：cuDNN 还支持循环神经网络（RNN）和长短时记忆网络（LSTM）的加速计算，这些网络在自然语言处理和序列数据建模中广泛使用。
+* 自动选择最佳算法：cuDNN 能够根据特定硬件和输入大小自动选择最佳的计算算法，以最大化性能。这对于不同的 GPU 硬件或模型配置非常有用。
+* 与深度学习框架的集成：cuDNN 被广泛集成到各种主流的深度学习框架中，如 TensorFlow、PyTorch、MXNet、Caffe、Keras 等。通过集成 cuDNN，框架能够利用 GPU 的计算能力，显著提高深度学习模型的训练和推理速度。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

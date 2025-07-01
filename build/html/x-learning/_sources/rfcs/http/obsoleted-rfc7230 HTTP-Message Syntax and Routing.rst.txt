@@ -1,0 +1,1179 @@
+.. _rfc7230:
+
+rfc7230: HTTP/1.1: Message Syntax and Routing
+#############################################
+
+* Obsoletes: `rfc2145`, `rfc2616`
+* Obsoleted by: :ref:`rfc9110` , :ref:`rfc9112`
+* Updates: `rfc2817`, `rfc2818`
+* June 2014
+* Category: Standards Track
+
+
+
+* 定义了HTTP消息的通用语法和路由机制。该规范详细描述了HTTP消息的结构，包括请求消息和响应消息，以及它们各自的起始行、头部字段和主体。
+* 它描述了HTTP客户端和服务器之间的连接管理，以及如何使用TCP/IP协议在这些连接上传输HTTP消息。它还定义了URI（统一资源标识符）的语法和语义，URI是用于标识Web资源的字符串。
+* 还介绍了HTTP协议中的一些重要概念，如持久连接、管线化、压缩和分块传输编码。它还定义了HTTP消息的编码格式（如chunked编码）和消息处理的流程。
+
+
+
+
+* HTTP消息的结构：HTTP消息由请求消息和响应消息组成，每个消息包含起始行、头部字段和主体。起始行描述消息的类型和目标，头部字段包含与消息相关的元数据，主体包含消息的主要内容。
+* HTTP消息的传输方式：HTTP使用TCP/IP协议在客户端和服务器之间传输消息。HTTP/1.1引入了持久连接机制，允许多个请求和响应在单个连接上进行交互，从而提高性能。
+* URI的语法和语义：URI是用于标识Web资源的字符串。RFC 7230定义了URI的语法和语义，以确保所有HTTP消息都可以正确地标识目标资源。
+* HTTP消息的编码格式：如chunked编码，可以将消息分割为多个块进行传输。这些编码格式可以提高HTTP消息的传输效率。
+* HTTP消息处理的流程：包括消息的解析、头部字段的解释和处理、消息的路由和响应的生成。这些流程确保HTTP消息可以正确地交换和处理。
+
+定义
+====
+
+hop-by-hop and end-to-end
+-------------------------
+
+* Hop-by-hop and end-to-end are two different communication models that are used in networking and data transmission. 
+* The key difference between these models lies in how data is transferred between the sender and receiver.
+* Both hop-by-hop and end-to-end communication models have their advantages and disadvantages, and the choice between them depends on the specific requirements of the application and the network being used.
+
+
+* In ``hop-by-hop`` communication, data is sent from the source node to the destination node through a series of intermediate nodes, where each intermediate node receives and processes the data before forwarding it to the next hop. 
+* This means that each intermediate node is responsible for performing certain functions, such as routing, error correction, and congestion control. 
+* As a result, hop-by-hop communication can be slower and more complex than end-to-end communication, but it allows for more fine-grained control over the data transmission process.
+
+* In ``end-to-end`` communication involves sending data directly from the source node to the destination node, without the involvement of intermediate nodes. 
+* This means that the data is not processed or modified during transit, and the destination node receives the data as it was originally sent by the source node. 
+* End-to-end communication is generally faster and simpler than hop-by-hop communication, but it may be less reliable in situations where there are network errors or congestion.
+
+
+Inbound and Outbound
+--------------------
+
+* "Inbound" 是一个术语，通常用于描述数据或信息的流动方向或位置。在计算机网络或服务器环境中，它通常指从外部网络或客户端进入服务器或系统的数据流或信息流。
+* 例如，在一个Web服务器环境中，当一个客户端请求一个网页时，请求数据从客户端"inbound" 到达服务器，服务器对请求进行处理并返回响应数据给客户端。因此，我们可以说请求数据是"inbound"，而响应数据是"outbound"。
+
+head-of-line (HOL) blocking problem
+-----------------------------------
+
+The head-of-line (HOL) blocking problem is a performance issue that can occur in network communication protocols, such as HTTP. It happens when a request/response is delayed or blocked, which causes subsequent requests to also be delayed or blocked, even if they could have been processed more quickly.
+
+
+ABNF语法
+--------
+
+::
+
+    1#protocol: one or more protocols can be specified in a comma-separated list
+    *( header-field CRLF ): zero or more header fields
+    1*( header-field CRLF ): 1 or more header fields
+        The asterisk (*) indicates that the header fields are optional and can occur zero or more times
+
+    注: # 类语法是本spec 新增的 ABNF 扩展（详见第7章）
+
+
+Abstract
+========
+
+* The Hypertext Transfer Protocol (HTTP) is a stateless application-level protocol for distributed, collaborative, hypertext information systems.  
+* This document provides::
+
+		an overview of HTTP architecture and its associated terminology, 
+		defines the "http" and "https" Uniform Resource Identifier (URI) schemes, 
+		defines the HTTP/1.1 message syntax and parsing requirements,
+		describes related security concerns for implementations.
+
+1.  Introduction
+================
+
+* 主要介绍了HTTP/1.1协议的背景、目的和适用范围
+* HTTP协议的发展历程：HTTP协议最初是用于文本传输的协议，随着Web的快速发展，HTTP协议也逐渐演变为一种用于传输多媒体、脚本和应用程序的协议。HTTP/1.1是HTTP协议的一个重要版本，其引入了许多新功能和改进，以提高性能和安全性。
+* HTTP协议的目的：HTTP协议的目的是提供一种通用的协议，用于在客户端和服务器之间传输各种类型的数据。HTTP协议使用标准化的消息格式和传输方式，以便各种系统和平台都可以相互通信。
+
+
+
+* This document 
+* describes the architectural elements that are used or referred to in HTTP, 
+* defines the "http" and "https" URI schemes, 
+* describes overall network operation and connection management,
+* defines HTTP message framing and forwarding requirements. 
+
+* Our goal is to define all of the mechanisms necessary for HTTP message handling that are independent of message semantics, thereby defining the complete set of requirements for message parsers and message-forwarding intermediaries.
+
+
+1.2.  Syntax Notation
+---------------------
+
+* This specification uses the Augmented Backus-Naur Form (ABNF) notation of [:ref:`rfc5234`] with a list extension, defined in ``Section 7``
+* ``Appendix B`` shows the collected grammar with all list operators expanded to standard ABNF notation.
+
+
+* ABNF rule names prefixed with "obs-" denote "obsolete" grammar rules that appear for historical reasons.
+
+
+2.  Architecture
+================
+
+
+2.1.  Client/Server Messaging
+-----------------------------
+
+Example::
+
+   Client request:
+
+     GET /hello.txt HTTP/1.1
+     User-Agent: curl/7.16.3 libcurl/7.16.3 OpenSSL/0.9.7l zlib/1.2.3
+     Host: www.example.com
+     Accept-Language: en, mi
+
+
+   Server response:
+
+     HTTP/1.1 200 OK
+     Date: Mon, 27 Jul 2009 12:28:53 GMT
+     Server: Apache
+     Last-Modified: Wed, 22 Jul 2009 19:15:56 GMT
+     ETag: "34aa387-d-1568eb00"
+     Accept-Ranges: bytes
+     Content-Length: 51
+     Vary: Accept-Encoding
+     Content-Type: text/plain
+
+     Hello World! My payload includes a trailing CRLF.
+
+
+2.2.  Implementation Diversity
+------------------------------
+
+* client不止浏览器，也不一定有真人在用
+* 可能是爬虫、可能是命令行……
+
+2.3.  Intermediaries
+--------------------
+
+* HTTP enables the use of intermediaries to satisfy requests through a chain of connections. 
+* There are three common forms of HTTP intermediary::
+
+	1. proxy
+		a.k.a. transparent proxy
+		作用: security, annotation services, or shared caching
+	2. gateway
+		a.k.a. "reverse proxy"
+		acts as an origin server for the outbound connection 
+			but translates received requests 
+			and forwards them inbound to another server or servers.
+	3. tunnel
+		acts as a blind relay between two connections without changing the messages.
+
+
+The figure above shows three intermediaries (A, B, and C) between the user agent and origin server::
+
+	          >             >             >             >
+       UA =========== A =========== B =========== C =========== O
+                  <             <             <             <
+
+The terms "inbound" and "outbound" are used to describe directional requirements in relation to the request route::
+
+	 "inbound" means toward the origin server
+	 "outbound" means toward the user agent.
+
+2.4.  Caches
+------------
+
+The following illustrates the resulting chain if B has a cached copy of an earlier response from O (via C) for a request that has not been cached by UA or A::
+
+               >             >
+          UA =========== A =========== B - - - - - - C - - - - - - O
+                     <             <
+
+
+
+2.5.  Conformance and Error Handling
+------------------------------------
+
+* A recipient MUST interpret a received protocol element according to the semantics defined for it by this specification, including extensions to this specification, unless the recipient has determined (through experience or configuration) that the sender incorrectly implements what is implied by those semantics.
+
+
+
+2.6. Protocol Versioning
+------------------------
+
+::
+
+		<major>.<minor>
+
+
+
+2.7. Uniform Resource Identifiers
+---------------------------------
+
+::
+
+     http-URI = "http:" "//" authority path-abempty [ "?" query ]
+                [ "#" fragment ]
+
+     https-URI = "https:" "//" authority path-abempty [ "?" query ]
+                 [ "#" fragment ]
+
+
+3. Message Format
+=================
+
+格式::
+
+    HTTP-message   = start-line
+                     *( header-field CRLF )
+                     CRLF
+                     [ message-body ]
+
+说明::
+
+    SP             = single space
+    obs-text       = %x80-FF
+    obs-fold       = CRLF 1*( SP / HTAB )
+
+
+    obs: is an abbreviation for "obsolete".
+    HTAB: horizontal tab
+
+
+示例::
+
+    请求:
+    GET /index.html HTTP/1.1
+    Host: www.zhaoweiguo.com
+
+    响应:
+    HTTP/1.1 200 OK
+    Server: nginx/1.19.6
+    Date: Fri, 17 Mar 2023 09:07:16 GMT
+    Content-Type: text/html
+    Content-Length: 8428
+    Last-Modified: Fri, 18 Jun 2021 03:36:37 GMT
+    Connection: keep-alive
+    ETag: "60cc14c5-20ec"
+    Accept-Ranges: bytes
+
+    ... ...
+
+
+
+
+3.1. Start Line
+---------------
+
+two types of message differ only in the start-line::
+
+    a request-line (for requests)
+    a status-line (for responses)
+
+格式::
+
+    start-line     = request-line / status-line
+
+    request-line   = method SP request-target SP HTTP-version CRLF
+    method         = token  # 说明:case-sensitive
+
+    status-line = HTTP-version SP status-code SP reason-phrase CRLF
+    status-code    = 3DIGIT
+    reason-phrase  = *( HTAB / SP / VCHAR / obs-text )
+
+
+3.2. Header Fields
+------------------
+
+linear whitespace::
+
+    1. OWS (optional whitespace)
+        零个或多个线性空格字节的情况
+        对于协议元素而言，如果可选的空格可以提高可读性，发送者应该生成可选的空格作为单个SP；否则，发送者不应该生成可选的空格
+    2. RWS (required whitespace)
+        至少需要一个线性空格字节来分隔字段标记的情况
+    3. BWS ("bad" whitespace)
+        BWS规则只是出于历史原因，用于允许可选的空格。
+        发送者在消息中不应该生成BWS。接收者在解析协议元素之前，应该解析这种不良的空格并将其删除。
+
+
+.. note:: Field Parsing：obs-fold 规则是一种历史上的 HTTP 头字段值的扩展规则，允许字段值跨越多行。在这种规则下，额外的行需要在行首至少加一个空格或制表符（obs-fold）。但是，这种规则已经被弃用，除非在 message/http 媒体类型中使用。在其他情况下，如果接收到 obs-fold，服务器必须将其替换为一个或多个空格（SP），代理和网关也必须这样做，用户代理接收到 obs-fold 时也必须将其替换为一个或多个空格。
+
+
+格式::
+
+    header-field   = field-name ":" OWS field-value OWS
+
+    field-name     = token
+
+    field-value    = *( field-content / obs-fold )
+    field-content  = field-vchar [ 1*( SP / HTAB ) field-vchar ]
+    field-vchar    = VCHAR / obs-text
+
+
+     token          = 1*tchar
+     tchar          = "!" / "#" / "$" / "%" / "&" / "'" / "*"
+                    / "+" / "-" / "." / "^" / "_" / "`" / "|" / "~"
+                    / DIGIT / ALPHA
+                    ; any VCHAR, except delimiters
+
+     quoted-string  = DQUOTE *( qdtext / quoted-pair ) DQUOTE
+     qdtext         = HTAB / SP /%x21 / %x23-5B / %x5D-7E / obs-text
+        说明: ASCII码中去除控制字符，"号(x22)，\号(x5c)
+
+
+
+3.3. Message Body
+-----------------
+
+格式::
+
+    message-body = *OCTET
+
+
+3.3.1.  Transfer-Encoding
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* HTTP协议定义了一种机制来对``http消息体``进行编码，从而支持多种数据格式。这种机制称为Transfer-Encoding（传输编码）
+
+
+示例::
+
+     Transfer-Encoding: gzip, chunked
+
+
+
+3.3.2.  Content-Length
+^^^^^^^^^^^^^^^^^^^^^^
+
+* A user agent SHOULD include a Content-Length header field in a request message if no Transfer-Encoding header field is present and the request method requires a payload body.
+* If a message contains a Transfer-Encoding header field, the sender MUST NOT include a Content-Length header field.
+
+
+示例::
+
+     Content-Length: 3495
+
+.. note:: Note: HTTP's use of Content-Length for message framing differs significantly from the same field's use in MIME, where it is an optional field used only within the "message/external-body" media-type.
+
+
+3.3.3.  Message Body Length
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* 如果Content-Length头部字段有效且没有Transfer-Encoding头部字段，那么消息体长度由Content-Length指定的八位字节长度确定，如果接收方在接收到指定长度的字节之前连接关闭或超时，则应该将消息视为不完整。
+* 如果Transfer-Encoding头部字段中包含了chunked编码，那么消息体长度由读取和解码chunked数据来确定；
+* 如果Transfer-Encoding头部字段中包含的不是chunked编码，那么消息体长度由读取连接直到被服务器关闭来确定；
+* 如果请求和响应中同时出现Content-Length和Transfer-Encoding头部字段，那么应该忽略Content-Length，否则可能会导致请求欺骗或响应拆分。
+
+
+
+3.4. Handling Incomplete Messages
+---------------------------------
+
+* A server that receives an incomplete request message, usually due to a canceled request or a triggered timeout exception, MAY send an error response prior to closing the connection.
+
+* A message body that uses the chunked transfer coding is incomplete if the zero-sized chunk (that terminates the encoding) has not been received.  
+* A message that uses a valid Content-Length is incomplete if the size of the message body received (in octets) is less than the value given by Content-Length.  
+* A response that has neither chunked transfer coding nor Content-Length is terminated by closure of the connection and, thus, is considered complete regardless of the number of message body octets received, provided that the header section was received intact.
+
+
+
+4. Transfer Codings
+===================
+
+格式::
+
+     transfer-coding    = "chunked" ; Section 4.1
+                        / "compress" ; Section 4.2.1
+                        / "deflate" ; Section 4.2.2
+                        / "gzip" ; Section 4.2.3
+                        / transfer-extension
+     transfer-extension = token *( OWS ";" OWS transfer-parameter )
+
+     transfer-parameter = token BWS "=" BWS ( token / quoted-string )
+
+* All transfer-coding names are case-insensitive and ought to be registered within the HTTP Transfer Coding registry
+
+几种标准的Transfer-Encoding，包括::
+
+    chunked：将消息体分成多个块进行传输，每个块带有一个长度字段，最后使用一个零长度的块作为结束标记。
+    compress：使用Unix的标准压缩算法进行压缩。
+    deflate：使用zlib库的deflate算法进行压缩。
+    gzip：使用gzip压缩算法进行压缩。
+
+
+4.1.  Chunked Transfer Coding
+-----------------------------
+
+* The chunked transfer coding wraps the payload body in order to transfer it as a series of chunks, each with its own size indicator, followed by an OPTIONAL trailer containing header fields.  
+* Chunked enables content streams of unknown size to be transferred as a sequence of length-delimited buffers, which enables the sender to retain connection persistence and the recipient to know when it has received the entire message.
+
+格式::
+
+     chunked-body   = *chunk
+                      last-chunk
+                      trailer-part
+                      CRLF
+
+     chunk          = chunk-size [ chunk-ext ] CRLF
+                      chunk-data CRLF
+     chunk-size     = 1*HEXDIG
+     last-chunk     = 1*("0") [ chunk-ext ] CRLF
+
+     chunk-data     = 1*OCTET ; a sequence of chunk-size octets
+
+* The chunk-size field is a string of hex digits indicating the size of the chunk-data in octets.  
+* The chunked transfer coding is complete when a chunk with a chunk-size of zero is received, possibly followed by a trailer, and finally terminated by an empty line.
+
+
+4.1.1.  Chunk Extensions
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+格式::
+
+     chunk-ext      = *( ";" chunk-ext-name [ "=" chunk-ext-val ] )
+
+     chunk-ext-name = token
+     chunk-ext-val  = token / quoted-string
+
+* The chunked encoding allows each chunk to include zero or more chunk extensions, immediately following the chunk-size, for the sake of supplying per-chunk metadata (such as a signature or hash), mid-message control information, or randomization of message body size.
+
+
+4.1.2.  Chunked Trailer Part
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* A trailer allows the sender to include additional fields at the end of a chunked message in order to supply metadata that might be dynamically generated while the message body is sent, such as a message integrity check, digital signature, or post-processing status. 
+* The trailer fields are identical to header fields, except they are sent in a chunked trailer instead of the message's header section.格式::
+
+     trailer-part   = *( header-field CRLF )
+
+* 附加在分块消息末尾的元数据字段，可以包括消息完整性校验、数字签名或后处理状态等信息。与普通的消息头部分不同，Trailer 部分是在分块的末尾发送的。
+
+4.1.3.  Decoding Chunked
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+pseudo-code::
+
+     length := 0
+     read chunk-size, chunk-ext (if any), and CRLF
+     while (chunk-size > 0) {
+        read chunk-data and CRLF
+        append chunk-data to decoded-body
+        length := length + chunk-size
+        read chunk-size, chunk-ext (if any), and CRLF
+     }
+     read trailer field
+     while (trailer field is not empty) {
+        if (trailer field is allowed to be sent in a trailer) {
+            append trailer field to existing header fields
+        }
+        read trailer-field
+     }
+     Content-Length := length
+     Remove "chunked" from Transfer-Encoding
+     Remove Trailer from existing header fields
+
+
+
+
+4.2. Compression Codings
+------------------------
+
+transfer-coding::
+
+    / "compress" ; Section 4.2.1
+    / "deflate" ; Section 4.2.2
+    / "gzip" ; Section 4.2.3
+
+
+    compress：使用Unix的标准压缩算法进行压缩。
+    deflate：使用zlib库的deflate算法进行压缩。
+    gzip：使用gzip压缩算法进行压缩。
+
+
+4.3. TE
+-------
+
+格式::
+
+     TE        = #t-codings
+     t-codings = "trailers" / ( transfer-coding [ t-ranking ] )
+     t-ranking = OWS ";" OWS "q=" rank
+     rank      = ( "0" [ "." 0*3DIGIT ] )
+                / ( "1" [ "." 0*3("0") ] )
+
+* TE is short for Transfer-Encoding
+* The "TE" header field in a request indicates what transfer codings, besides chunked, the client is willing to accept in response, and whether or not the client is willing to accept trailer fields in a chunked transfer coding.
+
+示例::
+
+     TE: deflate
+     TE:
+     TE: trailers, deflate;q=0.5
+
+"trailers" indicates that::
+
+    the client is willing to accept trailer fields in a chunked transfer coding on behalf of itself and any downstream clients.
+    For requests from an intermediary, this implies that either: 
+      (a) all downstream clients are willing to accept trailer fields in the forwarded response;
+      (b) the intermediary will attempt to buffer the response on behalf of downstream recipients.
+
+.. note:: Note that HTTP/1.1 does not define any means to limit the size of a chunked response such that an intermediary can be assured of buffering the entire response.
+
+q(similar to the qvalues used in content negotiation fields, Section 5.3.1 of [RFC7231])::
+
+    The rank value is a real number in the range 0 through 1, 
+    where 0.001 is the least preferred and 1 is the most preferred; 
+    a value of 0 means "not acceptable".
+
+
+* If the TE field-value is empty or if no TE field is present, the only acceptable transfer coding is chunked.
+* Since the TE header field only applies to the immediate connection, a sender of TE MUST also send a "TE" connection option within the Connection header field (Section 6.1) in order to prevent the TE field from being forwarded by intermediaries that do not support its semantics.
+
+
+
+4.4. Trailer
+------------
+
+发送者希望在消息末尾以 trailer 字段的形式发送元数据时，发送者应该在消息体之前生成一个 Trailer 首部字段，以指示将在 trailers 中存在哪些字段::
+
+    Trailer = 1#field-name
+
+Trailer可以在HTTP响应中使用，它可以包含一些元数据，这些元数据在响应主体后面传输。以下是一些Trailer的使用示例::
+
+    1. 计算完整性校验
+    Trailer可以用于在HTTP响应主体的末尾传输一个完整性校验值，
+    例如，在HTTP视频流传输中，可以使用Trailer传输一个CRC校验码，以便接收方可以检查视频流的完整性。
+
+    2. 传输编码扩展
+    Trailer还可以用于在HTTP响应主体的末尾传输传输编码的扩展信息。
+    例如，可以使用Trailer传输一些元数据，这些元数据可以用于将压缩算法从gzip升级为zopfli。
+
+    3. 其他元数据
+    Trailer还可以用于在HTTP响应的末尾传输其他元数据，
+    例如，可以使用Trailer传输一个“Location”头，这样接收方就可以在处理完响应主体之后重定向到新的URL。
+
+.. note:: 需要注意的是，Trailer只在使用chunked编码传输响应主体时才能使用。使用Trailer时，需要在HTTP响应头中添加一个“Trailer”字段，该字段指定将包含哪些Trailer字段。
+
+
+通过使用Trailer字段，我们可以在HTTP消息的尾部添加元数据，从而增强HTTP消息的灵活性和可扩展性::
+
+        self.send_response(200)
+        self.send_header('Content-Type', 'text/plain')
+        self.send_header('Transfer-Encoding', 'chunked')
+        self.send_header('Trailer', 'My-Field')
+        self.end_headers()
+
+        self.wfile.write(b'Hello, world!\r\n')
+        self.wfile.write(b'0\r\n')
+        self.wfile.write(b'My-Field: example\r\n\r\n')
+
+
+
+5. Message Routing
+==================
+
+5.1.  Identifying a Target Resource
+-----------------------------------
+
+* A URI reference (Section 2.7) is typically used as an identifier for the "target resource", which a user agent would resolve to its absolute form in order to obtain the "target URI".
+* The target URI excludes the reference's fragment component, if any, since fragment identifiers are reserved for client-side processing
+
+
+5.2.  Connecting Inbound
+------------------------
+
+* Once the target URI is determined, a client needs to decide whether a network request is necessary to accomplish the desired semantics and, if so, where that request is to be directed.
+* 1. If the client has a cache [RFC7234] and the request can be satisfied by it, then the request is usually directed there first.
+* 2. Else check its configuration to determine whether a proxy is to be used to satisfy the request.
+* 3. If no proxy is applicable, a typical client will invoke a handler routine, usually specific to the target URI's scheme, to connect directly to an authority for the target resource.
+
+
+5.3.  Request Target
+--------------------
+
+* Once an inbound connection is obtained, the client sends an HTTP request message (Section 3) with a request-target derived from the target URI. 
+* There are four distinct formats for the ``request-target``, depending on both the method being requested and whether the request is to a proxy::
+
+     request-target = origin-form
+                    / absolute-form
+                    / authority-form
+                    / asterisk-form
+
+
+5.3.1.  origin-form
+^^^^^^^^^^^^^^^^^^^
+
+* 主要用于直接向源服务器发起请求
+
+::
+
+     origin-form    = absolute-path [ "?" query ]
+
+Example::
+
+    directly from the origin server would open (or reuse) a TCP connection 
+      to port 80 of the host "www.example.org" and send the lines:
+
+     GET /where?q=now HTTP/1.1
+     Host: www.example.org
+
+
+
+5.3.2. absolute-form
+^^^^^^^^^^^^^^^^^^^^
+
+* 主要用于向代理服务器发起请求
+* When making a request to a proxy, other than a CONNECT or server-wide OPTIONS request (as detailed below), a client MUST send the target URI in absolute-form as the request-target.
+
+::
+
+    absolute-form  = absolute-URI
+
+
+示例::
+
+    GET http://www.example.org/pub/WWW/TheProject.html HTTP/1.1
+
+
+
+5.3.3. authority-form
+^^^^^^^^^^^^^^^^^^^^^
+
+* 只包含了请求目标的完整authority部分，用于CONNECT请求中
+* The authority-form of request-target is only used for CONNECT requests (Section 4.3.6 of [RFC7231]).
+
+::
+
+     authority-form = authority
+
+* When making a CONNECT request to establish a tunnel through one or more proxies, a client MUST send only the target URI's authority component (excluding any userinfo and its "@" delimiter) as the request-target.
+
+
+示例::
+
+     CONNECT www.example.com:80 HTTP/1.1
+
+* 适用场景是在进行CONNECT请求时，用于建立一个或多个代理服务器的通道。在HTTP/1.1中，CONNECT方法被用于建立一条到目标服务器的连接，并通过代理服务器进行通信。
+* 这个请求会在客户端和代理服务器之间建立一条隧道，允许客户端发送经过代理服务器中继的请求。
+
+
+
+5.3.4. asterisk-form
+^^^^^^^^^^^^^^^^^^^^
+
+* 只能用于OPTIONS请求中，用于请求服务端针对整个服务器的通信选项
+* The asterisk-form of request-target is only used for a server-wide OPTIONS request (Section 4.3.7 of [RFC7231]).
+
+::
+
+     asterisk-form  = "*"
+
+
+* When a client wishes to request OPTIONS for the server as a whole, as opposed to a specific named resource of that server, the client MUST send only "*" (%x2A) as the request-target.
+
+示例::
+
+     OPTIONS * HTTP/1.1
+
+
+* If a proxy receives an OPTIONS request with an absolute-form of request-target in which the URI has an empty path and no query component, then the last proxy on the request chain MUST send a request-target of "*" when it forwards the request to the indicated origin server.
+
+示例::
+
+     OPTIONS http://www.example.org:8001 HTTP/1.1
+
+    would be forwarded by the final proxy as
+
+     OPTIONS * HTTP/1.1
+     Host: www.example.org:8001
+
+
+5.4. Host
+----------
+
+*  The "Host" header field in a request provides the host and port information from the target URI, enabling the origin server to distinguish among resources while servicing requests for multiple host names on a single IP address.
+* Since the Host field-value is critical information for handling a request, a user agent SHOULD generate Host as the ``first header field`` following the request-line.
+
+示例::
+
+     GET /pub/WWW/ HTTP/1.1
+     Host: www.example.org
+
+* A client MUST send a Host header field in an HTTP/1.1 request even if the request-target is in the ``absolute-form``, since this allows the Host information to be forwarded through ancient HTTP/1.0 proxies that might not have implemented Host.
+* When a proxy receives a request with an ``absolute-form`` of request-target, the proxy MUST ignore the received Host header field (if any) and instead replace it with the host information of the request-target.  A proxy that forwards such a request MUST generate a new Host field-value based on the received request-target rather than forward the received Host field-value.
+
+
+
+.. note:: A server MUST respond with a 400 (Bad Request) status code to any HTTP/1.1 request message that lacks a Host header field and to any request message that contains more than one Host header field or a Host header field with an invalid field-value.
+
+5.5. Effective Request URI
+---------------------------
+
+* 有效请求URI是服务器构建的目标URI，用于正确处理请求。它包括使用请求目标、主机头字段和连接上下文的信息，以及服务器的本地配置。
+
+例::
+
+     GET /pub/WWW/TheProject.html HTTP/1.1
+     Host: www.example.org:8080
+
+     =>
+     http://www.example.org:8080/pub/WWW/TheProject.html
+
+
+5.6. Associating a Response to a Request
+----------------------------------------
+
+* HTTP does not include a request identifier for associating a given request message with its corresponding one or more response messages. 
+* Hence, it relies on the order of response arrival to correspond exactly to the order in which requests are made on the same connection.
+
+
+
+5.7. Message Forwarding
+-----------------------
+
+* Since an HTTP stream has characteristics similar to a ``pipe-and-filter`` architecture, there are no inherent limits to the extent an intermediary can enhance (or interfere) with either direction of the stream.
+
+
+5.7.1.  Via
+^^^^^^^^^^^
+
+* The "Via" header field is used to indicate the presence of intermediate protocols and recipients between the user agent and the server (on requests) or between the origin server and the client (on responses). 
+* It is similar to the "Received" header field in email. 
+
+* Multiple Via field values represent each proxy or gateway that has forwarded the message. 
+* Each intermediary appends its own information about how the message was received, such that the end result is ordered according to the sequence of forwarding recipients. 
+
+* 【示例】a request message could be sent from an HTTP/1.0 user agent to an internal proxy code-named "fred", which uses HTTP/1.1 to forward the request to a public proxy at p.example.net, which completes the request by forwarding it to the origin server at www.example.com.  The request received by www.example.com would then have the following Via header field:
+
+     Via: 1.0 fred, 1.1 p.example.net
+
+* The Via field value records the advertised protocol capabilities of the request/response chain such that they remain visible to downstream recipients. 
+* A sender MAY generate comments in the Via header field to identify the software of each recipient. 
+* An intermediary used as a portal through a network firewall SHOULD NOT forward the names and ports of hosts within the firewall region unless it is explicitly enabled to do so. 
+
+* An intermediary MAY combine an ordered subsequence of Via header field entries into a single such entry if the entries have identical received-protocol values::
+
+     Via: 1.0 ricky, 1.1 ethel, 1.1 fred, 1.0 lucy
+
+   could be collapsed to
+
+     Via: 1.0 ricky, 1.1 mertz, 1.0 lucy
+
+
+5.7.2.  Transformations
+^^^^^^^^^^^^^^^^^^^^^^^
+
+* 意义/作用
+* Some intermediaries include features for transforming messages and their payloads.  
+* A proxy might, for example, convert between image formats in order to save cache space or to reduce the amount of traffic on a slow link.
+* 风险点
+* However, operational problems might occur when these transformations are applied to payloads intended for critical applications, such as medical imaging or scientific data analysis, particularly when integrity checks or digital signatures are used to ensure that the payload received is identical to the original.
+
+* transforming proxy定义
+* A proxy that modifies messages in a semantically meaningful way is called a "transforming proxy," and such modifications should be presumed to be desired by the client or client organization that selected the proxy. 
+* 示例:
+* transforming proxy might be acting as::
+
+    a shared annotation server (modifying responses to include references to a local annotation database), 
+    a malware filter, 
+    a format transcoder, 
+    a privacy filter.
+
+* 注意
+* However, a transforming proxy must not change the "absolute-path" and "query" parts of the request-target when forwarding it to the next server, except in specific cases.
+
+* no-transform相关
+* When it comes to payload transformation, a proxy must not modify the payload of a message that contains a no-transform cache-control directive
+* If a proxy does transform the payload, it must add a Warning header field to indicate that a transformation has been applied.
+
+
+6. Connection Management
+========================
+
+6.1.  Connection
+----------------
+
+* The Connection header field in HTTP allows a sender to indicate desired control options for the current connection.
+* In order to avoid confusing downstream recipients, a proxy or gateway MUST remove or replace any received connection options before forwarding the message.
+
+* Hence, the Connection header field provides a declarative way of distinguishing header fields that are only intended for the immediate recipient ("hop-by-hop") from those fields that are intended for all recipients on the chain ("end-to-end"), enabling the message to be self-descriptive and allowing future connection-specific extensions to be deployed without fear that they will be blindly forwarded by older intermediaries.
+
+grammar::
+
+     Connection        = 1#connection-option
+     connection-option = token
+
+示例-The "close" connection option is defined for a sender to signal that this connection will be closed after completion of the response.::
+
+     Connection: close
+
+
+
+
+
+
+6.2. Establishment
+------------------
+
+* 这块有专门spec讲述
+
+6.3. Persistence
+----------------
+
+* HTTP/1.1 defaults to the use of "persistent connections", allowing multiple requests and responses to be carried over a single connection.
+* The "close" connection option is used to signal that a connection will not persist after the current request/response.
+
+A recipient determines whether a connection is persistent or not based on the most recently received message's protocol version and Connection header field::
+
+    if connection option is `close`:
+        return false
+    else if received protocol is HTTP/1.1 (or later)
+        return true
+    else if received protocol is HTTP/1.0 and connection option is `keep-alive`
+        return true
+    else
+        return false
+
+* A proxy server MUST NOT maintain a persistent connection with an HTTP/1.0 client (see Section 19.7.1 of [RFC2068] for information and discussion of the problems with the Keep-Alive header field implemented by many HTTP/1.0 clients).
+
+6.3.1.  Retrying Requests
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* When an inbound connection is closed prematurely, a client MAY open a new connection and automatically retransmit an aborted sequence of requests if all of those requests have idempotent methods (Section 4.2.2 of [RFC7231]).  
+* A proxy MUST NOT automatically retry non-idempotent requests.
+
+6.3.2.  Pipelining
+^^^^^^^^^^^^^^^^^^
+
+* A client that supports persistent connections MAY "pipeline" its requests (i.e., send multiple requests without waiting for each response).
+* A server MAY process a sequence of pipelined requests in parallel if they all have safe methods (Section 4.2.1 of [:ref:`RFC7231`]), but it MUST send the corresponding responses in the same order that the requests were received.
+* A user agent SHOULD NOT pipeline requests after a non-idempotent method, until the final response status code for that method has been received, unless the user agent has a means to detect and recover from partial failure conditions involving the pipelined sequence.
+
+
+
+6.4. Concurrency
+----------------
+
+* The specification recommends that clients limit the number of simultaneous open connections they maintain with a given server. Although previous versions of HTTP specified a maximum number of connections, this is no longer the case in HTTP/1.1. Instead, clients are encouraged to be conservative when opening multiple connections to a server.
+* While multiple connections can be used to avoid the ``head-of-line blocking problem``, it's important to note that each connection consumes server resources, and using too many connections can cause congestion on the network. Additionally, some servers may reject traffic from a single client that appears to be abusive or characteristic of a denial-of-service attack, such as an excessive number of open connections.
+
+
+.. note:: http/1.1使用多个connection来解决并发问题，而http2是在单个connection中实现了并发。
+
+
+6.5. Failures and Timeouts
+--------------------------
+
+* Servers will usually have some timeout value beyond which they will no longer maintain an inactive connection.
+
+
+* A client, server, or proxy MAY close the transport connection at any time.
+* For example, a client might have started to send a new request at the same time that the server has decided to close the "idle" connection.  
+* From the server's point of view, the connection is being closed while it was idle, but from the client's point of view, a request is in progress.
+
+* A server SHOULD sustain persistent connections, when possible, and allow the underlying transport's flow-control mechanisms to resolve temporary overloads, rather than terminate connections with the expectation that clients will retry.  The latter technique can exacerbate network congestion.
+
+* A client sending a message body SHOULD monitor the network connection for an error response while it is transmitting the request.  If the client sees a response that indicates the server does not wish to receive the message body and is closing the connection, the client SHOULD immediately cease transmitting the body and close its side of the connection.
+
+
+
+6.6. Tear-down
+--------------
+
+* When a client sends a "close" connection option, it should not send any more requests on that connection and must close the connection after reading the final response message corresponding to the request. 
+* Similarly, a server that receives a "close" connection option must initiate the close of the connection after sending the final response to the request that contained "close".
+
+* If the server receives additional data from the client on a fully closed connection, such as another request that was sent by the client before receiving the server's response, the server's TCP stack will send a reset packet to the client
+
+* The section also highlights the risk of TCP reset problem when a server performs an immediate close of a TCP connection, which can result in the client not being able to read the last HTTP response. 
+* To avoid this problem, servers typically close a connection in stages
+* First, the server performs a half-close by closing only the write side of the read/write connection.  
+* The server then continues to read from the connection until it receives a corresponding close by the client, or until the server is reasonably certain that its own TCP stack has received the client's acknowledgement of the packet(s) containing the server's last response.  
+* Finally, the server fully closes the connection.
+
+
+6.7. Upgrade
+------------
+
+* The "Upgrade" header field is intended to provide a simple mechanism for transitioning from HTTP/1.1 to some other protocol on the same connection.
+
+格式::
+
+     Upgrade          = 1#protocol
+
+     protocol         = protocol-name ["/" protocol-version]
+     protocol-name    = token
+     protocol-version = token
+
+* A server that sends a 101 (Switching Protocols) response MUST send an Upgrade header field to indicate the new protocol(s) to which the connection is being switched
+* A server that sends a 426 (Upgrade Required) response MUST send an Upgrade header field to indicate the acceptable protocols, in order of descending preference.
+
+
+示例::
+
+     GET /hello.txt HTTP/1.1
+     Host: www.example.com
+     Connection: upgrade
+     Upgrade: HTTP/2.0, SHTTP/1.3, IRC/6.9, RTA/x11
+
+
+     HTTP/1.1 101 Switching Protocols
+     Connection: upgrade
+     Upgrade: HTTP/2.0
+
+
+* A client cannot begin using an upgraded protocol on the connection until it has completely sent the request message (i.e., the client can't change the protocol it is sending in the middle of a message).
+* The Upgrade header field only applies to switching protocols on top of the existing connection
+
+7. ABNF List Extension: #rule
+=============================
+
+* A #rule extension to the ABNF rules of [RFC5234] is used to improve readability in the definitions of some header field values.
+* A construct "#" is defined, similar to "*", for defining comma-delimited lists of elements.  The full form is "``<n>#<m>element``" indicating at least <n> and at most <m> elements, each separated by a single comma (",") and optional whitespace (OWS).
+
+::
+
+    // 
+    1#element => element *( OWS "," OWS element )
+
+    #element => [ 1#element ]
+
+    // 至少有<n>个，最多有<m>个元素，每个元素之间用一个逗号和可选的空白分隔
+    <n>#<m>element => element <n-1>*<m-1>( OWS "," OWS element )
+
+
+.. note:: For compatibility with legacy list rules, a recipient MUST parse and ignore a reasonable number of empty list elements: enough to handle common mistakes by senders that merge values, but not so much that they could be used as a denial-of-service mechanism.
+
+
+示例(空元素不会对元素计数产生影响)::
+
+    例如，如果ABNF产生式如下：
+    example-list = 1#example-list-elmt
+    example-list-elmt = token ; see Section 3.2.6
+
+    那么以下是example-list的有效值（不包括双引号，仅用于分隔）:
+    "foo,bar"
+    "foo ,bar,"
+    "foo , ,bar,charlie "
+
+    以下值将是无效的，因为example-list产生式要求至少有一个非空元素：
+    ""
+    ","
+    ", ,"
+
+
+8.  IANA Considerations
+=======================
+
+8.1.  Header Field Registration
+-------------------------------
+
+* HTTP header fields are registered within the "Message Headers" registry maintained at <http://www.iana.org/assignments/message-headers/>.
+
+8.2.  URI Scheme Registration
+-----------------------------
+
+* IANA maintains the registry of URI Schemes [BCP115] at <http://www.iana.org/assignments/uri-schemes/>.
+
+
+8.3.  Internet Media Type Registration
+--------------------------------------
+
+* IANA maintains the registry of Internet media types [BCP13] at <http://www.iana.org/assignments/media-types>.
+* Internet Media Type 是指一种数据格式的类型，例如 HTML、XML 或 JSON 等，它们由类型（type）和子类型（subtype）组成，如 "text/html" 或 "application/json"
+
+
+* "Internet media type"（互联网媒体类型）在 HTTP 协议中被用来标识 HTTP 消息的格式和类型，可以帮助接收方正确解析并处理接收到的消息。每个媒体类型由一个 MIME 类型（如 "message" 或 "application"）和一个子类型（如 "http"）组成，而参数则提供了更多关于消息的详细信息。
+
+8.3.1.  Internet Media Type message/http
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* The message/http type can be used to enclose a single HTTP request or response message, provided that it obeys the MIME restrictions for all "message" types regarding line length and encodings.
+
+* "message/http" 类型用于表示单个 HTTP 请求或响应消息（用于在HTTP请求或响应中嵌套HTTP请求或响应。例如，在HTTP POST请求中嵌套一个HTTP GET请求）
+* "message/http" type is used to enclose a single HTTP request or response message
+* message/http通常用于HTTP代理和网关之间的通信
+* 一种较为通用的媒体类型，它将HTTP消息表示为一个整体，类似于一个二进制的HTTP请求或响应
+
+* message/http通常用于将HTTP消息嵌入到其他协议的消息中
+* application/http通常用于将HTTP请求或响应封装在其他协议的消息中，例如使用HTTP作为应用层协议的WebSockets协议
+
+8.3.2.  Internet Media Type application/http
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* The application/http type can be used to enclose a pipeline of one or more HTTP request or response messages (not intermixed).
+
+
+* "application/http" 类型则用于表示一组 HTTP 请求或响应消息
+* "application/http" type is used to enclose a pipeline of one or more HTTP request or response messages.
+* application/http则用于HTTP客户端和服务器之间的通信
+* application/http则是一种更具体的媒体类型，它将HTTP消息拆分成多个部分，每个部分都是一个独立的HTTP请求或响应。这使得application/http可以用于同时传输多个HTTP请求或响应，从而实现HTTP批处理。
+
+
+请求示例::
+
+    POST /batch HTTP/1.1
+    Host: example.com
+    Content-Type: application/http
+    Content-Length: 267
+
+    GET /resource1 HTTP/1.1
+    Host: example.com
+
+    POST /resource2 HTTP/1.1
+    Host: example.com
+    Content-Type: application/json
+    Content-Length: 15
+
+    {"key": "value"}
+
+响应示例::
+
+    HTTP/1.1 200 OK
+    Content-Type: application/http
+    Content-Length: 337
+
+    HTTP/1.1 200 OK
+    Content-Type: text/plain
+    Content-Length: 7
+
+    Success
+
+    HTTP/1.1 404 Not Found
+    Content-Type: text/plain
+    Content-Length: 13
+
+    Resource not found
+
+
+
+
+* 使用 application/http 封装多个 HTTP 请求或响应消息的主要优点是可以减少网络连接的建立和关闭，从而提高网络性能和吞吐量。
+
+8.4.  Transfer Coding Registry
+------------------------------
+
+* The "HTTP Transfer Coding Registry" defines the namespace for transfer coding names.  It is maintained at <http://www.iana.org/assignments/http-parameters>.
+
+
+
+
+
+
+8.5.  Content Coding Registration
+---------------------------------
+
+* IANA maintains the "HTTP Content Coding Registry" at <http://www.iana.org/assignments/http-parameters>.
+
+8.6.  Upgrade Token Registry
+----------------------------
+
+* The "Hypertext Transfer Protocol (HTTP) Upgrade Token Registry" defines the namespace for protocol-name tokens used to identify protocols in the Upgrade header field.  The registry is maintained at <http://www.iana.org/assignments/http-upgrade-tokens>.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

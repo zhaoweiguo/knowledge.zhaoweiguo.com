@@ -1,0 +1,198 @@
+# 2411.00774_Freeze-Omni: A Smart and Low Latency Speech-to-speech Dialogue Model with Frozen LLM
+
+* [https://arxiv.org/abs/2411.00774](https://arxiv.org/abs/2411.00774)
+* GitHub: [https://github.com/VITA-MLLM/Freeze-Omni](https://github.com/VITA-MLLM/Freeze-Omni)
+* 官网: [https://freeze-omni.github.io/](https://freeze-omni.github.io/)
+* HF: [https://huggingface.co/VITA-MLLM/Freeze-Omni](https://huggingface.co/VITA-MLLM/Freeze-Omni)
+* 组织: Tencent Youtu Lab, Audio, Speech and Language Processing Group (ASLP@NPU), Nanjing University
+
+
+## Abstract
+
+* 研究者提出了一种新的语音-文本多模态大模型架构，叫做 **Freeze-Omni**。它的特点是：
+    * **语音输入和输出可以接入一个已经训练好的文本大模型（LLM）**，而**不需要修改或训练这个LLM本身**（即“冻结”）。
+    * 通过三阶段训练策略，只用少量语音-文本数据（比如ASR和TTS数据）和6万条多轮文本问答，就能让模型具备语音对话能力。
+    * 即使在语音模式下，Freeze-Omni的智能水平也能和它所基于的文本LLM保持一致，并且还能实现低延迟的语音响应。
+    * 同时，通过多任务训练，Freeze-Omni具备了自然的双向语音对话能力。
+    * 总体来说，它是一种高效、资源友好的语音对话方案，避免了在资源有限时训练LLM可能出现的“灾难性遗忘”。
+
+
+## 1. Introduction
+
+* 近年来，大语言模型（LLM）发展迅速，尤其是 OpenAI 的 GPT 系列表现出强大能力。传统语音交互方式是 ASR（语音识别）+ LLM + TTS（语音合成）串联，但这种方式响应慢。而 GPT-4o 提供了端到端的语音交互，大大提升了体验，带动了语音对话多模态模型的研究热潮。
+* 现有一些开源语音-文本多模态 LLM 在实现中会微调 LLM 参数，但这样容易导致“遗忘”原有能力，且很难收集足够大规模的语音问答数据。
+* 为了解决这些问题，本文提出了 **Freeze-Omni** 模型，核心特点是：
+    1. **LLM 参数完全冻结**，保持原有智能。
+    2. 仅需少量语音问答数据即可训练，计算资源低。
+    3. 可适配任意文本模态 LLM，保留原有能力如 prompt 跟随和角色扮演。
+
+* Freeze-Omni 的关键设计包括：
+    * 用大规模 ASR 数据对齐语音编码器与 LLM，训练时通过 prompt embedding 学会“听懂”语音。
+    * 用文本-语音配对数据训练语音解码器，将文本转为语音。
+    * 利用预测用户中断的机制，实现双向语音对话能力。
+
+* 简而言之，Freeze-Omni 是一个低延迟、无需微调 LLM 本体、保持原智能的语音对话系统解决方案。
+
+
+
+## 2. Model
+
+### 2.1 Overview
+
+![](https://img.zhaoweiguo.com/uPic/2025/06/1k7aue.jpg)
+
+Figure 1:Overview of proposed Freeze-Omni. The streaming speech input forms chunk-wise features through the speech encoder, and then is connected to the LLM through the adapter. The LLM generates hidden states and text tokens, which are sent to the NAR prefix speech decoder and the NAR speech decoder in the form of chunks respectively after chunk segmentation. Finally, the AR speech decoder sends the generated tokens into the speech token FIFO and the streaming codec decoder generates streaming speech output from the FIFO according to a fixed speech token chunk size.
+
+
+* Freeze-Omni 是一个**语音到语音的对话模型**，其核心特点是**冻结了大语言模型（LLM）部分**，只训练语音相关的模块，这样可以保持原始 LLM 的智能，避免因微调而“遗忘”。
+* 模型结构
+    1. **语音输入模块**
+       * 使用 **流式语音编码器** 将语音转为特征，再通过 **适配器** 映射到 LLM 的输入空间。
+       * 编码器包括卷积 + Transformer，适配器是降采样卷积，用来压缩信息、减少延迟。
+    2. **语音输出模块**
+       * 借鉴 VALL-E，输出语音是通过 **语音 token** 实现的。
+       * 先由 LLM 输出隐藏层，再通过 **非自回归（NAR）+ 自回归（AR）解码器** 生成语音 token，最后通过 codec 解码器变成真实语音。
+
+
+
+### 2.2 Modeling of speech input
+
+#### 1. 流式语音编码器
+
+* 为了让 Freeze-Omni 支持语音输入并实现快速、低延迟响应，它采用了**分块式流式语音编码器**，将语音特征转成高维表示。
+* 再通过一个**适配器模块**将其映射到大语言模型（LLM）的嵌入空间。
+* **语音编码器**：由多个下采样卷积层和 Transformer 组成。
+* **适配器**：只包含下采样卷积层。
+* **使用下采样的目的**：减少帧率，加快处理速度，降低延迟。
+
+#### 2. 三阶段训练策略
+
+![](https://img.zhaoweiguo.com/uPic/2025/06/LC8Sbo.png)
+
+Figure 2:The 3-stage training method for modeling of speech input, the speech encoder in (c) is used in Freeze-Omni finally.
+
+* 训练过程分三步进行，以便模型在保持 LLM 冻结的情况下学会理解语音输入：
+    1. **第一阶段**：常规语音识别训练，输入语音，输出转录文本，使用 CTC 损失函数。
+    2. **第二阶段**：将训练好的语音编码器连接到 LLM，并添加可训练的特殊标记引导训练，LLM保持冻结，其他部分可训练。
+    3. **第三阶段**：构建多轮对话数据集，用语音合成（TTS）生成语音问题，加入可训练的提示嵌入引导 LLM 输出文本。此阶段只有提示嵌入可训练，其它模块（语音编码器和 LLM）都被冻结。
+
+
+### 2.3 Modeling of speech output
+
+#### 1. 架构：
+
+* Freeze-Omni 模仿 VALL-E，采用基于 token 的语音解码器，分为三个模块：
+    1. **NAR 解码器**：非自回归（Non-AutoRegressive），将大模型（LLM）输出转为语义特征；
+    2. **AR 解码器**：自回归（AutoRegressive），将语义特征转为语音 token；
+    3. **Codec 解码器**：将语音 token 解码为最终的语音信号。
+
+#### 2. 三阶段训练策略
+
+![](https://img.zhaoweiguo.com/uPic/2025/06/uVNx95.png)
+
+Figure 3:The 3-stage training method for modeling of speech output, the speech decoder in (c) is used in Freeze-Omni finally.
+
+1. **第一阶段**：仅用语音数据训练一个 codec 模型，用单一 codebook 提取语音 token，简化系统复杂度；
+2. **第二阶段**：用大量文本-语音对数据，把文本转为 token，传入冻结的 LLM，提取语义特征后由 NAR + AR 解码器预测语音 token，使用第一阶段训练的 codec 生成的 token 作为标签；
+3. **第三阶段**：引入多轮对话数据，新增一个“前缀 NAR 解码器(NAR prefix speech decoder)”处理 LLM 的隐藏状态（hidden state），并把它的输出作为上下文传给 NAR 解码器。此阶段只训练这个前缀解码器，其他模块保持冻结，以更好适配 LLM 的真实输出风格，提升语音生成质量。
+
+
+
+### 2.4 Design for duplex dialogue
+
+* 为了实现更自然的语音对语音双工对话，Freeze-Omni 设计了一个**基于语音片段的状态预测机制**：
+
+1. **开始检测**：使用一个语音活动检测器（VAD）来判断用户是否开始说话。
+2. **片段处理**：语音被分成一段段（chunk）送入模型，每段处理后模型会预测当前对话的状态：
+   * **状态 0**：用户还在说话，可以继续接收语音。
+   * **状态 1**：用户说完了，接下来模型要生成回应。
+   * **状态 2**：语音到结尾了，但不需要回应，可能是用户在停顿。
+3. **预测方式**：模型在 LLM 输出后加了一层分类器，仅对每段语音的最后一帧做状态判断。
+4. **系统实现**：
+   * 多个模型同时运行，作为“服务端”。
+   * 每个用户触发 VAD 后，语音片段被发送到服务端。
+   * 服务端根据空闲情况分配模型处理语音。
+
+* 这套机制让多个用户都可以灵活高效地进行实时对话，支持中断、生成、继续听等自然的交互模式。
+
+
+
+## 3. Experience
+
+
+### 1. 数据集与训练设置
+
+* **数据来源**：
+
+  * 从 [moss-003](https://huggingface.co/datasets/fnlp/moss-003-sft-data) 数据集中随机选取 6 万条多轮问答数据，用大模型（LLM）重新生成答案。
+  * 使用零样本 TTS 系统合成语音，获得语音输入输出数据。
+  * 总训练语音数据量：ASR（语音转文本）110,000 小时，TTS（文本转语音）3,000 小时。
+
+* **模型配置**：
+  * **大模型**：使用 Qwen2-7B-Instruct 作为冻结的语言模型（LLM 不参与训练）。
+  * **语音编码器**：350M 参数量，输入为梅尔滤波器特征。
+  * **语音解码器**：基于 TiCodec，约 120M 参数，支持非自回归（NAR）与自回归（AR）结构。
+
+* **训练方式**：
+  * 使用 AdamW 优化器和不同阶段的学习率调度器。
+  * 总共三阶段训练，使用 8 张 GPU。
+
+
+### 2. 语音输入理解能力
+
+* 通过 ASR 准确率验证模型对语音输入的理解能力。
+* **动态 chunk 训练** 提高了模型对不同语音长度的适应性。
+* 动态 chunk 条件下使用 chunk=∞ 的效果优于 chunk=4。
+* 最佳配置：使用 chunk=4 且不使用动态 chunk。
+
+### 3. 语音输出质量
+
+* 用 LLM 输出的隐藏状态合成语音，评估其准确性（用 ASR 还原后比对）。
+* **引入 LLM 隐藏状态作为 NAR 解码器前缀**后，语音质量明显提升。
+* 增加了一个**预处理网络**后（两层 Llama 解码器），输出语音 CER（字符错误率）进一步下降。
+
+
+### 4. 语音问答能力
+
+* 在 LlaMA-Questions、Web Questions 和 Trivia QA 上测试语音问答效果。
+* 文本问答数据通过 edge-tts 转成语音后输入。
+* Freeze-Omni 的准确率接近原始 LLM，表现优于同类模型 Moshi。
+
+![](https://img.zhaoweiguo.com/uPic/2025/06/JE6Lwh.jpg)
+
+Table 3: The accuracy (%) of different models in question answering on three sets
+
+### 5. 端到端延迟分析
+
+1. **统计延迟**：指大模型（LLM）被打断后，到生成首段语音的时间。这部分可以分为四个环节，实验中每次处理40个语音 token，文本分段按句子切分。
+2. **非统计延迟**：指从说话真正结束到 LLM 识别出“该打断了”这段时间。这部分需要人工测量，通常是1到2个语音编码块的时间，大约 160–320 毫秒。
+3. 综合考虑网络延迟（约200–300毫秒），Freeze-Omni 在真实场景下的平均总延迟约为 **1.2秒**。
+
+
+![](https://img.zhaoweiguo.com/uPic/2025/06/sQwvoi.jpg)
+
+Table 4: Detailed information of statistical latency. The unit of the results in the table is (ms). All results are
+completed using pytorch with bfloat16 inference.
+
+
+## 4. Conclusion and Future Work
+
+* 本文提出了一个名为 Freeze-Omni 的文本-音频多模态大模型，它能低延迟进行语音对话，且不需要微调大模型主体，性能优异。
+* 未来的改进方向包括：
+    1. 把语音编码器升级为通用音频编码器，以支持情感识别、音频描述等任务。
+    2. 在不修改大模型的前提下，扩展更多语音对话任务，比如状态预测能力。
+    3. 在语音解码器中支持多种声音风格和更强的指令理解能力，让语音输出更丰富。
+
+
+
+
+
+
+
+
+
+
+
+
+
+

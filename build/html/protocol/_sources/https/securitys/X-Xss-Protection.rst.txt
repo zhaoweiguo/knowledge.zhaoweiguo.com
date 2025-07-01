@@ -1,0 +1,61 @@
+X-Xss-Protection
+################
+
+.. note:: 当检测到跨站脚本攻击 (XSS (en-US)) 时，浏览器将停止加载页面。若网站设置了良好的 Content-Security-Policy 来禁用内联 JavaScript ('unsafe-inline')，现代浏览器不太需要这些保护， 但其仍然可以为尚不支持 CSP 的旧版浏览器的用户提供保护。
+
+
+Syntax::
+
+    X-XSS-Protection: 0
+    X-XSS-Protection: 1
+    X-XSS-Protection: 1; mode=block
+    X-XSS-Protection: 1; report=<reporting-uri>
+
+0::
+
+    Disables XSS filtering.
+
+1::
+
+    Enables XSS filtering (usually default in browsers). 
+    If a cross-site scripting attack is detected, 
+      the browser will sanitize the page (remove the unsafe parts).
+
+1; mode=block::
+
+    Enables XSS filtering. 
+    Rather than sanitizing the page, 
+      the browser will prevent rendering of the page if an attack is detected.
+
+1; report=<reporting-URI> (Chromium only)::
+
+    Enables XSS filtering. 
+    If a cross-site scripting attack is detected, 
+      the browser will sanitize the page and report the violation. 
+    This uses the functionality of the CSP report-uri directive to send a report.
+
+
+Example
+=======
+
+Block pages from loading when they detect reflected XSS attacks::
+
+    X-XSS-Protection: 1; mode=block
+
+PHP::
+
+    header("X-XSS-Protection: 1; mode=block");
+
+Nginx::
+
+    add_header "X-XSS-Protection" "1; mode=block";
+
+
+
+参考
+====
+
+* https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/X-XSS-Protection
+
+
+

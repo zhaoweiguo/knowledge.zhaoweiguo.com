@@ -1,0 +1,339 @@
+代码规范
+########
+
+
+Makefile
+========
+
+编写一个高质量的 Makefile 4 个方法::
+
+    1. 打好基础，也就是熟练掌握 Makefile 的语法
+    2. 做好准备工作，也就是提前规划 Makefile 要实现的功能
+    3. 进行规划，设计一个合理的 Makefile 结构
+    4. 掌握方法，用好 Makefile 的编写技巧
+
+目录实例::
+
+    ├── Makefile
+    ├── scripts
+    │   ├── gendoc.sh
+    │   ├── make-rules
+    │   │   ├── gen.mk
+    │   │   ├── golang.mk
+    │   │   ├── image.mk
+    │   │   └── ...
+    │   └── ...
+
+技巧 1：善用通配符和自动变量::
+
+    通配符是 %: 可以使不同的目标使用相同的规则，从而使 Makefile 扩展性更强，也更简洁
+    如:
+    tools.verify.%:
+      @if ! which $* &>/dev/null; then $(MAKE) tools.install.$*; fi
+
+    下面实例均可以使用上面定义的规则:
+    make tools.verify.swagger
+    make tools.verify.mockgen
+    自动变量 $*，用来指代被匹配的值 swagger、mockgen
+
+技巧 2：善用函数::
+
+    Makefile 常用函数列表:
+    @todo
+
+技巧 3：依赖需要用到的工具::
+
+    如果 Makefile 某个目标的命令中用到了某个工具，可以将该工具放在目标的依赖中
+
+技巧 4：把常用功能放在 /Makefile 中，不常用的放在分类 Makefile 中::
+
+    一个项目，尤其是大型项目，有很多需要管理的地方，其中大部分都可以通过 Makefile 实现自动化操作。
+    不过，为了保持 /Makefile 文件的整洁性，我们不能把所有的命令都添加在 /Makefile 文件中。
+
+    一个比较好的建议是:
+        将常用功能放在 /Makefile 中
+        不常用的放在分类 Makefile 中，并在 /Makefile 中 include 这些分类 Makefile
+
+技巧 5：编写可扩展的 Makefile::
+
+    定义: 可扩展的 Makefile:
+      可以在不改变 Makefile 结构的情况下添加新功能
+      扩展项目时，新功能可以自动纳入到 Makefile 现有逻辑中
+
+技巧 6：将所有输出存放在一个目录下，方便清理和查找::
+
+    通常我们可以把它们放在_output 这类目录下，这样清理时就很方便，只需要清理_output 文件夹就可以
+
+    .PHONY: go.clean
+    go.clean:
+      @echo "===========> Cleaning all build output"
+      @-rm -vrf $(OUTPUT_DIR)
+
+    注意: 要用 -rm，而不是 rm，防止在没有_output 目录时，执行 make go.clean 报错
+
+技巧 7：使用带层级的命名方式::
+
+    例如 tools.verify.swagger ，我们可以实现目标分组管理。
+
+    这样做的好处有很多:
+      1. 首先，当 Makefile 有大量目标时，通过分组，我们可以更好地管理这些目标
+      2. 其次，分组也能方便理解，可以通过组名一眼识别出该目标的功能类别
+      3. 最后，这样做还可以大大减小目标重名的概率
+
+
+技巧 8：做好目标拆分::
+
+    比如，我们可以将安装工具拆分成两个目标:
+      1. 验证工具是否已安装
+      2. 安装工具
+
+    通过这种方式，可以给我们的 Makefile 带来更大的灵活性
+    例如：我们可以根据需要选择性地执行其中一个操作，也可以两个操作一起执行
+
+技巧 9：设置 OPTIONS::
+
+    1. 首先，在 /Makefile 中定义 USAGE_OPTIONS:
+      define USAGE_OPTIONS
+      Options:
+        ...
+        BINS         The binaries to build. Default is all of cmd.
+                     ...
+        ...
+        V            Set to 1 enable verbose build. Default is 0.    
+      endef    
+      export USAGE_OPTIONS
+
+    2. 在 scripts/make-rules/common.mk 文件中，通过判断有没有设置 V 选项来选择不同的行为:
+      ifndef V
+      MAKEFLAGS += --no-print-directory
+      endif
+
+      or:
+      ifeq ($(origin V), undefined)
+      MAKEFLAGS += --no-print-directory
+      endif
+
+技巧 10：定义环境变量::
+
+    GO := go
+    GO_SUPPORTED_VERSIONS ?= 1.13|1.14|1.15|1.16|1.17
+    GO_LDFLAGS += -X $(VERSION_PACKAGE).GitVersion=$(VERSION) \
+      -X $(VERSION_PACKAGE).GitCommit=$(GIT_COMMIT) \
+      -X $(VERSION_PACKAGE).GitTreeState=$(GIT_TREE_STATE) \
+      -X $(VERSION_PACKAGE).BuildDate=$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
+    ifneq ($(DLV),)
+
+      GO_BUILD_FLAGS += -gcflags "all=-N -l"
+      LDFLAGS = ""
+    endif
+    GO_BUILD_FLAGS += -tags=jsoniter -ldflags "$(GO_LDFLAGS)" 
+    ...
+    FIND := find . ! -path './third_party/*' ! -path './vendor/*'
+
+    作用：只要修改一处，就可以使很多地方同时生效，避免了重复的工作
+
+
+
+一个大型 Go 项目通常需要实现以下功能::
+
+    1. 代码生成类命令
+    2. 格式化类命令
+    3. 静态代码检查
+    4. 测试类命令
+    5. 构建类命令
+    6. Docker 镜像打包类命令
+    7. 部署类命令
+    8. 清理类命令
+
+
+测试
+====
+
+测试用例函数必须以 Test、Benchmark、Example 开头::
+
+    1. TestXxx:         单元测试
+    2. BenchmarkXxx:    性能测试
+    3. ExampleXxx:      示例测试
+
+其他测试类型::
+
+    4. TestMain 函数
+    5. Mock 测试
+    6. Fake 测试等
+
+1. 单元测试TestXxx::
+
+    *testing.T
+
+    为了清晰地表达函数的实际输出和预期输出
+    可以将这两类输出命名为 expected/actual，或者 got/want:
+    如:
+    if c.expected != actual {
+      t.Fatalf("Expected User-Agent '%s' does not match '%s'", c.expected, actual)
+    }
+    or
+    if got, want := diags[3].Description().Summary, undeclPlural; got != want {
+      t.Errorf("wrong summary for diagnostic 3\ngot:  %s\nwant: %s", got, want)
+    }
+
+    包的命名规范:
+    Go 的测试可以分为白盒测试和黑盒测试。
+    a. 白盒测试
+        将测试和生产代码放在同一个 Go 包中，这使我们可以同时测试 Go 包中可导出和不可导出的标识符。
+        当我们编写的单元测试需要访问 Go 包中不可导出的变量、函数和方法时，就需要编写白盒测试用例。
+    b. 黑盒测试
+        将测试和生产代码放在不同的 Go 包中。
+        这时，我们仅可以测试 Go 包的可导出标识符。
+        这意味着我们的测试包将无法访问生产代码中的任何内部函数、变量或常量。
+
+2. 性能测试BenchmarkXxx::
+
+    *testing.B
+
+    函数内以 b.N 作为循环次数
+    其中 N 会在运行时动态调整，直到性能测试函数可以持续足够长的时间，以便能够可靠地计时
+
+    func BenchmarkRandInt(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            RandInt()
+        }
+    }
+
+    使用:
+    $ go test -bench=".*"
+    goos: linux
+    goarch: amd64
+    pkg: github.com/marmotedu/gopractise-demo/31/test
+    BenchmarkRandInt-4      97384827                12.4 ns/op
+    PASS
+    ok      github.com/marmotedu/gopractise-demo/31/test    1.223s
+
+    说明:
+    BenchmarkRandInt-4:
+        BenchmarkRandInt 表示所测试的测试函数名
+        4 表示有 4 个 CPU 线程参与了此次测试，默认是 GOMAXPROCS 的值。
+    90848414:
+        说明函数中的循环执行了 90848414 次。
+    12.8 ns/op:
+        说明每次循环的执行平均耗时是 12.8 纳秒，该值越小，说明代码性能越高。
+
+    B 类型的性能测试还支持下面 4 个参数:
+    a. benchmem，输出内存分配统计
+    b. benchtime，指定测试时间和循环执行次数（格式需要为 Nx，例如 100x）
+    c. cpu，指定 GOMAXPROCS
+    d. timeout，指定测试函数执行的超时时间
+
+3. 实例ExampleXxx::
+
+    说明:
+        有 fmt.Println/fmt.Printf 这类输出的时候使用
+
+    示例测试可能包含:
+        1. 以Output: 开头的注释
+        2. 以Unordered output: 开头的注释
+        这些注释放在函数的结尾部分
+        Unordered output: 开头的注释会忽略输出行的顺序
+
+    示例:
+    func ExampleMax() {
+        fmt.Println(Max(1, 2))
+        // Output:
+        // 2
+    }
+
+    使用:
+    $ go test -v -run='Example.*'
+    === RUN   ExampleMax
+    --- PASS: ExampleMax (0.00s)
+    PASS
+    ok      github.com/marmotedu/gopractise-demo/31/test    0.004s
+
+    说明:
+    当示例测试不包含 Output: 或者 Unordered output: 注释时
+    执行 go test 只会编译这些函数，但不会执行这些函数
+
+4. TestMain 函数::
+
+    *testing.M
+
+    简介:
+        1. 先做一些准备工作
+        2. 其他单元测试...
+        3. 最后再做一些收尾工作
+
+    说明:
+    TestMain 是一个特殊的函数（相当于 main 函数）
+    测试用例在执行时，会先执行 TestMain 函数，然后可以在 TestMain 中调用 m.Run() 函数执行普通的测试函数
+    在 m.Run() 函数前面我们可以编写准备逻辑，在 m.Run() 后面我们可以编写清理逻辑
+
+    示例:
+    // https://github.com/marmotedu/gopractise-demo/blob/master/31/test/math_test.go
+    func TestMain(m *testing.M) {
+        fmt.Println("do some setup")
+        m.Run()
+        fmt.Println("do some cleanup")
+    }
+
+    执行:
+    $ go test -v
+    do some setup
+    === RUN   TestAbs
+    --- PASS: TestAbs (0.00s)
+    ...
+    === RUN   ExampleMax
+    --- PASS: ExampleMax (0.00s)
+    PASS
+    do some cleanup
+    ok    github.com/marmotedu/gopractise-demo/31/test  0.006s
+
+5. Mock 测试::
+
+    GoMock 是由 Golang 官方开发维护的测试框架
+    实现了较为完整的基于 interface 的 Mock 功能
+        能够与 Golang 内置的 testing 包良好集成，也能用于其他的测试环境中。
+    GoMock 测试框架包含了 GoMock 包和 mockgen 工具两部分
+        a. GoMock 包用来完成对象生命周期的管理
+        b. mockgen 工具用来生成 interface 对应的 Mock 类源文件
+
+
+6. Fake 测试::
+   
+    对于比较复杂的接口，可以 Fake 一个接口实现，来进行测试
+    所谓 Fake 测试，其实就是针对接口实现一个假（fake）的实例
+    至于如何实现 Fake 实例，需要你根据业务自行实现
+
+
+测试框架::
+
+    1. Testify 框架
+        Testify 是 Go test 的预判工具，它能让你的测试代码变得更优雅和高效，测试结果也变得更详细
+    2. GoConvey 框架
+        GoConvey 是一款针对 Golang 的测试框架
+        可以管理和运行测试用例，同时提供了丰富的断言函数，并支持很多 Web 界面特性
+
+Mock 工具::
+
+    1. sqlmock
+        可以用来模拟数据库连接。数据库是项目中比较常见的依赖，在遇到数据库依赖时都可以用它
+    2. httpmock
+        可以用来 Mock HTTP 请求
+    3. bouk/monkey
+        猴子补丁，能够通过替换函数指针的方式来修改任意函数的实现
+        如果 golang/mock、sqlmock 和 httpmock 这几种方法都不能满足我们的需求
+        可以尝试用猴子补丁的方式来 Mock 依赖
+        可以这么说，猴子补丁提供了单元测试 Mock 依赖的最终解决方案
+
+
+
+
+
+参考
+====
+
+* 陈皓, 《跟我一起写 Makefile》 (PDF 重制版)
+
+
+
+
+
+

@@ -1,0 +1,147 @@
+构建工具 build
+##############
+
+
+* 官网: https://pypi.org/project/build/
+* GitHub: https://github.com/pypa/build
+* build 是一个用于构建 Python 项目的工具，通常用于生成源码分发包和二进制分发包（如 Wheel）。这些分发包可以用于发布到 Python Package Index (PyPI) 或其他包管理系统，以便他人可以安装和使用你的 Python 项目。
+* build 工具旨在提供一种简单而标准的方式来构建 Python 项目。
+* 它遵循 `PEP 517 <https://www.python.org/dev/peps/pep-0517/>`_ 和 `PEP 518 <https://www.python.org/dev/peps/pep-0518/>`_ 标准，这些标准定义了 Python 项目的构建过程和构建后端。
+* build 工具可以与各种构建后端一起工作，例如 setuptools、flit、poetry 等。是 Setuptools 和其他构建后端的前端工具。
+
+
+.. note:: build 管理基于 ``pyproject.toml`` 的构建，根据需要调用 build-backend 钩子来构建分发包。它是一个简单的构建工具，不执行任何依赖项管理。所以使用 ``setup.py`` 文件的不使用这种方法，而是直接用 ``python setup.py sdist`` 构建。
+
+
+
+
+Common arguments
+================
+
+::
+
+    --sdist (-s): 
+        Produce just an SDist
+    --wheel (-w): 
+        Produce just a wheel
+    -C<option>=<value>: 
+        A Config-setting, the PEP 517 way of passing options to a backend.
+        Can be passed multiple times. 
+        Matching options will make a list. 
+        Note that setuptools has very limited support.
+    --installer: 
+        Pick an installer for the isolated build (pip or uv).
+    --no-isolation (-n): 
+        Disable build isolation.
+    --skip-dependency-check (-x): 
+        Disable dependency checking when not isolated; 
+        this should be done if some requirements or version ranges are not required for non-isolated builds.
+    --outdir (-o): 
+        The output directory (defaults to dist`)
+
+Some common combinations of arguments::
+
+    --sdist --wheel (-sw): 
+        Produce an SDist and a wheel, both from the source distribution. 
+        The default (if no flag is passed) is to build an SDist and then build a wheel from the SDist.
+    -nx: 
+        Disable build isolation and dependency checking. 
+        Identical to pip and uv's --no-build-isolation flag.
+
+
+
+基本使用
+========
+
+
+安装::
+
+    pip install --upgrade build
+
+
+Usage::
+
+    python -m build
+
+    # 清理
+    rm -rf build dist *.egg-info
+
+
+.. note:: 更详细使用参见 ``pyproject.toml`` 配置文件。注意 setup.py 配置文件使用命令 ``python setup.py sdist``
+
+
+完成后应在 dist 目录中生成两个文件::
+
+    如果 pyproject.toml 文件内容:
+    [project]
+    name = "example_package_YOUR_USERNAME_HERE"
+    version = "0.0.1"
+
+    则生成如下2个文件:
+    dist/
+    ├── example_package_YOUR_USERNAME_HERE-0.0.1-py3-none-any.whl   # built distribution
+    └── example_package_YOUR_USERNAME_HERE-0.0.1.tar.gz             # source distribution
+
+
+
+
+
+
+
+
+
+常见问题
+========
+
+问题1::
+
+    FileNotFoundError: [Errno 2] No such file or directory: '/private/var/.../tx_agent-0.1.0/requirements.txt'
+    ERROR Backend subprocess exited when trying to invoke get_requires_for_build_wheel
+
+
+问题定位::
+
+    可能是因为项目中的依赖文件（如 requirements.txt）没有包含在打包过程中，或者你的 setup.py 中的依赖指定不正确
+    根因:
+        方法一:
+            pip -m build
+        方法二:
+            pip -m build --sdist
+            pip -m build --wheel
+        上面的命令与下面2个命令的不同点在于
+            pip -m build --wheel 是基于当前源码包打的wheel
+            而上面的命令是基于前面打的 sdist 包打的wheel
+            而 dsist 包中没有 requirements.txt 文件(可能通过解压 dist/name.xxx.tar 文件查看)
+
+解决方法::
+
+    往 MANIFEST.in 文件写入如下配置:
+    include requirements.txt
+
+
+问题2::
+
+    python -m build 执行成功，但生成包解压后发现内容不对
+
+问题定位::
+
+    可能是有缓存
+
+解决方法::
+
+    rm -rf build dist *.egg-info
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,179 @@
+GD(梯度下降)
+############
+
+* 梯度下降（Gradient Descent）是一种用于优化目标函数的算法。其目的是通过迭代调整模型参数，使损失函数逐渐降低，从而找到函数的最优值（最小值）。
+
+
+
+核心思想
+========
+
+* **梯度** 表示函数在某一点的方向导数，即在该点变化最快的方向。
+* **梯度下降** 通过沿梯度的反方向（即下降最快的方向）更新参数，使目标函数的值逐渐减小。
+
+
+
+公式
+====
+
+.. math::
+
+    \begin{array}{ll}
+    \theta_{t+1} = \theta_{t} - \eta \nabla_\theta L(\theta) \\
+    θ_{t+1} =θ_t −η∇_θL(θ_t) \\
+    \end{array}
+
+* 其中:
+    * θ：模型参数
+    * 𝐿(𝜃)：目标函数（如损失函数）
+    * :math:`∇_𝜃𝐿(𝜃_t)` ：参数 𝜃 的梯度
+    * 𝜂：学习率（控制每次参数更新的步幅）
+    * t：迭代次数
+
+
+
+
+梯度下降的三种类型
+==================
+
+* 根据每次计算梯度所使用的样本数量，梯度下降可分为以下三种类型：
+
+批量梯度下降（Batch Gradient Descent）::
+
+    使用整个数据集计算梯度。
+    更新稳定，但计算成本较高，尤其在大数据集时。
+
+随机梯度下降（Stochastic Gradient Descent, SGD）::
+
+    每次随机选择一个样本计算梯度。
+    计算效率高，但更新过程波动较大。
+
+小批量梯度下降（Mini-batch Gradient Descent）::
+
+    使用一个小批量的数据计算梯度（如 32 或 64 个样本）。
+    平衡了计算效率和更新的稳定性，是深度学习中最常用的方式。
+
+
+
+学习率的重要性
+==============
+
+学习率 𝜂 决定了每次参数更新的步幅，对梯度下降的效果影响巨大::
+
+    学习率过大：可能跳过最优点，甚至导致发散。
+    学习率过小：收敛速度变慢，训练时间过长。
+
+一般情况下，学习率需要通过调试或动态调整（如学习率衰减、优化算法）来确定。
+
+
+
+优缺点
+======
+
+优点::
+
+    简单有效：
+        梯度下降是简单但强大的优化算法，适用于多种机器学习和深度学习任务。
+
+    广泛适用：
+        几乎所有基于参数优化的模型（如线性回归、神经网络）都能用梯度下降来训练。
+
+    易于实现：
+        梯度下降算法的公式和步骤简单清晰，适合初学者理解和使用。
+
+
+缺点::
+
+    易陷入局部最优：
+        对非凸函数（如深度神经网络的损失函数），梯度下降可能停留在局部最优点。
+
+    对学习率敏感：
+        不合适的学习率会导致算法收敛过慢或发散。
+
+    计算成本：
+        对大数据集，批量梯度下降的计算成本较高。
+
+
+代码示例说明
+============
+
+
+.. code-block:: python
+
+    # 模拟梯度下降
+    import numpy as np
+
+    # 假设一个简单的二次函数：L(θ) = (θ - 3)^2
+    def loss_function(theta):
+        return (theta - 3) ** 2
+
+    # 梯度
+    def gradient(theta):
+        return 2 * (theta - 3)
+
+    # 梯度下降实现
+    def gradient_descent(initial_theta, learning_rate, iterations):
+        theta = initial_theta
+        for i in range(iterations):
+            grad = gradient(theta)  # 计算梯度
+            theta = theta - learning_rate * grad  # 更新参数
+            print(f"Iteration {i+1}: θ = {theta:.4f}, Loss = {loss_function(theta):.4f}")
+        return theta
+
+    # 初始化参数
+    initial_theta = 0  # 初始值
+    learning_rate = 0.1  # 学习率
+    iterations = 20  # 迭代次数
+
+    # 执行梯度下降
+    optimal_theta = gradient_descent(initial_theta, learning_rate, iterations)
+    print(f"Optimal θ: {optimal_theta:.4f}")
+
+
+输出::
+
+    Iteration 1: θ = 0.6000, Loss = 5.7600
+    Iteration 2: θ = 1.0800, Loss = 3.6864
+    Iteration 3: θ = 1.4640, Loss = 2.3593
+    Iteration 4: θ = 1.7712, Loss = 1.5099
+    Iteration 5: θ = 2.0170, Loss = 0.9664
+    Iteration 6: θ = 2.2136, Loss = 0.6185
+    Iteration 7: θ = 2.3709, Loss = 0.3958
+    Iteration 8: θ = 2.4967, Loss = 0.2533
+    Iteration 9: θ = 2.5973, Loss = 0.1621
+    Iteration 10: θ = 2.6779, Loss = 0.1038
+    Iteration 11: θ = 2.7423, Loss = 0.0664
+    Iteration 12: θ = 2.7938, Loss = 0.0425
+    Iteration 13: θ = 2.8351, Loss = 0.0272
+    Iteration 14: θ = 2.8681, Loss = 0.0174
+    Iteration 15: θ = 2.8944, Loss = 0.0111
+    Iteration 16: θ = 2.9156, Loss = 0.0071
+    Iteration 17: θ = 2.9324, Loss = 0.0046
+    Iteration 18: θ = 2.9460, Loss = 0.0029
+    Iteration 19: θ = 2.9568, Loss = 0.0019
+    Iteration 20: θ = 2.9654, Loss = 0.0012
+    Optimal θ: 2.9654
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

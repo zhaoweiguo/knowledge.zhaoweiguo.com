@@ -1,0 +1,46 @@
+常用
+####
+
+
+hostname
+========
+
+* 不能直接在容器内修改 /etc/hostname 文件，因为容器 stop/restart 后会重置，导致配置丢失
+* 使用时修改::
+
+    $ docker run -itd --hostname $host --name $name yourimage
+
+* 修改Dockerfile❌::
+
+    RUN hostname xxxx
+    报错: hostname: you must be root to change the host name
+
+
+
+
+
+
+
+/etc/hosts镜像
+==============
+
+增加 hosts记录::
+
+    $ docker run -itd --network $netname --add-host=$host:$ip --name $name yourimage
+
+通过 docker-compose 方式，则需要通过 extra_hosts 参数::
+
+    # docker-compose.yml
+    extra_hosts:
+     - "host1:172.18.0.3"
+     - "host2:172.18.0.4"
+
+
+
+
+
+
+
+
+
+

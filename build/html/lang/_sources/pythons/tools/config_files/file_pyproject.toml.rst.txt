@@ -1,0 +1,290 @@
+文件pyproject.toml
+##################
+
+
+spec
+====
+
+* pyproject.toml 文件是用 TOML 编写的。当前指定了三个表，即 [build-system]、[project] 和 [tool]。
+* 注意：只有 ``[build-system]`` 表的 ``requires`` 字段是必需的
+
+当 pyproject.toml 文件不存在时，构建工具应使用下面的示例配置文件作为其默认语义::
+
+    [build-system]
+    # Minimum requirements for the build system to execute.
+    requires = ["setuptools"]
+
+
+
+
+
+示例::
+
+    [project]
+    name = "mypackage"
+    version = "0.0.1"
+    dependencies = [
+        "requests",
+        'importlib-metadata; python_version<"3.8"',
+    ]
+
+
+
+[build-system] section
+======================
+
+* declare which build backend you use and which other dependencies are needed to build your project.
+
+
+setuptools示例::
+
+    [build-system]
+    requires = ["setuptools"]
+    build-backend = "setuptools.build_meta"
+
+
+    [build-system]
+    requires = ["setuptools>=61.0"]
+    build-backend = "setuptools.build_meta"
+
+
+hatchling示例::
+
+    [build-system]
+    requires = ["hatchling"]
+    build-backend = "hatchling.build"
+
+
+Flit 示例::
+
+    [build-system]
+    requires = ["flit_core>=3.4"]
+    build-backend = "flit_core.buildapi"
+
+PDM 示例::
+
+    [build-system]
+    requires = ["pdm-backend"]
+    build-backend = "pdm.backend"
+
+
+
+
+
+[project] section
+=================
+
+* specify your project’s basic metadata, such as the dependencies, your name, etc.
+
+.. note:: As of August 2024, ``Poetry`` is a notable build backend that does not use the [project] table, it uses the [tool.poetry] table instead. Also, the ``setuptools`` build backend supports both the [project] table, and the older format in setup.cfg or setup.py.
+
+
+::
+
+    [project]
+    dependencies = [
+      "httpx",
+      "gidgethub[httpx]>4.0.0",
+      "django>2.1; os_name != 'nt'",
+      "django>2.0; os_name == 'nt'",   # ; 分隔 依赖项 和 条件, 格式: <依赖项> ; <条件>
+    ]
+
+收集示例::
+
+    "pywin32>=306; sys_platform == 'win32' or platform_system == 'Windows'"
+    "pngpaste; sys_platform == 'darwin' and python_version < '3.12'"
+
+
+示例::
+
+    [project]
+    name = "example_package_YOUR_USERNAME_HERE"
+    version = "0.0.1"
+    authors = [
+      { name="Example Author", email="author@example.com" },
+    ]
+    maintainers = [
+      {name = "Brett Cannon", email = "brett@example.com"}
+    ]
+    description = "A small example package"
+
+    readme = "README.md"
+    # readme = {file = "README.txt", content-type = "text/markdown"}
+    # readme = {file = "README.rst", content-type = "text/x-rst"}
+
+    license = {file = "LICENSE"}
+    keywords = ["egg", "bacon", "sausage", "tomatoes", "Lobster Thermidor"]
+    requires-python = ">=3.8"
+
+    # A list of PyPI classifiers that apply to your project.
+    classifiers = [
+        # How mature is this project? Common values are
+        #   3 - Alpha
+        #   4 - Beta
+        #   5 - Production/Stable
+        "Development Status :: 4 - Beta",
+
+        # Indicate who your project is intended for
+        "Intended Audience :: Developers",
+        "Topic :: Software Development :: Build Tools",
+
+        # Specify the Python versions you support here.
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+
+        # PyPI will always reject packages with classifiers beginning with Private ::
+        Private :: Do Not Upload classifier,
+    ]
+
+
+
+dynamic metadata
+----------------
+
+* When a field is dynamic, it is the build backend’s responsibility to fill it. Consult your build backend’s documentation to learn how it does it
+
+
+setuptools示例::
+
+    [project]
+    dynamic = ["version"]
+
+    [tool.setuptools.dynamic]
+    version = {attr = "package.__version__"}
+
+
+
+
+[project.urls] sub section
+--------------------------
+
+允许您列出任意数量的额外链接以在 PyPI 上显示。通常，这可能是源、文档、问题跟踪器等::
+
+    [project.urls]
+    Homepage = "https://github.com/pypa/sampleproject"
+    Issues = "https://github.com/pypa/sampleproject/issues"
+    # 如果key带空格需要加引号
+    "Official Website" = "https://example.com"
+
+
+
+
+[project.optional-dependencies] sub section
+-----------------------------------------------
+
+::
+
+    [project.optional-dependencies]
+    gui = ["PyQt5"]
+    cli = [
+      "rich",
+      "click",
+    ]
+
+指定了gui参数，则会安装 PyQt5 依赖库::
+
+    pip install your-project-name[gui]
+
+
+[project.scripts] sub section
+-----------------------------
+
+To install a command as part of your package, declare it in the [project.scripts] table::
+
+    [project.scripts]
+    spam-cli = "spam:main_cli"
+
+    # after installing your project, a spam-cli command will be available. 
+    # Executing this command will do the equivalent of `from spam import main_cli; main_cli()`
+
+
+[project.gui-scripts] sub section
+---------------------------------
+
+windows 专用::
+
+    [project.gui-scripts]
+    spam-gui = "spam:main_gui"
+
+
+Advanced plugins
+----------------
+
+* Some packages can be extended through plugins.
+* Examples include Pytest and Pygments.
+* To create such a plugin, you need to declare it in a subtable of [project.entry-points] like this:
+
+    [project.entry-points."spam.magical"]
+    tomatoes = "spam:main_tomatoes"
+
+pipx `示例 <https://packaging.python.org/en/latest/guides/creating-command-line-tools/>`_ ::
+
+    [project.entry-points."pipx.run"]
+    greetings = "greetings.cli:app"
+
+
+
+
+
+
+
+
+
+[tool] section
+==============
+
+
+* tool-specific subtables, e.g., [tool.hatch], [tool.black], [tool.mypy].
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

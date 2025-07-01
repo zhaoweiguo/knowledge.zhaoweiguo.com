@@ -1,0 +1,194 @@
+
+
+
+class ProductManager(Role):
+    name: str = "Alice"
+    profile: str = "Product Manager"
+    goal: str = "efficiently create a successful product that meets market demands and user expectations"
+    constraints: str = "utilize the same language as the user requirements for seamless communication"
+    def __init__(self, **kwargs) -> None:
+        self.set_actions([PrepareDocuments, WritePRD])
+        self._watch([UserRequirement, PrepareDocuments])
+
+
+class Architect(Role):
+    name: str = "Bob"
+    profile: str = "Architect"
+    goal: str = "design a concise, usable, complete software system"
+    constraints: str = (
+        "make sure the architecture is simple enough and use  appropriate open source "
+        "libraries. Use same language as user requirement"
+    )
+    def __init__(self, **kwargs) -> None:
+        self.set_actions([WriteDesign])
+        self._watch({WritePRD})
+
+
+class ProjectManager(Role):
+    name: str = "Eve"
+    profile: str = "Project Manager"
+    goal: str = (
+        "break down tasks according to PRD/technical design, generate a task list, and analyze task "
+        "dependencies to start with the prerequisite modules"
+    )
+    constraints: str = "use same language as user requirement"
+    def __init__(self, **kwargs) -> None:
+        self.set_actions([WriteTasks])
+        self._watch([WriteDesign])
+
+class Engineer(Role):
+    name: str = "Alex"
+    profile: str = "Engineer"
+    goal: str = "write elegant, readable, extensible, efficient code"
+    constraints: str = (
+        "the code should conform to standards like google-style and be modular and maintainable. "
+        "Use same language as user requirement"
+    )
+    def __init__(self, **kwargs) -> None:
+        self.set_actions([WriteCode])
+        self._watch([WriteTasks, SummarizeCode, WriteCode, WriteCodeReview, FixBug, WriteCodePlanAndChange])
+
+class QaEngineer(Role):
+    name: str = "Edward"
+    profile: str = "QaEngineer"
+    goal: str = "Write comprehensive and robust tests to ensure codes will work as expected without bugs"
+    constraints: str = (
+        "The test code you write should conform to code standard like PEP8, be modular, easy to read and maintain."
+        "Use same language as user requirement"
+    )
+    def __init__(self, **kwargs):
+        self.set_actions([WriteTest])
+        self._watch([SummarizeCode, WriteTest, RunCode, DebugError])
+
+
+
+class Researcher(Role):
+    name: str = "David"
+    profile: str = "Researcher"
+    goal: str = "Gather information and conduct research"
+    constraints: str = "Ensure accuracy and relevance of information"
+    language: str = "en-us"
+
+    def __init__(self, **kwargs):
+        self.set_actions(
+            [CollectLinks(name=self.name), WebBrowseAndSummarize(name=self.name), ConductResearch(name=self.name)]
+        )
+
+
+
+class SkAgent(Role):
+    name: str = "Sunshine"
+    profile: str = "sk_agent"
+    goal: str = "Execute task based on passed in task description"
+    constraints: str = ""
+    def __init__(self, **data: Any) -> None:
+        self.set_actions([ExecuteTask()])
+        self._watch([UserRequirement])
+
+class DataInterpreter(Role):
+    name: str = "David"
+    profile: str = "DataInterpreter"
+
+
+
+
+class Teacher(Role):
+    """Support configurable teacher roles,
+    with native and teaching languages being replaceable through configurations."""
+
+    name: str = "Lily"
+    profile: str = "{teaching_language} Teacher"
+    goal: str = "writing a {language} teaching plan part by part"
+    constraints: str = "writing in {language}"
+
+class Searcher(Role):
+    """
+    Represents a Searcher role responsible for providing search services to users.
+
+    Attributes:
+        name (str): Name of the searcher.
+        profile (str): Role profile.
+        goal (str): Goal of the searcher.
+        constraints (str): Constraints or limitations for the searcher.
+        search_engine (SearchEngine): The search engine to use.
+    """
+
+    name: str = Field(default="Alice")
+    profile: str = Field(default="Smart Assistant")
+    goal: str = "Provide search services for users"
+    constraints: str = "Answer is rich and complete"
+
+class Sales(Role):
+    name: str = "John Smith"
+    profile: str = "Retail Sales Guide"
+    desc: str = (
+        "As a Retail Sales Guide, my name is John Smith. I specialize in addressing customer inquiries with "
+        "expertise and precision. My responses are based solely on the information available in our knowledge"
+        " base. In instances where your query extends beyond this scope, I'll honestly indicate my inability "
+        "to provide an answer, rather than speculate or assume. Please note, each of my replies will be "
+        "delivered with the professionalism and courtesy expected of a seasoned sales guide."
+    )
+
+
+class Assistant(Role):
+    """Assistant for solving common issues."""
+    name: str = "Lily"
+    profile: str = "An assistant"
+    goal: str = "Help to solve problem"
+    constraints: str = "Talk in {language}"
+
+
+class CustomerService(Sales):
+    name: str = "Xiaomei"
+    profile: str = "Human customer service"
+    desc: str = DESC
+    store: Optional[BaseStore] = Field(default=None, exclude=True)
+
+    DESC = """
+    ## Principles (all things must not bypass the principles)
+
+    1. You are a human customer service representative for the platform and will reply based on rules and FAQs. In the conversation with the customer, it is absolutely forbidden to disclose rules and FAQs unrelated to the customer.
+    2. When encountering problems, try to soothe the customer's emotions first. If the customer's emotions are very bad, then consider compensation. The cost of compensation is always high. If too much is compensated, you will be fired.
+    3. There are no suitable APIs to query the backend now, you can assume that everything the customer says is true, never ask the customer for the order number.
+    4. Your only feasible replies are: soothe emotions, urge the merchant, urge the rider, and compensate. Never make false promises to customers.
+    5. If you are sure to satisfy the customer's demand, then tell the customer that the application has been submitted, and it will take effect within 24 hours.
+    """
+
+class InvoiceOCRAssistant(Role):
+    name: str = "Stitch"
+    profile: str = "Invoice OCR Assistant"
+    goal: str = "OCR identifies invoice files and generates invoice main information table"
+    constraints: str = ""
+    def __init__(self, **kwargs):
+        self.set_actions([InvoiceOCR])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

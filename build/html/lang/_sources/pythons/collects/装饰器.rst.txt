@@ -1,0 +1,98 @@
+装饰器
+########
+
+
+
+@overload
+=========
+
+* typing 模块中的一个装饰器，用于定义函数重载（function overloading）。
+* 函数重载允许在同一作用域中定义多个同名函数，但这些函数的参数类型或数量不同。在 Python 中，实际的运行时并不支持函数重载，但通过 @overload 装饰器，可以在静态类型检查工具（如 mypy）中实现类似的功能。
+
+
+用法
+----
+
+* @overload 只能与类型提示一起使用，它不会实际实现函数逻辑，而是仅用于提供类型信息。具体的实现应该放在没有 @overload 装饰器的函数定义中。
+
+注意事项
+--------
+
+* 仅用于类型检查：@overload 装饰器不会实际生成不同的函数版本，它只是用于类型检查工具来识别不同的签名。
+* 实现必须单独定义：真正的函数实现必须在所有 @overload 定义之后，并且不能使用 @overload 装饰器。
+* 参数和返回类型的一致性：@overload 装饰器定义的参数和返回类型应该在实际实现中得到正确处理。
+
+
+示例
+----
+
+::
+
+    from typing import overload, Union
+
+    @overload
+    def process(value: int) -> str:
+        ...
+
+    @overload
+    def process(value: str) -> int:
+        ...
+
+    def process(value: Union[int, str]) -> Union[str, int]:
+        if isinstance(value, int):
+            return str(value)
+        elif isinstance(value, str):
+            return len(value)
+        else:
+            raise TypeError("Unsupported type")
+
+    # 示例调用
+    print(process(123))  # 输出: "123"
+    print(process("abc"))  # 输出: 3
+
+
+* process 函数有两个重载版本，一个接收 int 类型参数并返回 str，另一个接收 str 类型参数并返回 int。实际的函数实现结合了这两种情况，并根据输入的类型进行相应的处理。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

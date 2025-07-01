@@ -1,0 +1,191 @@
+常用
+####
+
+
+
+说明::
+
+    - 测试函数命名必须以 test_ 开头
+    - 测试函数必须返回一个布尔值，True 表示测试通过，False 表示测试失败
+
+
+主要功能::
+
+    - 简洁的断言格式：无需使用特定的断言方法，直接使用 Python 的 assert 语句。
+    - 丰富的插件系统：通过插件可以扩展 pytest 的功能，如生成测试报告、并行执行测试等。
+    - 测试夹具(fixtures)：可以用来设置测试前后需要的准备和清理工作，提高测试代码的可维护性和复用性。
+
+命名规则::
+
+    类名以 Test 开头: TestXxxx
+    函数名以 test_ 开头: test_xxxx
+    文件名以 test_ 开头: test_xxxx
+
+
+
+
+
+
+
+
+选项
+====
+
+基本(general)::
+
+    -k expr：
+        根据表达式过滤测试，例如 -k "MyClass and not method"
+    -m marker：
+        根据标记过滤测试，例如 -m "slow"
+    -s(--capture=no)：
+        允许 pytest 显示标准输出（例如，print 语句的输出）
+        (注：不加-s，插件里面的print还是会显示的，只是test_xxx文件里面的print不显示)
+    --capture=method
+        Per-test capturing method: one of fd|sys|no|tee-sys
+
+    # 失败重跑
+    --lf 或 --last-failed：
+        只重新运行上次失败的测试。
+    --ff 或 --failed-first：
+        先运行上次失败的测试，然后运行其他测试。
+
+    --pdb
+        失败(或KeyboardInterrupt)时调用Python调试器
+        示例：
+            pytest -x --pdb   # 在第一次用例失败时进入PDB
+            pytest --pdb --maxfail=3  # 在前3次失败是进入PDB
+    --trace
+        测试开始时进入PDB
+
+
+
+测试报告和输出(Reporting)::
+
+    -v(--verbose)
+        启用详细模式，显示每个测试的名称和执行结果
+        (如：使用它会显示: FAILED，而不使用它只会显示F)
+            (f)ailed
+            (E)rror
+            (s)kipped
+            (x)failed(@pytest.mark.xfail): 符合预期
+            (X)passed(@pytest.mark.xfail): 不符合预期
+            (p)assed
+            (P)assed with output
+            (a)ll except passed(p/P)
+            (A)ll
+    -q(--quiet)
+        减少测试输出的详细程度
+    --tb=style
+        控制回溯报告风格
+        pytest --tb=auto    # (默认) 第1和最后1条使用详细追溯信息，其他使用简短追溯信息
+        pytest --tb=long    # 详尽，信息丰富的追溯信息格式
+        pytest --tb=short   # 简短的追溯信息格式
+        pytest --tb=line    # 每个失败信息一行
+        pytest --tb=native  # Python标准库格式
+        pytest --tb=no      # 不使用追溯信息
+    -l, --showlocals
+        Show locals in tracebacks (disabled by default)
+    --durations=num：
+        显示运行时间最久的 num 个测试
+    -r chars
+        (default: 'fE')
+        用于在测试会话结束时显示测试结果摘要，从而可以在大型测试套件中轻松获得所有失败、跳过、标记失败(xfails)等测试结果的清晰图像
+        Show extra test summary info as specified by chars:
+            (f)ailed, (E)rror, (s)kipped, (x)failed, (X)passed,
+            (p)assed, (P)assed with output, (a)ll except passed
+            (p/P), or (A)ll.
+            注：参见上面 -v
+        示例：只查看失败和跳过的用例
+            pytest -rfs
+
+test session debugging and configuration::
+
+    -p name
+        指定加载或不加载某个插件
+        加载插件: pytest -p myplugin
+        禁用插件: pytest -p no:myplugin
+    --trace-config
+        Trace considerations of conftest.py files
+        用于输出详细的配置加载过程和信息。
+        这对于调试和了解 pytest 的配置如何被解析和加载非常有用。
+        打印出以下信息：
+            a. pytest 加载的所有配置文件
+            b. pytest 使用的所有插件
+            c. pytest 解析的所有命令行参数
+            d. pytest 生成的最终配置对象
+
+
+其他::
+
+    --maxfail=num
+        在达到指定数量的失败后停止测试运行
+
+
+
+
+基本用法
+========
+
+运行特定测试::
+
+    # 运行指定目录下的所有测试
+    pytest test_directory/
+    # 指定文件名
+    pytest test_file.py
+    # 指定函数名
+    pytest test_file.py::test_method
+    # 指定类名
+    pytest test_file.py::TestClass
+    # 指定类中的某个测试方法
+    pytest test_file.py::TestClass::test_method
+
+    # 通过标记表达式运行测试(执行所有带@pytest.mark.slow装饰器的用例)
+    pytest -m slow
+
+    # 从包中运行测试(导入pkg.testing并使用其文件系统位置来查找和运行测试)
+    pytest --pyargs pkg.testing
+
+
+
+
+
+在测试文件中增加::
+
+    if __name__ == "__main__":
+        pytest.main([__file__, "-s"])
+    等同于:
+        在命令行执行 `pytest -s` 命令
+
+    if __name__ == "__main__":
+        pytest.main([__file__, "-s", "-v"])
+    等同于:
+        在命令行执行 `pytest -s -v` 命令
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

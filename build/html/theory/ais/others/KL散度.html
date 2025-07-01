@@ -1,0 +1,577 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="zh-CN" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="zh-CN" > <!--<![endif]-->
+<head>
+
+
+<!-- start added 2025-04-14   增加对markdown中公式的支持 -->
+<script>
+window.MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+    },
+    options: {
+        ignoreHtmlClass: "tex2jax_ignore|mathjax_ignore",
+        processHtmlClass: "tex2jax_process|mathjax_process|math|output_area"
+    }
+};
+</script>
+<script defer="defer" src="https://fastly.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<!-- end added 2025-04-14   增加对markdown中公式的支持 -->
+
+
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Kullback-Leibler 散度 &mdash; 新溪-gordon V2025.05 文档</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+    <link rel="index" title="索引" href="../../genindex.html" />
+    <link rel="search" title="搜索" href="../../search.html" />
+    <link rel="next" title="深度学习相关" href="deeplearning.html" />
+    <link rel="prev" title="LLM" href="LLM.html" /> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+  <script src="../../_static/js/jquery.min.js"></script>
+
+
+<!-- 评论插件 gittalk start -->
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script> -->
+<!-- 评论插件 gittalk end -->
+
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> 新溪-gordon
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                V2025.05
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">理论</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../normal.html">常用</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/normal.html">常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/iceberg_theory.html">冰山理论</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/Six_Degrees.html">Six Degrees of Kevin Bacon</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../normals/Forgetting_Curve.html">Forgetting Curve-遗忘曲线</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../%E5%88%9B%E6%96%B0%E6%80%9D%E7%BB%B4.html">创新思维</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../inovative_thinkings/TRIZ.html">TRIZ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../inovative_thinkings/design_thinking.html">设计思维</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../inovative_thinkings/%E5%A4%B4%E8%84%91%E9%A3%8E%E6%9A%B4.html">头脑风暴</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../ai.html">关键定义</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../Parallelism/normal.html">通用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../Parallelism/PipelineParallelism.html">Pipeline Parallelism</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../Parallelism/TensorParallesim.html">Tensor Parallesim</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_activations/activation_Sigmoid.html">激活函数-Sigmoid</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_activations/activation_RELU.html">激活函数-ReLU</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_activations/activation_Leaky-ReLU.html">激活函数-Leaky ReLU</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_activations/activation_Tanh.html">激活函数-Tanh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_activations/activation_GELU.html">激活函数-GELU</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_activations/normalization_L1.html">归一化-L1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_activations/normalization_L2.html">归一化-L2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_activations/probabilistic_Softmax.html">概率分布-Softmax</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_activations/probabilistic_logSoftmax.html">概率分布-logsoftmax</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_activations/probabilistic_Sparsemax.html">概率分布-Sparsemax</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_loss/classify_cross_entropy.html">损失函数-分类-cross-entropy(交叉熵)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_loss/classify_NLL.html">损失函数-分类-负对数似然损失NLL Loss</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_loss/classify_log.html">损失函数-分类-对数损失(Log Loss)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_loss/classify_kl.html">损失函数-分类-KL 散度(KL Loss)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_loss/regression_MSE.html">损失函数-回归-均方误差(MSE)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_loss/regression_MAE.html">损失函数-回归-平均绝对误差(MAE)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_loss/regression_Huber.html">损失函数-回归-Huber 损失</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_loss/regression_log_cosh.html">损失函数-回归-对数余弦损失(Log-Cosh Loss)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_loss/%E6%9D%83%E9%87%8D%E8%A1%B0%E5%87%8F-L2%E6%AD%A3%E5%88%99%E5%8C%96.html">权重衰减(L2正则化)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_optims/GD.html">GD(梯度下降)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_optims/SGD.html">SGD随机梯度下降</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_optims/RMSprop.html">RMSprop</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_optims/Adam.html">Adam</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_optims/AdamW.html">AdamW</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../func_optims/Momentum.html">Momentum</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ners/HMM-%E9%9A%90%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E6%A8%A1%E5%9E%8B.html">HMM-隐马尔可夫模型</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ners/WWM-%E5%85%A8%E8%AF%8DMask.html">WWM-Whole Word Masking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ners/CRF-%E6%9D%A1%E4%BB%B6%E9%9A%8F%E6%9C%BA%E5%9C%BA.html">CRF-条件随机场</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dls/ANN.html">ANN(NN)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dls/DNN-%E6%B7%B1%E5%BA%A6%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C.html">深度神经网络(Deep Neural Network, DNN)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dls/CNN-%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C.html">卷积神经网络(Convolutional Neural Network, CNN)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dls/RNN-%E5%BE%AA%E7%8E%AF%E7%A5%9E%E7%BB%8F%E7%BD%91.html">RNN: 循环神经网(Recurrent Neural Network, RNN)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dls/LSTM-%E9%95%BF%E7%9F%AD%E6%97%B6%E8%AE%B0%E5%BF%86.html">LSTM: 长短时记忆(Long Short Term Memory, LSTM)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dl_theorys/propagation.html">前向/反向传播</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dl_theorys/LinearLayer.html">Linear Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dl_theorys/FFN.html">Feedforward Network-前馈网络</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dl_theorys/LayerNorm.html">LayerNorm(层归一化)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dl_theorys/WeightTying.html">Weight Tying</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dl_theorys/GreedyDecoding.html">Greedy Decoding</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dl_theorys/ImageGrounding.html">Image Grounding</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dl_theorys/Perplexity.html">Perplexity(PPL)困惑度</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../3Ds/ManhattanWorld%E6%9B%BC%E5%93%88%E9%A1%BF%E4%B8%96%E7%95%8C.html">Manhattan World(曼哈顿世界)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../3Ds/HoughTransform%E9%9C%8D%E5%A4%AB%E5%8F%98%E6%8D%A2.html">Hough Transform（霍夫变换）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../3Ds/PolarCoordinateSystem%E6%9E%81%E5%9D%90%E6%A0%87%E8%A1%A8%E7%A4%BA%E6%B3%95.html">极坐标表示法(Polar Coordinate System)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../3Ds/GaussianSphere%E9%AB%98%E6%96%AF%E7%90%83.html">Gaussian Sphere（高斯球）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../3Ds/edge_direction%E8%BE%B9%E7%BC%98%E6%96%B9%E5%90%91.html">边缘方向 Edge Direction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../3Ds/NormalVector%E6%B3%95%E5%90%91%E9%87%8F.html">NormalVector法向量</a></li>
+<li class="toctree-l2"><a class="reference internal" href="%E5%88%A4%E5%88%AB%E5%BC%8F%E6%A8%A1%E5%9E%8Bvs%E7%94%9F%E6%88%90%E5%BC%8F%E6%A8%A1%E5%9E%8B.html">判别式模型vs生成式模型</a></li>
+<li class="toctree-l2"><a class="reference internal" href="AllReduce.html">AllReduce</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Embedding%E6%A8%A1%E5%9E%8B.html">Embedding 模型</a></li>
+<li class="toctree-l2"><a class="reference internal" href="BPE.html">BPE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="LLM.html">LLM</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Kullback-Leibler 散度</a></li>
+<li class="toctree-l2"><a class="reference internal" href="deeplearning.html">深度学习相关</a></li>
+<li class="toctree-l2"><a class="reference internal" href="%E7%9F%A2%E9%87%8F%E5%8C%96%E8%AE%A1%E7%AE%97.html">矢量化计算(Vectorize calculations)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="other.html">其他</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../math.html">数学方法</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E5%9F%BA%E6%9C%AC-%E6%96%B9%E5%B7%AE_%E6%A0%87%E5%87%86%E5%B7%AE.html">方差/标准差</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E5%9F%BA%E6%9C%AC-%E5%AF%B9%E6%95%B0.html">基本-对数(logarithmic)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E5%9F%BA%E6%9C%AC-%E5%AF%BC%E6%95%B0.html">基本-导数</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E5%9F%BA%E6%9C%AC-%E7%9F%A9%E9%98%B5%E4%B9%98%E6%B3%95.html">基本-矩阵乘法</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E5%88%86%E5%B8%83-%E5%9D%87%E5%8C%80%E5%88%86%E5%B8%83.html">分布-均匀分布(Uniform Distribution)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E5%88%86%E5%B8%83-%E6%AD%A3%E6%80%81%E5%88%86%E5%B8%83.html">分布-正态分布(Normal Distribution)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E5%88%86%E5%B8%83-%E9%AB%98%E6%96%AF%E5%88%86%E5%B8%83.html">分布-高斯分布(Gaussian Distribution)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E5%88%86%E5%B8%83-%E4%BC%AF%E5%8A%AA%E5%88%A9%E5%88%86%E5%B8%83.html">分布-伯努利分布(Bernoulli Distribution)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E5%88%86%E5%B8%83-%E5%87%A0%E4%BD%95%E5%88%86%E5%B8%83.html">分布-几何分布(Geometric Distribution)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E5%88%86%E5%B8%83-%E6%B3%8A%E6%9D%BE%E5%88%86%E5%B8%83.html">分布-泊松分布(Poisson Distribution)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E5%88%86%E5%B8%83-%E4%BA%8C%E9%A1%B9%E5%88%86%E5%B8%83.html">分布-二项分布</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E6%A6%82%E7%8E%87%E5%AF%86%E5%BA%A6%E5%87%BD%E6%95%B0.html">概率密度函数(Probability Density Function, PDF)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E6%A6%82%E7%8E%87%E8%B4%A8%E9%87%8F%E5%87%BD%E6%95%B0.html">概率质量函数(Probability Mass Function, PMF)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E8%8C%83%E6%95%B0-%E6%9B%BC%E5%93%88%E9%A1%BF%E8%B7%9D%E7%A6%BB.html">L1 范数(曼哈顿距离)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E8%8C%83%E6%95%B0-%E6%AC%A7%E5%87%A0%E9%87%8C%E5%BE%97%E8%8C%83%E6%95%B0.html">L2 范数(欧几里得范数)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E8%8C%83%E6%95%B0-%E6%9C%80%E5%A4%A7%E8%8C%83%E6%95%B0.html">L∞ 范数(最大范数)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E8%8C%83%E6%95%B0-Frobenius%E8%8C%83%E6%95%B0.html">范数-Frobenius范数</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E7%BB%9F%E8%AE%A1-%E6%9C%80%E5%A4%A7%E4%BC%BC%E7%84%B6%E5%8E%9F%E7%90%86_MLP.html">统计-最大似然原理(Maximum Likelihood Principle)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E7%BB%9F%E8%AE%A1-%E6%9C%80%E5%A4%A7%E4%BC%BC%E7%84%B6%E4%BC%B0%E8%AE%A1_MLE.html">MLE-最大似然估计</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E7%BB%9F%E8%AE%A1-%E4%BC%BC%E7%84%B6%E5%87%BD%E6%95%B0.html">统计-似然函数(Likelihood)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E7%BB%9F%E8%AE%A1-%E8%BE%9B%E6%99%AE%E6%A3%AE%E6%B3%95%E5%88%99.html">统计-辛普森法则(Simpson’s Paradox)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E7%BB%9F%E8%AE%A1-%E4%B8%AD%E5%BF%83%E6%9E%81%E9%99%90%E5%AE%9A%E7%90%86_CLT.html">统计-中心极限定理(Central Limit Theorem, CLT)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E4%BA%8C%E5%85%AB%E5%AE%9A%E5%BE%8B.html">二八定律</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E5%90%88%E7%90%86%E8%BF%90%E7%94%A8%E6%97%B6%E9%97%B4%E5%BA%8F%E5%88%97.html">合理运用时间序列</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E5%A4%9A%E5%9B%A0%E7%B4%A0%E5%88%86%E6%9E%90%E9%97%AE%E9%A2%98.html">多因素分析问题</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E8%BF%B9%E5%87%BD%E6%95%B0.html">迹函数(trace function)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E7%89%B9%E5%BE%81%E5%80%BC.html">特征值(Eigenvalue)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E8%A1%8C%E5%88%97%E5%BC%8F.html">行列式(determinant)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E8%BD%AC%E7%BD%AE%E7%9F%A9%E9%98%B5.html">矩阵-转置矩阵</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E8%A7%A3%E6%9E%90%E8%A7%A3.html">解析解(Analytic Solution)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E5%87%BD%E6%95%B0-%E4%BB%BF%E5%B0%84%E5%87%BD%E6%95%B0.html">函数-仿射函数(affine functions)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../maths/%E5%87%BD%E6%95%B0-%E7%BA%BF%E6%80%A7%E5%87%BD%E6%95%B0.html">函数-线性函数(Linear Function)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../analysis.html">分析方法</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../analysis/%E8%BE%A9%E8%AF%81%E6%B3%95.html">辩证法</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../analysis/%E5%BD%92%E7%BA%B3%E6%B3%95.html">归纳法</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../analysis/%E6%BC%94%E7%BB%8E%E6%B3%95.html">演绎法</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../secure.html">安全</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../secures/KMS.html">KMS-密钥管理服务(Key Management Service)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../secures/%E5%9F%BA%E7%BA%BF%E7%AE%A1%E7%90%86.html">基线管理</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../secures/%E8%BF%9C%E7%A8%8B%E8%AF%81%E6%98%8E.html">远程证明</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../theorem.html">定理-原理</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../theorems/law.html">Law定理/定律</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/laws/Murphys_Law.html">墨菲定律(Murphy’s Law)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/laws/Parkinsons_Law.html">帕金森定律(Parkinson’s Law)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/laws/Peter_Principle.html">彼得原理(peterPrinciple)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/laws/Conways_Law.html">康威定律(Conway’s Law)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/laws/Dunbars_Number.html">Dunbar Number</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/laws/Benfords_Law.html">Benford’s law</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/laws/Zipfs_Law.html">Zipf’s law</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/laws/Clarkes_3Laws.html">Clarke’s three laws</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/laws/Occams_Razor.html">奥卡姆剃刀原则</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/laws/Law_of_Thermodynamics2.html">second law of thermodynamics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/laws/Law_of_Diminishing_Marginal_Utility.html">The Law Of Diminishing Marginal Utility</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/laws/X-Y_PROBLEM.html">X-Y PROBLEM</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/laws/Amdahls_Law.html">Amdahl’s Law</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/laws/Scaling_Law.html">scaling law</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/laws/Scaling_Law.html#id2">一种本质性的思维方式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/laws/Scaling_Law.html#id3">各领域的应用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/laws/Power_Law.html">Power Law(幂律)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/laws/%E5%A4%A7%E6%95%B0%E5%AE%9A%E5%BE%8B.html">大数定律(law of large numbers)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../theorems/question.html">问问题的技巧</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/questions/%E6%B5%B7%E5%B0%94%E8%BF%88%E8%80%B6%E7%B3%BB%E5%88%97%E9%97%AE%E9%A2%98.html">海尔迈耶系列问题</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../theorems/rule.html">Rule原则/规则</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/rules/ruleofthree.html">三次法则</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/rules/Peak-End%20Rule.html">峰终定律-Peak-End Rule</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/rules/MECE.html">MECE</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/rules/SMART.html">SMART 原则</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../theorems/model.html">模型</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/models/%E6%B3%A2%E5%A3%AB%E9%A1%BF%E7%9F%A9%E9%98%B5%E6%A8%A1%E5%9E%8B.html">波士顿矩阵模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/models/%E8%89%BE%E6%A3%AE%E8%B1%AA%E5%A8%81%E5%B0%94%E7%9F%A9%E9%98%B5.html">艾森豪威尔矩阵</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/models/Wardley%20Map.html">Wardley Map</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/models/ARCI%E6%A8%A1%E5%9E%8B.html">ARCI模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/models/%E8%BE%9B%E6%99%AE%E6%A3%AE%E6%82%96%E8%AE%BA.html">辛普森悖论</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../theorems/models/WBS.html">工作分解结构Work Breakdown Structure</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../learning.html">学习相关</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../learnings/study.html">如何学习</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/studys/fast-learn-new-field.html">如何快速学习</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/studys/%E4%BB%A5%E6%95%99%E4%B8%BA%E5%AD%A6.html">以教为学</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/studys/ZTD%E5%AD%A6%E4%B9%A0%E6%B3%95.html">ZTD学习套路</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/studys/%E5%A6%82%E4%BD%95%E6%88%90%E4%B8%BA%E5%A4%A7%E7%89%9B.html">如何成为大师/大牛</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/studys/%E9%AB%98%E6%95%88%E5%AD%A6%E4%B9%A0.html">高效学习</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/studys/%E5%AD%A6%E4%B9%A0%E6%96%B9%E6%B3%95%E8%AE%BA%E5%AF%BC%E5%9B%BE.html">学习方法论导图</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/studys/%E5%85%AD%E6%AD%A5%E5%AD%A6%E4%B9%A0%E6%B3%95.html">六步学习法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/studys/%E8%B4%B9%E6%9B%BC%E5%AD%A6%E4%B9%A0%E6%B3%95.html">费曼学习法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/studys/%E5%A4%96%E8%AF%AD%E5%AD%A6%E4%B9%A0%E6%8A%80%E5%B7%A7.html">外语学习技巧</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/studys/%E7%9F%A5%E8%AF%86%E5%9B%BE%E8%B0%B1.html">知识图谱</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/studys/%E5%A6%82%E4%BD%95%E8%AE%B0%E7%AC%94%E8%AE%B0.html">如何记笔记</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/studys/tmp.html">临时</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../learnings/source_code.html">源码学习</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/source_codes/learn-method.html">如何高效学习</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/source_codes/why-read-code.html">为何阅读源码</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/source_codes/how-to-read-code.html">如何阅读源码</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/source_codes/how-to-read-code2.html">如何阅读源码2</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/source_codes/how-to-read-code3.html">如何阅读源码3</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/source_codes/efficient-read-code.html">如何高效阅读源码</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../learnings/lifelong-learning.html">终身学习方法论</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/lifelong-learnings/learning1.html">终身学习方法论1</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/lifelong-learnings/%E6%8E%A8%E6%BC%94-%E5%81%9A-%E5%A4%8D%E7%9B%98.html">推演-做-复盘</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/lifelong-learnings/%E5%A4%8D%E7%9B%98.html">复盘</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/lifelong-learnings/%E4%BA%BA%E7%94%9F%E7%9A%84%E4%B8%89%E4%B8%AA%E9%98%B6%E6%AE%B5.html">人生的三个阶段</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/lifelong-learnings/mental-model.html">思维模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/lifelong-learnings/question.html">关键问题</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../learnings/read.html">如何阅读</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/reads/%E5%A6%82%E4%BD%95%E9%98%85%E8%AF%BB.html">如何阅读</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/reads/%E5%A6%82%E4%BD%95%E8%AF%BB%E4%B8%80%E6%9C%AC%E9%9D%9E%E8%99%9A%E6%9E%84%E5%9B%BE%E4%B9%A6.html">如何读一本非虚构图书</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/reads/%E5%BF%AB%E9%80%9F%E9%98%85%E8%AF%BB.html">快速阅读</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../learnings/write.html">如何写作</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/writes/how-to-write.html">如何写作</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/writes/%E5%86%99%E4%BD%9C%E5%A6%82%E7%BC%96%E7%A0%81.html">写作如编码</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/writes/%E9%87%91%E5%AD%97%E5%A1%94%E5%8E%9F%E7%90%86%E8%AE%B2%E5%86%99%E4%BD%9C.html">金字塔原理讲写作</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/writes/%E5%A6%82%E4%BD%95%E6%94%B6%E9%9B%86%E7%B4%A0%E6%9D%90.html">如何收集素材</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/writes/%E7%A8%8B%E5%BA%8F%E5%91%98%E6%80%8E%E6%A0%B7%E5%86%99%E5%A5%BD%E6%96%87%E7%AB%A0.html">程序员怎样写好文章</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../learnings/speech.html">如何演讲</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/speechs/%E8%A1%A8%E8%BE%BE%E5%A5%97%E8%B7%AF.html">表达套路</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../learnings/speechs/%E5%A6%82%E4%BD%95%E6%BC%94%E8%AE%B2.html">如何演讲</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../learnings/opensource.html">开源</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../economy.html">经济</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../psychics.html">心理学</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../startup.html">创业</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other.html">其他</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">新溪-gordon</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../ai.html">关键定义</a> &raquo;</li>
+        
+      <li>Kullback-Leibler 散度</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/ais/others/KL散度.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            <nav id="local-table-of-contents" role="navigation" aria-labelledby="local-table-of-contents-title">
+              <h4 id="local-table-of-contents-title">On This Page</h4>
+              <ul>
+<li><a class="reference internal" href="#">Kullback-Leibler 散度</a><ul>
+<li><a class="reference internal" href="#kl">KL散度的性质</a></li>
+</ul>
+</li>
+</ul>
+
+            </nav>
+  <table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="../../genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../search.html"><span class="std std-ref">搜索页面</span></a></p></td>
+</tr>
+</tbody>
+</table>
+<section id="kullback-leibler">
+<h1>Kullback-Leibler 散度<a class="headerlink" href="#kullback-leibler" title="此标题的永久链接">¶</a></h1>
+<ul class="simple">
+<li><p>Kullback-Leibler (KL) 散度，又称为相对熵，是一种衡量两个概率分布之间差异的非对称度量</p></li>
+<li><p>KL散度用于计算一个概率分布 𝑃 和另一个概率分布 𝑄 之间的信息差异，反映了从 𝑄 的角度来看，使用 𝑃 分布进行建模的“成本”。</p></li>
+<li><p>KL散度的数学表达式如下：</p></li>
+</ul>
+<div class="math notranslate nohighlight">
+\[D_{\mathrm{KL}}(P \| Q)=\sum_{x} P(x) \log \left(\frac{P(x)}{Q(x)}\right)\]</div>
+<ul class="simple">
+<li><dl class="simple">
+<dt>其中：</dt><dd><ul>
+<li><p>𝑃(𝑥) 是实际的分布，通常被视为“真实”的概率分布</p></li>
+<li><p>𝑄(𝑥) 是预测的分布或假设的分布</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p>KL散度的值始终是非负的，即 <span class="math notranslate nohighlight">\(𝐷_{KL}(𝑃∣∣𝑄)≥0\)</span> ，并且只有当 𝑃(𝑥)=𝑄(𝑥)x 对于所有 𝑥 都成立时，KL散度为零。</p></li>
+</ul>
+<section id="kl">
+<h2>KL散度的性质<a class="headerlink" href="#kl" title="此标题的永久链接">¶</a></h2>
+<ul class="simple">
+<li><p>非对称性：KL散度是非对称的，即 <span class="math notranslate nohighlight">\(𝐷_{KL}(𝑃∣∣𝑄)≠𝐷_{KL}(𝑄∣∣𝑃)\)</span></p></li>
+<li><p>信息量度：KL散度衡量了使用 𝑄 来近似 𝑃 时损失的信息量。越大意味着 𝑄 分布和 𝑃 分布之间的差距越大。</p></li>
+<li><p>在优化中的应用：KL散度广泛应用于机器学习，尤其是在变分推理、生成对抗网络（GANs）和信息论中。</p></li>
+</ul>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
+<td><p><a class="reference internal" href="../../genindex.html"><span class="std std-ref">索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
+<td><p><a class="reference internal" href="../../search.html"><span class="std std-ref">搜索页面</span></a></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="deeplearning.html" class="btn btn-neutral float-right" title="深度学习相关" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="LLM.html" class="btn btn-neutral" title="LLM" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+  
+  <div id="gitalk-container"></div>
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2010-2025, 新溪-gordon.
+
+    </p>
+  </div>
+  <div>备案号 <a href="http://www.beian.miit.gov.cn">京ICP备16018553号</a></div><div>Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a></div>. 
+
+
+</footer>
+
+<script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?042289284b8eb33866001347a3e0b129";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>     
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'V2025.05',
+            LANGUAGE:'zh-CN',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../_static/sphinx_highlight.js"></script>
+      <script type="text/javascript" src="../../_static/clipboard.min.js"></script>
+      <script type="text/javascript" src="../../_static/copybutton.js"></script>
+      <script type="text/javascript" src="../../_static/translations.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script type="text/javascript" src="../../None"></script>
+      <script type="text/javascript" src="https://fastly.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  
+
+  <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+
+
+      // var gitalk = new Gitalk({
+      //         clientID: '565177626b5d46427009',
+      //         clientSecret: 'b2a36e67e1d2a73e43667f46d571c2624f8e1026',
+      //         repo: 'knowledge',
+      //         owner: 'zhaoweiguo',
+      //         admin: ['zhaoweiguo'],
+      //         id: location.pathname,      // Ensure uniqueness and length less than 50
+      //         distractionFreeMode: false  // Facebook-like distraction free mode
+      //       })
+      // gitalk.render('gitalk-container')
+
+  </script>
+
+
+<script type="text/javascript" src="../../_static/js/table-of-contents-sidebar.js"></script>
+<!-- <script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script> -->
+<script type="text/javascript">
+    window.onload = function(e){
+        TableOfContents.init({
+            basePath: "https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/",
+            querySelector: "body" // or other css querySelector
+        });
+    }
+</script> 
+
+</body>
+</html>

@@ -1,0 +1,565 @@
+RFC6763: DNS-Based Service Discovery
+####################################
+
+* February 2013
+* Apple Inc.
+* Category: Standards Track
+* Company::
+  
+    Apple Inc.
+
+keyword::
+
+    DNS-SD
+
+收集
+====
+
+* http://www.dns-sd.org/
+* [定义]DNS Service Discovery is a way of using standard DNS programming interfaces, servers, and packet formats to browse the network for services.
+* DNS Service Discovery is compatible with, but not dependent on, Multicast DNS.
+
+
+* https://ycrblog.top/%E8%AF%A6%E8%A7%A3dns-sd%EF%BC%88%E4%B8%AD%EF%BC%89/
+* DNS-SD 是苹果先鼓捣出来的先进玩意儿，是基于多播 DNS（MDNS) 改进后的协议，完全兼容但不依赖于多播 DNS，而这个 Bonjour 呢，就是运用了这项技术实践出来的产物。其运行在苹果的各个产品上。包括 MacOs、IOS，将其内置为一项基础功能，AirPlay 就是最典型的运用 Bonjour 的例子。在零配置网络工作组（Zero-configuration networking）协议的领导下，诞生的 Bonjour，旨在用户在无序混乱的网络环境下，无需进行任何操作，连上互联网就能搜索、使用到我们推荐的服务 (广告 Advertise)。
+* ``zero-configuration networking (zeroconf)`` is a set of technologies that automatically creates a usable computer network based on the internet protocol suite (tcp/ip) when computers or network peripherals are interconnected. it does not require manual operator intervention or special configuration servers. without zeroconf, a network administrator must set up network services, such as dynamic host configuration protocol (dhcp) and domain name system (dns), or configure each computer’s network settings manually.
+* 基于 DNS 的服务发现主要用到 DNS 现有的三种类型记录 (Record Type)::
+
+    1. PTR 记录
+    2. SRV 记录
+    3. TXT 记录
+
+
+
+
+
+
+
+
+有多个版本的实现::
+
+    avahi – Linux implementation (http://www.avahi.org/)
+    jmDNS – Java implementation (http://jmdns.sourceforge.net/)
+    Bonjour – MAC OS (installed by default)
+    Bonjour – Windows (https://support.apple.com/kb/DL999?locale=en_US)
+
+    MacOS/IOS :Bonjour
+    Linux/UNIX :AVAHI
+    Windows :DNS-SD
+    Android :RxDNSSD jmdns GoogleAPI 网络框架
+
+
+
+
+
+1.  Introduction
+================
+
+
+* Given a type of service that a client is looking for, and a domain in which the client is looking for that service, this mechanism allows clients to discover a list of named instances of that desired service, using standard DNS queries.  This mechanism is referred to as DNS-based Service Discovery, or DNS-SD.
+
+* This document is written for two audiences::
+
+    1. for developers creating application software that offers or accesses services on the network
+    2. for developers creating DNS-SD libraries to implement the advertising and discovery mechanisms
+
+
+
+3.  Design Goals
+================
+
+* 指定服务类型、指定域，查询服务列表[如SRV records with the name "_http._tcp.example.com." would allow a client to discover servers implementing the "_http._tcp" service (i.e., web servers) for the "example.com." domain.]
+* 给定服务名，高效解决服务名与客户端所需信息(如ip, port等)的对应关系
+* 服务名相对持久，即使这个服务的ip, port变化，也能不受影响
+
+
+4.  Service Instance Enumeration (Browsing)
+===========================================
+
+The remainder of this section describes how SRV records may be used in a slightly different way, to allow a user to discover the names of all available instances of a given type of service, and then select, from that list, the particular instance they desire.
+
+4.1.  Structured Service Instance Names
+---------------------------------------
+
+* This document borrows the logical service-naming syntax and semantics from ``DNS SRV records``, but adds one level of indirection. 
+* Instead of requesting records of type "SRV" with name "_ipp._tcp.example.com.", the client requests records of type "PTR" (pointer from one name to another in the DNS namespace) [RFC1035].
+* In effect, if one thinks of the domain name "_ipp._tcp.example.com." as being analogous to an absolute path to a directory in a file system, then DNS-SD's PTR lookup is akin to performing a listing of that directory to find all the entries it contains.
+* The result of this PTR lookup for the name ``"<Service>.<Domain>"`` is a set of zero or more PTR records giving Service Instance Names of the form: ``Service Instance Name = <Instance> . <Service> . <Domain>``
+
+
+4.1.1.  Instance Names
+''''''''''''''''''''''
+
+* The <Instance> portion of the Service Instance Name is a user-friendly name consisting of arbitrary Net-Unicode text [RFC5198].
+* DNS labels are currently limited to 63 octets in length.  UTF-8 encoding can require up to four octets per Unicode character
+
+
+4.1.2.  Service Names
+'''''''''''''''''''''
+
+* The <Service> portion of the Service Instance Name consists of a pair of DNS labels, following the convention already established for SRV records [RFC2782].
+* The first label of the pair is an underscore character followed by the Service Name [RFC6335]. The Service Name identifies what the service does and what application protocol it uses to do it.  
+* The second label is either "_tcp" (for application protocols that run over TCP) or "_udp" (for all others).
+* Example: "_http._tcp"
+
+
+4.1.3.  Domain Names
+''''''''''''''''''''
+
+* The <Domain> portion of the Service Instance Name specifies the DNS subdomain within which those names are registered.
+* It may be "local.", meaning "link-local Multicast DNS" [RFC6762], or it may be a conventional Unicast DNS domain name, such as "ietf.org.", "cs.stanford.edu.", or "eng.us.ibm.com."
+
+
+4.2.  User Interface Presentation
+---------------------------------
+
+* The names resulting from the Service Instance Enumeration PTR lookup are presented to the user in a list for the user to select one (or more).  
+* Typically, only the first label is shown (the user-friendly <Instance> portion of the name).
+
+
+
+4.3.  Internal Handling of Names
+--------------------------------
+
+* "." becomes "\."
+* "\" becomes "\\"
+
+
+
+5. Service Instance Resolution
+==============================
+
+* When a client needs to contact a particular service, identified by a Service Instance Name, previously discovered via Service Instance Enumeration (browsing), it queries for the SRV and TXT records of that name.
+* The ``SRV`` record for a service gives the ``port number`` and ``target host name`` where the service may be found.
+* The ``TXT`` record gives additional information about the service, as described in Section 6, "Data Syntax for DNS-SD TXT Records".
+
+
+6. Data Syntax for DNS-SD TXT Records
+=====================================
+
+* Every DNS-SD service MUST have a TXT record in addition to its SRV record, with the same name, even if the service has no additional data to store and the TXT record contains no more than a single zero byte.
+* This allows a service to have explicit control over the Time to Live (TTL) of its (empty) TXT record, rather than using the default negative caching TTL, which would otherwise be used for a "no error no answer" DNS response.
+
+* Note that this requirement for a mandatory TXT record applies exclusively to DNS-SD service advertising, i.e., services advertised using the PTR+SRV+TXT convention specified in this document.
+* It is not a requirement of SRV records in general.
+* The DNS SRV record datatype [RFC2782] may still be used in other contexts without any requirement for accompanying PTR and TXT records.
+
+
+6.1. General Format Rules for DNS TXT Records
+---------------------------------------------
+
+* A DNS TXT record can be up to 65535 (0xFFFF) bytes long.
+* Note that when using Multicast DNS [RFC6762] the maximum packet size is 9000 bytes, including the IP header, UDP header, and DNS message header, which imposes an upper limit on the size of TXT records of about 8900 bytes.
+* The format of the data within a DNS TXT record is one or more strings, packed together in memory without any intervening gaps or padding bytes for word alignment.
+
+DNS-SD clients MUST treat the following as equivalent::
+
+   1. A TXT record containing a single zero byte.
+      (i.e., a single empty string.)
+
+   2. An empty (zero-length) TXT record.
+      (This is not strictly legal, but should one be received, it should
+      be interpreted as the same as a single empty string.)
+
+   3. No TXT record.
+      (i.e., an NXDOMAIN or no-error-no-answer response.)
+
+
+
+6.2. DNS-SD TXT Record Size
+---------------------------
+
+* The total size of a typical DNS-SD TXT record is intended to be small -- 200 bytes or less.
+* Using TXT records larger than 1300 bytes is NOT RECOMMENDED at this time.
+
+
+6.3. DNS TXT Record Format Rules for Use in DNS-SD
+--------------------------------------------------
+
+* DNS-SD uses DNS TXT records to store arbitrary key/value pairs conveying additional information about the named service.
+* The intention of DNS-SD TXT records is to convey a small amount of useful additional information about a service.
+
+
+6.4. Rules for Keys in DNS-SD Key/Value Pairs
+---------------------------------------------
+
+* The key MUST be at least one character.
+* The key SHOULD be no more than nine characters long.
+* Case is ignored when interpreting a key, so "papersize=A4", "PAPERSIZE=A4", and "Papersize=A4" are all identical.
+* A given key SHOULD NOT appear more than once in a TXT record.
+
+When examining a TXT record for a given key, there are therefore four categories of results that may be returned::
+
+   *  Attribute not present (Absent)
+
+   *  Attribute present, with no value
+      (e.g., "passreq" -- password required for this service)
+
+   *  Attribute present, with empty value
+      (e.g., "PlugIns=" -- the server supports plugins, but none are presently installed)
+
+   *  Attribute present, with non-empty value
+      (e.g., "PlugIns=JPEG,MPEG2,MPEG4")
+
+Each author should define the interpretation of these different kinds of result::
+
+    For example, for some keys, there may be a natural true/false boolean interpretation:
+       *  Absent implies 'false'
+       *  Present implies 'true'
+    For other keys it may be sensible to define other semantics, such as value/no-value/unknown:
+       *  Present with value implies that value.
+       *  Present with empty value implies 'false'.
+       *  Absent implies 'Unknown'.
+
+
+
+6.5. Rules for Values in DNS-SD Key/Value Pairs
+-----------------------------------------------
+
+* If there is an '=' in a DNS-SD TXT record string, then everything after the first '=' to the end of the string is the value.  The value can contain any eight-bit values including '='.
+* The value is opaque binary data. Often the value for a particular attribute will be US-ASCII [RFC20] or UTF-8 [RFC3629] text, but it is legal for a value to be any binary data.
+
+
+6.6. Example TXT Record
+-----------------------
+
+The TXT record below contains three syntactically valid key/value strings::
+
+    -------------------------------------------------------
+    | 0x09 | key=value | 0x08 | paper=A4 | 0x07 | passreq |
+    -------------------------------------------------------
+
+
+6.7. Version Tag
+----------------
+
+* It is recommended that authors defining DNS-SD profiles include an attribute of the form "txtvers=x", where "x" is a decimal version number in US-ASCII [RFC20] text (e.g., "txtvers=1" or "txtvers=8"), in their definition, and require it to be the first key/value pair in the TXT record.
+* Clients SHOULD ignore TXT records with a txtvers number higher (or lower) than the version(s) they know how to interpret.
+
+
+6.8. Service Instances with Multiple TXT Records
+------------------------------------------------
+
+* Generally speaking, every DNS-SD service instance has exactly one TXT record.
+* However, it is possible for a particular protocol's DNS-SD advertising specification to state that it allows multiple TXT records.
+
+
+
+
+
+7. Service Names
+================
+
+* 参见: 4.1.2.  Service Names
+
+* "_tcp" for TCP-based services
+* "_udp" for all other transport protocols
+
+
+
+7.1. Selective Instance Enumeration (Subtypes)
+----------------------------------------------
+
+*  Example: _printer._sub._http._tcp.<Domain>
+
+Even though the "A printer's web page" service is advertised two different ways, both PTR records refer to the name of the same SRV+TXT record pair::
+
+    ; One PTR record advertises "A web page"
+    _http._tcp.local. PTR A\032web\032page._http._tcp.local.
+
+    ; Two different PTR records advertise "A printer's web page"
+    _http._tcp.local. PTR A\032printer's\032web\032page._http._tcp.local.
+    _printer._sub._http._tcp.local.
+                      PTR A\032printer's\032web\032page._http._tcp.local.
+
+
+7.2. Service Name Length Limits
+-------------------------------
+
+Domain names used by DNS-SD take the following forms::
+
+                   <sn>._tcp . <servicedomain> . <parentdomain>.
+      <Instance> . <sn>._tcp . <servicedomain> . <parentdomain>.
+      <sub>._sub . <sn>._tcp . <servicedomain> . <parentdomain>.
+
+
+      The first example shows the name used for PTR queries.
+      The second shows a Service Instance Name
+        i.e., the name of the service's SRV and TXT records.
+      The third shows a subtype browsing name
+        i.e., the name of a PTR record pointing to a Service Instance Name
+
+      <sn> may be up to 15 bytes
+      <Instance> may be up to 63 bytes
+      <sub> is allowed to be up to 63 bytes
+
+      A fully qualified domain name may be up to 255 bytes long
+      so: len(<sub>._sub . <sn>._tcp)=> 63+1+4+1 + 1+15+1+4+1 + 63+1 =155
+      This leaves 100 bytes to <servicedomain> and <parentdomain>
+
+8. Flagship Naming
+==================
+
+* Many printers implement all three printing protocols: LPR, IPP, and pdl-datastream. For the benefit of clients that may speak only one of those protocols, all three are advertised.
+* However, some clients may implement two, or all three of those printing protocols.  When a client looks for all three service types on the network, it will find three distinct services -- an LPR service, an IPP service, and a pdl-datastream service -- all of which cause printed sheets to be emitted from the same physical printer.
+* To help guard against this, when there are two or more network protocols that perform roughly the same logical function, one of the protocols is declared the "flagship" of the fleet of related protocols.  Typically the flagship protocol is the oldest and/or best-known protocol of the set.
+
+
+9. Service Type Enumeration
+===========================
+
+* For problem diagnosis and network management tools, it may be useful for network administrators to find the list of advertised service types on the network, even if those Service Names are just opaque identifiers and not particularly informative in isolation.
+* For this purpose, a special meta-query is defined.  A DNS query for PTR records with the name ``"_services._dns-sd._udp.<Domain>"``
+
+
+10. Populating the DNS with Information
+=======================================
+
+How a service's PTR, SRV, and TXT records make their way into the DNS is outside the scope of this document
+
+11. Domain Enumeration
+======================
+
+* subtitle: Discovery of Browsing and Registration Domains
+
+Five special RR names are reserved::
+
+    1.  b._dns-sd._udp.<domain>.
+        A list of domains recommended for browsing
+    2. db._dns-sd._udp.<domain>.
+        A single recommended default domain for browsing
+    3.  r._dns-sd._udp.<domain>.
+        A list of domains recommended for registering services using Dynamic Update.
+    4. dr._dns-sd._udp.<domain>.
+        A single recommended default domain for registering services
+    5. lb._dns-sd._udp.<domain>.
+        The "legacy browsing" or "automatic browsing" domain(s)
+
+* For example, if a host has the address 192.168.12.34, with the subnet mask 255.255.0.0, then the 'base' address of the subnet is 192.168.0.0, and to discover the recommended automatic browsing domain(s) for devices on this subnet, the host issues a DNS PTR query for the name "lb._dns-sd._udp.0.0.168.192.in-addr.arpa."
+
+
+
+12.  DNS Additional Record Generation
+=====================================
+
+12.1.  PTR Records
+------------------
+
+When including a DNS-SD Service Instance Enumeration or Selective Instance Enumeration (subtype) PTR record in a response packet, the server/responder SHOULD include the following additional records:
+
+   1. The SRV record(s) named in the PTR rdata.
+   2. The TXT record(s) named in the PTR rdata.
+   3. All address records (type "A" and "AAAA") named in the SRV rdata.
+
+
+12.2.  SRV Records
+------------------
+
+When including an SRV record in a response packet, the server/responder SHOULD include the following additional records::
+
+    1. All address records (type "A" and "AAAA") named in the SRV rdata.
+
+12.3.  TXT Records
+------------------
+
+* When including a TXT record in a response packet, no additional records are required.
+
+12.4.  Other Record Types
+-------------------------
+
+* In response to address queries, or other record types, no new additional records are recommended by this document.
+
+
+13.  Working Examples
+=====================
+
+.. note:: The following examples were prepared using standard unmodified nslookup and standard unmodified BIND running on GNU/Linux.
+
+
+13.1.  What web pages are being advertised from dns-sd.org::
+
+    $ nslookup -q=ptr _http._tcp.dns-sd.org.
+    _http._tcp.dns-sd.org
+            name = Zeroconf._http._tcp.dns-sd.org
+    _http._tcp.dns-sd.org
+            name = Multicast\032DNS._http._tcp.dns-sd.org
+    _http._tcp.dns-sd.org
+            name = Service\032Discovery._http._tcp.dns-sd.org
+    _http._tcp.dns-sd.org
+            name = Stuart''s\032Printer._http._tcp.dns-sd.org
+
+    Answer: There are four, called "Zeroconf", "Multicast DNS", "Service Discovery", and "Stuart's Printer".
+
+
+13.2.  What printer-configuration web pages are there::
+
+
+    $ nslookup -q=ptr _printer._sub._http._tcp.dns-sd.org.
+    _printer._sub._http._tcp.dns-sd.org
+            name = Stuart''s\032Printer._http._tcp.dns-sd.org
+
+    Answer: "Stuart's Printer" is the web configuration UI of a network printer.
+
+
+13.3.  How do I access the web page called "Service Discovery"::
+
+    $ nslookup -q=any "Service\032Discovery._http._tcp.dns-sd.org."
+    Service\032Discovery._http._tcp.dns-sd.org
+                  priority = 0, weight = 0, port = 80, host = dns-sd.org
+    Service\032Discovery._http._tcp.dns-sd.org
+                  text = "txtvers=1" "path=/"
+    dns-sd.org     nameserver = ns1.dns-sd.org
+    dns-sd.org     internet address = 64.142.82.154
+    ns1.dns-sd.org internet address = 64.142.82.152
+
+    Answer: You need to connect to dns-sd.org port 80, path "/". 
+        The address for dns-sd.org is also given (64.142.82.154).
+
+
+14.  IPv6 Considerations
+========================
+
+* IPv6 has only minor differences from IPv4.
+* The address of the SRV record's target host is given by the appropriate IPv6 "AAAA" address records instead of (or in addition to) IPv4 "A" records.
+
+
+15.  Security Considerations
+============================
+
+* Since DNS-SD is just a specification for how to name and use records in the existing DNS system, it has no specific additional security requirements over and above those that already apply to DNS queries and DNS updates.
+* For DNS queries, DNS Security Extensions (DNSSEC) [RFC4033] should be used where the authenticity of information is important.
+* For DNS updates, secure updates [RFC2136] [RFC3007] should generally be used to control which clients have permission to update DNS records.
+
+
+16.  IANA Considerations
+========================
+
+* IANA manages the namespace of unique Service Names [RFC6335].
+
+
+Appendix A.  Rationale for Using DNS as a Basis for Service Discovery
+=====================================================================
+
+In summary::
+
+      Service discovery requires a central aggregation server.
+      DNS already has one: a DNS server.
+
+      Service discovery requires a service registration protocol.
+      DNS already has one: DNS Dynamic Update.
+
+      Service discovery requires a query protocol.
+      DNS already has one: DNS queries.
+
+      Service discovery requires security mechanisms.
+      DNS already has security mechanisms: DNSSEC.
+
+      Service discovery requires a multicast mode for ad hoc networks.
+      Using DNS-SD in conjunction with Multicast DNS provides this,
+      using peer-to-peer multicast instead of a DNS server.
+
+
+Appendix B.  Ordering of Service Instance Name Components
+=========================================================
+
+::
+
+    DNS Service Instance Names use the form:
+      Service Instance Name = <Instance> . <Service> . <Domain>
+
+    instead of:
+      Service Instance Name = <Service> . <Instance> . <Domain>
+
+.. note:: There are three reasons why it is beneficial using such form.
+
+
+B.1.  Semantic Structure
+------------------------
+
+* A given domain offers zero or more services.
+* For each of those service types, there may be zero or more instances of that service.
+
+B.2.  Network Efficiency
+------------------------
+
+If many answers in the packet have the same <Service> and <Domain>, then each occurrence of a Service Instance Name can be expressed using only the <Instance>
+
+B.3.  Operational Flexibility
+-----------------------------
+
+the administrator may choose to enable DNS Dynamic Update [RFC2136] [RFC3007] for printers registering in the "_ipp._tcp.example.com." subdomain, but not for other zones/subdomains.
+
+
+Appendix C.  What You See Is What You Get
+=========================================
+
+in DNS-SD the user-visible name is also the primary identifier for a service.
+
+Appendix D.  Choice of Factory-Default Names
+============================================
+
+When a DNS-SD service is advertised using Multicast DNS [RFC6762], if there is already another service of the same type advertising with the same name then automatic name conflict resolution will occur. the service should::
+
+    1.  Automatically select a new name 
+        (typically by appending or incrementing a digit at the end of the name)
+    2.  Try advertising with the new name, and
+    3.  Upon success, record the new name in persistent storage.
+
+    Example:
+        First factory-default name: Printer
+        Second with same name will automatically name itself "Printer (2)"
+
+Some examples of good factory-default names are::
+
+      Brother 5070N
+      Canon W2200
+      HP LaserJet 4600
+      Lexmark W840
+      Okidata C5300
+      Ricoh Aficio CL7100
+      Xerox Phaser 6200DX
+
+Bad factory-default names::
+
+    Printer_00306EC3FD1C
+
+
+Appendix E.  Name Encodings in the Domain Name System
+=====================================================
+
+* Although the original DNS specifications [RFC1033] [RFC1034] [RFC1035] recommend that host names contain only letters, digits, and hyphens, Service Instance Names are not host names.
+* Note that just because DNS-based Service Discovery supports arbitrary UTF-8-encoded names doesn't mean that any particular user or administrator is obliged to make use of that capability.
+
+
+
+Appendix F.  "Continuous Live Update" Browsing Model
+====================================================
+
+The service discovery user experience that the DNS-SD designers had in mind has some rather different properties::
+
+    1. Displaying the initial list of discovered services effectively instantaneous
+        i.e., typically 0.1 seconds, not 10 seconds
+    2. The list of discovered services should not be getting stale and out-of-date 
+        from the moment it's displayed.
+    3. Leaving service discovery windows open, 
+        and expecting them to show a continuous 'live' view of current network reality
+        a. delete stale services.
+        b. adding new services
+    4. Update when changes in configuration and connectivity of the client machine itself
+        a. When the user connects an Ethernet cable or joins an 802.11
+            automatically populate with discovered services, without explicit user action
+        b. When the user disconnects the Ethernet cable or turns off 802.11 wireless
+            automatically disappear all the services discovery
+
+
+
+
+
+参考
+====
+
+* https://www.rfc-editor.org/rfc/rfc6763.html
+  
+
+
+

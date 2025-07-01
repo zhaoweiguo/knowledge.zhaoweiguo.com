@@ -1,0 +1,84 @@
+常见问题
+########
+
+
+
+
+Failed to initialize NVML: Unknown Error
+========================================
+
+问题描述
+--------
+
+* After a random amount of time (it could be hours or days) the GPUs become unavailable inside all the running containers and nvidia-smi returns "Failed to initialize NVML: Unknown Error".
+* A restart of all the containers fixes the issue and the GPUs return available.
+* Outside the containers the GPUs are still working correctly.
+* I tried searching in the open/closed issues but I could not find any solution.
+* 启动docker的gpu选项后，如果一段时间不用，会莫名的gpu不可用
+
+可能的原因
+----------
+
+* [来自https://devv.ai/]根源通常在于容器和宿主机之间的 cgroup 管理机制冲突。具体来说，当 Docker 容器使用 systemd 来管理 cgroups 时，如果宿主机执行了 daemon-reload 命令（或者其他类似的操作），就会触发对所有引用了 NVIDIA GPU 的 Unit 文件的重新加载。 由于容器中 GPU 资源的引用已经被更新，所以容器会失去对这些 GPU 资源的访问权限， 从而导致 nvidia-smi 命令失败。
+
+
+重现方法
+--------
+
+* 1、确保你的容器当前可以正常访问 GPU， 并且 nvidia-smi 命令可以正常执行
+* 2、在宿主机上执行 daemon-reload 命令：``sudo systemctl daemon-reload``
+* 3、再次检查容器中的 nvidia-smi 命令
+* 如果此时出现了 "Failed to initialize NVML: Unknown Error" 错误， 那么就可以基本确定问题是由 cgroup 管理机制冲突导致
+
+解决方案
+--------
+
+* 修改/etc/docker/daemon.json::
+
+    添加 "exec-opts": ["native.cgroupdriver=cgroupfs"]
+
+    示例:
+    {
+        "default-runtime": "nvidia",
+        "runtimes": {
+            "nvidia": {
+                "args": [],
+                "path": "nvidia-container-runtime"
+            }
+        },
+        "exec-opts": ["native.cgroupdriver=cgroupfs"]
+    }
+
+* 重启 Docker 服务::
+
+    sudo service docker restart
+
+
+备选方案
+--------
+
+* sudo vim /etc/nvidia-container-runtime/config.toml, then changed no-cgroups = false, save
+* Restart docker daemon: sudo systemctl restart docker
+
+
+
+参考
+----
+
+* "Failed to initialize NVML: Unknown Error" after random amount of time: https://github.com/NVIDIA/nvidia-docker/issues/1671
+* Failed to initialize NVML: Unknown Error in Docker after Few hours: https://stackoverflow.com/questions/72932940/failed-to-initialize-nvml-unknown-error-in-docker-after-few-hours
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

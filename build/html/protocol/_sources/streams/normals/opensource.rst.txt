@@ -1,0 +1,194 @@
+开源
+####
+
+
+Golang开源
+==========
+
+基本
+----
+
+
+lal
+^^^
+
+* Golang audio/video live streaming library/client/server: https://github.com/q191201771/lal
+* https://pengrl.com/lal/#/
+
+
+
+MediaMTX
+^^^^^^^^
+
+* RTSP 1.0 client and server library: https://github.com/bluenviron/gortsplib
+* RTSP / RTMP / LL-HLS / WebRTC server: https://github.com/aler9/rtsp-simple-server
+* Also known as rtsp-simple-server: https://github.com/aler9/mediamtx
+* MediaMTX / rtsp-simple-server is a ready-to-use and zero-dependency server and proxy that allows users to publish, read and proxy live video and audio streams.
+* Features::
+
+    Publish live streams to the server
+    Read live streams from the server
+    Proxy streams from other servers or cameras, always or on-demand
+    Streams are automatically converted from a protocol to another. For instance, it's possible to publish a stream with RTSP and read it with HLS
+    Serve multiple streams at once in separate paths
+    Authenticate users; use internal or external authentication
+    Redirect readers to other RTSP servers (load balancing)
+    Query and control the server through an HTTP API
+    Reload the configuration without disconnecting existing clients (hot reloading)
+    Read Prometheus-compatible metrics
+    Run external commands when clients connect, disconnect, read or publish streams
+    Natively compatible with the Raspberry Pi Camera
+
+    $ docker run --rm -it --network=host aler9/rtsp-simple-server
+    $ docker run --rm -it -e RTSP_PROTOCOLS=tcp -p 8554:8554 -p 1935:1935 -p 8888:8888 -p 8889:8889 aler9/rtsp-simple-server
+
+    -> using GStreamer and FFmpeg
+    Publish a stream:
+        $ ffmpeg -re -stream_loop -1 -i file.ts -c copy -f rtsp rtsp://localhost:8554/mystream
+        $ gst-launch-1.0 rtspclientsink name=s location=rtsp://localhost:8554/mystream filesrc location=file.mp4 ! qtdemux name=d d.video_0 ! queue ! s.sink_0 d.audio_0 ! queue ! s.sink_1
+
+    Open the stream:
+        $ vlc --network-caching=50 rtsp://localhost:8554/mystream
+        $ gst-play-1.0 rtsp://localhost:8554/mystream
+        $ ffmpeg -i rtsp://localhost:8554/mystream -c copy output.mp4
+
+
+
+
+oto
+^^^
+
+* A low-level library to play sound: https://github.com/hajimehoshi/oto
+
+
+工具
+----
+
+* Demux and mux MPEG Transport Streams (.ts) natively in GO: https://github.com/asticode/go-astits
+
+
+FFmpeg
+------
+
+c
+^^^
+
+* FFmpeg is a collection of libraries and tools to process multimedia content such as audio, video, subtitles and related metadata.
+* https://github.com/FFmpeg/FFmpeg
+
+
+
+
+golang
+^^^^^^
+
+* Go Media Framework: https://github.com/3d0c/gmf
+* you can try a docker container ``riftbit/ffalpine``
+* https://github.com/3d0c/gmf/tree/master/examples::
+
+    1. video-to-image
+    2. images-to-video
+    3. watermark
+    4. mp4s-to-flv
+
+
+
+
+* FFMPEG wrapper written in GO which allows to obtain the progress.
+* https://github.com/xfrr/goffmpeg
+
+* golang binding for ffmpeg
+* https://github.com/u2takey/ffmpeg-go
+
+
+* Golang binding for FFmpeg: https://github.com/giorgisio/goav
+* This repository is no longer maintained.
+
+
+Python
+^^^^^^
+
+* https://github.com/kkroening/ffmpeg-python
+
+
+
+webrtc
+------
+
+* https://github.com/pion/webrtc
+* A Go implementation of RTP: https://github.com/pion/rtp
+
+nvr
+---
+
+EasyDarwin
+^^^^^^^^^^
+
+
+* 相关文章介绍
+* https://www.oschina.net/p/easydarwin?hmsr=aladdin1e1
+
+* https://github.com/tsingsee
+* EasyPlayer 系列播放器项目: https://github.com/tsingsee/EasyPlayer
+* EasyRTMP 是 TSINGSEE 青犀开放平台开发的一套 RTMP 直播推送功能组件: https://github.com/tsingsee/EasyRTMP
+* RTSP Server适用于 IPCamera、NVR、编码器、安卓监控设备等软硬件产品: https://github.com/tsingsee/EasyIPCamera
+* RTSPClient 组件，帮助用户非常简单地处理整个 RTSP OPTIONS/DESCRIBE/SETUP/PLAY 的复杂流程(成功应用在 RTSP 播放器 EasyPlayer、行业视频接入网关 EasyRTSPLive 多款产品中，适用于各种安防直播、行业直播、专业设备互联网直播等多种应用场景；): https://github.com/tsingsee/EasyRTSPClient
+* 集采集，编码，组播，推流和流媒体 RTSP 服务于一身的同屏功能组件: https://github.com/tsingsee/EasyScreenLive
+
+
+
+
+* https://github.com/EasyDarwin
+* 高性能开源 RTSP 流媒体服务器: https://github.com/EasyDarwin/EasyDarwin
+* EasyPusher 是手机端的一个 RTSP 推流器: https://github.com/EasyDarwin/EasyPusher
+* EasyDarwin（开源流媒体服务器）、EasyCMS（中心管理服务器）、EasyCamera（云摄像机服务）、EasyClient（云平台客户端）、EasyAACEncoder（开源音频编码项目）、EasyAudioDecoder（开源音频解码项目）、EasyProtocol（开源云平台协议）
+* http://www.easynvr.com/
+* http://www.easydarwin.org/easyclient/
+
+
+平台端口::
+
+    EasyCMS：接口服务端口，10000
+    EasyDarwin：接口服务端口，10008
+    EasyDarwin：RTSP 服务端口，10554
+    EasyDarwin：HTTP 后台管理端口，10080
+    EasyNVR：接口服务端口，10010
+    EasyNVR：后台管理端口，10080
+
+
+其他
+^^^^
+
+
+*  GPL-2.0 license
+* https://github.com/bluecherrydvr/bluecherry-client
+* https://github.com/ispysoftware/iSpy
+* https://github.com/Motion-Project/motion
+* https://github.com/ShinobiCCTV/Shinobi
+
+
+
+
+
+
+攻击专用
+--------
+
+cameradar
+^^^^^^^^^
+
+
+* RTSP Camera Attacker: https://github.com/Ullaakut/cameradar::
+
+    Detect open RTSP hosts on any accessible target host
+    Detect which device model is streaming
+    Launch automated dictionary attacks to get their stream route (e.g.: /live.sdp)
+    Launch automated dictionary attacks to get the username and password of the cameras
+    Retrieve a complete and user-friendly report of the results
+
+    $ docker run -t ullaakut/cameradar -t 192.168.124.0/24
+
+
+
+
+

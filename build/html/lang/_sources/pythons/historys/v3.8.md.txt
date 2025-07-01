@@ -1,0 +1,83 @@
+# Python 3.8(2019/10/21)
+
+## 新的语法特性
+
+1. **赋值表达式（海象运算符 `:=`）**：
+   - 引入了一种新的赋值运算符 `:=`，也被称为海象运算符，允许在表达式内部进行赋值。例如：
+     ```python
+     if (n := len(some_list)) > 10:
+         print(f"List is too long ({n} elements, expected <= 10)")
+     ```
+
+2. **位置参数专用语法**：
+   - 允许在函数定义中使用 `/` 来指示只能通过位置传递的参数。例如：
+     ```python
+     def func(pos1, pos2, /, pos_or_kwd, *, kwd1, kwd2):
+         pass
+     ```
+
+3. **f-string 中的 `=` 表达式**：
+   - f-string 现在支持 `=` 表达式，用于调试时显示表达式的值。例如：
+     ```python
+     x = 10
+     print(f"{x=}")  # 输出: x=10
+     ```
+
+## 新增的库和模块
+
+1. **增强的 `typing` 模块**：
+   - 引入了 `TypedDict`，允许为字典指定键和值的类型：
+     ```python
+      class Point2D(TypedDict):
+          x: int
+          y: int
+          label: str
+
+      a: Point2D = {'x': 1, 'y': 2, 'label': 'good'}  # OK
+      b: Point2D = {'z': 3, 'label': 'bad'}           # Fails type check
+
+      assert Point2D(x=1, y=2, label='first') == dict(x=1, y=2, label='first')
+     ```
+
+2. **`importlib.metadata` 模块**：
+   - 新增了 `importlib.metadata` 模块，用于访问包的元数据。
+   - 示例-提取一个已安装软件包的版本号、入口点列表:
+   ```python
+   >>> from importlib.metadata import version, requires, files
+   >>> version('requests')
+   '2.22.0'
+   >>> list(requires('requests'))
+   ['chardet (<3.1.0,>=3.0.2)']
+   >>> list(files('requests'))[:5]
+   [PackagePath('requests-2.22.0.dist-info/INSTALLER'),
+    PackagePath('requests-2.22.0.dist-info/LICENSE'),
+    PackagePath('requests-2.22.0.dist-info/METADATA'),
+    PackagePath('requests-2.22.0.dist-info/RECORD'),
+    PackagePath('requests-2.22.0.dist-info/WHEEL')]
+   ```
+
+
+## 性能优化
+
+1. **asyncio**
+   - asyncio.run() 已经从暂定状态晋级为稳定 API。 此函数可被用于执行一个 coroutine 并返回结果，同时自动管理事件循环
+
+   ```python
+   import asyncio
+
+   async def main():
+       await asyncio.sleep(0)
+       return 42
+
+   asyncio.run(main())
+   ```
+
+
+## 参考
+
+- https://docs.python.org/zh-cn/3/whatsnew/3.8.html
+
+
+
+
+

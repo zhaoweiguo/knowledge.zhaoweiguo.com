@@ -1,0 +1,172 @@
+/etc/apt目录
+############
+
+* /etc/apt/ 是 Ubuntu 和其他基于 Debian 的 Linux 发行版中用于管理 APT（Advanced Package Tool）配置文件的目录。APT 是一个用于管理软件包的工具，/etc/apt/ 目录包含了控制软件包源、偏好设置和各种 APT 操作的配置文件。
+
+
+
+/etc/apt/sources.list
+=====================
+
+* APT 使用的软件包源（即存储库）的列表。
+* 每一行通常包含存储库的 URL 和一些要使用的分支（如 main、universe 等）或版本（如 stable、testing）信息。
+
+Ubuntu 默认的 sources.list 可能包含类似如下内容::
+
+    deb http://archive.ubuntu.com/ubuntu/ focal main restricted
+    deb http://archive.ubuntu.com/ubuntu/ focal-updates main restricted
+
+
+/etc/apt/sources.list.d/目录
+----------------------------
+
+* 允许你将多个独立的软件包源配置文件放在不同的文件中。这样可以更方便地管理和维护多个第三方存储库。
+* 每个文件的格式与 sources.list 相同，但通常用于单独管理特定软件或 PPA（个人包档案）的源。
+* 例如，你可以在这个目录中为一个特定应用程序创建一个独立的 .list 文件。
+
+
+文件格式和结构
+--------------
+
+格式::
+
+    deb <uri> <distribution> <component1> [component2] [...]
+    deb-src <uri> <distribution> <component1> [component2] [...]
+
+    说明:
+    deb：指定 APT 使用的是二进制包源，即预编译的包。
+    deb-src：指定 APT 使用的是源码包源，用户可以下载并自行编译源代码。
+
+<uri>::
+
+    表示存储库的网络地址，通常是 HTTP、HTTPS、FTP 或文件路径。
+    例如：
+    http://archive.ubuntu.com/ubuntu/ 
+    或
+    http://security.ubuntu.com/ubuntu/。
+
+<distribution>::
+
+    表示所使用的发行版或版本名称。
+    这可以是一个版本的代号（如 focal 表示 Ubuntu 20.04 LTS）或一个版本状态（如 stable、testing、unstable）。
+    例如：
+        focal: Ubuntu 20.04
+        bionic: Ubuntu 18.04
+        bullseye: Debian11
+
+
+<component>::
+
+    表示软件包的分类，可以有多个组件。
+    常见的组件包括：
+        main：官方支持的自由软件
+        restricted：官方支持的非自由软件，如专有驱动程序
+        universe：由社区维护的自由软件，但不受官方支持
+        multiverse：包含非自由软件或受限制的软件
+        contrib：开源但依赖于非自由软件的包
+
+
+示例
+----
+
+
+# Ubuntu 官方存储库::
+
+    # 主存储库，包含官方支持的自由软件和非自由软件（如驱动程序）。
+    deb http://archive.ubuntu.com/ubuntu/ focal main restricted
+    # 更新存储库：用于提供软件包更新的存储库，确保用户的系统始终是最新的
+    deb http://archive.ubuntu.com/ubuntu/ focal-updates main restricted
+    deb http://archive.ubuntu.com/ubuntu/ focal universe
+    deb http://archive.ubuntu.com/ubuntu/ focal-updates universe
+    deb http://archive.ubuntu.com/ubuntu/ focal multiverse
+    deb http://archive.ubuntu.com/ubuntu/ focal-updates multiverse
+
+# 安全更新::
+
+    # 安全更新存储库：专门用于安全补丁的存储库
+    deb http://security.ubuntu.com/ubuntu/ focal-security main restricted
+    deb http://security.ubuntu.com/ubuntu/ focal-security universe
+    deb http://security.ubuntu.com/ubuntu/ focal-security multiverse
+
+# 源码包::
+
+    源码存储库：提供源码包，供用户下载和自行编译。
+    deb-src http://archive.ubuntu.com/ubuntu/ focal main restricted
+    deb-src http://archive.ubuntu.com/ubuntu/ focal-updates main restricted
+    deb-src http://archive.ubuntu.com/ubuntu/ focal universe
+    deb-src http://archive.ubuntu.com/ubuntu/ focal-updates universe
+    deb-src http://archive.ubuntu.com/ubuntu/ focal multiverse
+    deb-src http://archive.ubuntu.com/ubuntu/ focal-updates multiverse
+
+
+非标准存储库
+------------
+
+* 自定义格式提供了更多灵活性，尤其适合非标准存储库。标准格式则在传统的软件包源中更加普遍和一致。
+
+
+
+
+/etc/apt/trusted.gpg
+====================
+
+* 用于存储 APT 信任的 GPG 公钥。这些公钥用于验证从存储库中下载的软件包，以确保它们的来源可信。
+* trusted.gpg 是一个密钥环文件，trusted.gpg.d/ 目录则可以存放多个独立的 .gpg 文件，每个文件包含一个或多个公钥。
+
+
+
+/etc/apt/apt.conf
+=================
+
+* APT 的主配置文件，用于设置 APT 操作的全局配置选项。大多数情况下，这个文件是空的或不存在，因为 APT 通常使用默认设置。
+* 用户可以通过编辑或创建此文件来设置 APT 的行为，如代理设置、缓存目录等。
+
+
+
+/etc/apt/apt.conf.d/目录
+------------------------
+
+* 这个目录包含多个配置片段文件，每个文件设置特定的 APT 配置选项。
+* APT 会自动加载这个目录中的所有配置文件，从而覆盖或扩展 apt.conf 中的设置。
+
+
+
+/etc/apt/preferences
+====================
+
+* preferences 文件和 preferences.d/ 目录允许用户设置软件包的优先级。
+* 通过定义不同版本的优先级，用户可以控制 APT 从哪个存储库安装软件包，或防止升级到特定版本。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

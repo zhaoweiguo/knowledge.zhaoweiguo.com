@@ -1,0 +1,121 @@
+# Python 3.11(2022/10/24)
+
+# 增强的性能
+
+- Python 3.11 的整体性能提升了约 10-60%，具体取决于具体的工作负载。性能提升来自多项优化，包括字节码执行速度和内存管理的改进。
+- 更多细节请参见 更快的 `CPython <https://docs.python.org/zh-cn/3/whatsnew/3.11.html#whatsnew311-faster-cpython>`_ 一节。
+
+
+# 新特性
+
+1. **`异常组(ExceptionGroup)` 和 `except*` 语法**：
+   - 引入了 `ExceptionGroup` 类和 `except*` 语法，用于处理包含多个异常的异常组。例如：
+     ```python
+     try:
+         # 可能抛出多个异常
+         pass
+     except* ValueError as e:
+         # 处理 ValueError 异常
+         pass
+     ```
+2. **asyncio 任务组 (Task Groups)**：
+   - 在 `asyncio` 模块中引入了任务组 (`TaskGroup`) 概念，简化了同时启动和管理多个任务的流程。
+   - 异步上下文管理器：可以持有一组任务，等待它们全部完成后才退出
+   例如：
+     ```python
+     import asyncio
+
+     async def main():
+         async with asyncio.TaskGroup() as tg:
+             tg.create_task(some_coroutine())
+             tg.create_task(another_coroutine())
+
+     asyncio.run(main())
+     ```
+
+# 新的标准库模块
+
+3. **`tomllib` 模块**：
+   - 新增了 `tomllib` 模块，用于解析 TOML 配置文件。例如：
+     ```python
+     import tomllib
+
+     with open("config.toml", "rb") as f:
+         config = tomllib.load(f)
+     ```
+
+# 解释器的改进
+
+4. **更快的错误消息**：
+   - 改进了错误消息的格式，使其更加清晰和详细，便于调试和查找错误。
+   - 在打印回溯信息（traceback）时，解释器现在不仅会指出错误所在行，还会进一步指出引发错误的表达式在哪里
+
+# 类型提示的新增特性
+
+5. **`typing` 模块的改进**：
+   - 引入了新的 `Self` 类型提示，允许在类方法中指代该类自身：
+     ```python
+     from typing import Self
+
+     class Node:
+         def connect(self) -> Self:
+             # 返回自身实例
+             return self
+     ```
+
+6. **可变参数泛型(typing.TypeVarTuple)**
+    示例：
+    ```python
+    T = TypeVar("T")
+    Ts = TypeVarTuple("Ts")
+
+    def move_first_element_to_last(tup: tuple[T, *Ts]) -> tuple[*Ts, T]:    # 使用`星号解包表达式`
+        return (*tup[1:], tup[0])
+
+    ```
+
+
+7. **将单个 TypedDict 项标记为必填或非必填项**：
+   - Required 和 NotRequired 提供了一种简单明了的方式来标记 TypedDict 中的单个项是否必须存在。
+   - 默认情况下，所有字段仍然是必填的，除非 total 参数设置为 False
+   - total 参数设置为 False时，默认情况下所有字段则是非必填的
+   示例：
+   ```python
+   class Movie(TypedDict):
+       title: str
+       year: NotRequired[int]
+
+    m1: Movie = {"title": "Black Panther", "year": 2018}  # OK
+    m2: Movie = {"title": "Star Wars"}  # OK (year is not required)
+    m3: Movie = {"year": 2022}  # ERROR (missing required field title)
+    ```
+    与下面示例等价
+    ```python
+    class Movie(TypedDict, total=False):
+       title: Required[str]
+       year: int
+    ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

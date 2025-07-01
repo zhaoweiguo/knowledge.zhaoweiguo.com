@@ -1,0 +1,95 @@
+数字证书简介
+------------
+
+主流数字证书::
+
+    一般来说,主流的Web服务软件,通常都基于两种基础密码库:OpenSSL和Java
+    Tomcat、Weblogic、JBoss等,使用Java提供的密码库;通过Java的Keytool工具,生成Java Keystore(JKS)格式的证书文件
+    Apache、Nginx等,使用OpenSSL提供的密码库,生成PEM、KEY、CRT等格式的证书文件
+
+
+如果您在工作中遇到带有后缀扩展名的证书文件，可以简单用如下方法区分::
+
+    *.DER *.CER:这样的证书文件是二进制格式,只含有证书信息,不包含私钥
+    *.CRT:这样的文件可以是二进制格式,也可以是文本格式,一般均为文本格式,功能与*.DER/*.CER相同
+    *.PEM:一般是文本格式,可以放证书或私钥,或者两者都包含; 
+    *.KEY:「*.PEM」如果只包含私钥,那一般用*.KEY代替
+    *.PFX *.P12:是二进制格式,同时含证书和私钥,一般有密码保护
+
+证书之间的转换方法::
+
+
+    JKS:用于Weblogic,Tomcat,Jboss等
+    PFX:用于IIS
+    KEY&CRT:用于Apache、Nginx
+    KDB:用于IHS、Websphere等
+
+    1. 将JKS转换成PFX
+    keytool -importkeystore -srckeystore <path1>.jks -destkeystore <path2>.pfx -srcstoretype JKS -deststoretype PKCS12
+    2. 将PFX转换为JKS
+    keytool -importkeystore -srckeystore <path1>.pfx -destkeystore <path2>.jks -srcstoretype PKCS12 -deststoretype JKS
+    3. 将PEM/KEY/CRT转换为PFX
+    将密钥文件KEY和公钥文件CRT放到OpenSSL目录下，打开OpenSSL执行以下命令：
+    openssl pkcs12 -export -out server.pfx -inkey server.key -in server.crt
+    4. 将PFX转换为PEM/KEY/CRT
+    将PFX文件放到OpenSSL目录下，打开OpenSSL执行以下命令：
+    openssl pkcs12 -in server.pfx -nodes -out server.pem
+    openssl rsa -in server.pem -out server.key
+    ** 请注意 ** 此步骤是专用于使用keytool生成私钥和CSR申请证书，
+      并且获取到pem格式证书公钥的情况下做分离私钥使用的,
+      所以在实际部署证书时请使用此步骤分离出来的私钥和申请下来的公钥证书做匹配使用
+
+
+
+
+实战::
+
+  // 创建私钥
+  openssl genrsa -out server.key 4096
+  // 创建私钥和证书
+  openssl req -out server.csr -new -newkey rsa:4096 -nodes -keyout server.key
+  // 创建自签名证书
+  openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:4096 -keyout server.key -out server.crt
+  // 基于已存在的私钥创建csr(certificate signing request)
+  openssl req -out server.csr -key server.key -new
+  // 基于已存在的证书创建csr(certificate signing request)
+  openssl x509 -x509toreq -in server.crt -out server.csr -signkey server.key
+  // 去除私钥的密码
+  openssl rsa -in server.pem -out newserver.pem
+  // (todo)Parse a list of revoked serial numbers
+  openssl crl -inform DER -text -noout -in list.crl
+
+  // 检查certificate signing request (CSR)
+  openssl req -text -noout -verify -in server.csr
+  // 检查私钥
+  openssl rsa -in server.key -check
+  // 检查公钥
+  openssl rsa -inform PEM -pubin -in pub.key -text -noout
+  openssl pkey -inform PEM -pubin -in pub.key -text -noout
+  // 检查证书
+  openssl x509 -in server.crt -text -noout
+  openssl x509 -in server.cer -text -noout
+  // 检查PKCS#12 file (.pfx or .p12)
+  openssl pkcs12 -info -in server.p12
+
+  // 验证私钥和证书匹配
+  openssl x509 -noout -modulus -in server.crt | openssl md5
+  openssl rsa -noout -modulus -in server.key | openssl md5
+  openssl req -noout -modulus -in server.csr | openssl md5
+
+  // 显示所有的证书和中间媒体
+  openssl s_client -connect www.paypal.com:443
+
+  // 把DER文件 (.crt .cer .der) 转化为PEM
+  openssl x509 -inform der -in server.cer -out server.pem
+  // 把PEM文件转化为DER
+  openssl x509 -outform der -in server.pem -out server.der
+  // 把包含私钥和证书的PKCS#12文件(.pfx .p12) 转化为PEM文件
+  openssl pkcs12 -in server.pfx -out server.pem -nodes
+  // 把一个PEM证书文件和私钥转化为PKCS#12文件(.pfx .p12)
+  openssl pkcs12 -export -out server.pfx -inkey server.key -in server.crt -certfile CACert.crt
+
+
+
+
+
