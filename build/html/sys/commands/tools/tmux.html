@@ -29,7 +29,7 @@ window.MathJax = {
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>tmux使用 &mdash; 新溪-gordon V2025.06 文档</title>
+  <title>tmux使用 &mdash; 新溪-gordon V2025.07 文档</title>
   
 
   
@@ -92,7 +92,7 @@ window.MathJax = {
             
             
               <div class="version">
-                V2025.06
+                V2025.07
               </div>
             
           
@@ -1200,6 +1200,7 @@ window.MathJax = {
               <ul>
 <li><a class="reference internal" href="#">tmux使用</a><ul>
 <li><a class="reference internal" href="#id2">常见问题</a><ul>
+<li><a class="reference internal" href="#tmux-session">运行一段时间后tmux session 丢失</a></li>
 <li><a class="reference internal" href="#id3">屏幕比例不协调问题</a></li>
 </ul>
 </li>
@@ -1333,14 +1334,49 @@ Process 3171 detached
 「/tmp/tmux-501」这个目录出了问题，删掉这个目录，tmux就可以正常启动了
 </pre></div>
 </div>
-<p>tmux莫名被终止:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">grep</span> <span class="s2">&quot;tmux&quot;</span> <span class="o">/</span><span class="n">var</span><span class="o">/</span><span class="n">log</span><span class="o">/</span><span class="n">messages</span>
-<span class="n">Nov</span> <span class="mi">21</span> <span class="mi">21</span><span class="p">:</span><span class="mi">52</span><span class="p">:</span><span class="mi">28</span> <span class="n">idc</span><span class="o">-</span><span class="n">sm</span><span class="o">-</span><span class="n">udsp</span><span class="o">-</span><span class="n">pre</span><span class="o">-</span><span class="n">iot</span><span class="o">-</span><span class="n">engine</span><span class="o">-</span><span class="mi">02</span> <span class="n">kernel</span><span class="p">:</span> <span class="p">[</span><span class="mf">12555373.306451</span><span class="p">]</span> <span class="n">tmux</span><span class="p">[</span><span class="mi">17348</span><span class="p">]:</span> <span class="n">segfault</span> <span class="n">at</span> <span class="mi">7</span><span class="n">f58be1047b8</span> <span class="n">ip</span> <span class="mi">00007</span><span class="n">f58be1047b8</span> <span class="n">sp</span> <span class="mi">00007</span><span class="n">ffcbd210c38</span> <span class="n">error</span> <span class="mi">15</span> <span class="ow">in</span> <span class="n">libc</span><span class="o">-</span><span class="mf">2.17</span><span class="o">.</span><span class="n">so</span><span class="p">[</span><span class="mi">7</span><span class="n">f58be104000</span><span class="o">+</span><span class="mi">2000</span><span class="p">]</span>
-
-<span class="n">原因</span><span class="p">:</span>
-<span class="n">可能和glibc兼容性有问题</span>
+<section id="tmux-session">
+<h3>运行一段时间后tmux session 丢失<a class="headerlink" href="#tmux-session" title="此标题的永久链接">¶</a></h3>
+<ul>
+<li><p>起因，一段时间不用再进入时发现 tmux ls 为空:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ tmux ls
+no server running on /tmp/tmux-1004/default
+$ tmux attach
+no sessions
+$ ls -ld /tmp/tmux-$(id -u)/
+drwx------ 2 zhaowg3 zhaowg3 4096 Jul 14 12:02 /tmp/tmux-1004/
 </pre></div>
 </div>
+</li>
+<li><p>原因:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>tmux 的客户端通过 socket 文件连接到服务端；
+如果 socket 文件不存在或损坏，客户端连接就会报：failed to connect to server
+而 SIGUSR1 是 tmux 定义的信号之一，用于重建 socket 文件。
+</pre></div>
+</div>
+</li>
+<li><p>解决方案:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span># 找到 tmux 进程
+$ ps -aef | fgrep -i tmux
+hari     7139     1  1  2016 ?        2-20:32:31 tmux
+hari    25943 25113  0 22:00 pts/0    00:00:00 fgrep --color=auto -i tmux
+
+# 删除 tmux 进程
+$ kill -s USR1 7139
+$ tmux ls
+0: 12 windows (created Mon Apr 18 21:17:55 2016) [198x62]
+</pre></div>
+</div>
+</li>
+<li><dl class="simple">
+<dt>参考</dt><dd><ul class="simple">
+<li><p><a class="reference external" href="https://stackoverflow.com/questions/9668763/why-am-i-getting-a-failed-to-connect-to-server-message-from-tmux-when-i-try-to">https://stackoverflow.com/questions/9668763/why-am-i-getting-a-failed-to-connect-to-server-message-from-tmux-when-i-try-to</a></p></li>
+<li><p><a class="reference external" href="https://www.cnblogs.com/baiyunwanglai/p/15984105.html">https://www.cnblogs.com/baiyunwanglai/p/15984105.html</a></p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
 <section id="id3">
 <h3>屏幕比例不协调问题<a class="headerlink" href="#id3" title="此标题的永久链接">¶</a></h3>
 <p>有时候 tmux 突然中断之后，再次进入时，会发现屏幕被限制在了一个很小的范围内，其他的地方全部变成了点 “.”, 或者“烫”</p>
@@ -1435,7 +1471,7 @@ $ tmux list-clients
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../',
-            VERSION:'V2025.06',
+            VERSION:'V2025.07',
             LANGUAGE:'zh-CN',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',

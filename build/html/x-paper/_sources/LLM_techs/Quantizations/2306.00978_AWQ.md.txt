@@ -1,0 +1,228 @@
+# 2306.00978_AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration
+
+* [https://arxiv.org/abs/2306.00978](https://arxiv.org/abs/2306.00978)
+* GitHub: [https://github.com/mit-han-lab/llm-awq](https://github.com/mit-han-lab/llm-awq)
+* AWQ: Activation-aware Weight Quantization
+
+## Abstract
+
+* 大型语言模型（LLMs）已经变革了众多 AI 应用场景。而端侧 LLM 的重要性日益提升：
+    * 在边缘设备上本地运行 LLM 不仅可以降低云计算成本，还能更好地保护用户隐私。
+    * 然而，庞大的模型规模和受限的硬件资源带来了显著的部署挑战。
+* 我们提出了一种硬件友好的低比特权重量化方法 —— **激活感知权重量化（Activation-aware Weight Quantization，AWQ）**。
+    * AWQ 发现，并非所有 LLM 中的权重都同等重要，仅保护 1% 的关键权重即可显著降低量化误差。
+    * 为了识别这些关键的权重通道，我们应参考激活分布而非权重值本身。
+* 为避免硬件效率低下的混合精度量化，AWQ 通过数学推导得出：放大关键通道可以降低量化误差。
+    * AWQ 利用等效变换来放大这些关键权重通道，从而加以保护，缩放因子通过离线收集的激活统计数据确定。
+* AWQ 不依赖任何反向传播或重建过程，因此能够很好地泛化到不同的领域和模态，避免过拟合校准集。
+    * 在多项语言建模任务和特定领域基准（如编程和数学）上，AWQ 的表现优于现有方法。
+    * 得益于出色的泛化能力，AWQ 在**指令微调模型**和首次在**多模态模型**上的量化中也取得了优异表现。
+* 与 AWQ 同时发布的还有 **TinyChat** —— 一个高效灵活的推理框架，专为 4-bit 端侧 LLM/VLM 设计。
+    * 借助内核融合和平台感知的权重打包机制，TinyChat 在桌面和移动 GPU 上相较 Huggingface 的 FP16 实现提供了超过 **3 倍** 的加速。
+    * 同时，它也让部署 **70B 参数规模的 Llama-2 模型** 到移动 GPU 成为可能，真正实现了大模型部署的平民化。
+
+
+## 1. Introduction
+
+![](https://img.zhaoweiguo.com/uPic/2025/05/CjXiMf.png)
+
+Figure 1:We introduce AWQ, a versatile weight quantization method for LLM. To implement AWQ, we developed TinyChat to deploy 4-bit quantized LLMs into various edge platforms, achieving a 3-4× performance boost compared to FP16.
+
+* 为什么要在边缘设备上部署大语言模型（LLM）
+    * 可以 **离线运行**、减少延迟，适合实时应用（如语音助手、自动驾驶）。
+    * **降低云服务成本**，提升 **数据安全性**（数据无需上传）。
+    * 很大的大模型，例如 GPT-3 需要 350GB 显存，不适合部署在资源有限的设备上。
+
+* 解决方案：AWQ（Activation-aware Weight Quantization） 是一种低比特、仅对权重进行量化的方法，核心优点如下：**
+    1. **只量化不重要的权重**：通过分析激活值来找出“重要”权重（大约 0.1%-1%），保留它们，减少精度损失
+    2. **无需训练或反向传播**，不会过拟合小样本数据，更好地泛化到不同任务或模态
+    3. **通过通道缩放**降低量化误差，同时避免使用低效的混合精度方案
+    4. **适用于多种 LLM 和模态**，包括指令微调模型（如 Vicuna）和多模态模型（如 OpenFlamingo）
+
+* 实现与部署工具：TinyChat
+    * 专为边缘设备优化的推理框架，支持 **4-bit 量化模型的快速推理**。
+    * 提供实际设备测试：如只用 8GB 显存、15W 功耗的 Jetson Orin Nano 上也能运行模型。
+    * 在桌面、笔记本和移动GPU上平均 **提速 3.2-3.3 倍**。
+
+
+
+## 2. Related Work
+
+* 模型量化方法：
+    * 量化是指把模型的参数从高精度（如 float32）变为低精度（如 int8），可以减小模型体积并加快推理速度。
+    * 常见有两种方法：
+        * **量化感知训练（QAT, quantization-aware training）**：在训练时考虑量化影响，但不适合大模型。
+        * **训练后量化（PTQ, post-training quantization）**：在模型训练完成后再量化，适合大语言模型（LLM）。
+
+* 大语言模型的量化：
+    * 量化方式分为两类：
+        * **W8A8（权重和激活都是 8bit）**：效果好但硬件要求高。需要硬件支持（比如支持 INT8 运算的加速器），否则精度或速度损失可能较大。
+        * **低比特仅量化权重（如 W4A16）**：只量化权重，适合内存小、资源有限的场景。
+    * 目前主流方法是**W4（权重4位）量化**，比如 GPTQ 方法，但存在**过拟合校准数据**、**通用性差**的问题，有些模型还需要特殊处理。
+
+* System support for low-bit quantized LLMs
+    * 为了让低比特量化 LLM 真正加速，需要底层系统支持。
+    * 已有多个系统和库支持低比特量化：
+        * **GPTQ**、**FlexGen**、**llama.cpp**、**exllama**：支持 INT3/INT4 等低精度推理。
+        * **FasterTransformer**：支持 FP16×INT4 的乘法，但不支持 group-wise quantization。
+        * **LUT-GEMM**：通过查找表在 GPU 上进行高效计算。
+        * **MLC-LLM**：使用 TVM 技术，在 CPU/GPU 上表现优异。
+
+* 显存占用
+    * 激活是指模型运行时产生的中间值，决定了显存的瞬时占用。
+    * W4A16 的激活部分占用显存和 FP16 一样，但整体显存占用会略低，因为权重更小。
+
+
+| 类型        | 权重位宽   | 激活位宽   | 权重占用   | 激活占用   | 总显存占用      | 是否需要特定硬件          |
+| --------- | ------ | ------ | ------ | ------ | ---------- | ----------------- |
+| **FP32**  | 32-bit | 32-bit | 400 MB | 200 MB | 600 MB     | ❌                 |
+| **FP16**  | 16-bit | 16-bit | 200 MB | 200 MB | 400 MB     | ✅（支持 FP16）        |
+| **W8A8**  | 8-bit  | 8-bit  | 100 MB | 100 MB | **200 MB** | ✅（支持 INT8）        |
+| **W4A16** | 4-bit  | 16-bit | 50 MB  | 200 MB | **250 MB** | ❌（普通 CPU/GPU 可支持） |
+
+
+
+
+## 3. AWQ: Activation-aware Weight Quantization
+
+![](https://img.zhaoweiguo.com/uPic/2025/05/2kzQrH.png)
+
+Figure 2:We observe that we can find 1% of the salient weights in LLMs based on the activation distribution (middle). Keeping the salient weights in FP16 can significantly improve the quantized performance (PPL from 43.2 (left) to 13.0 (middle)), but the mixed-precision format is not hardware-efficient. We follow the activation-awareness principle and propose AWQ (right). AWQ performs per-channel scaling to protect the salient weights and reduce quantization error. We measure the perplexity of OPT-6.7B under INT3-g128 quantization.
+
+
+### **1. 关键思想：保护重要权重（salient weights）**
+
+* 模型中的权重并不是一样重要。
+* 有少量（比如0.1%-1%）“重要”的权重对模型性能影响很大。
+* 如果把这些重要权重保留为高精度（FP16），而其它大部分用低精度（比如INT3），模型精度会提升很多。
+* 但必须用 **激活值（activation）** 判断哪些权重重要，而不是用权重本身的大小。
+
+* 📌 **关键结果**：基于激活值挑选并保留1%的权重，可以让模型性能大幅优于传统量化方法（比如RTN）。
+
+---
+
+### **2. 问题：混合精度难部署 → 替代方法：缩放**
+
+* 直接保留一小部分权重为FP16虽然提升了精度，但会增加实现难度（硬件支持复杂）。
+* 所以作者提出第二种方式：
+    * **用缩放（scaling）来“保护”重要权重：**
+        * 对重要权重乘以一个放大因子`s`，然后把输入除以`s`。
+        * 这样不改变原始计算逻辑，但减少了这部分权重的量化误差。
+        * 结果表明，当`s=2`时效果最好，困惑度（PPL）降低了一半多。
+
+---
+
+### **结论总结：**
+
+* **量化时保护“重要权重”是关键**；
+* **最有效的保护方式是基于激活值挑选重要权重**；
+* **使用缩放（而非混合精度）可在保持硬件友好的同时提升性能**。
+
+
+
+## 4. TinyChat: Mapping AWQ onto Edge Platforms
+
+* 📌**核心问题**
+    * 虽然将大模型量化成更小的数据（比如AWQ用4位权重）能大幅减少内存，但**在实际设备上提升推理速度并不容易**。
+    * 主要瓶颈在于：生成阶段（generation）比上下文阶段（context）慢很多，而且是“内存带宽受限”（memory-bound）
+
+
+### 4.1 Why AWQ Helps Accelerate On-Device LLMs
+
+![](https://img.zhaoweiguo.com/uPic/2025/05/pn6wBv.png)
+
+* Figure 3:Bottleneck analysis for Llama-2-7B on NVIDIA RTX 4090. 
+    - Left: In on-device LLM applications, generation stage is much slower than the context stage. 
+    - Middle: The generation stage is memory bound and has low arithmetic intensity. 
+        - W4A16 quantization can effectively improve the arithmetic intensity by 4×. 
+    - Right: The amount of weight access is orders of magnitude larger than the amount of activation access. 
+        - Thus, weight-only quantization is more effective for on-device LLMs.
+* 图3关键点
+    * Context vs generation latency.
+      * 输入 200 tokens 的上下文阶段耗时仅 10ms。
+      * 生成 20 个 token 的生成阶段耗时高达 310ms。
+      * → **生成阶段远慢于上下文阶段，是主要瓶颈。**
+    * Generation stage is memory-bound
+      * RTX 4090 理论计算上限 165 TFLOPS，内存带宽 1TB/s。
+      * FP16 推理的算术强度（FLOPs / 内存访问）≈ 1，远低于 165，→ 明显是**内存瓶颈型任务**。
+      * → 减少内存访问是提升性能的唯一手段，AWQ 正好通过权重量化减少了 4 倍的权重内存。
+    * Weight access dominates memory traffic.
+      * 权重访问是主导因素，而非激活。
+      * 将权重量化为 4 比特将算术强度提高到约 4 FLOPs/Byte，对应约 4TFLOPS 峰值。
+      * → AWQ 通过“仅量化权重”可带来更高的理论加速上限，特别适合边缘部署。
+
+* 🧠**AWQ的优势**
+    * AWQ 用 **W4A16（4位权重 + 16位激活）**，相比传统的 W8A8 能让模型更小。
+    * 模型在生成阶段是内存带宽瓶颈，AWQ 把模型权重从 16bit 减为 4bit，**降低了内存访问量，提高了运算密度**，理论上可以提速约 4 倍。
+
+
+
+### 4.2 Deploy AWQ with TinyChat
+
+![](https://img.zhaoweiguo.com/uPic/2025/05/csOB2G.png)
+
+Figure 4:SIMD-aware weight packing for ARM NEON with 128-bit SIMD units. Original weights are reordered and packed to align with the bit width so that the weights can be unpacked into bytes at runtime using AND and shift bitwise operations with a 128-bit mask.
+
+* 📦 核心优化点：
+    1. **动态反量化（On-the-fly dequantization）**
+       * 把 INT4 转成 FP16 再进行矩阵乘法，**避免中间结果写入内存**。
+           * INT4 与 FP16 不能直接乘法 → 推理时需反量化至 FP16。
+           * TinyChat 将 反量化操作与矩阵乘法内核融合，避免中间结果写入 DRAM，减少内存访问。
+       * 把反量化和矩阵乘法融合在一起，加快运算。
+    2. **SIMD 感知的权重打包（SIMD-aware packing）**
+       * 反量化过程在 CPU 上成本高（1 shift + 1 AND + 1 FMA）。
+       * 在 CPU 上，考虑不同平台 SIMD 指令对齐方式，**提高并行解码效率**。
+         * 例如在 ARM 128-bit SIMD 上，每次可解码 32 个 4-bit 权重，只需 3 条 SIMD 指令。
+       * 权重打包方式按 SIMD 位宽调整：
+         * 128-bit SIMD → 每次处理 32 个 4-bit 权重。
+         * GPU 上更适合用交错打包顺序：`{0,2,4,6,1,3,5,7}`
+    3. **Kernel 融合（Kernel fusion）**
+       * 把多个小计算（如注意力机制的QKV计算、层归一化操作等）**合并成一个 kernel**，
+       * 减少 GPU kernel 启动次数，带来明显提速。
+
+* 📈**效果**
+    * 在 GPU 上（如 4090），相比 HuggingFace 的 FP16 推理，TinyChat 的 AWQ 实现能带来 **3 倍以上的加速**。
+    * 在 CPU 上也通过 C++ 优化减少开销。
+
+
+* 我的理解
+    * SIMD 感知的权重打包（SIMD-aware packing）
+        * 主流 CPU 的 SIMD 指令集（如 ARM NEON、Intel AVX）是以 128-bit 或 256-bit 为单位做并行计算的
+        * 以ARM NEON 的 128-bit SIMD 寄存器为例
+          * 每个寄存器可以装下：128-bit ÷ 4-bit = 32 个权重
+          * 如果直接把这些权重顺序排成：w0, w1, w2, ..., w31
+          * 每次提取一个权重就要进行一次解码（位移、AND 掩码），非常低效。
+        * 权重重排（Reordering）
+          * 优化的排列方式：w0, w16, w1, w17, ..., w15, w31
+          * 对齐 SIMD 操作：仅使用3 条 SIMD 指令（比如 AND、SHIFT）一次性解码整个寄存器中的 32 个 4-bit 权重
+          * 减少指令数：传统方式每个权重要用 3 条指令（解包+缩放），32 个权重要用 96 条。
+              * 而这种新排列方式仅用 3 条指令即可处理全部 32 个权重，大幅减少开销。
+
+
+## 5. Experiments
+
+
+* 🔸 在 LLaMA 系列模型上：
+    * **AWQ 的效果优于 RTN 和 GPTQ**，适用于从 7B 到 70B 不同规模模型。
+* 🔸 在多模态语言模型（如 OpenFlamingo）上：
+    * AWQ 只量化语言部分，**性能下降非常小但模型缩小4倍**。
+    * 在图文任务如 COCO 图像字幕中，AWQ 表现优于其他方法。
+    * 在多个视觉语言模型基准上，**AWQ 几乎没有性能损失**，是首个对视觉语言模型做低比特量化的方法。
+
+
+## 6. Conclusion
+
+* 提出了一种新的低比特大模型压缩方法，叫做 AWQ（Activation-aware Weight Quantization）。
+* 核心思路是：大模型里的权重重要性不一样，用每通道缩放的方法，减少对关键权重的量化误差。
+* 推出了一个叫 TinyChat 的系统，在桌面和移动端 GPU 上实现了 3.2-3.3 倍的速度提升，让大模型更容易部署到边缘设备上。
+
+
+
+
+
+
+
+
+
+
+

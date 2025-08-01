@@ -1,0 +1,756 @@
+2504.02495_DeepSeek-GRM: Inference-Time Scaling for Generalist Reward Modeling
+##############################################################################
+
+* https://arxiv.org/abs/2504.02495
+* 组织: DeepSeek
+
+
+* RM: Reward Modeling
+* GRM: Generative Reward Modeling
+* SPCT: Self-Principled Critique Tuning
+
+Abstract
+========
+
+* 这段内容主要讲的是如何通过改进奖励建模（Reward Modeling, RM）和学习方法来提升大语言模型（LLM）在推理阶段的可扩展性（inference-time scalability），特别是在泛化任务（general queries）中也能有效进行奖励反馈。
+* 【总结】这篇工作提出了一种新方法（SPCT）结合生成式奖励建模（GRM），让大语言模型在推理阶段也能更智能地评估和选择高质量输出，实现了更好的泛化能力和可扩展性，尤其适合复杂任务和缺乏明确奖励信号的场景。
+
+
+我来帮你拆解理解这段话的核心内容和关键术语：
+
+🌟 总体目标
+    - 当前在训练 LLM 时，经常使用 强化学习（Reinforcement Learning, RL） 来微调，使模型更符合人类偏好。
+    - 然而，在很多无法直接验证的任务中（比如开放式问答、复杂推理），很难定义准确的奖励信号，这是一个关键挑战。
+    - 本文的目标是：探索在推理阶段（inference-time），如何通过改进 RM 和 RL 方法来提升泛化能力和扩展性。
+
+🧠 核心贡献
+    1. 使用 Pointwise Generative Reward Modeling（GRM）
+        - 传统的 RM 方法经常基于打分或者排序（rank），不够灵活。
+        - GRM：是一种基于生成的方式给奖励评分，可以适应不同类型的输入（如对话、代码、问答等）。
+        - Pointwise：意思是对每个候选回答单独评分，而不是比较多个回答。
+    2. 提出 Self-Principled Critique Tuning（SPCT）
+        - 为了让 GRM 更有效地产生奖励信号，他们设计了一种新的在线强化学习方法：
+        - 模型自己生成评价标准（principles），比如回答是否逻辑清晰、有事实支持。
+        - 然后基于这些标准来进行批判性评价（critiques），评估候选答案的好坏。
+        - 这种方法能让模型更稳定地生成更高质量、更可扩展的奖励反馈，生成的新模型叫 DeepSeek-GRM。
+    3. 推理阶段的扩展策略（Inference-time Scaling）
+        - 为了在推理阶段提升性能，提出了两个策略：
+        - 并行采样（Parallel Sampling）：用更多计算资源生成多个结果，提高泛化性和鲁棒性。
+        - 引入 Meta RM（元奖励模型）：对多个候选答案的“投票”结果进行指导，提升最终选择质量。
+
+📊 实验效果
+    - SPCT 方法显著提升了 GRM 的质量和扩展性，在多个 RM 基准测试中超过现有模型和方法。
+    - 更重要的是，在推理阶段扩展（inference-time scaling）表现优于训练阶段扩展（training-time scaling）。
+    - 当然，DeepSeek-GRM 仍在某些任务上存在挑战，这也是未来通用奖励系统需要解决的方向。
+
+
+1. Introduction
+===============
+
+* 本章主要围绕奖励建模（Reward Modeling, RM）在大语言模型推理阶段扩展性中的挑战与解决方案展开
+* 【总结】本文提出了一种能在推理阶段生成高质量奖励的新方法（SPCT），通过组合原则生成、批判性评估和并行采样，构建出可扩展、通用的奖励系统，显著提升了 LLM 在泛化任务中的表现。
+
+* 背景介绍
+    - 大语言模型（LLMs）近年来取得巨大进展，已经具备理解、生成、推理、决策等复杂能力。
+    - LLM 已成为 AI 研究的重要支柱，推动了推理能力和任务表现的提升。
+* 强化学习（RL）与人类偏好对齐
+    - 强化学习（RL）作为 LLM 的后训练方法（post-training）被大规模使用。
+    - 它在三个方面效果显著：
+        1. 人类价值对齐（alignment with human preferences）
+        2. 长程推理能力（long-term reasoning）
+        3. 适应环境变化（adaptation to different tasks and contexts）
+
+* 奖励建模（Reward Modeling）是 RL 的关键
+    - 在 RL 中，奖励建模（RM）是关键，它负责判断 LLM 输出的好坏。
+    - 高质量的奖励能显著提升模型表现，不管是在训练中还是推理中。
+
+* 现有 RM 的局限性
+    - 当前高质量的奖励信号，主要依赖：
+        - 明确设计的环境（如游戏、仿真）
+        - 可验证的问题（如数学、代码）
+    - 但对开放任务（general domains）来说，判断“好回答”往往主观复杂、缺乏明确标准，因此更难建模。
+
+* 通用奖励建模的意义
+    - 所以提出了“通用奖励建模（Generalist RM）”：
+    - 它能支持更广泛任务
+    - 无需手工规则
+    - 适用于推理阶段（如采样选择）或训练阶段（RL微调）
+
+* RM 面临的挑战
+    1. 输入灵活性：能否支持单个/多个回答的评估
+    2. 跨任务准确性：能否给出合理奖励
+    3. 推理阶段计算扩展性：能否通过更多推理计算提升奖励质量
+    4. 学习策略的扩展能力：能否学出适合“扩展计算”的行为模式
+
+* 现有 RM 类型和打分模式分析
+
+    - 按生成方式分：
+        - Scalar（标量打分）：只输出一个分数
+        - Semi-scalar：介于标量与生成之间
+        - Generative（生成式）：生成文字评价
+    - 按打分方式(scoring patterns)分：
+        - Pointwise（单个评分）
+        - Pairwise（比较两个回答）
+    - 说明：
+        - Pairwise 虽然有用，但不支持单独打分，输入不灵活；
+        - Scalar 虽简单，但很难体现复杂差异，扩展性差。
+
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/04/ACcM4g.png
+
+    Figure 2: Different paradigms for reward generation, including (a) scalar, (b) semi-scalar, and (c) generative approaches, and different scoring patterns, including (i) pointwise and (ii) pairwise approaches. We list the representative methods for each approach, and corresponding inference-time scalability (whether better rewards could be obtained from multiple sampling) and input flexibility (whether supports rating single and multiple responses).
+
+
+
+* 作者的洞察与方法构思
+    - 他们发现：生成式+Pointwise的GRM是一个很好的统一方法，能支持多种输入类型。
+    - 如果引入“原则（principles）”和“批判性分析（critiques）”，可以提升奖励质量。
+    - 这启发了他们提出新的训练方法：Self-Principled Critique Tuning（SPCT）。
+
+
+* 方法设计 & 实现细节
+    - SPCT 核心点：
+        - 利用规则引导 RL（rule-based online RL）
+        - 学习生成符合任务的“原则”和“批判性分析”
+    - 新模型叫做 DeepSeek-GRM-27B（基于 Gemma-2-27B 后训练而成）
+    - 在推理阶段：
+        - 使用并行采样生成多个评估结果
+        - 生成多个不同原则+分析，进行投票
+        - 引入Meta RM提升最终评估表现
+
+
+
+2. Preliminaries
+================
+
+* 本章主要解释了 各种 Reward Model（奖励模型, RM）方法的比较 以及 如何用“原则（principles）”提升奖励质量。
+
+2.1 Comparisons of Different RM approaches
+------------------------------------------
+
+
+✅ 两个关键能力：
+    1. 输入灵活性（Input Flexibility）：是否支持打分单个、多组或成对的回答。
+    2. 推理阶段可扩展性（Inference-Time Scalability）：在推理时是否可以通过采样（sampling）多次来提升评分效果。
+
+✅ 两个维度的分类方式：
+    1. 生成方式（Reward Generation Paradigms）：
+        - Scalar（标量）：直接生成一个分数。
+        - Semi-Scalar（半标量）：先生成一段文字评价（critique），再生成一个分数。
+        - Generative（生成式）：只生成文字评价，通过分析文字提取奖励（reward）值。
+    2. 评分模式（Scoring Patterns）：
+        - Pointwise（逐条评分）：每个回答单独打分。
+        - Pairwise（两两比较）：从多个回答中挑出最好一个。
+
+✅ 推理时扩展的挑战：
+    - 在推理阶段扩展算力的方法是“采样多次”（比如生成多个奖励结果，再汇总投票），
+    - Scalar 模型的问题：每次都生成同一个分数，没法从多次采样中受益。
+    - Pairwise 模型的问题：只看成对的比较，不支持单个或多个回答的评估，灵活性差。
+
+✅ 公式解释：
+    - 作者给出一个 Pointwise Generative Reward Model（GRM）的数学表达式：
+
+.. math::
+
+    {S_i\}_{i=1}^{n} = f_{\text{extract}}(C),\quad C \sim r_\theta(x, \{y_i\}_{i=1}^{n})
+
+* 意思是：
+    - 对输入 query x 和多个回应 :math:`\{y_i\}` ，生成一个文本评价 C（Critique）；
+    - 然后用提取函数 :math:`f_{\text{extract}}` 把评价 C 变成每个回答的得分 :math:`\{S_i\}`
+    - 默认打分是离散整数 1-10 分。
+
+
+
+2.2 Boosting Reward Quality with Principles
+-------------------------------------------
+
+✅ 为什么要用“原则”？
+    - 在特定领域（比如数学、编程），可以用规则自动判断对错；
+    - 但在通用领域（例如对话质量、观点合理性等），没那么清晰的标准；
+    - 所以可以用“原则（principles）”来辅助打分，原则可以是：逻辑清晰性、礼貌、事实准确性、任务完成度等；
+    - 这类似于 Constitutional AI 的思想，即用规则或道德框架训练模型。
+
+✅ 套用原则后的公式：
+    - 意思是：现在模型的 reward 不仅取决于 query 和回答，还包括原则集 :math:`\{p_j\}`
+
+.. math::
+
+    \mathcal{R} = C \sim r_\theta(x, \{y_i\}, \{p_j\})
+
+
+
+3. Self-Principled Critique Tuning (SPCT)
+=========================================
+
+🌟总览：什么是 SPCT？
+    - SPCT 是一种新的训练方法，目标是让 生成式奖励模型（GRM） 能够：
+        1. 自己生成评判原则（principles）
+        2. 根据这些原则生成批判（critiques）
+        3. 从批判中提取奖励分数（reward）
+        4. 在推理时（inference time）更好扩展，更高质量
+    - 方法包含两个阶段：
+        - Rejective Fine-Tuning（拒绝式微调）：用于“冷启动”，让模型学会生成结构正确、基本合理的原则与批判。
+        - Rule-based RL（基于规则的强化学习）：进一步优化生成质量。
+
+
+3.1 Unpinning Principles from Understanding to Generation
+---------------------------------------------------------
+
+* 过去的做法：人工定义好“原则”，模型根据这些原则来打分。
+* SPCT 的做法：模型自己生成原则，再生成批判 → 提取出 reward。
+
+* 具体公式：
+    - 原则: :math:`{p_i} ~ p_θ(x, {y_i})`
+    - 奖励: :math:`𝓡 = C ~ r_θ(x, {y_i}, {p_i})`
+    - 输入是 query `x` 和若干响应 `y_i`
+    - 模型先生成一组原则 `p_i`
+    - 再根据这些原则生成批判 `C`
+    - 从批判中提取奖励 `S_i`
+
+🔑 意义：让模型根据具体场景、问题和回答，自适应地生成不同评判标准。最终能生成更加细粒度、合理的 reward，有利于大规模推理。
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/04/2oqszA.png
+
+    Figure 3: Illustration of SPCT, including rejective fine-tuning, rule-based RL, and corresponding scalable behaviors during inference. The inference-time scaling is achieved via naive voting or meta RM guided voting with principles generated at scale, resulting in finer-grained outcome rewards within a expanded value space.
+
+
+
+3.2 Rule-Based Reinforcement Learning
+-------------------------------------
+
+* To optimize principle and critique generation in GRMs simultaneously, we propose SPCT, which integrates rejective fine-tuning and rule-based RL.
+* Rejective Fine-Tuning（冷启动）
+    - 这个阶段的目的是：
+        - 让 GRM 熟悉多种输入格式（单个响应、成对、多响应）
+        - 生成结构正确的原则和批判
+        - 提供一个基础模型以进入下一阶段强化学习
+    - 做法：
+        - 使用训练好的 GRM 对同一个 query + response 组采样多次（`𝑁̄_{RFT}` 次）
+        - 使用统一的 rejection 策略：
+            - 若 reward 跟 ground truth 不一致 → 拒绝
+            - 若所有采样都一致正确 → 太简单 → 也拒绝
+    - ⚠️注意点：
+        - 如果多个响应，要求模型能挑出最好那个，并给出最高分。
+        - 有些难例模型采样多次也不对，这时候可以给出提示（hint）：告诉它 ground truth 中哪个是最优，再让它尝试。
+        - 但这可能导致 偷懒的批判，特别是对复杂任务（如推理），所以还要继续用 RL 微调。
+
+* Rule-Based Reinforcement Learning（强化学习阶段）
+    - 这个阶段的目标：
+        - 用 规则定义的 reward signal 来优化模型
+        - 强化原则和批判的生成质量
+    - 方法基于 GRPO（Generalized Reward Policy Optimization）：
+        - 不再用“格式奖励”去奖励模型写得好不好看
+        - 用 规则判断预测的 reward 是否合理
+        - 用 KL 惩罚约束模型不要偏离太远
+
+
+小结: SPCT 有啥亮点
+---------------------
+
++----------+--------------+----------------------+
+| 能力     | 传统 GRM     | SPCT 加强点          |
++==========+==============+======================+
+| ------   | ----------   | --------------       |
++----------+--------------+----------------------+
+| 原则生成 | 人工设定     | 模型自动生成         |
++----------+--------------+----------------------+
+| 灵活性   | 输入固定格式 | 任意数量响应统一格式 |
++----------+--------------+----------------------+
+| 推理扩展 | 難以扩展     | 可通过采样+投票扩展  |
++----------+--------------+----------------------+
+| 批判质量 | 不稳定       | 原则引导+RL优化更好  |
++----------+--------------+----------------------+
+| 奖励粒度 | 粗略         | 更细致、适应性强     |
++----------+--------------+----------------------+
+
+* SPCT 的目标是构建一个真正“通才型的奖励模型”，能在多种任务、多种格式下输出高质量 reward，并保持高可扩展性。
+
+
+4. Inference-Time Scaling with SPCT
+===================================
+
+核心背景
+----------
+
+* 作者提出了一种叫 SPCT（Self-Principled Critique Tuning） 的方法，前面章节主要讲的是训练（training）过程中如何让模型生成更好、更自适应的原则（principles）和评价（critiques），以帮助奖励模型（Reward Model, GRM）更准确地评估答案的质量。
+* 而第 4 章则讲的是： > 在推理（inference）阶段，怎么进一步提升这个模型的效果，尤其是通过 多轮采样 + 投票 来实现“算力换效果”的策略。
+
+4.1 Voting with Generated Rewards
+---------------------------------
+
+✅ 做法：
+    - 对于每一个输入（问题和回答们），你可以 采样 $k$ 次不同的原则和评价。
+    - 每次采样会生成一套原则 $\{p_{i,j}\}$，用于计算对应的奖励 $S_{i,j}$。
+    - 最终，把每个回答 $y_i$ 的多个奖励 加总起来形成最终得分 $S_i^* = \sum_j S_{i,j}$，得出哪个回答最好。
+
+🤔 这有什么好处？
+    - 虽然每次评分是 1-10 之间的整数，但多轮投票后，相当于把评分空间 扩大了 $k$ 倍，比如从 1-10 扩展到 1-320。
+    - 多生成一些“原则”，相当于多角度审题，“模拟更多评审员视角”，所以更准确。
+    - 模型推理时会打乱答案顺序，以避免位置偏差、提升多样性。
+
+4.2 Meta Reward Modeling Guided Voting
+--------------------------------------
+
+❓为什么还需要“指导投票”？
+    - 因为有些采样出来的原则/评价质量不高，甚至是“废话”或“胡说八道”，如果把这些也加进去投票就会“拉低智商”。
+    - 所以，引入一个 Meta RM（元奖励模型） 来过滤这些采样。
+
+✅ Meta RM 怎么做？
+    - 是一个简单的分类器，判断某条采样出来的原则+评价是不是靠谱（对错用二元标签）。
+    - 用之前 rejective fine-tuning 阶段的非 hinted 采样数据训练（包含好坏都有，增强鲁棒性）。
+
+🔍 推理阶段怎么用？
+    1. 对于 $k$ 条采样出来的奖励，Meta RM 对每一条打分。
+    2. 只取得分最高的前 :math:`k_{\text{meta}} \leq k` 条投票，过滤掉不靠谱的样本，提升最终结果。
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/04/DIEF41.png
+
+    Table 2: Overall results of different methods and models on RM benchmarks. Underlined numbers indicate the best performance, bold numbers indicate the best performance among baseline and our methods, and italicized font denotes scalar or semi-scalar RMs. For meta RM guided voting (MetaRM), :math:`k_{meta} = 1/2 k`
+
+
+总结理解
+----------
+
+* 推理时，DeepSeek-GRM 会：
+    1. 多次生成不同视角的“原则+评价”，就像多个评委给出意见；
+    2. 把这些意见综合投票 得出更细致的打分；
+    3. 再用 Meta 奖励模型筛选掉不靠谱的意见，进一步提升投票质量。
+
+* 这就实现了“推理阶段的可扩展性”：用更多计算（比如 $k=32$ 次采样）换取更好的评估表现。
+
+
+
+5. Results on Reward Modeling Benchmarks
+========================================
+
+
+5.1 Experiment Settings
+-----------------------
+
+📊 Benchmark 和评估指标：
+    - 在多个领域的 Reward Modeling（RM） 基准测试中对模型表现进行评估
+        - Reward Bench（2024）
+        - PPE（2025）
+        - RMB（2025）
+        - ReaLMistake（2024）
+    - 评估指标包括：
+        - Accuracy：在 Reward Bench、PPE 和 RMB 中用于衡量模型是否能从多个候选回复中选出最优回复。
+        - ROC-AUC：用于 ReaLMistake 数据集，评估模型在判断“错误”轨迹上的能力。
+    - 为避免评分相同（tie）的问题，他们会先打乱候选顺序，然后用 `argmax_i(S_i)` 来选出得分最高的回复。
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/04/pC3wtt.png
+
+    Table 3: Inference-time scalability results of different methods on RM benchmarks. Settings are the same as Table 2.
+
+⚙️ 方法实现（Method Implementation）：
+    - 复现了以下基线方法（全部基于 Gemma-2-27B）：
+        - LLM-as-a-Judge
+        - DeepSeek-BTRM-27B
+        - CLoud-Gemma2-27B
+        - DeepSeek-PairRM-27B
+    - 自研的方法有：
+        - DeepSeek-GRM-27B-RFT（精调版）
+        - DeepSeek-GRM（多种模型规模版本）：
+            - DeepSeek-V2-Lite (16B MoE)
+            - Gemma-2-27B
+            - DeepSeek-V2.5 (236B MoE)
+            - DeepSeek-V3 (671B MoE)
+    - 还有一个 Meta RM（元奖励模型），也是用 Gemma-2-27B 训练的。
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2025/04/XIbG7p.png
+
+    Table 4: Ablation studies for different components of the proposed SPCT. Bold numbers indicate the best performance.
+
+
+
+5.2 Results and Analysis
+------------------------
+
+📊 Reward Modeling 性能总结：
+    - DeepSeek-GRM-27B 表现整体优于基线方法，甚至接近 GPT-4o 和 Nemotron。
+    - 标量模型（scalar RMs）比如 DeepSeek-BTRM 更擅长处理“可验证任务”（如 PPE），但对生成类任务泛化性差。
+    - 而 SPCT 训练的 GRM 模型更少偏见，更通用。
+    - LLM-as-a-Judge 表现较差，可能因为缺乏“原则指引（principle guidance）”。
+
+💧 推理时扩展性（Inference-Time Scalability）：
+    - 用更多采样数（例如 Voting@8 或 Voting@32），DeepSeek-GRM 的效果大幅提升。
+    - Meta RM 帮助过滤低质量的采样结果，让 Voting 更有效。
+    - LLM-as-a-Judge 加上 Token Probability 投票方式也有提升。
+    - CLoud-Gemma2 的提升有限，可能是因为标量 reward 缺乏多样性。
+
+* 总体上，SPCT 提升了 GRM 的推理扩展能力，MetaRM 又进一步强化了它的效果。
+
+🧪 消融实验补充发现：
+    - General Instruction Data 对 GRM 的效果很关键。
+    - Principle Generation 是性能提升的关键组件，无论是贪婪解码还是推理投票。
+    - Voting 中引入 MetaRM + k 值选择非常有效。
+
+.. note:: 通过推理优化（而非增加模型体量）也可以达到非常强的效果，成本更低。同时测试发现，DeepSeek-R1 即便具备长链式思维能力（chain-of-thought），但在 Reward Modeling 上并没有显著提升。
+
+
+总结
+----
+
+1. DeepSeek-GRM-27B + SPCT 框架 + MetaRM 是当前在多个 Reward Modeling 基准任务上表现最强的方案之一。
+2. 它通过合理采样、有效投票策略和通用指令数据训练，提升了模型的通用性与推理扩展性。
+3. 相较于扩大模型体量，优化推理方式的性价比更高。
+
+
+
+6. Related Work
+===============
+
+Generative Reward Models, GRMs
+------------------------------
+
+* 传统奖励模型（Scalar RMs）的问题：  
+    - 传统的奖励模型只输出一个“标量分数”（比如打分为0~1之间的一个值），代表某个回复的好坏，比如 Ouyang et al., 2022 的方法。
+    - 但这种方式表达能力有限，不足以全面评估复杂的语言输出。
+* GRMs 的新思路：  
+    - GRMs（生成式奖励模型）把“奖励”表示成文本形式的反馈或评分，可以提供更细致、语义更丰富的奖励信号。  
+    - 也就是说，模型不只是“给分”，还能解释为什么这个回答更好。
+* GRMs 的能力提升：
+    - 既能判断一个回答（单响应），也能比较多个回答（多响应）。
+    - LLM-as-a-Judge 是一种典型方法，支持有参考（reference-based）和无参考（reference-free）的评估。
+    - 还有研究尝试结合：
+        - 离线强化学习（Offline RL）方法训练 GRMs，例如 DPO（Direct Preference Optimization）；
+        - 工具和外部知识来增强 GRM 的判断；
+        - 作为接口连接外部环境，动态调整奖励。
+
+* 挑战： 尽管这些方法在效率上有挑战（如成本高、推理慢），但它们展示了构建“通用奖励系统”（Generalist Reward System）的潜力。
+
+Inference-Time Scaling for LLMs
+-------------------------------
+
+* 这部分讨论的是：在推理阶段增强模型性能，而不是通过更大模型或更多训练。
+* 研究方向包括：
+    - 多样采样与奖励模型引导的聚合（sampling + RM-guided aggregation），用多个回答投票/评分选择更优输出；
+    - 长链思维（Chain-of-Thought, CoT）推理策略：鼓励模型在推理时生成详细的推理过程，提高逻辑和复杂任务的表现；
+    - 使用 可扩展的奖励或验证器（scalable rewards/verifiers） 来提升如编程、推理等特定领域中的模型效果。
+
+* 作者强调，他们提出的 inference-time scalable generalist RMs（推理时刻可扩展的通用奖励模型） 不仅提升了评估/奖励模型本身的能力，也有望通过“推理时刻共扩展（co-scaling）”的方式提升策略模型（policy models）的整体性能。
+
+总结
+----
+
+* 本文站在两个前沿领域的交叉点上 —— 用更强大、通用、可扩展的奖励模型，配合 推理时刻的增强策略，推动 AI 系统在复杂任务上获得更高质量的判断和输出。
+
+
+7. Conclusion and Future Work
+=============================
+
+* 本章是整篇论文的总结和未来展望部分
+* SPCT 方法的核心贡献
+    - SPCT 全称：Self-Principled Critique Tuning（自我原则批评调优）
+    - 它解决的问题：
+        - 在“推理阶段”（inference time）如何让通用奖励模型（GRM）表现更强。
+    - SPCT 是怎么做到的？
+        - 使用规则驱动的在线强化学习（rule-based online RL）：
+        - 模型可以自己生成评价原则（principles）和批评意见（critiques），来判断其他模型的输出质量。
+        - 相当于奖励模型自己学会“怎么评价好坏”，而不是完全靠人工标注。
+* 实验效果
+    - 提出的 DeepSeek-GRM（基于 SPCT 的 GRM）：
+    - 超越了多个基线方法（baseline methods）。
+    - 在多个公开的强大模型（public RMs）中也表现得很好。
+    - 在推理阶段进行扩展（inference-time scaling）后，表现进一步提升。
+    - 特别是在有 meta RM 指导下效果最好：meta RM 负责筛选质量更高的推理轨迹，起到了“投票专家”的作用。
+
+* 未来方向（Future Work）
+    🔸 a)将 GRM 融入 RL 流水线：
+        - 让 GRM 成为 在线强化学习系统中的通用奖励接口。
+        - 不只是“离线评估”，还能实时地指导训练。
+    🔸 b)与策略模型（Policy Model）做 inference-time co-scaling：
+        - 不只是奖励模型本身增强，在推理阶段还可以与策略模型一起扩展，协同提升性能。
+    🔸 c)作为稳健的离线评估器（Offline Evaluators）：
+        - GRMs 可以用于评估大型基础模型（Foundation Models）的输出质量，减少人力标注。
+* 总结一句话：
+    > 本文提出的 SPCT 方法让通用奖励模型在“推理阶段”变得更聪明、更灵活，不仅提升了评估能力，也为未来将其嵌入 RL 系统、协助训练和评估大模型打开了新路径。
+
+
+A. Additional Related Work
+==========================
+
+* 三种主流的奖励模型（Reward Models, RMs）方向，用于训练或对齐大语言模型（LLMs），包括:
+    1. 宪法式AI(Constitutional AI)
+    2. 标量奖励模型（Scalar Reward Models）  
+    3. 半标量奖励模型（Semi-Scalar Reward Models）
+
+* Constitutional AI
+    - 核心理念：  
+        - 是一种不再依赖人类反馈的替代方法，通过“宪法”规则（constitution）来对齐 LLM 与人类价值。
+    - 主要做法：
+        - 不用人类点评（human critiques），而用 AI 生成的反馈（AI feedback）或者分类器（classifiers）来判断输出是否符合“宪法”规则。
+        - 这些“宪法”是人工编写的规则集（例如道德、安全、礼貌等方面的准则）。
+    - 优点：
+        - 可以自动监督模型，不再依赖大量人类反馈。
+        - 比传统的 RLHF 更易扩展（scalable）。
+    - 局限：
+        - 范围有限（limited scope）
+        - 有偏性（potential bias）
+        - 缺乏灵活性（inflexibility）
+    - 这篇论文的关联：
+        > 作者也试图解决这些问题，即自动生成或动态调整“原则（principles）”，这和宪法式AI的目标是一致的。
+
+* Scalar Reward Models
+    - 核心理念：
+        - 最早期的对齐方法：用一个简单的分数（标量，scalar）来表示一个输出的好坏程度，通常是人类反馈的回归结果。
+    - 代表方法：
+        - Stiennon et al., 2020 是开创者（OpenAI 的最早奖励模型）
+        - 后续引入 Bradley-Terry 模型（一种用于建模偏好排序的统计模型）
+        - 还包括很多回归模型（Gao et al., 2023；Wang et al., 2024/2025）
+    - 延伸：
+        - 出现了“过程奖励模型（Process RM）”：不是只看最终答案对错，而是检查中间每一步推理是否合理（比如数学题）。
+    - 优点：
+        - 简单高效，适合大规模训练。
+    - 缺点：
+        - 表达能力有限：只能提供一个数字，没法解释为什么；
+        - 泛化性差：不同任务、输入类型难以统一；
+        - 推理时无法细致调节奖励（inference-time refinement）
+
+* Semi-Scalar Reward Models
+    - 核心理念：
+        - 介于标量和生成式奖励模型（GRM）之间：用文本中间结果丰富标量奖励的表达力。
+    - 优点：
+        - 信息更丰富，比纯标量能表达更多细节；
+        - 保留了部分效率优势。
+    - 缺点：
+        - 推理时扩展能力弱（inference-time scaling）：
+        - 主要还是靠 sampling 和 voting，但提升有限；
+        - 在效率和效果上是折中方案，两头都没完全占到便宜。
+
+
+B. Limitations and Future Directions
+====================================
+
+
+Limitations
+-----------
+
+* 效率问题（GRM vs Scalar RM）
+    - 现状：
+        - 生成式奖励模型（GRM）天然比标量模型慢得多，尤其是在大模型上，这会限制它们在实时强化学习中的大规模应用。
+    - 缓解方法：  
+        - 论文中采用了 并行采样（parallel sampling） 的方式来降低推理时间（例如用 8 个样本，延迟不会显著增加）。  
+        - 作者认为未来可以通过以下方法进一步解决这一问题：
+            - 提高 LLM 的推理效率  
+            - 优化 RM 架构  
+
+* 在可验证任务上的性能落后
+    - 现象：  
+        - 在一些“可验证性强的任务”（比如数学题或需要逻辑验证的推理任务）上，DeepSeek-GRM 仍落后于 scalar RMs。
+    - 原因分析：  
+        - 标量 RM 更容易捕捉“隐藏特征”（比如答案结构、格式）；
+        - 而 GRM 要靠更强的推理能力来给出评价，这方面尚不足。
+    - 缓解手段：  
+        - 使用 参考答案生成式评分（reference-based reward）（附录 E.1.3）；
+        - 使用 长链推理（long-horizon reasoning）（附录 D.3）。
+
+* 未充分探索的“过程奖励”潜力
+    - 现状：  
+        - DeepSeek-GRM 目前是按“点”打分（pointwise）用于结果评价（outcome RM）。  
+        - 但它也有潜力用于过程监督（process RM），例如逐步验证推理过程。
+    - 当前进展：  
+        - 虽然文章没详细研究这一点，但它在“Reward Bench”中表现不错（尤其是在 MATH-prm 数据上），暗示这种可能性。
+
+Future Directions
+-----------------
+
+1. 结合工具（Tool-Augmented RM）
+    - 启发：  
+        - 参考 Li et al., 2024b 的工作，可以将外部工具（如代码解释器、搜索引擎）结合进来，用来增强 DeepSeek-GRM。
+    - 优势：  
+        - 执行需要精确步骤的任务；
+        - 处理复杂的知识性问题；
+        - 避免出错，比如数字计算、模式匹配错误等。
+
+2. 原则-点评阶段解耦（Principle-Critique Decoupling）
+    - 现状：
+        - 当前原则（Principles）和点评（Critiques）是一起生成的。
+    - 改进建议：  
+        - 可以先为每个 query 单独生成原则（提前生成），再基于这些原则对响应进行点评。  
+        - 原则生成可以视为一个“接口”，供点评模块使用。
+    - 好处：  
+        - 会显著提升效率，更方便用于强化学习管道。
+
+3. 用于离线评估（Offline LLM Evaluation）
+    - 方法：  
+        - 每个“原则”可以看作一种“评价标准（criteria）”。
+    - 用法：  
+        - 比如：一个 LLM 在某个样本上比另一个弱，就可以从点评中抽取出“失败的原则”，作为模型弱点的解释性信号。
+    - 价值：  
+        - 实现更透明、更可解释的 LLM 对比与评估。
+
+4. 利用长链推理（Long-Horizon Reasoning）
+    - 好处：  
+        - 有潜力提升 DeepSeek-GRM 的评估深度和准确性。
+    - 挑战：
+        - 会进一步拉高计算成本，导致效率问题，因此未来需要更多研究来平衡。
+
+总结
+----
+
+🔍 Limitations:
+    - ❗ GRMs 效率低，难以用于实时强化学习；
+    - ❗ 在数学/推理类任务中，GRM 落后于 scalar RM；
+    - ❗ DeepSeek-GRM 潜力未完全开发成 Process RM。
+
+🚀 Future Directions:
+    1. 引入外部工具（代码执行器、搜索等）→ 提升精确性；
+    2. 原则与点评解耦 → 提高效率，适配 RL 管道；
+    3. 用于 LLM 离线评估 → 抽取失败原因作为模型弱点评价；
+    4. 利用长链推理能力 → 提升复杂任务表现，但需平衡效率。
+
+
+
+G. Prompt Templates
+===================
+
+DeepSeek-GRM (Default)::
+
+    You are a skilled little expert at scoring responses. 
+    You should evaluate given responses based on the given judging criteria.
+    Given the context of the conversation (the last round is the User’s query) and multiple responses from the Assistant, you need to refer to the [General Evaluation Criteria] to score the responses. 
+    Based on the general evaluation criteria, state potential other specific criteria to the query, the weights of different criteria, and then provide an overall comprehensive score upon them.
+    Each score is an integer between 1 and 10, with a higher score indicating that the response meets the relevant criteria more closely. 
+    For example, a score of 1 means the response does not meet the criteria at all, a score of 6 means the response meets only some parts, and a score of 10 means the response perfectly meets the evaluation criteria.
+    Before scoring, please analyze step by step. 
+    Your scoring needs to be as strict as possible.
+
+    #### Evaluation Criteria ####
+    1. Instruction Adherence:
+        - Fully Adhered (9-10 points): 
+            The response fully complies with all instructions and requirements of the question.
+        - Partially Adhered (6-8 points): 
+            The response meets most of the instructions but has some omissions or misunderstandings.
+        - Basically Adhered (3-5 points): 
+            The response meets some instructions, but the main requirements are not fulfilled.
+        - Not Adhered (1-2 points): 
+            The response does not meet any instructions.
+        Example: If the question requires three examples and the response provides only one, it falls under “Partially Adhered.”
+    2. Usefulness:
+        - Highly Useful (9-10 points): 
+            - The response provides comprehensive and accurate information, fully addressing the issue.
+        - Useful but Incomplete (6-8 points): 
+            - The response provides some useful information, but lacks details or accuracy.
+        - Limited Usefulness (3-5 points): 
+            - The response offers little useful information, with most content being irrelevant or incorrect.
+        - Useless or Incorrect (1-2 points): 
+            The response is completely irrelevant or incorrect.
+        Example: If there are factual errors in the response but the overall direction is correct, it falls under “Useful but Incomplete.”
+    3. Level of Detail:
+        - Very Detailed (9-10 points):
+            - The response includes ample details covering all aspects of the issue.
+        - Detailed but Slightly Lacking (6-8 points): 
+            - The response is fairly detailed but misses some important details.
+        - Basically Detailed (3-5 points): 
+            - The response provides some details but is not thorough enough overall.
+        - Not Detailed (1-2 points): 
+            - The response is very brief and lacks necessary details.
+        Example: If the response provides only a simple conclusion without an explanation, it falls under “Not Detailed.”
+    4. Relevance:
+        - Highly Relevant (9-10 points):
+            - The response is highly relevant to the question, with information closely aligned with the topic.
+        - Generally Relevant (6-8 points):
+            - The response is generally relevant but includes some unnecessary information.
+        - Partially Relevant (3-5 points):
+            - The response has a lot of content that deviates from the topic.
+        - Not Relevant (1-2 points):
+            - The response is completely irrelevant.
+        Example: If the response strays from the topic but still provides some relevant information, it falls under “Partially Relevant.”
+
+    #### Conversation Context ####
+    {conversation context & query}
+
+    #### Responses to be Scored ####
+    [The Begin of Response i]
+    {the i-th response}
+    [The End of Response i]
+
+    #### Output Format Requirements ####
+    Output with three lines Specific Criteria: <Other potential criteria specific to the query and the context, and the weights of each criteria>.
+    Analysis: <Compare different responses based on given Criteria>.
+    Scores: <the overall comprehensive score of all responses in order, separate by comma in the boxed, e.g., \boxed{x, x} if there exists 2 responeses>.
+
+
+
+
+DeepSeek-GRM (Training on Rating Single Response)::
+
+    You are a skilled little expert at scoring responses. 
+    You should evaluate given responses based on the given judging criteria.
+    Given the context of the conversation (the last round is the User’s query) and multiple responses from the Assistant, you need to refer to the [General Evaluation Criteria] to score the responses. 
+    Based on the general evaluation criteria, state potential other specific criteria to the query, the weights of different criteria, and then provide an overall comprehensive score upon them. The score is 0 or 1, with 1 indicating that the response is correct.
+    Before scoring, please analyze step by step. 
+    Your scoring needs to be as strict as possible.
+
+    #### Evaluation Criteria ####
+    1. Instruction Adherence:\n - Fully Adhered: The response fully complies with all instructions and requirements of the question.\n - Partially Adhered: The response meets most of the instructions but has some omissions or misunderstandings.\n - Basically Adhered: The response meets some instructions, but the main requirements are not fulfilled.\n - Not Adhered: The response does not meet any instructions.\n Example: If the question requires three examples and the response provides only one, it falls under “Partially Adhered.”
+    2. Clarity:\n - Very Clear: The response is fluent, well-structured, and logically clear.\n - Clear but Minor Issues: The response is mostly clear but has some minor language or structural issues.\n - Basically Clear: The response has noticeable language or logic issues but is still understandable.\n - Not Clear: The response is disjointed, illogical, and hard to understand.\n Example: If the response has complex sentence structures and lacks punctuation, it falls under “Basically Clear” or “Not Clear.”
+    3. Accuracy:\n - Completely Accurate: All information and data are completely accurate.\n - Mostly Accurate: Most information is accurate, with minor errors.\n - Some Errors: There are some noticeable errors affecting comprehension.\n - Mostly Incorrect: There are numerous errors seriously affecting the credibility of the information.\n Example: If a specific data point is incorrectly cited but doesn’t affect the overall conclusion, it falls under “Mostly Accurate.” 
+
+    #### Conversation Context ####
+    {conversation context & query}
+
+    #### Responses to be Scored ####
+    [The Begin of Response]
+    {the response}
+    [The End of Response]
+
+    #### Output Format Requirements ####
+    Output with three lines
+    Specific Criteria: <Other potential criteria specific to the query and the context, and the weights of each criteria>.
+    Analysis: <Compare different responses based on given Criteria>.
+    Scores: <the overall comprehensive score of the response, e.g., \boxed{x}>
+
+
+Meta RM::
+
+    Prompt:
+    Please score the responses.
+
+    #### Conversation Context ####
+    {conversation context & query}
+
+    #### Responses to be Scored ####
+    [The Begin of Response i]
+    {the i-th response}
+    [The End of Response i]
+
+    Response:
+    {principle & critique}
+
+
+
+LLM-as-a-Judge::
+
+    You are a skilled little expert at scoring responses. 
+    You should evaluate given responses based on the given judging criteria.
+    Given the context of the conversation (the last round is the User’s query) and multiple responses from the Assistant, you need to refer to the [General Evaluation Criteria] to score the responses. 
+    Based on the general evaluation criteria, state potential other specific criteria to the query, the weights of different criteria, and then select the best response among all candidates.
+    Before judging, please analyze step by step. Your judgement needs to be as strict as possible.
+
+    #### Evaluation Criteria ####
+    ... // 与上面的(DeepSeek-GRM (Default))相同
+
+    #### Conversation Context ####
+    {conversation context & query}
+
+    #### Responses to be Scored ####
+    [The Begin of Response]
+    {the response}
+    [The End of Response]
+
+
+    #### Output Format Requirements ####
+    Output with three lines
+    Specific Criteria: <Other potential criteria specific to the query and the context, and the
+    weights of each criteria>.
+    Analysis: <Compare different responses based on given Criteria>.
+    Scores: <the index of the best response based on the judgement, in the format of \boxed{x}>.
+
+
+
+
+
+

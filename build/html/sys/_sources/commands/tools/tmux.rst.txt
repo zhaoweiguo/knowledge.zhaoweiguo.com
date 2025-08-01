@@ -129,13 +129,45 @@ tmux配置::
 
     「/tmp/tmux-501」这个目录出了问题，删掉这个目录，tmux就可以正常启动了
 
-tmux莫名被终止::
 
-    > grep "tmux" /var/log/messages
-    Nov 21 21:52:28 idc-sm-udsp-pre-iot-engine-02 kernel: [12555373.306451] tmux[17348]: segfault at 7f58be1047b8 ip 00007f58be1047b8 sp 00007ffcbd210c38 error 15 in libc-2.17.so[7f58be104000+2000]
 
-    原因:
-    可能和glibc兼容性有问题
+
+运行一段时间后tmux session 丢失
+------------------------------------
+
+* 起因，一段时间不用再进入时发现 tmux ls 为空::
+
+    $ tmux ls
+    no server running on /tmp/tmux-1004/default
+    $ tmux attach
+    no sessions
+    $ ls -ld /tmp/tmux-$(id -u)/
+    drwx------ 2 zhaowg3 zhaowg3 4096 Jul 14 12:02 /tmp/tmux-1004/
+
+* 原因::
+
+    tmux 的客户端通过 socket 文件连接到服务端；
+    如果 socket 文件不存在或损坏，客户端连接就会报：failed to connect to server
+    而 SIGUSR1 是 tmux 定义的信号之一，用于重建 socket 文件。
+
+* 解决方案::
+
+    # 找到 tmux 进程
+    $ ps -aef | fgrep -i tmux
+    hari     7139     1  1  2016 ?        2-20:32:31 tmux
+    hari    25943 25113  0 22:00 pts/0    00:00:00 fgrep --color=auto -i tmux
+
+    # 删除 tmux 进程
+    $ kill -s USR1 7139
+    $ tmux ls
+    0: 12 windows (created Mon Apr 18 21:17:55 2016) [198x62]
+
+
+* 参考
+    * https://stackoverflow.com/questions/9668763/why-am-i-getting-a-failed-to-connect-to-server-message-from-tmux-when-i-try-to
+    * https://www.cnblogs.com/baiyunwanglai/p/15984105.html
+
+
 
 
 屏幕比例不协调问题

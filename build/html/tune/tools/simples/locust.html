@@ -29,7 +29,7 @@ window.MathJax = {
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Locust &mdash; 新溪-gordon V2025.06 文档</title>
+  <title>Locust &mdash; 新溪-gordon V2025.07 文档</title>
   
 
   
@@ -92,7 +92,7 @@ window.MathJax = {
             
             
               <div class="version">
-                V2025.06
+                V2025.07
               </div>
             
           
@@ -290,6 +290,93 @@ window.MathJax = {
 <span class="n">pip3</span> <span class="n">install</span> <span class="n">websocket</span><span class="o">-</span><span class="n">client</span>
 </pre></div>
 </div>
+<p>使用示例:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># 默认使用 locusfile.py 文件</span>
+<span class="n">locust</span> <span class="o">--</span><span class="n">host</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="mf">10.193.135.79</span><span class="p">:</span><span class="mi">8880</span>
+
+
+<span class="c1"># 使用自定义文件名</span>
+<span class="n">locust</span> <span class="o">-</span><span class="n">f</span> <span class="n">stress_from_excel</span><span class="o">.</span><span class="n">py</span> \
+  <span class="o">--</span><span class="n">host</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="mf">10.193.135.79</span><span class="p">:</span><span class="mi">8880</span> \
+  <span class="o">--</span><span class="n">users</span> <span class="mi">100</span> \
+  <span class="o">--</span><span class="n">spawn</span><span class="o">-</span><span class="n">rate</span> <span class="mi">10</span>
+
+
+<span class="c1"># 使用命令行模式（无需打开浏览器）</span>
+<span class="o">--</span><span class="n">headless</span> <span class="o">--</span><span class="n">run</span><span class="o">-</span><span class="n">time</span> <span class="mi">60</span><span class="n">s</span> <span class="o">--</span><span class="n">csv</span> <span class="n">report</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">locust</span><span class="w"> </span><span class="kn">import</span> <span class="n">HttpUser</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">between</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">locust</span><span class="w"> </span><span class="kn">import</span> <span class="n">events</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+
+<span class="c1"># ===== 读取 Excel 文件中用户 prompt =====</span>
+
+<span class="n">pc_corpus_file</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;/Users/zhaoweiguo/Downloads/todelete/intend/PC端语料.xlsx&#39;</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">pc_corpus_file</span><span class="p">)</span>  <span class="c1"># 假设第一列是 &quot;prompt&quot;</span>
+<span class="n">prompts</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;query&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+<span class="c1"># 可重复测试</span>
+<span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+
+<span class="n">total_num</span><span class="o">=</span><span class="mi">0</span>
+<span class="n">total_fail</span><span class="o">=</span><span class="mi">0</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ChatUser</span><span class="p">(</span><span class="n">HttpUser</span><span class="p">):</span>
+    <span class="n">wait_time</span> <span class="o">=</span> <span class="n">between</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">)</span>  <span class="c1"># 用户之间等待时间</span>
+
+    <span class="nd">@task</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">chat_completion</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">global</span> <span class="n">total_num</span><span class="p">,</span> <span class="n">total_fail</span>  <span class="c1"># 声明要修改的全局变量</span>
+
+        <span class="n">prompt</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">prompts</span><span class="p">)</span>
+
+        <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="s2">&quot;Qwen2/Qwen2.5&quot;</span><span class="p">,</span>  <span class="c1"># 与 curl 中一致</span>
+            <span class="s2">&quot;messages&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">prompt</span><span class="p">}</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;temperature&quot;</span><span class="p">:</span> <span class="mf">0.7</span><span class="p">,</span>
+            <span class="s2">&quot;stream&quot;</span><span class="p">:</span> <span class="kc">False</span>
+        <span class="p">}</span>
+
+        <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;Authorization&quot;</span><span class="p">:</span> <span class="s2">&quot;Bearer sk-xxxx&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Content-Type&quot;</span><span class="p">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;User-Agent&quot;</span><span class="p">:</span> <span class="s2">&quot;vscode-restclient&quot;</span>
+        <span class="p">}</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+            <span class="s2">&quot;/v1/chat/completions&quot;</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">payload</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span>
+        <span class="p">)</span>
+        <span class="n">total_num</span> <span class="o">=</span> <span class="n">total_num</span> <span class="o">+</span> <span class="mi">1</span>
+        
+        <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">200</span><span class="p">:</span>
+            <span class="n">total_fail</span> <span class="o">=</span> <span class="n">total_fail</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;响应状态码:&quot;</span><span class="p">,</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;response:&quot;</span><span class="p">,</span> <span class="n">response</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;请求失败，当前总请求数: </span><span class="si">{</span><span class="n">total_num</span><span class="si">}</span><span class="s2">, 失败数: </span><span class="si">{</span><span class="n">total_fail</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        
+        <span class="c1"># 随机打印，概率10%</span>
+        <span class="c1"># if random.random() &lt; 0.1:</span>
+        <span class="c1">#     print(&quot;响应状态码:&quot;, response.status_code)</span>
+        <span class="c1">#     print(&quot;响应内容:&quot;, response.text)</span>
+
+
+    <span class="nd">@events</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">add_listener</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_request</span><span class="p">(</span><span class="n">request_type</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">response_time</span><span class="p">,</span> <span class="n">response_length</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="n">context</span><span class="p">,</span> <span class="n">exception</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># print(f&quot;----- [{request_type}] {name}, url: {url} - {response_time}, kwargs: {kwargs}&quot;)</span>
+        <span class="c1"># print(f&quot;----- response_time: {response_time}ms, start_time: {start_time}&quot;)</span>
+        <span class="k">if</span> <span class="n">exception</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;----- [ERROR] </span><span class="si">{</span><span class="n">exception</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">response</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">200</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;----- [FAIL] </span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
 <table class="docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
@@ -354,7 +441,7 @@ window.MathJax = {
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../',
-            VERSION:'V2025.06',
+            VERSION:'V2025.07',
             LANGUAGE:'zh-CN',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',

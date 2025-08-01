@@ -1,0 +1,570 @@
+# 2501.06282_MinMo: A Multimodal Large Language Model for Seamless Voice Interaction
+
+* [https://arxiv.org/abs/2501.06282](https://arxiv.org/abs/2501.06282)
+* 官网: [https://funaudiollm.github.io/minmo](https://funaudiollm.github.io/minmo)
+* 组织: FunAudioLLM Team, Tongyi Lab, Alibaba Group
+
+
+
+
+## Abstract
+
+* 这段内容介绍了一个名为 **MinMo** 的多模态大语言模型（Multimodal LLM），主要用于实现自然、流畅、实时的人机语音对话。
+* **背景**：现有语音-文本多模态模型分为两类：
+    1. **原生模型**：一次性处理语音和文本，但容易出问题，比如语音和文本长度差太多、语音预训练不足、遗忘文本知识。
+    2. **对齐模型**：更好地保持文本模型能力，但语音数据少、任务单一、缺乏对情绪/风格等细节的控制能力。
+* **MinMo 做了什么**：
+    * 是一个约 **80亿参数** 的多模态大模型。
+    * 用了 **140万小时语音数据**，经历四阶段训练：
+        1. 语音到文本对齐
+        2. 文本到语音对齐
+        3. 语音到语音对齐
+        4. 双工交互对齐（实现人和系统同时说话）
+    * 在多个语音理解与生成任务上表现优异，同时保留文本LLM的能力。
+
+* **新贡献**：
+    * 提出一个简单但效果很好的语音解码器，提升语音生成质量。
+    * 支持用户指令控制语音输出，如控制情绪、口音、语速，甚至模仿特定说话人。
+    * 延迟表现优秀：
+        * 语音识别延迟约 **100ms**
+        * 双向实时对话延迟约 **600ms（理论）/ 800ms（实际）**
+
+
+## 1.Instruction
+
+* 近年来，语音交互系统快速发展，尤其是在多模态大语言模型（比如 GPT-4o 和 Moshi）的推动下。这些系统不仅能生成自然、富有表现力的语音，还能理解情绪和音频事件等非语言信息。
+* 这段内容介绍了一个新的多模态大模型 **MinMo**，它的核心目标是实现更加自然流畅的语音交互。
+
+### 📌 MinMo 是什么？
+
+MinMo 是一个**多模态大语言模型**，支持语音和文本的双向理解与生成，参数量约等于 8B。它旨在实现人类一样的语音对话体验。
+
+### 🔍 MinMo 有什么能力？
+
+* 它在多个语音相关任务上达到了当前最好的效果（SOTA）：
+    * **语音识别（ASR）**
+    * **语音翻译（S2TT）**: speech-to-text translation
+    * **语音问答（SQA）**: spoken question answering
+    * **声音事件识别**
+    * **情感识别**
+    * **语言识别、年龄识别、性别识别**
+    * **可控风格的语音合成**
+    * **全双工对话（边说边听）**
+
+### 当前语音交互的两类大模型
+
+#### 第一类：**原生多模态模型**（如 Moshi、GLM-4-Voice）
+
+* 直接用一个 Transformer 模型同时处理文本和语音输入/输出；
+* 需要用大量语音和文本混合数据进行预训练；
+* **缺点：**
+    1. 语音离散化后序列很长（比如每秒约 12.5 个 token），比文本长两倍以上，模型越大，计算越难；
+    2. 可用的语音数据比文本少很多，导致训练中“灾难性遗忘”，模型忘记语音能力。
+
+### 第二类：**对齐多模态模型**（如 LLaMA-Omni、Freeze-Omni）
+
+* 在已有的文本大模型基础上加入语音模块；
+* 中间仍然依赖文本输出，保持原模型的聊天能力；
+* **缺点：**
+    1. 用的语音数据量有限；
+    2. 还没验证能否胜任更多语音任务，比如情感识别、说话人分析等；
+    3. 缺乏对复杂说话风格的理解和双向语音对话的评估。
+
+
+
+### 新模型 MinMo 的语音解码器设计：
+
+* 不像 LLaMA-Omni（用非自回归解码器，效果差）或 Freeze-Omni（用三个不同解码器，结构复杂）；
+* MinMo 采用一种更简单的自回归流式 Transformer 解码器；
+* 把 LLM 的隐藏状态与语音 token 混合后输出语音，实现效果更好、结构更清晰。
+
+
+### 🔄 为什么 MinMo 很特别？
+
+#### ✅ 解决了现有模型的三大痛点：
+
+1. **语音数据稀缺 + 训练不均衡** → 容易忘掉原本的文本能力。
+2. **语音序列比文本长太多** → 模型难以处理。
+3. **现有模型结构复杂或性能弱** → 语音质量不高或响应慢。
+
+#### ✅ MinMo 的解决方案：
+
+* 用 **140 万小时语音数据**进行多阶段训练，增强语音能力同时保住文本能力。
+* 使用一种新设计的 **流式语音解码器**，结构简单但语音合成效果好。
+* 引入 **全双工预测模块**，实现打断式自然对话，延迟低至 600-800ms。
+
+### 📊 与其他模型的比较
+
+![](https://img.zhaoweiguo.com/uPic/2025/06/v0PiC8.png)
+
+Figure 1:Performance comparison between our MinMo(∼8B parameters) and top-tier speech-text multimodal models
+
+* 与现有顶尖模型（如 Moshi、GLM-4-Voice、Freeze-Omni、Whisper-large 等）相比，MinMo 在各项任务上表现更好，同时结构更简洁、响应更快、功能更全面。
+
+
+### 📎 总结三点贡献：
+
+1. **MinMo 模型设计：** 统一语音和文本的端到端训练流程，保留文本大模型的强大能力。
+2. **新型语音生成方式：** 用隐藏层表示来生成语音，速度快、效果好。
+3. **全双工机制：** 模型能边听边说，支持用户随时打断，体验更像真人。
+
+
+## 2.Related Work
+
+
+### Multimodal Spoken Dialogue Models
+
+* **研究背景**：
+    * 目前已经有很多语音大模型能理解音频，但很少用于真正的语音交互。
+
+* **模型类型**：多模态语音对话模型主要分为两类：
+    * **协同系统（Collaborative Systems）**：
+        * 把语音识别、文本生成、语音合成等分成多个模块处理，
+        * 典型如 PSLM、VITA。
+        * 这类方法模块之间依赖强，可能导致信息丢失或延迟。
+    * **端到端系统（End-to-End Models）**：
+        * 直接从语音输入生成语音输出，不依赖中间模块，
+        * 代表如 Llama-Omni、Mini-Omni、Moshi、SyncLM、GLM-4-Voice、IntrinsicVoice。
+
+* **全双工交互（Full-duplex）**：
+    * 多数模型支持“你说我听”的半双工对话，只有少数支持“边说边听”的全双工对话。
+    * 全双工更自然，但更难实现。
+
+* **MinMo 的定位**：
+    * 属于**“对齐型多模态模型”（aligned multimodal）**，与 Freeze-Omni 和 Mini-Omni2 属于同类。
+    * 相比其他模型，MinMo：
+        * 用了更大的语音数据（140万小时 vs. Llama-Omni的20万样本）；
+        * 支持更多语音任务；
+        * 引入了新的语音解码器；
+        * 在全双工语音交互任务中表现更系统、更全面。
+
+
+### Text Style-Controllable Speech Synthesis
+
+* **区别**：
+    * 与纯文本对话模型不同，多模态语音模型还能处理**情感、语调、语速、方言等声音风格信息**。
+
+* **现有方法**：
+   * **协同系统**可搭配支持风格控制的TTS模型，生成具备特定情感/风格的回复。
+        * 例如 ParalinGPT、E-Chat 等能理解情绪信息，但生成过程仍需依赖外部TTS模块。
+   * **端到端风格控制**：
+        * 像 Moshi 和 GLM-4-Voice 这类模型开始在训练中加入不同风格的语音数据，实现端到端的风格可控合成。
+
+* **MinMo 的新贡献**：
+   * 提出新的**流式语音解码器**；
+   * 首次在对齐型模型中实现了**风格可控语音生成**（包括情绪、语速、方言甚至模仿声音）；
+   * 改进了模型的指令理解和响应能力。
+
+![](https://img.zhaoweiguo.com/uPic/2025/06/JhgBGG.jpg)
+
+Figure 2: Examples demonstrating various capabilities of MinMo. 
+
+
+## 3.MinMo
+
+### 3.1 Model Architecture
+
+![](https://img.zhaoweiguo.com/uPic/2025/06/hvAFr0.png)
+
+Figure 3:The overall architecture of MinMo. 
+
+
+#### 🧠 **模型结构简介**
+
+1. **语音编码器（Voice Encoder）**
+      * 用的是预训练的 SenseVoice-large
+      * 该模块提供强大的语音理解能力并支持多语言语音识别、情感识别和音频事件检测
+
+2. **输入投影器（Input Projector）**
+   * 由随机初始化的两层 Transformer 与 一层 CNN 层相结合组成
+   * 用于维度对齐和下采样
+
+3. **文本大模型（LLM）**
+   * 用的是 Qwen2.5-7B-instruct，负责生成文本响应
+
+4. **输出投影器（Output Projector）**
+   * 一个线性层，用来对齐 LLM 输出和语音生成模块
+
+5. **语音 Token 语言模型（Voice Token LM）**
+   * 利用 CosyVoice 2 的流音频生成机制
+   * CosyVoice2 具有低延迟和具有竞争力的语音合成性能
+   * 对于每批收到的五个文本Token，将这些标记及其对应的最终隐藏层向量同时传递给输出投影器 (Output Projector) 和语音Token语言模型
+   * 语音 Token 语言模型会自回归生成 15 个语音Token，确保高效无缝的音频合成
+
+6. **Token 转语音模块（Token2wav Synthesizer）**
+   * 将语音 token 变成真正的语音波形
+       * a pretrained flow-matching model: 先变成 Mel 频谱
+       * a pretrained vocoder: 再变成声音
+   * 上面2个模型都来源于 CosyVoice2
+
+7. **全双工预测器（Full Duplex Predictor）**
+   * 由一个单层 Transformer 和一个线性 softmax 输出层组成，两者均随机初始化
+   * 实时预测是否执行用户命令或暂时停止正在进行的系统广播以允许处理来自用户的进一步音频输入。
+   * 一旦全双工预测器确定系统响应合适，MinMo 就会生成文本输出并以逐个标记的方式同时生成音频标记。
+
+
+#### 🔁 **生成过程**
+
+1. 用户说话 → 语音编码器处理
+2. 投影器和 LLM 生成文字回复
+3. 每生成 5 个文本 token，就同步生成 15 个语音 token
+4. 最终通过 token2wav 模块，逐块生成语音并播放
+
+> 生成一轮语音的 **总延迟大约 600 毫秒**
+
+
+### 3.2 Streaming Voice Decoder
+
+* Streaming Voice Decoder(语音解码器)
+* MinMo 的语音解码器能把 LLM 输出的文本转成自然流畅的语音。
+* 语音解码器由三部分组成：
+    1. **输出投影器（Output Projector）**：
+       * 将 LLM 的维度与语音解码器的维度对齐
+       * 把 LLM 输出的隐藏状态和文本 token 对齐到语音模型能理解的格式，生成“语义向量”。
+           * LLM 的隐藏状态包含丰富的上下文信息，但在语义上存在歧义
+           * 而采样的文本标记更精确且与生成的文本一致
+           * 当前轮用户输入的隐藏状态包含明确的指令信息
+       * **query embeddings** 和**embeddings of five sampled text tokens** 以及 LLM 最后一层输出的隐藏状态将沿序列维度连接并输入到投影仪中
+           * 对于每个对话回合，the embeddings of user input 和 LLM 最后一层输出的隐藏状态将沿特征维度连接以形成**query embeddings**
+       * 投影仪的输出被称为语义向量 ，它代表丰富而准确的语义信息（比如语气、情感等）。
+    2. **语音 token 语言模型（Voice Token LM）**：
+       * 接收语义向量并“自回归地”生成语音 token。
+       * 每轮生成时，固定“5个语义向量 + 15个语音 token”交织的序列混合训练。
+       * 训练时用 teacher forcing 方法，并通过特殊 token 控制是否继续生成语义向量或开始语音。
+    3. **流式Token 转语音模块（Streaming Token2wav Synthesizer）**：
+       * 把生成的语音 token 实时转成语音波形。
+       * 用了两个子模块：
+         * chunk-aware flow matching model: token → mel 频谱
+         * mel-to-wave vocoder: mel 频谱 → 声音
+
+![](https://img.zhaoweiguo.com/uPic/2025/06/JMipwt.jpg)
+
+Table 1: Descriptions of the modules in MinMo as depicted in Figure 3. MinMo has approximately 8 billion parameters in total.
+
+#### 📌 延迟计算公式（Latency Formula）
+
+$$
+\text{Latency} = 5 \cdot d_{\text{llm}} + 15 \cdot d_{\text{lm}} + 15 \cdot d_{\text{syn}}
+$$
+
+* 其中各项含义为：
+    * $d_{\text{llm}}$：生成一个文本 token 所需时间（由 LLM 计算）
+    * $d_{\text{lm}}$：生成一个语音 token 所需时间（由语音 token LM 计算）
+    * $d_{\text{syn}}$：将一个语音 token 转为音频所需时间（由 token2wav 模块处理）
+* 这个公式体现了生成一组语音（5个文本 token + 15个语音 token）所需的总处理时间。
+
+
+### 3.3 Tasks and Training Data
+
+![](https://img.zhaoweiguo.com/uPic/2025/06/aviO6n.jpg)
+
+Table 2: The multitask training data for MinMo. Task specifications can be found in Section 4.
+
+下面是对这段 **MinMo 训练任务与数据（3.3节）** 的简洁解读，帮助你快速理解重点内容：
+
+#### 🗣️ 一、语音转文本（Speech-to-Text）
+
+* **数据量：约 120 万小时**
+* 包含任务：
+    * 语音识别（ASR）
+    * 语音翻译（S2TT）
+    * 语言识别（LID）
+    * 情感识别（SER）
+    * 背景声音检测（AED）
+    * 说话人分析
+    * 语音润色
+    * 语音对话转文本（chat）
+* 👉 用统一格式训练：用自然语言描述任务 + 语音文件路径 + 输出文本
+
+![](https://img.zhaoweiguo.com/uPic/2025/06/z6YLkF.jpg)
+
+
+#### 🔊 二、文本转语音（Text-to-Speech）
+
+* **数据量：约 17 万小时**
+* 包含任务：
+    * 普通语音合成
+    * 可控语音合成（调节语速、情绪、方言等）
+
+* 👉 数据样例：
+
+![](https://img.zhaoweiguo.com/uPic/2025/06/jnBiUJ.jpg)
+
+Table 3: Examples of text-to-speech data controlled by instructions.
+
+
+#### 🔄 三、语音对话（Speech-to-Speech）
+
+* **数据量：约 1 万小时（含多轮对话）**
+* 数据来源：
+    1. **用文字对话模拟语音对话**（从 Alpaca 和 ShareGPT 等数据生成）
+    2. **用真人语音替换模拟语音，提高真实感**
+    3. **控制语气/语速的多轮对话模拟**，提高风格多样性
+* 👉 使用 CosyVoice 和 Qwen-Max 联合生成语音风格丰富的对话
+
+
+#### 🎛️ 四、语音控制指令（Speech-to-ControlToken）
+
+* **数据量：约 4000 小时**
+* 用于训练全双工交互（用户可以打断系统说话）
+* 数据来源：
+    * **真实语音会议数据**（如 Alimeeting、Fisher）
+    * **模拟数据**（用 MOSS 或自建对话+语音合成）
+* 👉 自动加标签规则：
+    * 用户结束时 = 系统开始时
+    * 系统结束后 T 秒 = 用户开始时（T~正态分布 N(0.6, 0.4²)）
+    * 用户尝试打断但失败 = 标记为“用户回声”
+
+
+### 3.4 Model Training
+
+* MinMo 的训练过程分为 **四个阶段**，每阶段完成一种能力的「对齐」，最终实现语音理解+生成+对话+打断，像 GPT-4o 一样流畅语音交互。
+
+#### 🧩 阶段一：**语音对文本对齐（Speech-to-Text Alignment）**
+
+* 🔧 训练目的：
+    * 让语音输入能正确送进文本大模型处理（让语音语义和文本语义对齐）
+
+* 📌 具体做法：
+    * **预对齐（Pre-align）**：只训练 Input Projector（防止它影响预训练的语音编码器）
+    * **完全对齐（Full-align）**：联合训练语音编码器和投影器，冻结 LLM
+    * **指令微调（SFT）**：解冻 LLM（用 LoRA 轻量调参），让它能理解更多复杂任务指令
+* → 数据量：约 130 万条样本
+
+#### 🔊 阶段二：**文本对语音对齐（Text-to-Speech Alignment）**
+
+* 🔧 训练目的：
+    * 让 LLM 生成的文字能被“翻译”成语音，学会说话
+
+* 📌 具体做法：
+    * 先训练 Output Projector
+    * 然后联合训练 Output Projector + Voice Token LM（其他部分冻结）
+
+* 📌 特别训练：
+    * 加入带指令的合成数据（约 1000 小时）
+    * 能根据用户提示控制情绪、语速、方言等
+
+
+#### 🔁 阶段三：**语音对语音对齐（Speech-to-Speech Alignment）**
+
+* 🔧 训练目的：
+    * 让模型能进行语音对语音的多轮对话，不只“听懂-说话”，还能“用声音连续对话”
+
+* 📌 具体做法：
+    * 继续训练 Output Projector 和 Voice Token LM（不动 LLM）
+    * 使用约 1 万小时语音对话数据
+    * 包括控制风格（方言、语速、情绪等）的语音聊天数据
+
+* 👉 结果发现：即使不动 LLM，仅靠对齐后的嵌入，模型也能有效学会“声音风格控制”！
+
+
+#### 🔁 阶段四：**全双工交互对齐（Duplex Interaction Alignment）**
+
+* 🔧 训练目的：
+    * 让模型支持 **“边听边说”/“打断当前回复”**，支持更自然的语音交互（比如用户说话时能打断系统）
+
+* 📌 具体做法：
+    * 单独训练 Full Duplex Predictor 模块
+    * 输入是 LLM 的隐藏状态，输出是判断：
+        1. 是否现在该回答用户？
+        2. 是否应该打断当前正在说的话？
+* 📦 使用数据：4000 小时人类真实语音对话
+
+
+#### ✅ 最终效果
+
+MinMo 通过这四阶段训练，**具备了完整的语音理解和语音交互能力**，并保持了 Qwen2.5-7B 文本大模型的语言理解力，**延迟低，交互自然**。
+
+## 4.Experiments
+
+![](https://img.zhaoweiguo.com/uPic/2025/06/Lt0MhF.jpg)
+
+Table 4: Summary of evaluation benchmarks for MinMo in this report.
+
+
+* MinMo 模型在多个语音任务中进行了全面评估，包括：
+    * 语音识别与翻译（ASR、ST）
+    * 语言识别（LID）
+    * 上下文提示增强的语音识别（支持热词定制）
+    * 情感识别、说话人分析、音频事件理解
+    * 语音生成与语音对话任务
+
+
+### 4.1 Speech Recognition and Translation
+
+![](https://img.zhaoweiguo.com/uPic/2025/06/3QMoAj.jpg)
+
+Table 5: Multilingual speech recognition results from our MinMo and baseline models in terms of word error rate (WER) and character error rate (CER) on Mandarin, English, and multilingual public test sets. Results in parentheses are directly cited from papers. The best result for each test set is boldfaced.
+
+1. **多语言语音识别（ASR）**：
+   * 在中、英、日、韩等 10 种语言上评估。
+   * 相比 Whisper 和 Qwen2-Audio，MinMo 在是否使用语言信息提示（LID）的情况下都表现更稳、更强。
+
+2. **语音翻译（Speech Translation）**：
+   * 在 Fleurs 和 CoVoST2 数据集上进行评估。
+   * MinMo 比串联的 Whisper+Qwen2.5 模型表现更好，尤其在中英、日英方向上达到最优（SOTA）。
+
+3. **语言识别（LID）**：
+   * 在 102 种语言上测试，MinMo 达到 85.3% 准确率，优于 Whisper-V3。
+   * Whisper-V3 常把粤语误判为普通话，MinMo 能正确区分。
+
+4. **上下文提示（热词）语音识别(Contextual Biasing Speech Recognition)**：
+   * MinMo 能通过提示词实现更精准识别，支持中文及多语言热词。
+   * 表现优于强大的基线模型 SeACo-Paraformer。
+
+
+### 4.2 Speech Analysis and Understanding
+
+![](https://img.zhaoweiguo.com/uPic/2025/06/5P0tGo.jpg)
+
+Table 11: Speech emotion recognition performance from MinMo and the baseline models on various evaluation benchmarks, in terms of unweighted average accuracy (UA), weighted average accuracy (WA), and macro F1 score (F1). Results for SALMONN and Qwen-Audio are reproduced by the authors of this work.
+
+
+1. **语音情感识别（SER）**：
+   * 在 7 个主流数据集上测试。
+   * MinMo 表现在中英文表演类情感识别中几乎完美。
+   * 在 Air-Bench 基准测试中，MinMo 在情感、性别、年龄等任务上全面超越其他模型。
+
+2. **多语言零样本能力**：
+   * 在未训练过的语言上，MinMo 也能准确识别情感，显示了很强的跨语言泛化能力。
+
+3. **音频事件理解（如“这是什么声音？”）**：
+   * MinMo 在大多数任务上表现最优。
+   * 但在多选类问答题上略逊于 Qwen-Audio，原因是 MinMo 更倾向“理解内容”而非“选项匹配”。
+
+4. **说话人分析（性别 / 年龄）**：
+   * MinMo 在性别识别和年龄估计任务上准确率最高。
+
+总结：**MinMo 是一个在语音识别、翻译、理解和生成等任务上性能全面领先的多模态大模型，特别是在跨语言鲁棒性、上下文自适应和音频理解方面表现突出。**
+
+
+### 4.3 Speech-to-Text Enhancement
+
+![](https://img.zhaoweiguo.com/uPic/2025/06/E6e5tW.jpg)
+
+Table 14: Examples of the source and the prediction of MinMo for the spoken language smoothing task, sampled from the SWAB test set.
+
+* **口语润色(Spoken Language Smoothing)**
+    * 把自动语音识别（ASR）生成的“口语风格”文字转换成“书面语风格”的文字。
+    * 训练和评估用的 SWAB 数据集来自中英文会议、播客和讲座。
+    * 结果表明 MinMo 的表现与 Qwen2.5-7B 相当，人类评价更能反映效果。
+
+* **标点插入与反向文本标准化(Punctuation Insertion and Inverse Text Normalization)**
+    * 在语音转文字后自动添加标点符号，并恢复标准写法（如数字、时间等）。
+    * 评测中用 GPT-4 Turbo 排名评分，MinMo 的主观得分优于其他模型。
+
+
+### 4.4 Voice Generation
+
+* **文本转语音（TTS）**
+    * 把文本合成语音，评估内容一致性和语音质量。
+    * 中英文都有测试，发现 MinMo 的中文表现稍差于 CosyVoice 2.0，英文差距不大，主观理解没受太大影响。
+
+* **遵循指令的语音生成**
+    * 评估模型是否能按要求生成带情绪、方言、语速或角色风格的语音。
+    * MinMo 在“方言”和“角色扮演”方面的准确率明显超过 GLM-4-Voice。
+
+### 4.5 Voice Chat
+
+#### **一、语音问答和语音对话训练方式**
+
+* 为了让 MinMo 模型支持语音对话，它在两种场景中构建训练数据：
+    1. **Speech-to-Text（S2T）**：
+        * 用开源文本对话数据，用户部分用TTS转语音
+        * 也使用真实ASR训练数据作为语音输入
+    2. **Speech-to-Speech（S2S）**：
+        * 与上类似，但模型需要直接输出语音。
+
+
+#### **二、语音问答能力评估**
+
+* 使用三个常见问答数据集（Llama Questions、Trivia QA、Web Questions）来测试 S2T 和 S2S 的效果。
+* 测试中，文本题目被用 TTS 转为语音输入。
+* MinMo 在多个测试中表现超过现有模型，尤其在 S2S 模式上取得 SOTA（最先进）结果。
+* 但相比 S2T，S2S 模式表现略差，原因包括：
+    * 一些答案语言复杂，对 TTS 要求高；
+    * S2S 中使用了 ASR 回转文本，增加误差。
+
+#### **三、多轮语音交互能力评估**
+
+* 构建了两个测试集：
+    * **Alpaca Test**：测逻辑推理能力；
+    * **ChitChat Test**：测日常闲聊能力。
+* 用 Qwen-Max 自动评分，0~10 分，MinMo 在对话能力上基本保持原始文本模型水平，但在逻辑性强的 Alpaca 测试中略有下降，可能是多任务训练和 LoRA 微调影响了原模型推理能力。
+
+#### **四、全双工语音对话（双方可同时说话）**
+
+* MinMo 支持“人机同时讲话”的全双工交互。
+* 使用三个数据集评估，包括中文（AliMeeting）、英文（Fisher）和一个模拟集。
+* 测试内容包括：
+    * **说话时机预测**（谁该说话）
+    * **用户回应预测**（比如“嗯”、“好”这类反馈）
+* 结果：
+    * 在人机对话中，预测准确率接近 99%；
+    * 在真人对话中，因语速、噪音等变化更大，准确率略降；
+    * 模型能灵敏地判断用户开始说话并及时停止输出，避免“抢话”。
+
+#### **五、响应速度和延迟分析**
+
+* MinMo 全双工系统有四个主要模块：
+    * 预测模块
+    * 语音转文本模块
+    * 文本转语音Token模块
+    * Token转音频模块
+* 以“助手轮到说话”为例，从用户说完话到助手说出回应，系统总延迟约 **600ms**。
+* 这包括：
+    * 判断说话结束：250ms
+    * 语音转前5个文字Token：150ms
+    * 预测15个语音Token：70ms
+    * Token合成音频首包：130ms
+* 延迟测试基于 L20 GPU + BF16 模型。
+
+
+## 5.Conclusion
+
+* MinMo 是一个先进的多模态大模型，专为语音交互设计，克服了现有模型在语音理解和生成方面的限制。它在140万小时的语音数据上训练，表现出色，能识别多种语言、对话内容和情绪。
+* 它的关键创新是一个新的对齐方法，使语音生成更简单、延迟更低（约600毫秒），还能准确表达用户指定的情绪、口音和说话风格。支持双向对话，交流更自然流畅。
+* 总结来说，MinMo 推动了语音交互技术的发展，提升了自然、富有表现力的语音生成能力，并为多模态模型开辟了新方向。
+
+
+## 6.Limitations
+
+1. **指令理解能力不足**：MinMo 是在一个预训练的大语言模型（LLM）上，通过对齐方式加入语音理解和生成能力的，但LLM只做了LoRA微调，跟随各种语言和任务指令的能力还有待提升，可能需要更多高质量文本数据来改进。
+2. **语音生成有发音错误**：MinMo 在端到端生成语音时存在一些“长尾发音错误”，原因包括 LLM 保留了部分“一对多”的 token，以及一些特殊符号在语音中无法很好地表达。可以通过扩大数据规模来改善这些问题。
+3. **语音生成效率不高**：MinMo 的语音生成受指令控制的效率有待提升，这与指令数据量少、只使用隐藏表示进行对齐、历史信息传递受限等因素有关。
+4. **仍依赖外部模块**：虽然 MinMo 实现了基于语义的双工模块，但还需要依赖外部的 AEC（回声消除）和 VAD（语音活动检测）模块，未来希望实现真正端到端的一体化系统。
+
+
+## A. Prompts for Voice Understanding Tasks
+
+### A.1 Spoken Language Smoothing
+
+* Faithfulness Evaluation: 用于评估模型对原始语音识别文本的润色是否忠实于原意，并修正了语音识别错误。
+* Formality Evaluation: 用于评估模型润色后的文本是否符合书面语规范，易读、语法正确。
+
+![](https://img.zhaoweiguo.com/uPic/2025/06/XNbGXF.jpg)
+
+Prompt for Faithfulness Evaluation (Spoken Language Smoothing)
+
+
+![](https://img.zhaoweiguo.com/uPic/2025/06/FpXbfy.jpg)
+
+Prompt for Formality Evaluation (Spoken Language Smoothing)
+
+### A.2 Punctuation and Inverse Text Normalization
+
+* Faithfulness Evaluation: 只关注标点符号的使用是否合理
+* Formality Evaluation: 只关注反规范化是否做得好（比如“一百二”是否被还原成“120”）。
+
+
+![](https://img.zhaoweiguo.com/uPic/2025/06/T76Aw1.jpg)
+
+Prompt for Faithfulness Evaluation (Spoken Language Smoothing)
+
+![](https://img.zhaoweiguo.com/uPic/2025/06/tdoMEP.jpg)
+
+Prompt for Formality Evaluation (Spoken Language Smoothing)
+
+
+
+

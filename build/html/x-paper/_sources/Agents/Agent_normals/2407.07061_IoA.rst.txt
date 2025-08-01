@@ -1,0 +1,171 @@
+2407.07061_IoA: Internet of Agents: Weaving a Web of Heterogeneous Agents for Collaborative Intelligence
+########################################################################################################
+
+
+* https://arxiv.org/abs/2407.07061
+* 组织：清华大学、北京大学、北京邮电大学、腾讯
+* LLMs为开发功能强大的自主代理铺平了道路。然而，由于依赖三方代理在其自己的生态系统中定义，现有的多代理框架通常难以集成这些功能强大的三方代理。它们在模拟分布式环境时也面临挑战，因为大多数框架仅限于单设备设置。此外，这些框架通常依赖于硬编码的通信管道，从而限制了它们对动态任务要求的适应性。受互联网概念的启发，我们提出了代理互联网 （IoA），这是一个新颖的框架，通过为基于 LLM 的多Agent协议提供一个灵活且可扩展的框架。IoA 引入了代理集成协议、类似即时消息传递的架构设计，以及用于代理分组和对话流控制的动态机制。通过对通用辅助任务、具身 AI 任务和检索增强生成(RAG)基准的广泛实验，我们证明 IoA 始终优于最先进的基线，展示了其促进异构代理之间有效协作的能力。IoA 代表了在类似 Internet 的环境中连接不同代理的一步，代理可以在其中无缝协作以实现更高的智能和能力。
+* The rapid advancement of large language models (LLMs) has paved the way for the development of highly capable autonomous agents. However, existing multi-agent frameworks often struggle with integrating diverse capable third-party agents due to reliance on agents defined within their own ecosystems. They also face challenges in simulating distributed environments, as most frameworks are limited to single-device setups. Furthermore, these frameworks often rely on hard-coded communication pipelines, limiting their adaptability to dynamic task requirements. Inspired by the concept of the Internet, we propose the Internet of Agents (IoA), a novel framework that addresses these limitations by providing a flexible and scalable platform for LLM-based multi-agent collaboration. IoA introduces an agent integration protocol, an instant-messaging-like architecture design, and dynamic mechanisms for agent teaming and conversation flow control. Through extensive experiments on general assistant tasks, embodied AI tasks, and retrieval-augmented generation(RAG) benchmarks, we demonstrate that IoA consistently outperforms state-of-the-art baselines, showcasing its ability to facilitate effective collaboration among heterogeneous agents. IoA represents a step towards linking diverse agents in an Internet-like environment, where agents can seamlessly collaborate to achieve greater intelligence and capabilities.
+
+
+
+* GitHub: https://github.com/OpenBMB/IoA
+* IoA 期望像互联网一样，创建一个类似的平台来促进自主代理之间的协作
+* IoA 旨在解决现有多智能体框架的三个基本限制::
+
+    1. 生态系统隔离
+        大多数框架只考虑在自己的生态系统中定义的代理，这可能会阻止各种第三方代理的集成，并限制代理能力的多样性和平台的通用性;
+    2. 单设备模拟
+        几乎所有的多智能体框架都在单个设备上模拟多智能体系统，这与真实世界的场景有很大不同，在真实世界的场景中，智能体可以分布在位于不同位置的多个设备上;
+    3. 刚性沟通和协调
+        沟通过程、智能体分组和状态转换大多是硬编码的，而在现实生活中，人类根据手头的任务决定队友，并在讨论和任务分配或执行之间动态切换。
+
+
+2.1 OVERVIEW OF IOA
+===================
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/08/yR8dyo.png
+
+    Figure 1: The illustration on the conceptual layered architecture on the design of IoA.
+
+
+解决多智能体系统(如Agentverse、Autogen、MetaGPT、ChatDev)的三个基本挑战::
+
+    1. 分布式代理协作：与在单个设备上模拟多代理系统的传统框架不同，IoA 支持分布在多个设备和位置的代理。（第 2.2 节和第 2.3.1 节）
+    2. 动态和自适应通信：IoA 实施了自主团队组建和对话流程控制的机制，允许代理根据任务要求和持续进展调整其协作策略。（第 2.3.2 至 2.3.4 节）
+    3. 异构智能体的集成：IoA 为集成各种第三方智能体提供了灵活的协议，扩展了系统内智能体能力的多样性。（第 2.4 节）
+
+IoA 的核心由两个主要组件组成::
+
+    1. 服务器充当中心枢纽，管理代理注册、发现和消息路由。它使具有不同功能的代理能够找到彼此并启动通信。
+    2. 客户端充当各个代理的包装器，为它们提供必要的通信功能并使它们适应指定的协议。
+
+
+IoA 对服务器和客户端组件都采用了三层架构::
+
+    1. 交互层：促进团队组建和代理沟通。
+    2. 数据层：管理与代理、群聊和任务相关的信息。
+    3. 基础层：为代理集成、数据管理和网络通信提供必要的基础设施。
+
+2.2 ARCHITECTURE OF IOA
+=======================
+
+服务端架构由三层组成::
+
+    1. 交互层：在顶层，交互层管理代理与系统之间的高级交互。它包括 
+        Agent Query Block（代理查询块），用于使代理能够根据特定特征搜索其他代理，
+        Group Setup Block（用于促进群聊的创建和管理）
+        Message Routing 消息路由块（用于确保在代理和群聊之间高效、准确地路由消息）。
+
+    2. 数据层：数据层作为信息支柱，处理关键系统信息的存储和管理。
+        Agent Registry Block 维护着一个注册代理的综合数据库，包括它们的功能和当前状态，类似于分布式系统中的服务发现
+        Session Managemnt Block 会话管理块管理活动连接并确保服务器和连接的客户端之间的持续通信。
+    
+    3. 基础层：基础层是整个系统的基础，为服务器的运行提供了必要的基础设施。它包括
+        用于处理数据持久性和检索的数据基础设施块、
+        用于管理网络通信的网络基础设施块
+        用于实施身份验证、授权和其他安全措施以维护系统完整性的安全块。
+
+
+客户端架构由三层组成::
+
+    1. 交互层：在代理操作的最前沿，交互层管理Agent在系统内的交互。
+        团队组建块实现了为手头任务确定合适合作者和组建团队的逻辑，类似于传统多智能体研究中的联盟形成
+        作为补充，通信块管理代理参与群聊并处理消息处理。
+    2. 数据层：数据层充当代理的内存，维护与代理操作相关的本地数据。它包括 
+        Agent Contact Block 用于存储当前座席已与之交互的其他座席的信息，
+        Group Info Block 用于维护有关正在进行的群聊和协作的详细信息，
+        Task Management Block 用于跟踪分配给座席的任务的状态和进度。
+    3. 基础层：基础层构成了客户端架构的基础，为客户端的操作提供了基本功能。
+        代理集成块 定义用于将第三方代理集成到 IoA 生态系统中的协议和接口。
+        除此之外，数据基础设施块处理本地数据存储和检索，
+        而网络基础设施块管理与服务器的网络通信。
+
+
+2.3 KEY MECHANISMS
+==================
+
+
+2.3.1 Agent Registration and Discovery
+--------------------------------------
+
+* Agent Registration 代理注册
+* Agent Discovery 代理发现
+
+
+
+2.3.2 Autonomous Nested Team Formation
+--------------------------------------
+
+* Team Formation Process 团队组建流程
+* Nested Team Structure 嵌套团队结构
+* Communication Complexity 通信复杂性
+    * 嵌套团队组建机制有助于降低大型代理团队中的通信复杂性。
+    * 假设每个组内都有完全连接的通信，则通信次数：n(n-1)/2
+    * 通过将任务分解为子任务并将它们分配给子群聊，我们可以减少通信渠道的总数。
+    * 假设分成2个组，每个组组员个数是n1,n2, 则通信次数：n1(n1-1)/2+n2(n2-1)/2
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/08/dw5Rca.png
+
+    Figure 2: An example of nested team formation mechanism. The process is simplified for clarity.
+
+
+2.3.3 Autonomous Conversation Flow Control
+------------------------------------------
+
+* 有效的沟通对于自主代理之间的成功协作至关重要。受言语行为理论启发（Austin， 1975;Searle， 1969） 及其在多代理系统中的应用 （Finin et al.， 1994;Labrou et al.， 1999）中，我们在 IoA 中引入了一种自主对话流控制机制。这种机制使代理能够协调他们的沟通并保持结构化的对话，从而提高他们协作的效率和有效性。
+
+* 1. Sequential Speaking Mechanism 顺序朗读机制：为了管理潜在的冲突并确保清晰的沟通，IoA 采用了最基本的连续发言机制。在任何给定时间，只允许一名特工发言，以防止混淆并保持清晰的沟通秩序。这种方法虽然简单，但在与以下动态功能结合使用时，为更复杂的对话管理奠定了基础。
+* 2. Finite State Machine for Group Chat States 群聊状态的有限状态机
+* 3. Autonomous State Transitions and Next Speaker Selection 自治状态转换和下一位发言人选择
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/08/Z4QEnT.png
+
+    Figure 3: The state transition among different states.
+
+
+2.3.4 Task Assignment and Execution
+-----------------------------------
+
+* IoA 中的任务分配和执行机制旨在有效地在代理之间分配工作，并管理简单和复杂任务的执行。此机制与团队组建和对话流控制机制协同工作，以确保有效协作和任务完成。
+
+* 1. Task Representation 任务表示
+* 2. Task Allocation 任务分配
+
+    * a. 同步任务分配：当群聊进入同步任务分配状态 Ss 时，任务会分配给特定的机器人，群聊会暂停，直到任务完成。
+    * b. 异步任务分配：在异步任务分配状态 Sa 下，分配任务时不会打断正在进行的讨论。这允许并行执行任务。
+
+* 3. Task Execution 任务执行
+
+    * 完成任务或子任务后，负责的代理会向群聊报告。
+    * 对于同步任务，这会触发群聊的恢复。对于异步任务，将记录完成情况，并与组共享任何相关信息。
+
+
+
+
+2.5 Putting It All Together
+===========================
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/08/PgUhb2.png
+
+    Figure 4:An example walkthrough of the major components of IoA.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

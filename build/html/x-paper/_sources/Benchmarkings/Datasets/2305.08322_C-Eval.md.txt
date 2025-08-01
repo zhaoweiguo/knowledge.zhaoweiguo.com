@@ -1,0 +1,506 @@
+# 2305.08322_C-Eval: A Multi-Level Multi-Discipline Chinese Evaluation Suite for Foundation Models
+
+
+* [https://arxiv.org/abs/2305.08322](https://arxiv.org/abs/2305.08322)
+* GitHub: [https://github.com/hkust-nlp/ceval](https://github.com/hkust-nlp/ceval)
+* 数据集: [https://huggingface.co/datasets/ceval/ceval-exam](https://huggingface.co/datasets/ceval/ceval-exam)
+* 引用: 215(2025-07-12)
+
+
+## 总结
+
+* 简介
+    * 中文数据集
+    * ABCD单选题
+    * C-Eval 包含四个难度等级（中学、高中、大学和专业）的多选题，涵盖52个不同学科领域，从人文学科到科学与工程。
+    * 还提供了一个C-Eval Hard子集，包含非常具有挑战性的问题，要求高级推理能力。
+
+
+
+## C-Eval_ A Multi-Level Multi-Discipline Chinese Evaluation Suite for Foundation Models
+
+
+* 当前的大语言模型（LLM）发展很快，需要新的中文评测标准。
+* **C-Eval** 是第一个全面的中文评测套件，用来测试模型在中文背景下的知识和推理能力。
+* 它包含四个难度层级的选择题：初中、高中、大学和专业级，覆盖了 **52个学科**（包括文科、理工科等）。
+* 其中还有一个特别难的子集叫 **C-Eval Hard**，用于进一步测试模型的高级推理能力。
+* 研究团队用 C-Eval 对多个先进的大模型进行了测试，结果发现目前只有 GPT-4 平均正确率超过 60%，说明模型还有很大进步空间。
+* C-Eval 的目标是帮助发现模型的优点和不足，推动适合中文用户的大模型发展。
+
+
+
+The paper introduces **C-Eval**, a comprehensive **Chinese evaluation suite** designed for **foundation models**, focusing on **multi-level** and **multi-disciplinary** capabilities. Here's a summary of its key points:
+
+1. **Purpose**:  
+   C-Eval aims to assess the **general knowledge and reasoning abilities** of foundation models in the **Chinese language**, covering a broad range of disciplines and difficulty levels.
+
+2. **Structure**:  
+   - **Multi-Level**: The test includes questions from **elementary to graduate levels**, simulating educational progression.
+   - **Multi-Disciplinary**: Subjects span **STEM (Science, Technology, Engineering, Mathematics)** and **Humanities**.
+
+3. **Key Features**:  
+   - **Large-Scale and Diverse Dataset**: Contains a substantial number of questions from various educational levels and disciplines.
+   - **Focus on Reasoning**: Emphasizes **logical reasoning, comprehension, and problem-solving** rather than mere memorization.
+   - **Standardized Format**: Uses a **multiple-choice format** similar to standardized tests to ensure objectivity in evaluation.
+
+4. **Evaluation Capabilities**:  
+   C-Eval is designed to test not only **basic knowledge** but also **higher-order thinking skills**, such as **inference, analysis, and synthesis**.
+
+5. **Applications**:  
+   - Useful for benchmarking the **performance of Chinese language foundation models**.
+   - Supports the development of **multi-modal and multi-task AI systems** by providing a standardized evaluation framework.
+
+6. **Significance**:  
+   This evaluation suite addresses the **lack of comprehensive Chinese benchmarks**, offering researchers and developers a reliable tool to assess and improve the **generalization and reasoning abilities** of AI models in the Chinese context.
+
+In conclusion, **C-Eval** is a robust, well-structured evaluation tool for measuring the **comprehensive capabilities** of Chinese foundation models across different difficulty levels and disciplines.
+
+
+## Abstract
+
+这段论文章节为**摘要（Abstract）**，主要内容总结如下：
+
+- **背景与动机**：随着大语言模型（LLMs）的快速发展，亟需新的自然语言处理（NLP）基准来评估这些模型的能力。
+- **提出方法**：作者提出了**C-Eval**，这是首个全面的中文评估套件，旨在评估基础模型在**中文语境**下的知识与推理能力。
+- **数据结构**：C-Eval 包含四个难度等级（中学、高中、大学和专业）的多选题，涵盖52个不同学科领域，从人文学科到科学与工程。
+- **子集 C-Eval Hard**：还提供了一个**C-Eval Hard**子集，包含非常具有挑战性的问题，要求高级推理能力。
+- **实验与结果**：作者在C-Eval上对最先进的LLMs进行了全面评估，包括面向英语和中文的模型。结果显示，**只有GPT-4的平均准确率超过60%**，表明当前LLMs仍有较大提升空间。
+- **贡献与目标**：C-Eval有助于分析基础模型的优缺点，推动其为中文用户服务的发展。数据和评估代码已公开。
+
+**总结**：C-Eval 是一个面向中文语境、评估高级知识与推理能力的综合性NLP基准，旨在推动大语言模型在中文场景下的发展与评估。
+
+
+## 1 Introduction
+
+本文段落主要介绍了 **C-Eval** 这一全新的中文评估基准的背景、意义与内容。总结如下：
+
+---
+
+### **背景与动机**
+1. **传统 NLP 评估基准的局限性**：早期的 NLP 指标主要评估模型在特定、简单任务上的表现，难以全面衡量大语言模型（LLMs）的复杂能力。
+2. **LLMs 带来的新挑战**：随着 LLMs 能力的提升，评估重点转向更广泛和复杂的技能，如世界知识和推理能力。
+3. **现有中文评估的不足**：尽管英文评估体系（如 MMLU、BIG-bench、HELM）不断发展，但中文的评估工具严重滞后。现有的中文基准（如 CLUE）不足以全面评估 LLMs 在中国语境下的复杂能力。
+4. **翻译基准的局限性**：将英文基准直接翻译并不能满足中文用户的需求，中文 LLMs 需要评估其对本土文化、历史、法律等知识的掌握。
+
+---
+
+### **C-Eval 的介绍与特点**
+1. **目标**：填补中文 LLM 研发与评估之间的差距，提供一个全面的中文评估体系。
+2. **内容**：
+   - 包含 **13948 道多选题**，覆盖 **52 个学科领域**（从人文学科到科学工程）。
+   - 题目按难度划分四个等级：**中学、高中、大学和专业**。
+3. **C-Eval Hard**：
+   - 是 C-Eval 的子集，包含最具挑战性的问题，要求高水平的推理能力。
+   - 即使是 GPT-4 在该子集上的准确率也仅为 53.3%，表明其难度极高。
+
+---
+
+### **实验与结果**
+1. **评估模型**：包括 GPT-4、ChatGPT、Claude 等主流 LLMs。
+2. **整体表现**：
+   - GPT-4 是唯一平均准确率超过 60% 的模型，达到 **66.4%**，仍表明当前 LLMs 存在较大提升空间。
+   - 尽管 GPT-4 不是针对中文数据训练的，但仍是前三名之一。
+3. **中文专用模型表现**：
+   - 一些中文模型在知识测试方面接近 ChatGPT，但在推理任务上仍有明显差距。
+   - 在 C-Eval Hard 上，大多数模型表现接近随机猜测。
+4. **C-Eval 的灵活性**：作为一个综合评估套件，C-Eval 的不同子集可用于测试模型的特定能力，帮助开发者全面了解模型的优劣势。
+
+---
+
+### **总结**
+C-Eval 是首个全面评估中文环境下 LLM 语言、知识和推理能力的中文评估体系。它不仅提供对模型整体能力的衡量，也通过不同难度和学科的题目帮助识别模型的优劣势，推动中文 LLM 的发展。
+
+
+## 2 The C-Eval Evaluation Suite
+
+本章“2. The C-Eval Evaluation Suite”对C-Eval评估套件的设计原则、数据收集、数据处理以及评估方式进行了详细介绍。以下是章节内容的总结：
+
+---
+
+![](https://img.zhaoweiguo.com/uPic/2025/07/V6jpVy.jpg)
+
+Table 1: Statistics of C-EVAL.
+
+
+---
+
+### **2.1 Design Principle（设计原则）**
+
+- **目标与动机**：
+  - C-Eval旨在帮助开发人员从多个维度快速了解其模型的能力，识别模型的不足并加以改进。
+  - 重点关注世界知识和推理能力，这两项是当前大型语言模型（LLMs）的关键技能。
+  - 与简单场景如对话表现类似不同，复杂任务更能体现LLM之间的差异。
+
+- **数据来源**：
+  - 基于中国实际使用的、具有挑战性的人类考试题目构建，覆盖多个维度的能力评估。
+  - 仅选择多选题，因为其评估指标明确（如准确性），且能很好地反映模型的潜在能力。
+  - 所有题目只有一个正确答案，四个选项，通过提示（prompting）方式使用LLM解答。
+
+- **分类与难度**：
+  - C-Eval涵盖52个学科，分为STEM、人文学科、社会科学和“其他”四大类别（见表1）。
+  - 按难度分为中学、高中、大学和职业四个级别，总计13,948道题目。
+  - 数据被划分为开发集（Dev）、验证集（Valid）和测试集（Test），其中测试集规模最大。
+
+- **数据污染风险的缓解**：
+  - 避免使用官方考试（如高考）题目，以减少预训练数据中可能存在的数据泄露风险。
+  - 数据多来自模拟考试或地方性考试文档（如PDF、Word），需人工解析与标注，降低数据重复的可能性。
+
+---
+
+### **2.2 Data Collection（数据收集）**
+
+- **科目选择**：
+  - C-Eval覆盖四个难度级别：中学、高中、大学和职业。
+  - 中学和高中选择标准学科（如数学、物理、化学），排除英语和部分写作主导的科目。
+  - 大学科目选自中国教育部列出的13类本科专业，每个类别至少包含一个代表科目。
+  - 职业类科目选自中国国家职业资格目录，如医师、法律职业和公务员考试等。
+
+- **数据来源**：
+  - 主要来自互联网上的模拟考试，部分来自中国顶尖大学的公开考试题。
+  - 少量来自授权的研究生入学考试模拟题网站（Weipu）。
+
+- **数据处理**：
+  - 数据格式多样，包括PDF、Word和网页，需进行文本提取、结构解析与清洗。
+  - 对于涉及复杂数学符号的科目（如STEM类），需人工转换为标准LaTeX格式。
+  - 所有题目均处理为四个选项，去重、清理后，通过多人手动验证，确保LaTeX表达无误。
+  - 题目按科目随机分成开发集（5题）、验证集和测试集（1:9比例）。
+
+- **解释数据生成**：
+  - 为支持**Few-shot Chain-of-Thought (COT)** 推理，使用GPT-4自动生成解释，并由人工修订，提升解释质量。
+  - 开发集中的问题包含解释，便于在few-shot提示中使用，提升模型推理性能。
+
+---
+
+### **2.3 C-Eval Hard（C-Eval Hard）**
+
+- **定义与目的**：
+  - 从C-Eval中选取8个涉及复杂数学表达式和推理的学科，构建**C-Eval Hard**基准。
+  - 包括高等数学、离散数学、概率统计、大学化学、大学物理、高中数学、高中化学和高中物理等。
+  - 这些科目对模型的高阶推理和LaTeX解析能力提出了更高要求。
+  - C-Eval Hard是第一个提供高难度中文推理题的评估基准，旨在推动LLM在复杂任务中的性能提升。
+
+---
+
+### **2.4 Evaluation（评估）**
+
+- **评估指标**：
+  - 使用**准确性（accuracy）**作为评估指标。
+  
+- **数据使用说明**：
+  - 开发集和验证集标签公开，测试集标签保留，防止模型在测试集上提前接触数据。
+  - 用户需通过网站 <https://cevalbenchmark.com> 提交预测结果，获取测试集准确率，同时可选择是否公开排名。
+
+---
+
+### **总结**
+
+C-Eval是一个多学科、多难度级别的中文LLM评估基准，覆盖52个学科和4个难度级别。通过精选多选题、严格数据处理与LaTeX格式转换、引入few-shot COT解释数据等方式，C-Eval不仅评估模型的基础知识掌握能力，还强调复杂推理能力。C-Eval Hard进一步聚焦于STEM类高难度推理任务，为LLM在中文语境下的性能评估提供了系统性的工具。
+
+
+## 3 Experiment
+
+以下是对论文章节“**3 Experiment**”的总结：
+
+---
+
+### **3.1 Setup（实验设置）**
+
+本节介绍了实验的具体设置。研究人员在 **C-Eval 数据集** 上评估了多种大型语言模型（LLMs），采用 **zero-shot（零样本）** 和 **five-shot（五样本）** 两种设置，并对模型输出使用正则表达式提取答案，以确保能够正确解析模型的输出结果。
+
+- **Answer-only (AO)** 与 **Chain-of-thought (COT)** 两种推理方式均被测试，但由于 zero-shot 中的 COT 输出难以解析，因此 COT 仅在 five-shot 中进行。
+- 对于部分模型，五样本的上下文长度可能超出模型的最大输入长度，因此动态减少样本数量以适应模型限制。
+- 提供了 AO 和 COT 的提示模板（在附录中）。
+
+---
+
+### **3.2 Models（评估模型）**
+
+研究人员评估了 **11 个基于中文输入的 LLMs**，涵盖不同机构、不同参数规模。包括：
+
+- **英文模型**（如 GPT-4、ChatGPT、Claude 系列、LLaMA）
+- **中文导向模型**（如 GLM-130B、ChatGLM-6B、Chinese-LLaMA、MOSS）
+
+部分模型虽然以英文为主，但因其训练数据中包含少量中文，仍可以处理中文输入。部分商业模型（如文心一言、通义千问）因无公开 API 或权重未纳入评估。
+
+---
+
+### **3.3 Results（实验结果）**
+
+#### **General comparison（总体比较）**
+
+- **GPT-4** 在所有设置中表现最佳，显著优于其他模型，在 zero-shot 和 five-shot 中均超过 60% 的平均准确率。
+- **ChatGPT** 为第二强模型，但在 STEM（科学、技术、工程和数学）领域与 GPT-4 有较大差距。
+- **GLM-130B** 是中文模型中表现最好的，但在 STEM 领域与英文模型差距明显。
+
+#### **Does few-shot prompting help?（五样本提示是否有效）**
+
+- 五样本提示对部分模型（如 GPT-4、Claude、ChatGPT）有正向作用，但对部分经过指令调优的模型（如 GLM-130B、MOSS）反而降低性能。
+- 研究人员认为这是因为这些模型没有在指令调优阶段适当地融合示例信息。
+
+#### **Does chain-of-thought prompting help?（思维链提示是否有效）**
+
+- 多数模型在 COT 设置下平均准确率 **低于 AO 设置**，说明在 COT 中未带来显著优势。
+- 一些模型（如 GPT-4、ChatGLM）在特定科目（如物理、统计）中 COT 提示有明显提升。
+- 研究人员认为，COT 在非推理密集型任务中可能适得其反，并且模型是否能有效利用 COT 与其是否接受过 COT 训练密切相关。
+
+#### **Difference between English- and Chinese-oriented models（中英文模型比较）**
+
+- **GLM-130B** 在中文相关领域（如社会科学、人文学科）接近甚至超越英文模型（如 ChatGPT），但在 STEM 领域仍有较大差距。
+- 表明中文模型在中文知识领域具有一定优势，但在复杂任务上仍需提升。
+
+#### **Results on C-Eval Hard（C-Eval Hard 难度测试）**
+
+- 即使是 GPT-4，在 C-Eval Hard 中的准确率也较低（约 50%），说明该测试集难度极高。
+- 除 GPT-4、ChatGPT 和 Claude 外，其他模型提升有限。
+- 研究指出，在高难度任务中模型性能差异拉大，强调了对复杂任务评估的重要性。
+
+#### **Results on the validation split（验证集结果）**
+
+- 由于测试集标签未公开，验证集结果可用于参考模型性能。
+- 验证集准确率与测试集表现高度一致，且模型排名大致一致，说明验证集可用于快速开发和评估。
+
+---
+
+### **总结**
+
+本章节通过在 C-Eval 多学科多难度中文评估数据集上的实验，系统评估了多种 LLMs 的性能，特别是对 **zero-shot、five-shot、COT** 等不同设置下的表现进行了分析。实验表明：
+
+- **GPT-4 显著优于其他模型**，尤其在复杂任务中；
+- 中文模型在中文相关领域有潜力，但在 STEM 领域仍落后；
+- **COT 提示在部分模型中有效**，但并非普遍适用，尤其对未进行 COT 训练的模型有害；
+- **五样本提示对部分模型有帮助，但对指令调优模型可能适得其反**；
+- C-Eval Hard 作为高难度任务集，对模型的能力提出了更高要求。
+
+该实验为中文 LLM 的发展和评估提供了重要参考，也强调了在复杂任务和跨语言场景下模型性能差异的重要性。
+
+
+## 4 Related Work
+
+这段文字总结了与本研究相关的英语和中文基准（benchmark）的工作，主要从任务类型、评价维度和数据来源等方面进行对比分析，具体内容如下：
+
+---
+
+### 总结：
+
+#### **英语基准（English Benchmarks）**
+1. **传统基准**：早期的英语基准主要关注模型在单一任务或任务类型上的能力评估，如自然语言理解（NLU）、阅读理解、机器翻译和摘要生成等。
+   - 例如，GLUE 基准整合了多个 NLU 任务，并因 BERT 和 GPT 等预训练模型的出现，模型表现甚至超越人类。
+2. **综合性基准**：为了更全面评估大语言模型（LLMs）的能力，近年来出现了更广泛的评估基准。
+   - **MMLU**：涵盖多个领域和任务，基于真实世界的考试和书籍，LLMs 在达到 GPT-3 规模之前表现接近随机。
+   - **BIG-bench**：包含 204 个多样化任务，其中一些被认为超出了当前 LLM 的能力。
+   - **HELM**：整合 42 项任务，并使用 7 个不同指标（如准确性、鲁棒性）评估 LLM。
+
+---
+
+#### **中文基准（Chinese Benchmarks）**
+1. **发展滞后**：相比英语基准，中文语言能力的评估体系仍不够完善。
+2. **主要基准**：
+   - **CLUE**：首个大规模中文 NLU 基准，目前仍是使用最广泛、最成熟的中文基准。
+   - **AGIEval** 和 **MMCU**：基于中国高考、司法考试、公务员考试等真实考试题，涵盖法律、医学等领域。
+3. **C-Eval 的优势**：
+   - **领域更广**：覆盖更多学科。
+   - **难度层次**：设置四个难度等级，其中 C-Eval Hard 是首个提供复杂推理问题的中文基准。
+   - **减少数据泄漏**：题目多来自模拟试卷（PDF、Word），经过处理，避免直接使用真实考试题，相比之下，AGIEval 和 MMCU 使用的是历史考试原题。
+
+---
+
+### 总体评价：
+本段通过对比英语与中文基准的发展现状，强调了 C-Eval 在中文模型评估中的创新性和全面性，特别是在难度分级、领域覆盖和数据来源处理方面的优势。
+
+
+## 5 Discussion
+
+这一章节主要讨论了对大语言模型（LLMs）评估的进一步思考和未来方向。作者认为，LLM的评估不应仅限于日常对话场景，而应扩展到更复杂的应用环境，这也是他们创建C-Eval评估套件的主要动机。C-Eval，尤其是其中的C-Eval Hard部分，在中文语境下的LLM评估方面取得了重要进展。
+
+同时，作者也指出目前包括C-Eval在内的英文评估基准仍不完善。LLM的能力不仅限于准确性，还包括推理与调用API等能力，以及安全性、偏见和鲁棒性等多方面因素。这些方面仍有待进一步研究和评估，作者将其作为未来工作的重点。
+
+
+## Acknowledgement
+
+这段“Acknowledgement”（致谢）主要表达了对评审人和资助机构的感谢。以下是总结内容：
+
+作者感谢了匿名评审人提出的宝贵意见。同时，指出论文作者之一 Bai Yuzhuo 的研究得到了中国国家重点研发计划（项目编号：2020AAA0106502）和清华大学郭锹研究院的支持。
+
+
+## Appendix A Author Contributions
+
+本附录详细说明了论文作者在不同任务中的贡献，具体总结如下：
+
+1. **数据收集、标注与初步验证**  
+   由黄宇真、白宇卓、朱智浩、张君磊、张靖涵、苏唐君、刘俊腾、张奕恺、雷佳怡等人负责收集并手动标注了初步数据集，并进行了交叉验证。张君磊使用GPT-4生成解释数据，黄宇真、白宇卓和何俊贤对这些解释进行了人工修订。
+
+2. **数据处理**  
+   黄宇真主要负责数据处理任务，包括手动修正从PDF文档中提取的问题中的拼写和格式错误，确保LaTeX公式能正确编译。张靖涵负责数据去重。
+
+3. **模型评估**  
+   评估工作由多个作者分别完成：黄宇真测试了ChatGPT和MOSS，白宇卓测试了ChatGLM，张君磊测试了GLM-130B，吕传诚测试了Bloomz-mt、LLaMA、Chinese-LLaMA和Chinese-Alpaca，付尧测试了GPT-4和Claude系列模型。
+
+4. **网站与提交系统构建**  
+   朱智浩负责构建了项目的网站和在线提交系统。
+
+5. **论文撰写**  
+   黄宇真、白宇卓和何俊贤负责撰写论文主体内容，其他作者参与了校对工作。
+
+6. **项目指导**  
+   付尧、孙茂松和何俊贤担任项目顾问，其中何俊贤为项目的主要指导者，负责项目的启动与组织。
+
+总体来看，本项目是一个多人协作完成的研究工作，涵盖了数据收集、处理、评估、系统构建和论文撰写等多个方面，体现了团队成员在不同环节中的专业分工与合作。
+
+
+## Appendix B Detailed Stats of C-Eval
+
+This appendix provides a detailed summary of the **C-Eval** evaluation suite, listing all 52 subjects along with their broader categories (STEM, Social Science, Humanities, and Other) and the number of questions for each subject. The distribution is as follows:
+
+- **STEM (Science, Technology, Engineering, and Mathematics)**: Includes 21 subjects, totaling **5,038 questions**.  
+- **Social Science**: Includes 10 subjects, totaling **3,015 questions**.  
+- **Humanities**: Includes 11 subjects, totaling **3,458 questions**.  
+- **Other**: Includes 10 subjects, totaling **4,420 questions**.
+
+The subjects vary from academic disciplines like Mathematics, Physics, and Computer Science to professional certifications such as Legal Qualification, Tax Accountant, and Civil Servant exams. This comprehensive list reflects the multi-level and multi-disciplinary nature of the C-Eval suite, designed to evaluate foundation models across a wide range of Chinese educational and professional domains.
+
+
+## Appendix C Explanation Data Generation
+
+**总结：**
+
+本附录章节介绍了使用 GPT-4 自动生成解释性数据的方法。通过提供五个由人工编写的“问题-解释”对作为提示，GPT-4 被引导生成包含问题和正确答案的解释内容。生成的解释还需经过人工修订，以确保最终解释的质量。图5展示了一个生成过程的示例，其中红色文本为模型自动生成的响应，上方文本为用户输入的提示。每个段落下方还提供了对应的英文翻译，以辅助理解。
+
+
+## Appendix D Evaluation Prompts
+
+这段内容总结如下：
+
+---
+
+**附录 D：评估提示（Evaluation Prompts）总结**
+
+本节展示了 **答案仅输出（answer-only）** 和 **思维链（chain-of-thought）** 两种测试场景下的评估提示（prompt）示例，分别见图6和图7。
+
+- **图6** 展示了一个 **答案仅输出场景下的少样本（few-shot）评估示例**，而 **零样本（zero-shot）评估** 则通过移除示例（exemplars）实现。红色文本表示模型自动生成的响应，前面的文本是输入提示。同时，图中还提供了中文文本的英文翻译。
+
+- **图7** 展示了一个 **思维链场景下的少样本评估示例**，同样，零样本评估可通过移除示例来实现。结构与图6一致，红色部分为模型的自动生成内容。
+
+---
+
+**核心要点**：  
+本节通过图示说明了两种不同评估方式下的提示设计，强调了在不同场景下（如少样本与零样本）提示的差异，并提供了中英对照以便理解。
+
+
+## Appendix E Details of the models being evaluated
+
+这篇附录总结了作者在实验中评估的多个大语言模型（LLMs），涵盖了它们的主要特点、结构改进、训练方式以及在实验中的具体版本。以下是各模型的简要总结：
+
+---
+
+### 1. **ChatGPT 和 GPT-4**
+- 通过强化学习与人类反馈（RLHF）优化，使其更符合人类指令，更安全、更有帮助。
+- GPT-4 支持图像输入，规模更大，并经过精细的后训练对齐处理，达到人类水平的表现，甚至在模拟考试中排名前10%。
+
+### 2. **Claude**
+- Anthropic 系列模型，强调与人类意图对齐。
+- 使用宪法人工智能（Constitutional AI）方法，确保其帮助性和可信度。
+- 提供轻量版 Claude-instant，推理更快且成本更低。
+
+### 3. **BLOOMZ-mt**
+- 基于多语言 BLOOM 模型，通过多任务提示微调构建。
+- 支持多语言任务，使用机器翻译提示提升多语言泛化能力。
+- 实验中评估了176B参数版本。
+
+### 4. **LLaMA**
+- 使用 Transformer 架构，训练数据来自多个开源来源。
+- 在训练效率和语言能力上进行了优化，表现出超越参数规模大10倍的模型的能力。
+- 实验中评估了LLaMA-65B版本。
+
+### 5. **GLM-130B 和 ChatGLM-6B**
+- GLM系列模型，具备双向注意力机制，支持任务自适应。
+- GLM-130B 是双语预训练模型，使用INT4量化提升推理效率。
+- ChatGLM-6B 是针对中文对话优化的轻量模型，可在6GB显存上运行。
+- 实验中评估了FP16设置的两个模型。
+
+### 6. **Chinese-LLaMA**
+- LLaMA 的中文适配版本，扩展了20K中文词汇。
+- 在中文数据上进行了二次预训练和指令微调。
+- 实验中评估了13B参数的版本。
+
+### 7. **Chinese-Alpaca**
+- 基于 Chinese-LLaMA，进一步在中文指令数据上微调。
+- 实验中评估了13B参数版本。
+
+### 8. **MOSS**
+- 中国首个开源LLM，规模和对齐技术与ChatGPT相当。
+- 基于CodeGen初始化，预训练包含100B中文和20B英文数据。
+- 集成了监督微调和偏好模型，并支持插件增强。
+- 实验中评估了开源版本moss-moon-003-sft。
+
+---
+
+### 总结：
+本附录对多个大语言模型进行了详细描述，涵盖了其架构特点、训练方式、多语言支持、对齐机制、量化优化等方面。这些模型代表了当前LLM发展中的不同方向，包括参数规模、中文适配、多任务能力、对齐技术等。实验中评估了这些模型的不同版本，以比较其性能和适用性。
+
+
+## Appendix F Breakdown of Model Performance
+
+### Appendix F Summary: Breakdown of Model Performance
+
+This section provides a detailed analysis of the performance of four representative models—**GPT-4**, **ChatGPT**, **ChatGLM**, and **Claude-instant-v1.0**—across various subject categories in both **zero-shot** and **five-shot** settings using the **C-Eval** benchmark.
+
+#### **Key Observations:**
+
+1. **Zero-shot Performance (Table 9):**
+   - **GPT-4** consistently outperforms other models across most subjects.
+   - **ChatGPT** shows strong performance in certain subjects like **College Economics** and **Education Science**, but lags in technical fields.
+   - **ChatGLM** performs poorly in most subjects, with particularly low scores in **High School Chinese** and **High School Mathematics**.
+   - **Claude-instant-v1.0** is the weakest among the four, especially in fields like **Advanced Mathematics** and **High School Mathematics**.
+
+2. **Five-shot Performance (Table 10):**
+   - The five-shot setting introduces **Chain-of-Thought (COT)** reasoning, and generally, performance improves compared to the zero-shot setting.
+   - **GPT-4** maintains its superiority in most subjects, with notable improvements in **High School Biology** and **Middle School Geography**.
+   - **ChatGPT** improves in some areas when using COT, particularly in **Education Science** and **Middle School Politics**.
+   - **ChatGLM** still underperforms in most subjects, but shows some progress in **Middle School Politics** and **Middle School Geography**.
+   - **Claude-instant-v1.0** sees improvements in several fields when using COT, but remains the weakest of the four.
+
+3. **Subject-wise Highlights:**
+   - **Advanced Mathematics** and **College Physics** are challenging for all models, even in the five-shot setting.
+   - **Middle School-level subjects** generally show better performance across all models, especially in **Biology**, **Mathematics**, and **Geography**.
+   - **Social Science and Humanities subjects** (e.g., **History**, **Politics**, **Law**) tend to perform better than STEM subjects, particularly for **ChatGPT** and **GPT-4**.
+   - **Professional and vocational subjects** like **Fire Engineer** and **Tax Accountant** are consistently difficult for all models.
+
+4. **General Trends:**
+   - **GPT-4** is clearly the top-performing model in both zero-shot and five-shot settings.
+   - The use of **COT reasoning** leads to substantial improvements across board, especially for **ChatGPT** and **ChatGLM**.
+   - **ChatGLM** and **Claude-instant-v1.0** have the most room for improvement, particularly in technical and advanced subjects.
+
+For a full and detailed performance breakdown of all models, readers are encouraged to visit the C-Eval leaderboard at [https://cevalbenchmark.com/static/leaderboard.html](https://cevalbenchmark.com/static/leaderboard.html).
+
+
+## Appendix G Option Bias
+
+### 总结：Appendix G Option Bias
+
+本节主要探讨了C-Eval数据集中选项偏差（Option Bias）的问题，并通过实验验证了模型对选项顺序的敏感性。
+
+1. **选项分布分析**：
+   - 表11展示了C-Eval中正确答案在四个选项（A、B、C、D）之间的分布。
+   - 各选项的正确率在22.9%到26.4%之间，接近随机选择的25%，且与MMLU数据集的分布相似。
+   - 虽然存在轻微波动，但整体上没有显著的选项偏好。
+
+2. **模型对选项顺序的敏感性验证**：
+   - 为了检测模型是否存在对选项顺序的偏差，研究人员对每个问题的选项进行了5种不同的随机排列。
+   - 使用ChatGPT、ChatGLM-6B和ChatGLM2-6B在5种排列上进行零样本（zero-shot）测试，评估模型在不同排列下的表现。
+   - 表12展示了不同模型在不同学科类别和整体上的平均准确率以及准确率的方差（Var）。
+   - 模型在不同排列下的准确率方差较小，说明模型对选项顺序的依赖性较低。
+
+**结论**：
+- C-Eval数据集的正确答案分布接近随机，不存在明显的选项偏差。
+- 主流模型在不同选项排列下的表现稳定，表明模型并未显著受到选项顺序的影响。
+
+
+## Appendix H Compute and Resources Used for Evaluation
+
+**Summary of Appendix H: Compute and Resources Used for Evaluation**
+
+In this appendix, the authors describe the computational resources used during the evaluation of various large language models (LLMs) on the C-Eval benchmark. To run inference for models with publicly available weights (such as Bloomz-mt, LLaMA-65B, and GLM-130B), they used a cluster equipped with 8 A100-80GB GPUs. These high-capacity resources were necessary due to the large size of the models involved.
+
+In most cases, the inference process on the C-Eval dataset was completed within one day. For models accessed via APIs, which typically do not require local high-end hardware, inference was run using CPUs and also finished within a similar timeframe.
+
+This section provides context on the infrastructure and computational requirements for evaluating different LLMs, ensuring reproducibility and transparency of the experimental setup.

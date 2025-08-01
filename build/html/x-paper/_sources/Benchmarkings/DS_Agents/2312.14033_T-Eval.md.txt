@@ -1,0 +1,429 @@
+# 2312.14033_T-Eval: Evaluating the Tool Utilization Capability of Large Language Models Step by Step
+
+
+* 首页: [https://arxiv.org/abs/2312.14033](https://arxiv.org/abs/2312.14033)
+* PDF: [https://arxiv.org/pdf/2312.14033](https://arxiv.org/pdf/2312.14033)
+* GitHub: https://github.com/open-compass/T-Eval
+* HuggingFace: https://huggingface.co/datasets/lovesnowbest/T-Eval
+* 组织: 1Science and Technology of China, 2Shanghai AI Laboratory, 3Tsinghua University, 4Jilin University
+* 引用: 32(2025-07-12)
+
+
+## 总结
+
+* 简介
+    * 评估对象: LLM工具的使用
+        * 如：可用于评估 Agent 的评测集
+    * 语言: 中文、英文
+    * 类别
+        * Instruct: 2,660
+        * Retrieve: 6,426
+        * Plan: 553
+        * Reason: 6,426
+        * Review: 487
+        * Understand: 6,753
+    * 数据集构建
+        * 初始生成了 1,500 对指令-解决方案对，经过两轮人工筛选后保留 553 对。
+        * 总共构建了 23,305 个测试用例，涵盖 Instruct、Plan、Reason、Retrieve、Understand 和 Review 等六个维度。
+
+* 核心思想：
+    * 将“工具使用”这一过程分解为六个关键子能力：
+    * 规划（plan）、推理（reason）、检索（retrieve）、理解（understand）、指令遵循（instruct）和反思（review）
+        1. **规划能力（Plan）**：LLM 需要生成一个合理的工具调用序列。
+        2. **推理能力（Reason）**：理解上下文并生成逻辑性的中间步骤。
+        3. **检索能力（Retrieve）**：从工具列表中选择合适的工具。
+        4. **理解能力（Understand）**：解析工具文档并生成正确的参数。
+        5. **指令能力（Instruct）**：按照指定格式生成调用指令。
+        6. **评估能力（Review）**：判断工具调用是否成功，并识别错误类型。
+
+
+
+
+## Abstract
+
+![](https://img.zhaoweiguo.com/uPic/2025/07/Vy9dju.png)
+
+Figure 1:Overview of T-Eval: T-Eval decomposes the tool utilization capability into six necessary abilities: plan, reason, retrieve, understand, instruct and review. To respond to a query with a given tool list, LLM agents generate a plan first before calling tools. The solution path is multiple rounds of tool calling where agents reason their thoughts, retrieve and understand the necessary tools and parameters, execute the instructions, and finally review the tool response.
+
+
+
+该段落主要介绍了**T-Eval** 这个用于评估大型语言模型（LLMs）**工具使用能力**的基准测试框架。主要内容总结如下：
+
+1. **背景与问题**：虽然大型语言模型在各种自然语言处理任务中表现出色，并借助工具扩展了应用范围，但目前对模型如何使用这些工具的能力评估仍有待深入。
+
+2. **现有研究的不足**：以往的研究多从整体层面评估模型，而缺乏对工具使用过程的细粒度分析。
+
+3. **T-Eval的核心思想**：T-Eval 将“工具使用”这一过程**分解为六个关键子能力**：**规划（plan）、推理（reason）、检索（retrieve）、理解（understand）、指令遵循（instruct）和反思（review）**。这种分解有助于更细致地评估模型在不同子过程中的表现。
+
+4. **评估方法**：T-Eval 通过分步评估这些子能力，提供了一种**更细化、更系统**的评估方法，不仅与结果导向的评估保持一致，还揭示了模型在工具使用上的**整体与个别的能力差异**。
+
+5. **实验与分析**：作者在多个大型语言模型上进行了广泛的实验，并进行了深入分析，验证了T-Eval的有效性。
+
+6. **意义与贡献**：T-Eval 为评估大型语言模型的工具使用能力提供了**新的视角和方法**，并有助于更深入地理解模型在实际应用中的表现。
+
+7. **资源开放**：T-Eval 的基准测试将在 GitHub 上开源，便于研究者进一步使用和研究。
+
+
+## 1 Introduction
+
+
+
+本文主要针对大规模语言模型（LLMs）在工具使用（tool utilization）方面的能力评估不足的问题，提出了一种新的评估基准——**T-Eval**。以下是文章内容的总结：
+
+1. **研究背景**：  
+   大型语言模型（LLMs）在多种任务中展现出强大的能力，并通过结合外部工具进一步扩展了解决复杂问题的能力。然而，现有研究在评估LLMs的工具使用能力方面存在局限，主要依赖最终输出或单步调用，忽略了中间步骤的评估，难以识别模型在工具学习中的关键瓶颈。此外，当前基准依赖实时工具交互，容易受到外部因素（如API服务不稳定或信息时效性变化）的影响，导致评估结果不稳定且难以公平比较。
+
+2. **提出的解决方案：T-Eval**：  
+   为了解决这些问题，作者提出了**T-Eval**，这是一个**逐步工具使用评估基准**。与以往从整体上评估模型的方法不同，T-Eval将评估分解为多个子任务，分别评估LLMs在工具使用过程中的各项基本能力，包括**规划、推理、检索、理解、指令遵循和回顾**。该方法通过**人工专家验证的金标准工具使用注释**，设计了基于中间步骤的评估协议和指令提示，从而可以对模型能力进行更细致的分析。
+
+3. **T-Eval的优势**：  
+   - 通过分解评估流程，T-Eval显著降低了外部因素（如在线工具的不稳定性）对评估结果的影响，提高了评估的稳定性与公平性。
+   - 使用**多智能体数据生成管道**并由专家验证，确保数据质量和评估可靠性。
+   - 通过在多种LLMs上的广泛实验验证了T-Eval的有效性和泛化能力，揭示了当前LLMs在工具学习中的主要瓶颈，并为提升工具使用能力提供了新的视角。
+
+4. **主要贡献**：  
+   - 提出了一种新的工具使用评估基准T-Eval，支持对LLMs作为工具代理的细粒度能力评估。
+   - T-Eval的设计减少了外部干扰，实现更稳定和公平的模型评估。
+   - 实验结果验证了T-Eval的有效性，并为改进LLMs的工具使用能力提供了深入的分析和见解。
+
+总体而言，本文提出了一个系统化、分解式的LLM工具使用评估框架，弥补了现有评估方法的不足，为LLM在复杂工具交互任务中的性能评估提供了新的思路和工具。
+
+
+## 2 T-Eval
+
+该章节主要介绍了 **T-Eval** 评估框架的设计与构建，旨在系统性地评估大语言模型（LLMs）在工具调用（tool utilization）方面的能力。
+
+
+### **1. 评估维度的分解（2.1 Evaluation Decomposition）**
+为了全面评估 LLM 在工具调用过程中的能力，作者将整个流程拆解为六个关键维度：
+
+1. **规划能力（Plan）**：LLM 需要生成一个合理的工具调用序列。
+2. **推理能力（Reason）**：理解上下文并生成逻辑性的中间步骤。
+3. **检索能力（Retrieve）**：从工具列表中选择合适的工具。
+4. **理解能力（Understand）**：解析工具文档并生成正确的参数。
+5. **指令能力（Instruct）**：按照指定格式生成调用指令。
+6. **评估能力（Review）**：判断工具调用是否成功，并识别错误类型。
+
+通过将工具调用过程分解为这些维度，T-Eval 能够更精细地评估 LLM 在工具使用中的表现。
+
+---
+
+### **2. 细粒度评估协议（2.2 Fine-Grained Evaluation Protocol）**
+
+T-Eval 为每个维度设计了独立的评估指标，并提出了 **单维度评估** 和 **端到端评估** 两种方式：
+
+- **单维度评估**（Single-Index Evaluation）：
+  - 每个维度（Plan/Reason/Retrieve/Understand/Instruct/Review）都有对应的评估指标，例如：
+    - **Plan**：使用 Sentence-BERT 计算动作序列的相似性；
+    - **Reason**：评估生成的中间步骤与黄金答案的相似度；
+    - **Retrieve**：评估 LLM 是否选择了正确的工具；
+    - **Understand**：对比生成的参数与黄金答案；
+    - **Instruct**：评估生成的调用指令格式与内容的准确性；
+    - **Review**：通过多选题形式判断工具响应是否成功并识别错误类型。
+
+- **端到端评估**（End-to-End Evaluation）：
+  - 要求 LLM 生成完整的解决方案路径和最终答案。
+  - 使用 **Win Rate** 等指标，将模型的响应质量与 GPT-3.5 进行比较，以衡量整体性能。
+
+---
+
+### **3. 数据集构建（2.3 Dataset Construction）**
+
+![](https://img.zhaoweiguo.com/uPic/2025/07/1dJo69.png)
+
+Figure 2:Overview of the dataset construction process. By randomly sampling tools from the tool database, we prompt GPT-3.5 to generate initial queries and further refine them with GPT-4. After that, we develop a multi-agent framework to resolve queries with the provided tools, collecting both solution paths and tool responses. Finally, human experts are employed to verify the annotations and pick high-quality samples.
+
+
+T-Eval 的数据集构建过程包含三个主要阶段：
+
+1. **工具收集**（Tool Collection）：
+   - 从多个领域（研究、旅行、娱乐、网络、生活、金融）中选择 1~2 个高质量、高可用性工具，总共构建了 15 个基础工具。
+   - 所有工具均配有高质量的手动文档，以确保评估专注于 LLM 本身的能力而非工具描述不清晰的问题。
+
+2. **指令生成**（Instruction Generation）：
+   - 使用 GPT-3.5 生成初步指令，再由 GPT-4 优化，以提升指令的多样性和可行性。
+   - 使用随机采样工具、洗牌工具文档、加入少样本示例等策略，增强生成指令的多样性。
+
+3. **黄金解标注**（Golden Solution Annotation）：
+   - 采用多代理（multi-agent）架构进行自动化标注，包括：
+     - **Planner**：规划下一步动作；
+     - **Executor**：生成并执行调用；
+     - **Reviewer**：评估调用结果。
+   - 最后由人工专家进行复审，确保标注质量。
+
+4. **包容性难度评估**（Inclusive Difficulty Evaluation）：
+   - 为适应不同规模的 LLM，设计了 **简单模式**（字符串格式）和 **困难模式**（JSON 格式）。
+   - 简单模式更注重语义质量，困难模式更严格、更贴近实际产品需求。
+
+---
+
+### **4. 数据集概览（2.4 Dataset Summary）**
+
+- 初始生成了 1,500 对指令-解决方案对，经过两轮人工筛选后保留 553 对。
+- 总共构建了 **23,305 个测试用例**，涵盖 Plan、Reason、Retrieve 等六个维度。
+- 数据集涵盖多个领域，具有较高的多样性和实用性，适合作为工具调用能力评估的基准。
+
+---
+
+### **总结**
+
+本章系统地提出了 **T-Eval** 评估框架，从工具调用的多个关键维度出发，设计了细粒度的评估协议与高质量的数据集。该框架不仅能够详细评估 LLM 在工具调用过程中的各项能力，还通过多代理标注与人机协作，保证了数据质量与可扩展性，为后续研究提供了标准化和可比较的评估基准。
+
+
+## 3 Experiments
+
+![](https://img.zhaoweiguo.com/uPic/2025/07/fha77c.jpg)
+
+Table 1: Main Results of T-Eval.
+
+
+本章“实验”部分对多个大语言模型（LLMs）在**T-Eval**基准上的工具使用能力进行了评估，旨在回答关于工具使用能力的三个关键问题：哪些模型表现更好、当前模型与理想工具代理之间还有多大差距、以及什么样的训练数据有助于提升工具使用能力。
+
+### 1. 实验设置
+- 评估了**20个模型**，覆盖了**API基础的商业模型**（如GPT-3.5、GPT-4、Claude2）和**开源模型**（如LLaMA2、Vicuna、Qwen等），模型参数规模从**7B到70B**不等。
+- 对于API模型，使用了特定版本（如GPT-4的gpt-4-1106-preview）。
+- 所有模型在T-Eval的多个子任务中进行评估，包括指令理解、计划、推理、检索、理解和反馈等。
+
+### 2. 主要实验结果
+- **GPT-4**在所有任务中表现最佳，总体评分为**86.4**，显示出其在工具使用能力方面的领先地位。
+- **GPT-3.5**和**Claude2**也表现出较强的工具使用能力，特别是在字符串和JSON格式任务上。
+- 对于**开源模型**，随着模型规模的增加，性能通常提升。例如，**Qwen-72B**在总体评分上达到**71.4**，与GPT-4的差距显著缩小。
+- 然而，开源模型在某些任务上仍存在明显劣势，尤其是JSON格式下的**指令遵循能力**和**状态反馈（review）能力**，表明格式化输出和与环境的动态交互仍是挑战。
+
+### 3. 研究问题与分析
+#### Q1: 哪个模型更适合工具使用？
+- GPT-4表现最优，GPT-3.5和Claude2紧随其后。
+- Qwen-7B在小模型中表现突出，Qwen-72B在大模型中接近API模型表现。
+- 表明高质量的训练数据（如Qwen使用的自我指令数据）对工具使用能力提升有显著帮助。
+
+#### Q2: 当前模型与理想工具代理的差距？
+- 指令遵循（尤其是JSON格式输出）是当前模型的瓶颈，多数开源模型得分较低。
+- 工具检索能力和状态反馈能力不足，特别是在与环境的动态交互中。
+- GPT-4在状态反馈任务中得分高达94.5%，远超大多数模型（约50-60%），说明当前模型在这一能力上仍有较大提升空间。
+
+#### Q3: 什么样的训练数据有助于工具使用？
+- **通用指令数据**（如ShareGPT、WizardLM的复杂指令）有助于小模型提升能力，但对大模型效果有限。
+- **任务特定数据**（如代码或代理相关数据）如CodeLLaMA、AgentLM有一定帮助，但不如高质量的指令数据有效。
+- 结论：**高质量、多样化、复杂的指令数据**是提升工具使用能力的关键，相比之下，单纯扩大模型规模效果有限。
+
+### 总结
+本章通过系统的实验和分析，揭示了当前大语言模型在工具使用能力上的优劣势。API模型在整体表现上领先，而开源模型通过提升模型规模和使用高质量训练数据（如Qwen）可显著缩小差距。未来的研究应重点关注**格式遵循能力、动态环境交互能力**及**高质量训练数据的构建**，以推动更强大的工具代理的发展。
+
+
+## 4 Discussion
+
+
+
+本节对 T-Eval 基准的评估方法、与其他方法的比较以及实验中反映出的问题进行了深入分析，总结如下：
+
+---
+
+### 4.1 格式遵循与问题解决能力的关系
+
+格式遵循是大型语言模型（LLMs）执行任务时的一项关键能力，尤其是在使用 LLM 作为智能体的场景中，已有大量研究致力于提升这一能力。然而，实验发现，格式遵循能力可能需要与**问题解决能力**共同训练才能有效。例如，ChatGLM3-6B 和 Baichuan2-7B 在 JSON 格式评估的 Instruct 子集中得分较高，显示出较强的 JSON 渲染能力，但在 Plan 和 Reason 子集中，它们生成有效 JSON 格式的能力下降明显，格式与文本得分差异较大。这表明，**仅仅具备生成特定格式输出的能力并不能保证模型能解决对应任务中的复杂问题**。因此，建议在任务设计中**将格式要求与问题解决能力联合训练**，以使模型更好地适应具体协议。
+
+---
+
+### 4.2 包容性评估协议的必要性
+
+从实验结果（表1）可以看出，许多开源 LLM 在 JSON 格式评估中表现不佳，尤其是在 Reason、Retrieve 和 Understand 子集中。虽然 JSON 格式评估更贴近实际中工具代理的使用场景，但如果模型不熟悉任务所要求的特定指令格式，**严格的格式匹配评估将难以区分模型能力的差异**。例如，Baichuan2-13B 在 JSON 格式下的 Plan 子集得分较低，但使用字符串格式评估时得分显著提高，说明其基本规划能力并不存在严重缺陷。这表明，**过于严格的格式评估可能会掩盖模型的真实能力**，尤其对能力较弱的模型而言。因此，T-Eval 提出了一种包容性评估协议，将严格的格式匹配转化为语义层面的句子分析，**避免了评估的僵化性，更真实地反映模型内部能力**。
+
+---
+
+### 4.3 与其他基准的比较
+
+本节将 T-Eval 的细粒度评估协议与现有工具评估方法进行对比。选取了 ToolBench 提出的“获胜率”（win rate）作为整体评估代表，利用 GPT-4 对多个开源模型与 GPT-3.5-turbo 的回答质量进行比较。结果显示，T-Eval 的平均得分趋势与 ToolBench 的胜率评估结果相似，验证了 T-Eval 的合理性与泛化性。例如，Qwen-7B 在胜率上达到 52%，但与 GPT-3.5-turbo 在多项能力维度上仍存在差距。这说明整体评估方法有时**可能不够准确**。相比之下，T-Eval 不仅清晰地揭示了模型之间的能力差异，还详细展示了模型在工具使用方面的具体表现，**因此被认为是一个更合理、更全面的工具使用能力评估基准**。
+
+---
+
+### 总结
+
+本节通过对格式遵循与问题解决能力的联合训练需求、包容性评估协议的提出以及与其他评估方法的比较，全面论证了 T-Eval 评估体系的科学性与实用性。T-Eval 不仅避免了传统格式评估的僵化问题，还能在细粒度层面反映模型的真实能力，为评估大型语言模型的工具使用能力提供了一个更全面、更合理的框架。
+
+
+## 5 Related Work
+
+
+
+本章节综述了与大型语言模型（LLM）相关的三类研究工作：
+
+1. **增强LLM与工具的结合**  
+   有两种主要方式将外部工具集成到LLM中。第一种是将工具视为特定标记并对模型部分或全部进行微调，但这种方法需要大量工具相关数据，且难以适应新工具。第二种是利用LLM强大的上下文学习能力，通过提供工具的描述和示例来增强模型。该方法更具灵活性，已被成功应用于ChatGPT插件等工具调用场景。T-Eval基准主要针对这一范式，评估不同基础模型的工具调用能力。
+
+2. **LLM的评估方法**  
+   随着LLM应用的拓展，其评估变得至关重要。已有大量基准用于评估LLM在问答、自然语言理解和常识推理等任务上的性能。此外，研究还扩展到代码生成和幻觉检测等领域。部分基准也开始评估LLM代理在多样化场景中的表现。在工具使用方面，已有工具QA、Gorilla、API-Bank等基准，分别侧重于响应质量、调用准确性和综合性评估。T-Eval则首次提出对工具使用能力的细粒度评估。
+
+3. **通过提示词引导LLM作为智能体**  
+   提示词技术通过提供指令或示例来增强LLM的推理能力。典型方法包括思维链（CoT）和思维树（ToT），它们引导模型进行更全面的思考。其他先进系统如ReAct、ReWOO、SwiftSage等则进一步发展了LLM代理，利用高级提示方法提升模型表现，释放其潜在能力。
+
+综上，该章节全面回顾了LLM在工具集成、评估方法和智能体引导方面的研究进展，并突出了T-Eval在工具使用能力评估上的创新与独特性。
+
+
+## 6 Conclusion
+
+
+
+本文总结提出了一种名为 T-Eval 的综合性、细粒度的大型语言模型（LLM）工具使用评估基准。T-Eval 通过将工具使用任务按照模型能力进行解耦，并为各项任务设计专门的评估协议，从而揭示模型的真实能力。这种分步评估方法对当前 LLM 在工具学习方面的瓶颈进行了深入分析，为工具代理的进一步发展提供了有价值的见解。
+
+
+## Appendix A T-Eval Benchmark Details
+
+1. **数据来源与规模**  
+   T-Eval由533对高质量的查询-解决方案标注对构成，总共包含23,305个测试用例。
+
+2. **子集划分**  
+   数据集被划分为6个子集：Instruct、Plan、Reason、Retrieve、Understand和Review，各子集的测试用例数量详见表2。  
+   - Instruct: 2,660  
+   - Retrieve: 6,426  
+   - Plan: 553  
+   - Reason: 6,426  
+   - Review: 487  
+   - Understand: 6,753  
+
+3. **工具调用分析**  
+   - 图5展示了T-Eval中标注路径中工具调用的分布情况，包括工具调用的类别分布和调用步骤的累计分布。  
+   - 每个查询平均需要调用5.8个工具步骤，说明该数据集能够有效评估大型语言模型在工具使用上的泛化能力和区分度。
+
+本节内容为T-Eval的结构与统计特性提供了详细说明，为后续的模型评估奠定了基础。
+
+
+## Appendix B Implementation Details
+
+* **实验细节**  
+   为了评估单一模型的纯能力，作者采用了 ReAct（Yao et al., 2022）作为端到端评估的基本代理范式，并将最大动作步数限制为20，以确保大语言模型（LLM）在解决问题时的高效性和准确性。在单索引评估中，使用多轮对话风格的提示与LLM进行交互，并对响应进行评估。未特别说明时，选用开源模型的“chat”或“instruct”版本进行评估。
+
+* **提示（Prompt）**  
+   详细展示了不同阶段的提示模板，包括：
+   - **查询生成**（Query Generation）：见图6；
+   - **查询优化**（Query Refinement）：见图7；
+   - **多代理标注提示**（Multi-Agent Annotation Prompt）：见图8。
+
+
+![](https://img.zhaoweiguo.com/uPic/2025/07/d0MojP.jpg)
+
+Figure 6: An example prompt of query generation.
+
+
+![](https://img.zhaoweiguo.com/uPic/2025/07/l8vYzO.jpg)
+
+Figure 7: An example prompt of query refinement.
+
+![](https://img.zhaoweiguo.com/uPic/2025/07/WwkMRf.jpg)
+
+Figure 8: An example prompt of Multi-Agent Annotation Prompt.
+
+
+
+* **数据集展示**  
+   本部分展示了不同任务对应的数据集及提示模板，包括：
+   - **指令生成**（Instruct）：见图9；
+   - **计划生成**（Plan）：见图10；
+   - **推理能力**（Reason）：见图11；
+   - **信息检索**（Retrieve）：见图12；
+   - **理解能力**（Understand）：见图13；
+   - **审查能力**（Review）：见图14。
+
+![](https://img.zhaoweiguo.com/uPic/2025/07/RcPk18.jpg)
+
+Figure 9: An example prompt in the INSTRUCT dataset.
+
+![](https://img.zhaoweiguo.com/uPic/2025/07/L1C3aY.jpg)
+
+Figure 10: An example prompt in the PLAN dataset.
+
+![](https://img.zhaoweiguo.com/uPic/2025/07/Q04xSX.jpg)
+
+Figure 11: An example prompt in the REASON dataset.
+
+![](https://img.zhaoweiguo.com/uPic/2025/07/WuE5AU.jpg)
+
+Figure 12: An example prompt in the RETRIEVE dataset.
+
+![](https://img.zhaoweiguo.com/uPic/2025/07/7rwjz4.jpg)
+
+Figure 13: An example prompt in the UNDERSTAND dataset.
+
+![](https://img.zhaoweiguo.com/uPic/2025/07/PZf3NK.jpg)
+
+Figure 14: An example prompt in the REVIEW dataset.
+
+总结：本章节详细描述了实验中所采用的模型结构、评估方式、提示模板和数据集内容，为后续实验结果的分析提供了实现基础和方法支持。
+
+
+## Appendix C Detailed Evaluation Metrics
+
+
+
+本文档详细介绍了 T-Eval 评估体系中六个能力维度（Instruct、Plan、Reason、Retrieve、Understand 和 Review）的评估方法和对应的评分指标。T-Eval 通过两种输入格式（JSON 和 String）来评估大型语言模型（LLM）在工具使用能力上的表现。
+
+### 总体结构
+每个查询数据表示为一个元组 (T, q)，其中 T 是工具列表，q 是用户问题。解决方案路径 S 是一个由（思考、动作、观察、回顾）组成的序列，最终给出答案 A。每个动作 a 由工具名称和参数组成。评估过程针对每一步进行评分，并综合得出整体现有工具使用能力的分数。
+
+---
+
+### C.1 Instruct（生成指令）
+- LLM 需要根据指定模板生成符合格式的调用请求（JSON 或 String）。
+- 评估分两步：格式是否正确（格式得分 0.5）和参数是否准确（参数得分 = 0.5 × 参数匹配百分比）。
+- 总分为格式得分 + 参数得分。
+
+---
+
+### C.2 Plan（规划）
+- LLM 生成一个调用工具的步骤序列 P。
+- 与参考答案进行对比，构建相似度矩阵 S，使用 Sentence-BERT 计算工具名和参数的相似度。
+- 构建二分图，使用 Hopcroft-Karp 算法找到最大匹配，再通过最长递增子序列（LIS）算法计算匹配长度。
+- 精度（p）和召回率（r）根据匹配长度与总数的比例计算。
+- 最终计划得分为：plan score = 2pr / (p + r)。
+- JSON 格式要求生成工具列表，String 格式则逐行输出。
+
+---
+
+### C.3 Reason（推理）
+- LLM 需要根据已有信息生成下一步的思考内容。
+- 评估方法为使用 Sentence-BERT 计算生成内容与参考答案的相似度。
+- JSON 格式要求生成包含思考、工具名和参数的字典；String 格式只需生成思考内容。
+
+---
+
+### C.4 Retrieve（检索）
+- LLM 需要预测下一步应当调用的工具名。
+- 与参考答案对比，完全匹配得 1，否则得 0。
+- JSON 格式需生成包含工具名和参数的结构，String 格式只需生成工具名。
+
+---
+
+### C.5 Understand（理解参数）
+- LLM 需要生成调用工具所需的参数。
+- 评估方式为与参考答案的参数进行相似度比较（Sentence-BERT）。
+- JSON 格式需生成完整调用信息，String 格式只需生成参数内容。
+
+---
+
+### C.6 Review（评估响应）
+- LLM 需要对工具返回的响应进行分类，可能的类别包括：Success、Internal Error、Input Error、Irrelevant Response、Unable to Accomplish。
+- 正确分类得 1 分，错误分类得 0 分。
+
+---
+
+### 总结
+T-Eval 评估体系从六个维度全面衡量 LLM 在工具使用任务中的表现，覆盖了从生成调用请求、规划调用步骤、生成思考内容、检索工具、理解参数，到评估响应的全过程。通过严格的格式检查与语义相似度评估相结合，确保评估结果的客观性和准确性。两种输入格式（JSON 与 String）的设计也增强了评估体系的灵活性与实用性。
+
+
+## Appendix D API Documentation
+
+![](https://img.zhaoweiguo.com/uPic/2025/07/xmMGWG.jpg)
+
+Figure 15: An example API document: BINGMap.
+
+
+- **文档构建方式**：手动编写并详细注释每个工具的 API 描述，遵循 OpenAI 的注释格式。
+- **文档目的**：
+  - 提供比 RapidAPI 更详尽的工具描述，便于理解。
+  - 避免由于官方文档不完整导致的测试失败。
+- **文档示例**：以 `BINGMap` 为例，详细列出了其 API 接口的功能、参数、返回值等信息。
+
+
+
+
+
+

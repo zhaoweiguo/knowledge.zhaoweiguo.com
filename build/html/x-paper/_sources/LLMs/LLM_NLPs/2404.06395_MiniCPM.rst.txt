@@ -1,0 +1,88 @@
+2404.06395_MiniCPM: Unveiling the Potential of Small Language Models with Scalable Training Strategies
+######################################################################################################
+
+* https://arxiv.org/abs/2404.06395
+* GitHub: https://github.com/OpenBMB/MiniCPM
+* 组织: 清华大学计算机科学与技术系, Modelbest Inc.
+* The burgeoning interest in developing Large Language Models (LLMs) with up to trillion parameters has been met with concerns regarding resource efficiency and practical expense, particularly given the immense cost of experimentation. This scenario underscores the importance of exploring the potential of ``Small Language Models (SLMs)`` as a resource-efficient alternative. In this context, we introduce MiniCPM, specifically the 1.2B and 2.4B non-embedding parameter variants, not only excel in their respective categories but also demonstrate capabilities on par with 7B-13B LLMs. While focusing on SLMs, our approach exhibits scalability in both model and data dimensions for future LLM research. Regarding model scaling, we employ extensive model wind tunnel experiments for stable and optimal scaling. For data scaling, we introduce a Warmup-Stable-Decay (WSD) learning rate scheduler (LRS), conducive to continuous training and domain adaptation. We present an in-depth analysis of the intriguing training dynamics that occurred in the WSD LRS. With WSD LRS, we are now able to efficiently study data-model scaling law without extensive retraining experiments on both axes of model and data, from which we derive the much higher compute optimal data-model ratio than Chinchilla Optimal. Additionally, we introduce MiniCPM family, including MiniCPM-DPO, MiniCPM-MoE and MiniCPM-128K, whose excellent performance further cementing MiniCPM's foundation in diverse SLM applications.
+* 人们对开发具有多达万亿个参数的大型语言模型 ( LLMs ) 的兴趣日益浓厚，但也引起了对资源效率和实际费用的担忧，特别是考虑到实验成本巨大。这种情况强调了探索**小语言模型 (SLM)** 作为资源高效替代方案的潜力的重要性。在这种情况下，我们介绍 MiniCPM，特别是 1.2B 和 2.4B 非嵌入参数变体，不仅在各自的类别中表现出色，而且还展示了与 7B-13B LLMs同等的功能。在专注于 SLM 的同时，我们的方法在模型和数据维度上都表现出了可扩展性，适合未来的LLM研究。关于模型缩放，我们采用广泛的模型风洞实验来实现稳定和最佳的缩放。对于数据扩展，我们引入了预热-稳定-衰减（WSD）学习率调度器（LRS），有利于持续训练和领域适应。我们对 WSD LRS 中发生的有趣的训练动态进行了深入分析。借助 WSD LRS，我们现在能够有效地研究数据模型缩放定律，而无需在模型和数据两个轴上进行大量的再训练实验，从中我们得出比 Chinchilla Optimal 更高的计算最佳数据模型比率。此外，我们还推出了MiniCPM系列，包括MiniCPM-DPO、MiniCPM-MoE和MiniCPM-128K，其卓越的性能进一步巩固了MiniCPM在各种SLM应用中的基础。 
+
+
+5. Two Stage Pre-training Strategy
+==================================
+
+* 包含预训练阶段和监督微调（SFT）阶段。在预训练阶段，数据由大规模的无标签数据组成，而在SFT阶段，高质量的标签数据成为优化目标。
+
+
+
+6. Model
+========
+
+
+6.1 Model Details::
+
+    Vocabulary
+    Shared Input-output Layer
+    Deep-and-thin Network
+    Group Query Attention
+
+
+6.2 Training Stages::
+
+    整体训练包括三个阶段：稳定训练阶段、衰减阶段、SFT阶段
+    1. Stable Training Stage
+    2. Decay Stage.
+    3. SFT Stage
+
+
+
+7 MiniCPM Family
+================
+
+7.1 MiniCPM-DPO
+---------------
+
+* SFT 之后，我们使用 DPO (Rafailov et al., 2024 )来对模型进行人类偏好调整。在此阶段，UltraFeedback （Cui et al., 2023 ）被用作主要对齐数据集，并构建专有的偏好数据集以增强模型的代码和数学能力。我们进行一轮 DPO 训练，学习率为 1×10^−5 并利用 Cosine LRS，因为我们有预定义的训练步骤。
+* 应用 DPO 进行偏好对齐后，模型在 MTBench （Zheng et al., 2024 ）上的得分从 SFT 后的 6.89 提高到 7.25，甚至超过了 Llama2-70B-Chat 等大型模型。然而，我们也注意到基准测试的性能略有下降，这被称为**对齐税**（Askell et al., 2021 ） 。
+
+
+7.2 MiniCPM-128K
+----------------
+
+* 涉及冗长上下文的任务取决于这些上下文中的隐含信息，从而避免了对 SLM 中通常缺乏的广泛知识的需求。在本节中，我们将 MiniCPM-2.4B 的上下文长度从 4,096 个token扩展到 128,000 个token，说明了 SLM 有效处理长上下文的能力。
+
+
+
+7.3 MiniCPM-MoE
+---------------
+
+* 使用 Mixture-of-Expert 进一步扩展了 MiniCPM 的能力
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

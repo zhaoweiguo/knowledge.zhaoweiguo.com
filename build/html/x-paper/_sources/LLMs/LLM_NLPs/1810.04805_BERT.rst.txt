@@ -1,0 +1,189 @@
+1810.04805_BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding
+###########################################################################################
+
+* https://arxiv.org/abs/1810.04805
+* 组织：Google AI Language
+* 我们引入了一种名为 BERT 的新的语言表示模型，它代表 Transformers 的双向编码器表示。与最近的语言表示模型不同，BERT 旨在通过在所有 Layer 中，同时调节左、右上下文来预训练未标记文本的深度双向表示。因此，预训练的 BERT 模型只需一个额外的输出层即可进行微调，从而为各种任务（例如问答和语言推理）创建最先进的模型，而无需进行大量特定任务的架构修改。
+* We introduce a new language representation model called BERT, which stands for Bidirectional Encoder Representations from Transformers. Unlike recent language representation models, BERT is designed to pre-train deep bidirectional representations from unlabeled text by jointly conditioning on both left and right context in all layers. As a result, the pre-trained BERT model can be fine-tuned with just one additional output layer to create state-of-the-art models for a wide range of tasks, such as question answering and language inference, without substantial task-specific architecture modifications.
+* BERT 概念简单，经验强大。它在 11 项自然语言处理任务上获得了最新的结果，包括将 GLUE 分数推至 80.5%（绝对提高 7.7%）、MultiNLI 准确率达到 86.7%（绝对提高 4.6%）、SQuAD v1.1问答测试 F1 达到 93.2（绝对提高 1.5 分），SQuAD v2.0 测试 F1 达到 83.1（绝对提高 5.1 分）。
+* BERT is conceptually simple and empirically powerful. It obtains new state-of-the-art results on eleven natural language processing tasks, including pushing the GLUE score to 80.5% (7.7% point absolute improvement), MultiNLI accuracy to 86.7% (4.6% absolute improvement), SQuAD v1.1 question answering Test F1 to 93.2 (1.5 point absolute improvement) and SQuAD v2.0 Test F1 to 83.1 (5.1 point absolute improvement).
+
+
+* GitHub: https://github.com/google-research/bert
+
+
+1 Introduction
+==============
+
+* 将预训练的 language representations 应用于下游任务有两种现有策略：基于特征和微调(feature-based and fine-tuning)。
+* 1. 基于特征的方法 uses task-specific architectures that include the pre-trained representations as additional features.
+* 2. 微调的方法引入(introduces) minimal task-specific parameters, and is trained on the downstream tasks by simply fine-tuning all pre-trained parameters. 
+
+* 我们证明了双向预训练(bidirectional pre-training)对于语言表示的重要性。
+* 预先训练的表示减少了对许多精心设计的特定任务架构(heavily-engineered task-specific architectures)的需求。
+* BERT 是第一个基于微调(fine-tuning based)并在大量句子级和标记级任务上实现了最先进的性能的表示模型，优于许多特定于任务的架构。
+
+
+
+2 Related Work
+==============
+
+* pre-training general language representations主要有下面几种方法
+
+
+2.1 Unsupervised Feature-based Approaches
+-----------------------------------------
+
+* 预训练的词嵌入(Pre-trained word embeddings)是现代 NLP 系统不可或缺的一部分
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/09/Yb0gyq.png
+
+    Figure 1: Overall pre-training and fine-tuning procedures for BERT. 除了输出层之外，预训练和微调使用相同的架构。使用相同的预训练模型参数来初始化不同下游任务的模型。在微调过程中，所有参数都会被微调。 [CLS]是在每个输入示例前面添加的特殊符号， [SEP]是特殊的分隔符标记（例如分隔问题/答案）
+
+
+2.2 Unsupervised Fine-tuning Approaches
+---------------------------------------
+
+* Sentence or document encoders which produce contextual token representations have been pre-trained from unlabeled text and fine-tuned for a supervised downstream task
+* 产生上下文 token 表示的句子或文档编码器已经根据未标记的文本进行了预训练，并针对监督下游任务进行了微调
+* The advantage of these approaches is that few parameters need to be learned from scratch.
+* 这些方法的优点是几乎不需要从头开始学习参数
+* At least partly due to this advantage, OpenAI GPT Radford achieved previously state-of-the-art results on many sentence-level tasks
+* 至少部分由于这一优势，OpenAI GPT Radford 在许多句子级任务上取得了先前最先进的结果
+
+
+2.3 Transfer Learning from Supervised Data
+------------------------------------------
+
+* There has also been work showing effective transfer from supervised tasks with large datasets, such as natural language inference and machine translation.
+* Computer vision research has also demonstrated the importance of transfer learning from large pre-trained models, where an effective recipe is to fine-tune models pre-trained with ImageNet
+
+
+
+
+3 BERT
+======
+
+
+3.1 Pre-training BERT
+---------------------
+
+* Masked LM：为了训练深度双向表示，我们只需随机屏蔽一定比例的输入标记，然后预测这些屏蔽标记（完形填空）
+* Next Sentence Prediction (NSP)：
+
+* Pre-training data：使用 BooksCorpus（800M 单词）。 （ 2015 ）和英文维基百科（2,500M 字）。对于维基百科，我们仅提取文本段落并忽略列表、表格和标题。使用文档级语料库而不是打乱的句子级语料库至关重要
+
+
+3.2 Fine-tuning BERT
+--------------------
+
+* Fine-tuning is straightforward 
+* since the self-attention mechanism in the Transformer allows BERT to model(建模) many downstream tasks
+* whether they involve(涉及) single text or text pairs
+* by swapping out(交换) the appropriate inputs and outputs. 
+
+
+Appendix A Additional Details for BERT
+======================================
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/09/6dVA56.png
+
+    预训练模型架构的差异。 BERT 使用双向 Transformer。 OpenAI GPT 使用从左到右的 Transformer。 ELMo 使用独立训练的从左到右和从右到左 LSTM 的串联来生成下游任务的特征。在这三者中，只有 BERT 表示在所有层中同时以左右上下文为条件。除了架构差异之外，BERT 和 OpenAI GPT 是微调方法，而 ELMo 是基于特征的方法。
+
+A.1 Illustration of the Pre-training Tasks
+------------------------------------------
+
+Masked LM and the Masking Procedure::
+
+    * 80% of the time: Replace the word with the [MASK] token, e.g., my dog is hairy → my dog is [MASK]
+    * 10% of the time: Replace the word with a random word, e.g., my dog is hairy → my dog is apple
+    * 10% of the time: Keep the word unchanged, e.g., my dog is hairy → my dog is hairy. 
+    * The purpose of this is to bias the representation towards the actual observed word.
+
+    说明:
+        1. 15%的token会被mask
+        2. 1.5%(10 of 15%)的token被随机替换(因为比例小，所以不会影响模型的语言理解能力)
+
+
+Next Sentence Prediction::
+
+    Input = [CLS] the man went to [MASK] store [SEP]
+            he bought a gallon [MASK] milk [SEP] 
+    Label = IsNext
+
+    Input = [CLS] the man [MASK] to the store [SEP]
+            penguin [MASK] are flight ##less birds [SEP] 
+    Label = NotNext
+
+
+
+A.2 Pre-training Procedure
+--------------------------
+
+* 为了生成每个训练输入序列，我们从语料库中采样两个文本范围，我们将其称为“句子”，尽管它们通常比单个句子长得多（但也可以更短）。
+* 第一个句子接收A嵌入，第二个句子接收B嵌入。
+* 50% 的情况下B是A之后的实际下一个句子，50% 的情况下它是随机句子，这是为了“下一句预测”任务而完成的。
+* 在WordPiece标记化之后应用LM掩蔽，统一掩蔽率为15%，并且不对部分词片进行特殊考虑。
+
+
+A.3 Fine-tuning Procedure
+-------------------------
+
+最佳超参数值是特定于任务的，但我们发现以下可能的值范围在所有任务中都适用::
+
+    • Batch size: 16, 32
+    • Learning rate (Adam): 5e-5, 3e-5, 2e-5
+    • Number of epochs: 2, 3, 4
+
+
+* 大数据集（例如，100k+ 标记的训练样本）对超参数选择的敏感度远低于小数据集
+
+
+A.4 Comparison of BERT and OpenAI GPT
+-------------------------------------
+
+* • GPT is trained on the BooksCorpus (800M words); BERT is trained on the BooksCorpus (800M words) and Wikipedia (2,500M words).
+* • GPT uses a sentence separator ([SEP]) and classifier token ([CLS]) which are only introduced at fine-tuning time; BERT learns [SEP], [CLS] and sentence A/B embeddings during pre-training.
+* • GPT was trained for 1M steps with a batch size of 32,000 words; BERT was trained for 1M steps with a batch size of 128,000 words.
+* • GPT used the same learning rate of 5e-5 for all fine-tuning experiments; BERT chooses a task-specific fine-tuning learning rate which performs the best on the development set.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

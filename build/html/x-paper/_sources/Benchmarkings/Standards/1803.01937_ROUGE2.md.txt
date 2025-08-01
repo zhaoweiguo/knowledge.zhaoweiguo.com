@@ -1,0 +1,111 @@
+# 1803.01937_ROUGE2.0: Updated and Improved Measures for Evaluation of Summarization Tasks
+
+* [https://arxiv.org/abs/1803.01937](https://arxiv.org/abs/1803.01937)
+* PDF: [https://arxiv.org/pdf/1803.01937](https://arxiv.org/pdf/1803.01937)
+* 参考: 181(2025-07-17)
+
+
+## Abstract
+
+* 本文研究背景：摘要指出，评估机器生成摘要的质量至关重要，ROUGE已成为标准的自动评估指标，但现有ROUGE措施在捕捉同义概念和主题覆盖方面存在局限性，导致评分无法真实反映摘要质量。
+
+* 总结任务的评估对判断机器生成摘要的质量非常重要。
+* 过去十年里，ROUGE 成为了主流的自动评估方法，它能衡量机器摘要和人工摘要之间的 n-gram 重合程度。
+* 但 ROUGE 也有缺点，比如不能很好地识别同义词或主题覆盖情况，所以得分有时不能准确反映摘要的真实质量。
+* 为了解决这些问题，本文提出了改进版的 ROUGE 2.0，包括多个新指标，如加入同义词和主题信息的变种，提升了对摘要质量的多角度评估能力。
+* 示例: ROUGE-N+Synonyms、ROUGE-Topic、ROUGE-Topic+Synonyms、ROUGE-TopicUniq和ROUGE-TopicUniq+Synonyms
+
+
+## 1. Problems with the current ROUGE measures
+
+* ROUGE是一种通过比较系统生成的摘要与理想摘要（通常由人类创建）来自动评估摘要质量的方法，主要关注n-gram的重叠。
+* ROUGE的召回率得分（如ROUGE-1）无法全面反映摘要的性能，忽略了同义词和内容的实质性。
+* 在比较多个摘要系统时，ROUGE的局限性较小，但在实际应用或新任务中，单靠ROUGE分数无法评估摘要效果。
+* 示例中，两个系统生成的摘要（SysSum1和SysSum2）与参考摘要（RefSum）存在内容和表达方式的差异，ROUGE分数可能无法准确反映其质量。
+
+![](https://img.zhaoweiguo.com/uPic/2025/07/M1jo3B.jpg)
+
+
+* SysSum1和SysSum2的 ROUGE-1 F-Score分别为0.727和0.286（去除停用词后分别为0.571和0.305）。
+* SysSum1虽然简洁且捕捉了所有重要内容，但ROUGE-1 F-Score仍然不高，原因在于ROUGE不支持同义词。
+* ROUGE评分要求系统摘要与参考摘要完全一致，导致得分偏低，实际表达相同内容的方式多样。
+* 解决方案：允许同义词捕捉和评估主题覆盖率。
+
+
+
+* ROUGE评分无法有效捕捉主题或子集覆盖，主要关注参考摘要与系统摘要之间的n-gram重叠。
+* 在摘要生成中，了解不同内容或主题的覆盖情况至关重要，尤其在新闻、推文和观点摘要中，主题定义依赖于具体应用。
+* 提出ROUGE 2.0，旨在解决现有ROUGE的问题，包含以下新度量：
+    * ROUGE-{N|Topic|TopicUniq}+Synonyms：使用同义词字典捕捉同义词。
+    * ROUGE-Topic：主题或子集覆盖，主题可按词性自定义。
+    * ROUGE-TopicUniq：唯一主题或子集覆盖，主题可按词性自定义。
+* 通过这些新度量，可以优化摘要算法，提高精确度和召回率，避免强制生成与参考摘要相同的内容。
+
+
+## 2. ROUGE 2.0
+
+* ROUGE 2.0 具备改进的评分功能
+    * 支持通过同义词词典捕捉语义重叠
+    * 可针对特定主题或内容子集进行评估
+
+* 新指标：
+    * ROUGE-N+Synonyms：考虑同义词的n-gram重叠。
+        * 也叫 ROUGE-N+Synonyms，是对传统 ROUGE-N 的扩展，加入了同义词识别能力
+    * ROUGE-Topic：基于主题的评估。
+    * ROUGE-Topic+Synonyms：结合主题和同义词的评估。
+    * ROUGE-TopicUniq：评估独特主题的覆盖。
+    * ROUGE-TopicUniq+Synonyms：结合唯一主题和同义词的评估。
+        * 只计算每个主题词的唯一出现，重复出现的词只算一次
+        * 更关注摘要是否覆盖了所有关键主题点，而不是是否多次提到
+
+
+### 2.1 Semantics Capture using Synonyms: Rouge-{NN|Topic|TopicUniq}+Synonyms
+
+* ROUGE-{NN|Topic|TopicUniq}+Synonyms通过同义词字典提高参考摘要与系统摘要之间的n-gram重叠一致性。
+* 传统ROUGE只进行表面重叠，未考虑同义词，导致得分偏低。
+* 使用同义词后，系统摘要的召回率可达到1.000，显示出完美重叠。
+* ROUGE 2.0使用WordNet获取名词、动词和形容词的同义词，支持模块化替换特定领域或语言的同义词字典。
+* 可根据特定需求（如Twitter领域）使用相应的同义词字典。
+
+![](https://img.zhaoweiguo.com/uPic/2025/07/ldi92d.jpg)
+
+
+### 2.2 Topic or Subset Coverage: ROUGE Topic
+
+![](https://img.zhaoweiguo.com/uPic/2025/07/ckARCZ.jpg)
+
+Table 3 Part-of-speech options for ROUGE-Topic and ROUGE-TopicUniq scoring.
+
+* ROUGE-Topic允许根据不同的主题评估摘要，支持指定词性组合。
+* 评估维度可根据摘要任务定义，默认使用单词的出现频率（unigrams）。
+* 通过Stanford的词性标注器支持多种语言。
+* ROUGE-Topic可以分别评估多个维度，计算公式涉及参考摘要和系统摘要的词性标记。
+
+* ROUGE-Topic评估系统摘要与参考摘要之间的重叠词汇，考虑特定词性（POS）。
+* 重复词汇会影响ROUGE-Topic的精确度和召回率。
+* ROUGE-TopicUniq通过计算唯一词汇的集合交集，提供更准确的主题覆盖度评估。
+* REFUniq和SY SUniq分别表示参考和系统摘要中唯一的单词集合。
+
+![](https://img.zhaoweiguo.com/uPic/2025/07/pW1YoG.jpg)
+
+Table 4 ROUGE-TopicNN|JJ and ROUGE-TopicUniqNN|JJ scores
+
+
+* 表4展示了 ROUGE-Topic 和 ROUGE-TopicUniq 评分，主题为名词（NN）和形容词（JJ），用于评估意见覆盖。
+* ROUGE-TopicNN|JJ召回分数显示，SysSum1和SysSum2都正确捕捉了大部分参考摘要中的意见。
+* 使用同义词后，ROUGE-TopicNN|JJ的分数有所提升。
+* ROUGE-TopicUniqNN|JJ分数表明，精确度提高，重复被抑制，仅计算一次主题匹配。
+* SysSum1的ROUGE-TopicUniqNN|JJ + Synonyms F-Score显示其摘要完整且简洁。
+* SysSum2的精确度较低，表明包含了多余的主题和意见，需优化算法以减少冗余信息。
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,146 @@
+2410.17238_SELA: Tree-Search Enhanced LLM Agents for Automated Machine Learning
+###############################################################################
+
+* https://arxiv.org/abs/2410.17238
+* 组织: DeepWisdom, University of California(Berkeley, San Diego), 香港大学(广州,深圳), 华南师范等
+* 自动机器学习 (AutoML) 方法包括优化模型选择和集成的固定管道的传统方法，以及自主构建管道的基于LLM的新型框架。虽然基于LLM的代理在自动化机器学习任务方面表现出了良好的前景，但即使在多次迭代之后，它们也经常生成低多样性和次优的代码。为了克服这些限制，我们引入了树搜索增强型LLM代理 (Tree-Search Enhanced LLM Agents, SELA)，这是一种基于代理的创新系统，利用蒙特卡罗树搜索 (MCTS) 来优化 AutoML 流程。通过将管道配置用树结构表示，我们的框架使代理能够智能地进行实验并迭代地完善其策略，从而促进更有效地探索机器学习解决方案空间。这种新颖的方法使 SELA 能够根据实验反馈发现最佳途径，从而提高解决方案的整体质量。在对 20 个机器学习数据集的广泛评估中，我们比较了传统 AutoML 方法和基于代理的 AutoML 方法的性能，证明 SELA 相对于所有数据集的每个基线实现了 65% 到 80% 的胜率。这些结果强调了 AutoML 中基于代理的策略的巨大潜力，为应对复杂的机器学习挑战提供了全新的视角。
+* Automated Machine Learning (AutoML) approaches encompass traditional methods that optimize fixed pipelines for model selection and ensembling, as well as newer LLM-based frameworks that autonomously build pipelines. While LLM-based agents have shown promise in automating machine learning tasks, they often generate low-diversity and suboptimal code, even after multiple iterations. To overcome these limitations, we introduce Tree-Search Enhanced LLM Agents (SELA), an innovative agent-based system that leverages Monte Carlo Tree Search (MCTS) to optimize the AutoML process. By representing pipeline configurations as trees, our framework enables agents to conduct experiments intelligently and iteratively refine their strategies, facilitating a more effective exploration of the machine learning solution space. This novel approach allows SELA to discover optimal pathways based on experimental feedback, improving the overall quality of the solutions. In an extensive evaluation across 20 machine learning datasets, we compare the performance of traditional and agent-based AutoML methods, demonstrating that SELA achieves a win rate of 65% to 80% against each baseline across all datasets. These results underscore the significant potential of agent-based strategies in AutoML, offering a fresh perspective on tackling complex machine learning challenges.
+
+
+* Github: 参见 metagpt 中的实现
+
+
+.. note:: 快速简介：一个把LLM和AutoML相接合的方法，引入了树搜索增强型LLM代理
+
+
+1 Introduction
+==============
+
+* 自动化机器学习 (AutoML) 是一个快速发展的领域，旨在以最少的人工干预实现可靠机器学习解决方案设计过程的自动化。
+* 传统的 AutoML 框架，例如 ``Auto-WEKA``、``Auto-Sklearn``、``AutoGluon``和 ``H2O AutoML``，依赖于预定义的搜索空间和例程。
+* 这些框架主要侧重于优化超参数和模型集成，以找到最佳模型配置。
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/10/aRz269.png
+
+    解决 AutoML 问题的基于代理的方法主要有两种类型。第一种方法将机器学习任务分为多个阶段，为每个阶段提出一个计划，并根据计划逐步生成和执行代码，解决方案完成后不进行细化。第二个一步生成整个解决方案，并从整体上迭代地完善它。 第3种方法集成了这两种方法，支持分阶段规划，同时在每个阶段级别迭代探索更好的解决方案。
+
+
+* 本论文提出了机器学习问题的搜索空间并将其概念化为一棵树，其中每个分支代表一个潜在的解决方案路径。为了导航这个搜索空间，我们采用蒙特卡罗树搜索（MCTS）作为核心决策引擎，利用其平衡探索（测试新策略）和利用（改进已知的良好策略）的能力。 MCTS 允许代理有效地探索大型决策空间、收集和处理实验结果，并智能地选择下一个有希望的配置进行测试。
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/10/31vjM8.png
+
+    各种 AutoML 方法的关键功能比较。动态表示系统根据中间结果调整工作流程的能力，使其能够适应新信息的出现。多样化是指跨任务采用多种策略或方法，这有助于捕获不同的建模需求。本能意味着系统直接依赖于LLM生成的决策，并且在很大程度上取决于模型的倾向。
+
+
+2 Related Works
+===============
+
+* 树搜索及其与LLMs集成: 树搜索算法极大地促进了人工智能领域的问题解决，其中蒙特卡罗树搜索（Monte Carlo Tree Search, MCTS）成为一种领先技术。
+* AutoML 系统的进步和局限性: 引入了自动化机器学习 (AutoML) 框架，以减少设计机器学习管道时对专业知识的需求。尽管取得了这些进步，传统的 AutoML 系统仍然受到严格的管道和有限的灵活性的限制，无法适应独特的数据集或特定的任务要求。
+* 用于动态机器学习管道的LLM代理: 与静态管道相比，基于LLM的代理提供了更动态的解决方案来解决复杂的机器学习挑战。
+
+
+.. note:: SELA集成了两种方法的优势——分阶段规划和迭代细化——使其能够从头开始自主探索和生成机器学习解决方案。这种方法在搜索过程中提供了更大的灵活性和控制力，从而能够在每个阶段生成优化的解决方案。
+
+
+3 Method
+========
+
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/11/nzYDwy.png
+
+    SELA的流程如下：系统首先将问题描述和数据集信息输入到LLM中，LLM 生成潜在解决方案的搜索空间，包括数据预处理、特征工程和模型训练。该搜索模块由蒙特卡罗树搜索 (MCTS) 提供支持，通过选择、扩展和模拟潜在配置来探索该空间。然后， LLM代理通过规划、编码和执行实验来模拟所选的配置。模拟的反馈被反馈到搜索模块，在反向传播步骤中使用它来完善未来的搜索。这个迭代过程持续进行，直到满足预定义的停止标准，从而产生优化的实验管道。
+
+
+3.1 Insight Proposal and Search Space Creation
+----------------------------------------------
+
+* 为了使 SELA 能够探索广泛的机器学习策略，我们引入了一个洞察提议器(insight proposer)，它可以生成适合机器学习工作流程不同阶段的多种方法。每个提出的洞察(insight)建议或者采用单一技术，或者旨在提高性能的方法组合。例如，特征工程洞察可能建议从现有变量创建交互特征，而模型训练洞察可以提出特定算法或建议运行网格搜索以提高准确性。
+* 洞察提议者将问题描述 𝑝 和数据集信息 𝑑 （例如元数据和样本记录）作为输入，并使用大型语言模型 𝑀 为机器学习过程的每个阶段生成 𝑚 个洞察 𝜆 。这些洞察存储在洞察池(insight pool)中，形成 \methodname 探索的搜索空间 Λ 。我们将机器学习过程分解为五个阶段：探索性数据分析 ( 𝜏1 )、数据预处理 ( 𝜏2 )、特征工程 ( 𝜏3 )、模型训练 ( 𝜏4 ) 和模型评估 ( 𝜏5 )。为简单起见，我们将整个阶段集表示为 𝑇 ，并将任何特定阶段称为 𝜏 。
+
+.. figure:: https://img.zhaoweiguo.com/uPic/2024/11/s1wQzg.png
+
+    公式
+
+
+3.2 Pipeline Execution and Code Generation
+------------------------------------------
+
+* 我们部署了一个 LLM 代理（称为实验执行器 𝐸 ），通过根据自然语言需求构建实用的实验管道来进行每次试验。代理在此过程中采取两个主要步骤：首先，给定一个实验 configuration 𝑐 ，这是搜索模块提供的一组洞察（在第 3.3.2 节中介绍），实验执行器将这些洞察转化为详细计划。该计划由一系列与机器学习过程的每个阶段相对应的任务指令 𝐼^(𝜏∈𝑇) 组成。此步骤称为 𝐸 计划 。
+* 接下来，按照计划，代理根据相应的指令 𝐼^𝜏 为每个任务 𝜏 编写并执行代码 𝜎^𝜏 ，生成完整管道的代码 𝜎^(𝜏∈𝑇) 以及最终执行分数 𝑠 。完整的代码输出集 𝜎^(𝜏∈𝑇) 被连接成一个完整的解决方案 𝜎_𝑠𝑜𝑙 以解决问题。此阶段称为 𝐸_code&execution。
+
+
+3.3 Tree Search in Machine Learning Experiments
+-----------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,348 @@
+# 2211.10438_SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models
+
+* [https://arxiv.org/abs/2211.10438](https://arxiv.org/abs/2211.10438)
+* GitHub: [https://github.com/mit-han-lab/smoothquant](https://github.com/mit-han-lab/smoothquant)
+
+
+
+## Abstract
+
+* 大语言模型性能很好，但计算和内存开销大。
+* 量化可以减少内存和加快推理，但现有方法难以兼顾精度和效率。
+* **SmoothQuant** 是一种无需训练、保留精度、通用的后训练量化方法，支持将权重和激活都量化为 8 位（W8A8）。
+* 它通过一个数学等价的方法，把激活中的难量化部分转移到更易量化的权重中，从而平滑激活异常值。
+* 这种方法适用于多种主流模型，如 OPT、LLaMA、Falcon、Mistral 等。
+* 结果显示：几乎不损失精度的情况下，可实现最高 **1.56× 推理速度提升** 和 **2× 内存节省**，甚至能在单节点上部署 530B 模型。
+
+
+## 1. Introduction
+
+* 大模型（LLMs）性能强大，但因为参数量巨大，运行成本高、内存需求大，例如 GPT-3 需要 350GB 内存，仅推理就要多块高端 GPU。
+* **量化（Quantization）**是一种有效的优化方法，通过用低比特的整数（如 INT8）代替浮点数（如 FP16），可以节省显存、提升速度。但 LLM 的 **激活值（activations）** 很难量化，特别是当模型参数超过 67 亿时，会出现异常值（outliers），导致误差增大，影响准确率。
+
+* 之前的优化方法如：
+    * **ZeroQuant**：引入动态激活量化，适用于中小模型，但不适用于超大模型如 OPT-175B。
+    * **LLM.int8()**：保留异常值为 FP16，其余为 INT8，但难以高效实现。
+
+### SmoothQuant 的核心思路：
+
+* 观察到激活值中每个 token 在不同通道上变化相似。
+* **把激活中的变化“迁移”到权重上**，平滑处理后，激活和权重都变得容易量化。
+* 这样在不需要重新训练的前提下，实现更快、更省内存的量化。
+
+### 优点：
+
+* 精度保持好，适用于超大模型（如 OPT-175B、BLOOM-176B、GLM-130B、MT-NLG 530B）。
+* 推理速度最多可提升 **1.56 倍**，内存最多减少 **一半**。
+* 易于实现，已集成到 FasterTransformer 框架中。
+* 可以用 **更少的 GPU** 运行更大的模型，大幅降低使用成本。
+
+
+## 2. Preliminaries
+
+### 1. **量化（Quantization）是什么？**
+
+* 量化是把高精度的数据（如FP16浮点数）转换成低精度（如INT8整数），以提高硬件运行效率。
+
+### 2. **基本公式：**
+
+* 量化过程是：
+
+> `X_INT8 = round(X_FP16 / Δ)`
+> `Δ = max(|X|) / (2^(N-1) - 1)`
+
+* 其中：
+    * `X` 是原始浮点张量；
+    * `X_INT8` 是量化后的整数张量；
+    * `Δ` 是量化步长；
+    * `N=8` 表示使用 8 位整数。
+
+* 默认假设量化是**对称的**（中心为0），但也可以处理**非对称**的情况（比如ReLU后）。
+
+### 示例：
+
+* 假设浮点张量：
+$$
+X = [-1.5, -0.5, 0.0, 0.5, 1.0]
+$$
+
+1. 先计算最大绝对值：
+
+$$
+\max(|X|) = 1.5
+$$
+
+2. 然后用公式算 Δ：
+
+$$
+\Delta = \frac{1.5}{127} ≈ 0.0118
+$$
+
+
+
+#### 🔄 量化过程：
+
+使用下面公式：
+
+$$
+X_{\text{INT8}} = \text{round}\left(\frac{X}{\Delta}\right)
+$$
+
+也就是：
+
+| 原始 X | 除以 Δ ≈ 0.0118 | 四舍五入 | INT8 值 |
+| ---- | ------------- | ---- | ------ |
+| -1.5 | -127.12       | -127 | -127   |
+| -0.5 | -42.37        | -42  | -42    |
+| 0.0  | 0.0           | 0    | 0      |
+| 0.5  | 42.37         | 42   | 42     |
+| 1.0  | 84.75         | 85   | 85     |
+
+
+#### 📦 反量化（Dequantization）也可以做：
+
+$$
+X_{\text{FP}} ≈ X_{\text{INT8}} × Δ
+$$
+
+比如：
+
+* `85 × 0.0118 ≈ 1.003`（还原为接近 1.0）
+
+
+
+### 3. **Δ（量化步长）怎么得出？**
+
+* **静态量化（Static）**：提前用一批样本统计出 Δ；
+* **动态量化（Dynamic）**：运行时实时计算 Δ。
+
+### 4. **量化的粒度有不同种类：**
+
+* **Per-tensor**：整个张量共用一个 Δ（最快但精度最低）；
+* **Per-token**：每个 token 使用不同 Δ；
+* **Per-channel**：每个输出通道用不同 Δ；
+* **Group-wise**：按通道组共享 Δ，介于 per-tensor 和 per-channel 之间。
+
+
+### 5. **为什么 INT8 有用？**
+
+* 在 Transformer 中，一个线性层的计算是：**Y = X × W**，
+* 其中：
+    * **X** 是输入，形状是 T × Ci（T 是 token 数，Ci 是输入通道数）
+    * **W** 是权重，形状是 Ci × Co（Co 是输出通道数）
+    * **Y** 是输出，形状是 T × Co
+* 为了减少存储成本，可以把权重量化成 **INT8**（比 FP16 节省一半空间）。
+* 但如果还想提高推理速度，就需要把 **权重和激活（或输入）都量化成 INT8**，这样才能用硬件支持的整数计算加速（比如 NVIDIA GPU、Intel CPU 等上的 INT8 GEMM 算法）。
+
+
+
+## 3. Review of Quantization Difficulty
+
+* **1. 激活比权重更难量化**
+    * 权重分布平滑，容易量化。
+    * 激活中有**异常值（outliers）**，数值比其他值大约100倍，很难压缩。
+* **2. 异常值影响整个通道的量化效果**
+    * 如果使用“**每张量（per-tensor）**”量化，这些异常值会撑大整个量化范围，
+    * 导致其他普通值几乎没有有效的量化等级（只有2~3级），误差很大。
+* **3. 异常值集中在固定通道**
+    * 某些通道中的异常值在所有token中都存在，不是偶然现象，而是**结构性固定的**。
+
+
+![](https://img.zhaoweiguo.com/uPic/2025/06/gX5YOB.jpg)
+
+Figure 4: Magnitude of the input activations and weights of a linear layer in OPT-13B before and after SmoothQuant. Observations: (1) there are a few channels in the original activation map whose magnitudes are very large (greater than 70); (2) the variance in one activation channel is small; (3) the original weight distribution is flat and uniform. SmoothQuant migrates the outlier channels from activation to weight. In the end, the outliers in the activation are greatly smoothed while the weight is still pretty smooth and flat.
+
+
+
+### 各种量化方法的对比（以INT8为例）：
+
+![](https://img.zhaoweiguo.com/uPic/2025/06/hb6IcJ.jpg)
+
+Table 1:Among different activation quantization schemes, only per-channel quantization (Bondarenko et al., 2021) preserves the accuracy, but it is not compatible (marked in gray) with INT8 GEMM kernels. We report the average accuracy on WinoGrande, HellaSwag, PIQA, and LAMBADA.
+
+
+| 方法              | 准确率（接近FP16越好） | 是否适配高效硬件（如Tensor Core） |
+| --------------- | ------------- | ---------------------- |
+| FP16            | 最准            | ✅                      |
+| per-tensor      | 差（准确率大幅下降）    | ✅                      |
+| per-token       | 稍好，但仍很差       | ✅                      |
+| **per-channel** | 准确率几乎等于FP16   | ❌ 不兼容硬件加速              |
+
+
+### 难点总结：
+
+* **per-channel量化**效果好但不能直接用在Tensor Core这类高吞吐硬件上。
+* 当前主流使用的是**per-token量化**，虽然仍不能解决激活值难量化的问题，但至少兼容硬件。
+
+
+## 4. SmoothQuant
+
+### 📌 核心思想：
+
+* **SmoothQuant** 通过对输入激活进行“平滑处理”，把量化的难度从难以量化的激活转移到更容易量化的权重，从而提高量化精度。
+
+### 🧠 原理简化：
+
+1. **原始问题：**
+   * 每个通道分别量化激活（per-channel activation quantization）很难做到。
+
+2. **解决方法：**
+   * 对每个通道的激活除以一个“平滑因子” $s_j$，同时将权重乘以相应的 $s_j$，保持数学等价。
+   * 这样做可以让激活的数值范围变得更均匀，更容易量化。
+
+![](https://img.zhaoweiguo.com/uPic/2025/06/JoJLAE.jpg)
+
+Figure 5:Main idea of SmoothQuant when **α** is 0.5. The smoothing factor **s** is obtained on calibration samples and the entire transformation is performed offline. At runtime, the activations are smooth without scaling.
+
+
+3. **如何选平滑因子：**
+   * 如果想让激活更容易量化，就让 $s_j = \max(|X_j|)$
+   * 如果想让权重更容易量化，就让 $s_j = 1 / \max(|W_j|)$
+   * 但极端选择都会带来问题（一个容易，另一个难）
+
+4. **平衡方案：**
+   * 引入一个超参数 $\alpha \in [0, 1]$，控制激活和权重之间的平衡：
+     $$
+     s_j = \frac{\max(|X_j|)^\alpha}{\max(|W_j|)^{1 - \alpha}}
+     $$
+   * 一般选择 $\alpha = 0.5$ 表示激活和权重平分“量化难度”。
+
+5. **离线处理：**
+   * 平滑和缩放操作可以提前离线完成，不增加实际运行时开销。
+
+### ⚙️ 在 Transformer 中的应用：
+
+![](https://img.zhaoweiguo.com/uPic/2025/06/iryOhH.jpg)
+
+Figure 6: SmoothQuant’s precision mapping for a Transformer block. All compute-intensive operators like linear layers and batched matmul (BMMs) use INT8 arithmetic.
+
+
+* 在注意力和前馈层的输入上应用 SmoothQuant。
+* 将线性层和注意力中的矩阵乘法（BMM）都使用 INT8 量化。
+* 而像 ReLU、Softmax、LayerNorm 等轻量操作仍保留 FP16。
+* 这样既能保持精度，也提升推理效率。
+
+![](https://img.zhaoweiguo.com/uPic/2025/06/AoGdJL.jpg)
+
+Table 2: Quantization setting of the baselines and SmoothQuant. All weight and activations use INT8 representations unless specified. For SmoothQuant, the efficiency improves from O1 to O3 (i.e., lower latency).
+
+
+### ✅ 总结一句话：
+
+* SmoothQuant 是一种将激活的量化难度部分转移到权重上，并通过平衡参数 α 控制转移强度的高效后量化方法，特别适合大语言模型。
+
+
+## 5. Experiments
+
+
+### 一、实验设置（5.1 Setups）
+
+* **对比方案**：与4种常见的INT8量化方法比较（W8A8、ZeroQuant、LLM.int8()、Outlier Suppression），SmoothQuant提供三种量化等级（O1-O3），可灵活调整精度与效率。
+* **模型与数据集**：测试对象涵盖多个大型语言模型（OPT、BLOOM、GLM-130B），在多个Zero-shot任务上进行评估，包括LAMBADA、PIQA、WikiText等。
+* **激活平滑技术**：引入参数α调整激活分布，使用少量样本一次性校准后在所有任务中复用。
+* **实现方式**：分别在 Huggingface 和 NVIDIA FasterTransformer 框架中实现 INT8 量化模块，直接替换 FP16 模块即可使用。
+
+
+### 二、准确率评估（5.2 Accurate Quantization）
+
+* **OPT-175B**：SmoothQuant在保持准确率的同时成功量化，LLM.int8()虽然也能保持准确率，但代价是延迟较高。
+* **不同模型**：SmoothQuant适用于各种模型，BLOOM 相对容易量化，GLM-130B较难但也能保证性能，远超其他方法。
+* **不同大小模型**：从小模型到超大模型（如OPT-175B）都适用，性能稳定。
+* **指令微调模型**：在指令调优的OPT-IML-30B上同样有效。
+* **LLaMA系列**：对LLaMA及其衍生模型（LLaMA2、Falcon、Mistral、Mixtral）进行量化，准确率几乎无损。
+
+### 三、加速与内存节省（5.3 Speedup and Memory Saving）
+
+* **PyTorch版**：SmoothQuant-O3比FP16快1.5倍以上，且更省内存；LLM.int8()虽然保准确率但延迟更高。
+* **FasterTransformer版**：在这个高效框架中也有显著加速，甚至只用一半GPU完成同样推理任务，节省成本。
+* **推理阶段加速**：SmoothQuant显著提升了逐token生成速度（最高提速1.42倍）并减少一半显存占用。
+
+
+### 四、规模化部署（5.4 Scaling Up）
+
+* 成功将530B规模的MT-NLG模型量化为W8A8，并部署在单节点（8张A100卡）上，几乎无性能损失。
+
+### 五、消融实验（5.5 Ablation Study）
+
+* **量化方案对比**：粗粒度（O3）量化速度更快，且静态量化比动态更高效。
+* **迁移强度α**：最佳α值在0.4-0.6之间，平衡权重和激活的量化难度。
+
+```note
+简而言之：**SmoothQuant 是一种高效、实用的INT8后训练量化方法，能在不影响大模型性能的前提下，极大提升速度并节省内存，适用于多种规模和架构的大语言模型。**
+```
+
+## 6. Related Work
+
+### 1. 大语言模型（LLMs）
+
+* 随着模型参数规模增加（如GPT-3到530B），性能显著提升，支持少样本/零样本学习。
+* 但模型越大，推理成本越高。
+* 本文提出的方法可以对最大的一些开源模型（如OPT-175B、BLOOM-176B、GLM-130B，甚至MT-NLG 530B）进行**量化**，以降低内存消耗并加速推理。
+
+
+### 2. 模型量化（Model Quantization）
+
+* 量化可大幅减少模型体积并提升推理速度，已成功用于CNN和Transformer。
+* 技术如“权重均衡”和“通道切分”能减少权重量化误差，但难以解决**激活值的异常值**问题，而这正是LLM量化的关键难点。
+
+
+### 3. LLM量化的挑战与现状
+
+* GPTQ 只量化权重，不处理激活。
+* ZeroQuant 和 nuQmm 提出了更复杂的量化方法，但需要定制 CUDA 内核，且仅支持小模型。
+* LLM.int8() 尝试处理激活异常值，但推理反而更慢。
+* Outlier Suppression 方法也只适用于小模型，如BERT。
+* 本文提出的新方法：**无需重训练，使用每张量静态量化（per-tensor static quantization）**，支持INT8推理，兼顾准确率与硬件效率，适用于最大规模的开源LLM。
+
+
+
+## 7. Conclusion
+
+* SmoothQuant 是一种高效准确的量化方法，可以在不损失精度的情况下，把大语言模型（最多到 530B 参数）的权重和激活都压缩成 8 位。
+* 它适用于所有的矩阵计算（GEMM），大大降低了推理时的延迟和内存占用。
+* 它已集成进 PyTorch 和 FasterTransformer，最高可实现 1.56 倍加速、内存减半，从而降低大模型的使用成本，推动其普及。
+
+
+
+
+## Appendix A. Discussion on Weight-Only Quantization
+
+* 这段话主要是在比较两种大模型量化方法：**权重激活同时量化（W8A8）** 和 **仅权重量化（如 GPTQ）**
+
+### 背景：
+
+* 本文关注的是 **W8A8 量化的对比**，因为可以用 **INT8 算子（GEMM）** 加速推理。
+* 另一种方法是 **只量化权重**（如 GPTQ），推理时再转回 FP16 来乘法运算，也能提升速度，尤其适用于 **单条生成任务（batch size=1）**。
+
+
+### 核心讨论要点：
+
+1. **GPTQ 对比困难：**
+   * GPTQ 只支持 **生成阶段、batch size=1**。
+   * 不支持 **上下文阶段（context stage）** 或 **批处理（batching）**。
+   * GPTQ 的优化是为 **OPT-175B** 模型设计的。
+   * 本文使用了 FasterTransformer，直接比较会不公平。
+
+2. **适用场景不同：**
+   * GPTQ 更适合 **小 token 数量、内存瓶颈明显的场景**。
+   * SmoothQuant 更适合 **批处理或上下文处理（多个 token）**。
+   * 实际生产中，通过先进的批处理技术，GPT 模型的吞吐可提速 **37 倍**，W8A8 会更有优势。
+
+3. **KV Cache 是关键：**
+   * 聊天机器人等应用需要处理长上下文和批处理，**KV Cache 占用内存非常大**（比如 512 批处理大小、2048 长度时占 3TB）。
+   * 所以，**激活量化**可以显著降低 **KV Cache 的内存开销**。
+
+4. **方法可以结合：**
+   * 认为两种方法（GPTQ 和 SmoothQuant）**不是对立的**，可以结合。
+   * 未来可能实现 **W4A4 量化**，进一步提升效率，特别是 NVIDIA Hopper 架构支持 INT4 指令。
+
+
+
+
+
+
+
+
+
+
+
