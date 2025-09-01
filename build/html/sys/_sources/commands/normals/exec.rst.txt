@@ -62,3 +62,28 @@ Mac下与 linux 的不同点-替换相关功能::
     $ find . -type f -exec sed -i "" 's|](/from/|](/to/|g' {} \;
      说明: 为解决查询和替换文本中有默认分隔符问题
 
+
+实战-rst 转 md
+-----------------
+
+'.. note:: <content>' 替换成 '```note\n<content>\n```'::
+
+    find . -type f -name "*.rst" -exec perl -0777 -pi -e 's/\.\. note::(\s+.*?)(?=\n\n|\n\S|\n$)/```note\n$1\n```/gs' {} \;
+
+".. figure:: <pic url>" 替换为 "![](<pic_url>"::
+
+    find . -type f -name "*.rst" -exec perl -pi -e 's/\.\. figure:: ([^\s]+)/![]($1)/g' {} \;
+
+
+"::\n<content>" 转为 ```\n<content>\n```::
+
+    find . -type f -name "*.rst" -exec perl -0777 -pi -e 's/(^|\n)::\n\n(\s+.*?)(?=\n\n|\n[^\s]|\n$)/\n```\n$2\n```/gs' {} \;
+
+将 rst 格式的标题转换为 markdown 格式::
+
+    find . -type f -name "*.md" -exec perl -0777 -pi -e '
+        s/^(.+)\n=+$/## $1/gm;
+        s/^(.+)\n-+$/### $1/gm;
+        s/^(.+)\n^+$/#### $1/gm;
+    ' {} \;
+

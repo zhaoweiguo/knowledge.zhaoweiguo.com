@@ -24,12 +24,28 @@ window.MathJax = {
 <!-- end added 2025-04-14   增加对markdown中公式的支持 -->
 
 
+<!-- start added 2025-08-06   增加对mermaid图的支持 -->
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    mermaid.initialize({
+        startOnLoad: true,
+        theme: 'default',
+        flowchart: { useMaxWidth: true }
+    });
+});
+</script>
+<!--  end added 2025-08-06   增加对mermaid图的支持 -->
+
+
+
+
   <meta charset="utf-8">
   <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>桌面相关 &mdash; 新溪-gordon V2025.07 文档</title>
+  <title>桌面相关 &mdash; 新溪-gordon V2025.08 文档</title>
   
 
   
@@ -92,7 +108,7 @@ window.MathJax = {
             
             
               <div class="version">
-                V2025.07
+                V2025.08
               </div>
             
           
@@ -356,6 +372,7 @@ window.MathJax = {
 <li class="toctree-l4"><a class="reference internal" href="../../commands/normals/exec.html#linux">linux专用实例</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../commands/normals/exec.html#mac">Mac专用实例</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../commands/normals/exec.html#id3">实战</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../commands/normals/exec.html#rst-md">实战-rst 转 md</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../commands/normals/xargs.html">xargs命令</a></li>
@@ -715,10 +732,10 @@ window.MathJax = {
 <li class="toctree-l3 current"><a class="current reference internal" href="#">桌面相关</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#ubuntu">Ubuntu</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#id3">中文输入法</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id4">截屏</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id5">电脑合盖</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id6">亮度调节</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id7">鼠标配置</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id5">截屏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id6">电脑合盖</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id7">亮度调节</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id8">鼠标配置</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#xev">xev</a></li>
 </ul>
 </li>
@@ -1200,14 +1217,17 @@ window.MathJax = {
               <ul>
 <li><a class="reference internal" href="#">桌面相关</a><ul>
 <li><a class="reference internal" href="#ubuntu">Ubuntu</a></li>
-<li><a class="reference internal" href="#id3">中文输入法</a></li>
-<li><a class="reference internal" href="#id4">截屏</a></li>
-<li><a class="reference internal" href="#id5">电脑合盖</a></li>
-<li><a class="reference internal" href="#id6">亮度调节</a><ul>
+<li><a class="reference internal" href="#id3">中文输入法</a><ul>
+<li><a class="reference internal" href="#id4">常见问题</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id5">截屏</a></li>
+<li><a class="reference internal" href="#id6">电脑合盖</a></li>
+<li><a class="reference internal" href="#id7">亮度调节</a><ul>
 <li><a class="reference internal" href="#xbacklight">xbacklight</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#id7">鼠标配置</a></li>
+<li><a class="reference internal" href="#id8">鼠标配置</a></li>
 <li><a class="reference internal" href="#xev">xev</a><ul>
 <li><a class="reference internal" href="#imwheel">imwheel</a></li>
 </ul>
@@ -1280,17 +1300,57 @@ $&gt; sudo apt-get install pdfeditor
 <p class="admonition-title">警告</p>
 <p>注意：要在增加输入法配置时，去掉左侧选中的``Only Show Current Language``</p>
 </div>
-</section>
 <section id="id4">
-<h2>截屏<a class="headerlink" href="#id4" title="此标题的永久链接">¶</a></h2>
+<h3>常见问题<a class="headerlink" href="#id4" title="此标题的永久链接">¶</a></h3>
+<ul class="simple">
+<li><p>在浏览器可以了打出中文，但在vscode中打不出来</p></li>
+<li><p>原因：通常是因为 VSCode 没有正确继承或使用系统的输入法框架（通常是 IBus 或 Fcitx）。</p></li>
+<li><dl class="simple">
+<dt>解决方案</dt><dd><ul>
+<li><dl class="simple">
+<dt>方案一：最简单的解决方案</dt><dd><ul>
+<li><p>打开终端，用命令启动: <code class="docutils literal notranslate"><span class="pre">code</span></code></p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>方案二：修改启动器图标(此方案使用没有生效，原因待定位)</dt><dd><ul>
+<li><dl class="simple">
+<dt>找到 VSCode 的桌面文件</dt><dd><ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">/usr/share/applications/code.desktop</span></code> 或 <code class="docutils literal notranslate"><span class="pre">~/.local/share/applications/code.desktop</span></code></p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>在 Exec 命令前添加环境变量</dt><dd><ul>
+<li><p>把 <code class="docutils literal notranslate"><span class="pre">Exec=/usr/share/code/code</span> <span class="pre">--unity-launch</span> <span class="pre">%F</span></code> 改为 <code class="docutils literal notranslate"><span class="pre">Exec=env</span> <span class="pre">GTK_IM_MODULE=ibus</span> <span class="pre">QT_IM_MODULE=ibus</span> <span class="pre">/usr/share/code/code</span> <span class="pre">--unity-launch</span> <span class="pre">%F</span></code></p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+</section>
+<section id="id5">
+<h2>截屏<a class="headerlink" href="#id5" title="此标题的永久链接">¶</a></h2>
 <ul class="simple">
 <li><p>ubuntu 系统自带截图工具 screenshot</p></li>
 <li><p>自定义区域截图的快捷键：Setting -&gt; Devices -&gt; Keyboard</p></li>
 <li><p>可以设置为 <code class="docutils literal notranslate"><span class="pre">ctrl</span> <span class="pre">+</span> <span class="pre">alt</span> <span class="pre">+</span> <span class="pre">A</span></code></p></li>
 </ul>
 </section>
-<section id="id5">
-<h2>电脑合盖<a class="headerlink" href="#id5" title="此标题的永久链接">¶</a></h2>
+<section id="id6">
+<h2>电脑合盖<a class="headerlink" href="#id6" title="此标题的永久链接">¶</a></h2>
 <ul class="simple">
 <li><p>有时界面上相关设置，有时则没有，没有的话可以用下面方法</p></li>
 </ul>
@@ -1318,8 +1378,8 @@ sudo systemctl restart systemd-logind.service
 </pre></div>
 </div>
 </section>
-<section id="id6">
-<h2>亮度调节<a class="headerlink" href="#id6" title="此标题的永久链接">¶</a></h2>
+<section id="id7">
+<h2>亮度调节<a class="headerlink" href="#id7" title="此标题的永久链接">¶</a></h2>
 <section id="xbacklight">
 <h3>xbacklight<a class="headerlink" href="#xbacklight" title="此标题的永久链接">¶</a></h3>
 <ul class="simple">
@@ -1328,8 +1388,8 @@ sudo systemctl restart systemd-logind.service
 </ul>
 </section>
 </section>
-<section id="id7">
-<h2>鼠标配置<a class="headerlink" href="#id7" title="此标题的永久链接">¶</a></h2>
+<section id="id8">
+<h2>鼠标配置<a class="headerlink" href="#id8" title="此标题的永久链接">¶</a></h2>
 <div class="admonition note">
 <p class="admonition-title">备注</p>
 <p>2024-07-14 使用联想的一个无线鼠标，前进后退键和我原来习惯是相反的，搞搞搞，搞了半天，最后也没搞好，换了一个蓝牙鼠标直接就好了。原来这两款鼠标的这两个键是相反的，即Thumb1和Thumb2对应的Button8 Button9是反的。总之下面这些实践中并没有用。</p>
@@ -1539,7 +1599,7 @@ $ gnome-session-properties
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../',
-            VERSION:'V2025.07',
+            VERSION:'V2025.08',
             LANGUAGE:'zh-CN',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
