@@ -1,0 +1,850 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="zh-CN" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="zh-CN" > <!--<![endif]-->
+<head>
+
+
+<!-- start added 2025-04-14   增加对markdown中公式的支持 -->
+<script>
+window.MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+    },
+    options: {
+        ignoreHtmlClass: "tex2jax_ignore|mathjax_ignore",
+        processHtmlClass: "tex2jax_process|mathjax_process|math|output_area"
+    }
+};
+</script>
+<script defer="defer" src="https://fastly.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<!-- end added 2025-04-14   增加对markdown中公式的支持 -->
+
+
+<!-- start added 2025-08-06   增加对mermaid图的支持 -->
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    mermaid.initialize({
+        startOnLoad: true,
+        theme: 'default',
+        flowchart: { useMaxWidth: true }
+    });
+});
+</script>
+<!--  end added 2025-08-06   增加对mermaid图的支持 -->
+
+
+
+
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>2.1.3. PMF（Probabilistic Matrix Factorization，概率矩阵分解） &mdash; 新溪-gordon V2025.09 文档</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+    <link rel="index" title="索引" href="../../../genindex.html" />
+    <link rel="search" title="搜索" href="../../../search.html" />
+    <link rel="next" title="2.1.4. Two-Tower Models（双塔模型）" href="Two-TowerModels%E5%8F%8C%E5%A1%94%E6%A8%A1%E5%9E%8B.html" />
+    <link rel="prev" title="2.1.2. MF(Matrix Factorization，矩阵分解)" href="MF%E6%A6%82%E7%8E%87%E7%9F%A9%E9%98%B5%E5%88%86%E8%A7%A3.html" /> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+  <script src="../../../_static/js/jquery.min.js"></script>
+
+
+<!-- 评论插件 gittalk start -->
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script> -->
+<!-- 评论插件 gittalk end -->
+
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> 新溪-gordon
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                V2025.09
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">AI</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../normal.html">1. 常用</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../normals/normal.html">1.1. 常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../normals/AIGC.html">1.2. AIGC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../normals/ml.html">1.3. 机器学习machine learning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../normals/bi.html">1.4. BI(Business Intelligence)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../normals/deep_learning.html">1.5. 深度学习</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../normals/deep_learnings/normal.html">1.5.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../normals/deep_learnings/history.html">1.5.2. 历史</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../normals/monitor.html">1.6. monitor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../normals/algorithm.html">1.7. 相关算法</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../normals/tool.html">1.8. 工具</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../normals/question.html">1.9. 常见问题</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../normals/%E6%9C%BA%E5%99%A8%E4%BA%BA.html">1.10. 机器人领域</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../../theory.html">2. 理论</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../key.html">2.1. 关键定义</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="CF%E5%8D%8F%E5%90%8C%E8%BF%87%E6%BB%A4.html">2.1.1. 协同过滤（Collaborative Filtering, CF）</a></li>
+<li class="toctree-l3"><a class="reference internal" href="MF%E6%A6%82%E7%8E%87%E7%9F%A9%E9%98%B5%E5%88%86%E8%A7%A3.html">2.1.2. MF(Matrix Factorization，矩阵分解)</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">2.1.3. PMF（Probabilistic Matrix Factorization，概率矩阵分解）</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Two-TowerModels%E5%8F%8C%E5%A1%94%E6%A8%A1%E5%9E%8B.html">2.1.4. Two-Tower Models（双塔模型）</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../Parallelism/normal.html">2.1.5. 通用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../Parallelism/PipelineParallelism.html">2.1.6. Pipeline Parallelism</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../Parallelism/TensorParallesim.html">2.1.7. Tensor Parallesim</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../func_activations/activation_Sigmoid.html">2.1.8. 激活函数-Sigmoid</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../func_activations/activation_RELU.html">2.1.9. 激活函数-ReLU</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../func_activations/activation_Leaky-ReLU.html">2.1.10. 激活函数-Leaky ReLU</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../func_activations/activation_Tanh.html">2.1.11. 激活函数-Tanh</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../func_activations/activation_GELU.html">2.1.12. 激活函数-GELU</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../func_activations/normalization_L1.html">2.1.13. 归一化-L1</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../func_activations/normalization_L2.html">2.1.14. 归一化-L2</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../func_activations/probabilistic_Softmax.html">2.1.15. 概率分布-Softmax</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../func_activations/probabilistic_logSoftmax.html">2.1.16. 概率分布-logsoftmax</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../func_activations/probabilistic_Sparsemax.html">2.1.17. 概率分布-Sparsemax</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../func_loss/classify_cross_entropy.html">2.1.18. 损失函数-分类-cross-entropy(交叉熵)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../func_loss/classify_NLL.html">2.1.19. 损失函数-分类-负对数似然损失NLL Loss</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../func_loss/classify_log.html">2.1.20. 损失函数-分类-对数损失(Log Loss)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../func_loss/classify_kl.html">2.1.21. 损失函数-分类-KL 散度(KL Loss)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../func_loss/regression_MSE.html">2.1.22. 损失函数-回归-均方误差(MSE)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../func_loss/regression_MAE.html">2.1.23. 损失函数-回归-平均绝对误差(MAE)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../func_loss/regression_Huber.html">2.1.24. 损失函数-回归-Huber 损失</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../func_loss/regression_log_cosh.html">2.1.25. 损失函数-回归-对数余弦损失(Log-Cosh Loss)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../func_loss/%E6%9D%83%E9%87%8D%E8%A1%B0%E5%87%8F-L2%E6%AD%A3%E5%88%99%E5%8C%96.html">2.1.26. 权重衰减(L2正则化)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../func_optims/GD.html">2.1.27. GD(梯度下降)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../func_optims/SGD.html">2.1.28. SGD随机梯度下降</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../func_optims/RMSprop.html">2.1.29. RMSprop</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../func_optims/Adam.html">2.1.30. Adam</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../func_optims/AdamW.html">2.1.31. AdamW</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../func_optims/Momentum.html">2.1.32. Momentum</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../ners/HMM-%E9%9A%90%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E6%A8%A1%E5%9E%8B.html">2.1.33. HMM-隐马尔可夫模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../ners/WWM-%E5%85%A8%E8%AF%8DMask.html">2.1.34. WWM-Whole Word Masking</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../ners/CRF-%E6%9D%A1%E4%BB%B6%E9%9A%8F%E6%9C%BA%E5%9C%BA.html">2.1.35. CRF-条件随机场</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dls/ANN.html">2.1.36. ANN(NN)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dls/DNN-%E6%B7%B1%E5%BA%A6%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C.html">2.1.37. 深度神经网络(Deep Neural Network, DNN)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dls/CNN-%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C.html">2.1.38. 卷积神经网络(Convolutional Neural Network, CNN)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dls/RNN-%E5%BE%AA%E7%8E%AF%E7%A5%9E%E7%BB%8F%E7%BD%91.html">2.1.39. RNN: 循环神经网(Recurrent Neural Network, RNN)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dls/LSTM-%E9%95%BF%E7%9F%AD%E6%97%B6%E8%AE%B0%E5%BF%86.html">2.1.40. LSTM: 长短时记忆(Long Short Term Memory, LSTM)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dl_theorys/propagation.html">2.1.41. 前向/反向传播</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dl_theorys/LinearLayer.html">2.1.42. Linear Layer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dl_theorys/FFN.html">2.1.43. Feedforward Network-前馈网络</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dl_theorys/LayerNorm.html">2.1.44. LayerNorm(层归一化)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dl_theorys/WeightTying.html">2.1.45. Weight Tying</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dl_theorys/GreedyDecoding.html">2.1.46. Greedy Decoding</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dl_theorys/ImageGrounding.html">2.1.47. Image Grounding</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dl_theorys/Perplexity.html">2.1.48. Perplexity(PPL)困惑度</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../3Ds/ManhattanWorld%E6%9B%BC%E5%93%88%E9%A1%BF%E4%B8%96%E7%95%8C.html">2.1.49. Manhattan World(曼哈顿世界)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../3Ds/HoughTransform%E9%9C%8D%E5%A4%AB%E5%8F%98%E6%8D%A2.html">2.1.50. Hough Transform（霍夫变换）</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../3Ds/PolarCoordinateSystem%E6%9E%81%E5%9D%90%E6%A0%87%E8%A1%A8%E7%A4%BA%E6%B3%95.html">2.1.51. 极坐标表示法(Polar Coordinate System)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../3Ds/GaussianSphere%E9%AB%98%E6%96%AF%E7%90%83.html">2.1.52. Gaussian Sphere（高斯球）</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../3Ds/edge_direction%E8%BE%B9%E7%BC%98%E6%96%B9%E5%90%91.html">2.1.53. 边缘方向 Edge Direction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../3Ds/NormalVector%E6%B3%95%E5%90%91%E9%87%8F.html">2.1.54. NormalVector法向量</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../others/AllReduce.html">2.1.55. AllReduce</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../others/BPE.html">2.1.56. BPE</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../others/Embedding%E6%A8%A1%E5%9E%8B.html">2.1.57. Embedding 模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../others/K-Means%E8%81%9A%E7%B1%BB%E7%AE%97%E6%B3%95.html">2.1.58. K-Means聚类算法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../others/LLM.html">2.1.59. LLM</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../others/deeplearning.html">2.1.60. 深度学习相关</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../others/other.html">2.1.61. 其他</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../others/%E5%88%A4%E5%88%AB%E5%BC%8F%E6%A8%A1%E5%9E%8Bvs%E7%94%9F%E6%88%90%E5%BC%8F%E6%A8%A1%E5%9E%8B.html">2.1.62. 判别式模型vs生成式模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../others/%E6%AC%A7%E5%87%A0%E9%87%8C%E5%BE%97%E7%A9%BA%E9%97%B4.html">2.1.63. 欧几里得空间(Euclidean space)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../others/%E7%9F%A2%E9%87%8F%E5%8C%96%E8%AE%A1%E7%AE%97.html">2.1.64. 矢量化计算(Vectorize calculations)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../tmp.html">2.2. 临时</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../tmps/ReAct.html">2.2.1. ReAct框架</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tmps/Reflection.html">2.2.2. Reflection反思</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tmps/math.html">2.2.3. 数学</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tmps/bag-of-words.html">2.2.4. bag-of-words</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tmps/word2vec.html">2.2.5. Word2Vec</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tmps/doc2vec.html">2.2.6. Doc2Vec</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tmps/FastText.html">2.2.7. FastText</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tmps/LDA.html">2.2.8. LDA-Latent Dirichlet Allocation(潜在狄利克雷分配)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tmps/overfitting-underfitting.html">2.2.9. overfitting&amp;underfitting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tmps/RAG.html">2.2.10. RAG</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tmps/Agent.html">2.2.11. Agent</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tmps/LLM.html">2.2.12. LLM</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tmps/RL.html">2.2.13. RL-强化学习</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tmps/prompt_engineering.html">2.2.14. Prompt Engineering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tmps/finetune.html">2.2.15. LLM调优(finetune)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tmps/Workflow.html">2.2.16. Workflow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tmps/0normal.html">2.2.17. 通用</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../LLM.html">3. 大模型</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../LLMs/normal.html">3.1. 常用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/normals/normal.html">3.1.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/normals/package.html">3.1.2. 依赖安装</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/normals/encoder.html">3.1.3. 编码-解码器</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/normals/usage.html">3.1.4. 使用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/normals/tmp.html">3.1.5. 临时</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../LLMs/model.html">3.2. 著名模型</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/models/Qwen3.html">3.2.1. Qwen3</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/models/DeepSeek.html">3.2.2. DeepSeek-R1-推理模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/models/LLaMA.html">3.2.3. LLaMA</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/models/ChatGLM.html">3.2.4. ChatGLM</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/models/BERT.html">3.2.5. BERT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/models/OpenAI.html">3.2.6. OpenAI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/models/BART.html">3.2.7. BART</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/models/T5.html">3.2.8. T5</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/models/ChatRWKV.html">3.2.9. ChatRWKV</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/models/Open-Assistant.html">3.2.10. Open-Assistant</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/models/OpenGVLab.html">3.2.11. OpenGVLab</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../LLMs/finetune.html">3.3. 调优</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../LLMs/Quantization%E9%87%8F%E5%8C%96.html">3.4. 模型量化(Quantization)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/Quantizations/normal.html">3.4.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/Quantizations/GGUF.html">3.4.2. GGUF 文件</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../LLMs/fileformat.html">3.5. 文件格式</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/fileformats/normal.html">3.5.1. 通用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/fileformats/GGML.html">3.5.2. GGML系列文件格式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/fileformats/ONNX.html">3.5.3. ONNX</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../LLMs/fileformats/ONNXs/normal.html">常用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../LLMs/fileformats/ONNXs/ONNX.html">ONNX</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../LLMs/fileformats/ONNXs/onnxruntime.html">onnxruntime</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../LLMs/fileformats/ONNXs/skl2onnx.html">skl2onnx</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/fileformats/NCNN.html">3.5.4. NCNN</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../LLMs/openai.html">3.6. 商业项目</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/openais/normal.html">3.6.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/openais/openai.html">3.6.2. OpenAI</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../LLMs/prompt.html">3.7. Prompt 提示词</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/prompts/demo_chinese.html">3.7.1. 中文</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/prompts/demo_english.html">3.7.2. English</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/prompts/skill.html">3.7.3. 示例</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../LLMs/Android.html">3.8. Android版LLM相关</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/Androids/normal.html">3.8.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/Androids/Android%E7%89%88%E9%83%A8%E7%BD%B2.html">3.8.2. Android版部署</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../LLMs/Androids/GPU.html">3.8.3. GPU</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../RAG.html">4. RAG相关</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../NLP.html">5. NLP</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../NLPs/normal.html">5.1. 常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../NLPs/preprocess.html">5.2. 预处理</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../NLPs/preprocesses/normal.html">5.2.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../NLPs/preprocesses/%E5%85%B3%E9%94%AE%E8%AF%8D%E6%8F%90%E5%8F%96.html">5.2.2. 关键词提取</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../NLPs/preprocesses/%E5%88%86%E8%AF%8D.html">5.2.3. 分词</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../NLPs/preprocesses/%E6%83%85%E6%84%9F%E5%88%86%E6%9E%90.html">5.2.4. 情感分析</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../NLPs/preprocesses/%E6%96%87%E6%9C%AC%E8%A1%A8%E7%A4%BA.html">5.2.5. 文本表示</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../NLPs/preprocesses/%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6.html">5.2.6. 注意力机制</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../NLPs/preprocesses/%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.html">5.2.7. 语言模型</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../NLPs/NER.html">5.3. NER-命名实体识别</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../NLPs/NERs/normal.html">5.3.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../NLPs/NERs/seq-label.html">5.3.2. 序列标注</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../NLPs/NERs/BiLSTM%2BCRF.html">5.3.3. BiLSTM+CRF</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../NLPs/NERs/history.html">5.3.4. 历史</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../NLPs/summary.html">5.4. 总结-摘要</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../NLPs/summarys/normal.html">5.4.1. 通用</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../library.html">6. 函数库</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../libraries/normal.html">6.1. 常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../libraries/Image.html">6.2. Image图像处理</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../libraries/Video.html">6.3. Video视频</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../libraries/IPython.html">6.4. IPython</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/IPythons/normal.html">6.4.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/IPythons/magic.html">6.4.2. 魔法命令 </a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/IPythons/display.html">6.4.3. display函数</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../libraries/Jupyter.html">6.5. Jupyter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../libraries/NumPy.html">6.6. NumPy</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/NumPys/normal.html">6.6.1. 通用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/NumPys/Ndarray.html">6.6.2. Ndarray 对象</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/NumPys/function.html">6.6.3. 通用函数</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../libraries/Pandas.html">6.7. Pandas</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Pandas/normal.html">6.7.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Pandas/example_subset.html">6.7.2. 实例-subset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Pandas/example_analysis.html">6.7.3. 实例-统计分析</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Pandas/example_sql.html">6.7.4. 利用pandas实现SQL操作</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Pandas/example_default_value.html">6.7.5. 实例-缺失值的处理</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Pandas/example_multi_index.html">6.7.6. 多层索引的使用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Pandas/practice.html">6.7.7. 实践</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../libraries/Pandas/practices/practice_2012ObamaElect.html">实践-2012年奥巴马总统连任选举</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Pandas/api_input_output.html">6.7.8. API-输入输出</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Pandas/api_General.html">6.7.9. API-General functions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Pandas/api_Series.html">6.7.10. API-Series</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Pandas/api_DataFrame.html">6.7.11. API-DataFrame</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Pandas/api_Index.html">6.7.12. API-index</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../libraries/Matplotlib.html">6.8. Matplotlib</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Matplotlibs/normal.html">6.8.1. 基本</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Matplotlibs/install.html">6.8.2. 安装</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Matplotlibs/pyplot.html">6.8.3. pyplot </a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Matplotlibs/matplotlib.patches.html">6.8.4. matplotlib.patches</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Matplotlibs/example.html">6.8.5. 实例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../libraries/Matplotlibs/examples/plot.html">折线图plot</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../libraries/Matplotlibs/examples/bar.html">条形图bar</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../libraries/Matplotlibs/examples/hist.html">直方图hist</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../libraries/Matplotlibs/examples/scatter.html">散点图scatter</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../libraries/Matplotlibs/examples/stackplot.html">面积图stackplot</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../libraries/Matplotlibs/examples/pie.html">饼图pie</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../libraries/Matplotlibs/examples/box.html">箱型图box</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../libraries/Matplotlibs/examples/multi.html">多图合并multi</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Matplotlibs/pylab.html">6.8.6. pylab子包</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../libraries/SciPy.html">6.9. SciPy</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/SciPys/normal.html">6.9.1. 常用</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../libraries/sklearn.html">6.10. sklearn</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/sklearns/normal.html">6.10.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/sklearns/supervised.html">6.10.2. 监督学习</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../libraries/sklearns/superviseds/glm.html">广义线性模型</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/sklearns/unsupervised.html">6.10.3. 无监督学习</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../libraries/statsmodels.html">6.11. statsmodels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../libraries/OpenCV.html">6.12. OpenCV</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/OpenCVs/normal.html">6.12.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/OpenCVs/example.html">6.12.2. 实例</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/OpenCVs/struct.html">6.12.3. 代码类结构</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../libraries/Seaborn.html">6.13. Seaborn</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/Seaborns/normal.html">6.13.1. 常用</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../libraries/jieba.html">6.14. jieba中文分词</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../libraries/gensim.html">6.15. gensim: 文本主题建模和相似性分析</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/gensims/normal.html">6.15.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/gensims/Core_Tutorials.html">6.15.2. Core Tutorials</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/gensims/Tutorials.html">6.15.3. Tutorials: Learning Oriented Lessons</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../libraries/gensims/How-to_Guides.html">6.15.4. How-to Guides: Solve a Problem</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../libraries/LAC.html">6.16. LAC-百度词法分析工具</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../framework.html">7. 学习框架</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../frameworks/normal.html">7.1. 常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../frameworks/pytorch.html">7.2. PyTorch</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../frameworks/pytorchs/normal.html">7.2.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../frameworks/pytorchs/nn.html">7.2.2. nn模块</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../frameworks/pytorchs/PyTorch.html">7.2.3. PyTorch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../frameworks/pytorchs/ExecuTorch.html">7.2.4. ExecuTorch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../frameworks/pytorchs/torchrun.html">7.2.5. torchrun (Elastic Launch)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../frameworks/huggingface.html">7.3. huggingface</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../frameworks/huggingfaces/normal.html">7.3.1. 常用</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../frameworks/huggingfaces/normals/huggingface_hub.html">Hugging Face Hub</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../frameworks/huggingfaces/normals/lib_python.html">Hub Python Library</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../frameworks/huggingfaces/normals/Datasets.html">Datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../frameworks/huggingfaces/normals/Text_Generation_Inference_main.html">TGI: Text Generation Inference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../frameworks/huggingfaces/normals/Evaluate.html">Evaluate</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../frameworks/huggingfaces/Transformers.html">7.3.2. Transformers</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../frameworks/huggingfaces/Transformers/Transformers.html">Transformers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../frameworks/huggingfaces/Transformers/Transformers_V4.45.2.html">Transformers 4.45.2</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../frameworks/huggingfaces/Tokenizers_V0.13.3.html">7.3.3. Tokenizers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../frameworks/huggingfaces/PEFT.html">7.3.4. PEFT</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../frameworks/huggingfaces/PEFT/PEFT.html">PEFT</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../frameworks/huggingfaces/PEFT/PEFT_V0.13.0.html">PEFT 0.13.0</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../frameworks/huggingfaces/Accelerate.html">7.3.5. Accelerate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../frameworks/huggingfaces/TRL.html">7.3.6. TRL - Transformer Reinforcement Learning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../frameworks/huggingfaces/collect.html">7.3.7. 收集</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../frameworks/huggingfaces/collects/resources.html">resources</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../frameworks/huggingfaces/collects/model.html">model</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../frameworks/huggingfaces/collects/blog_decoding-methods.html">博文: decoding methods of LLM with transformers</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../frameworks/vLLM.html">7.4. vLLM</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../frameworks/vLLMs/normal.html">7.4.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../frameworks/vLLMs/vLLM_doc.html">7.4.2. vLLM官方文档</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../frameworks/llama.cpp.html">7.5. llama.cpp框架</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../frameworks/llama.cpps/normal.html">7.5.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../frameworks/llama.cpps/llama-cpp-python.html">7.5.2. Python bindings for llama.cpp</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../frameworks/DeepSpeed.html">7.6. DeepSpeed</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../frameworks/DeepSpeeds/huggingface.html">7.6.1. huggingface</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../frameworks/DeepSpeeds/ZeRO.html">7.6.2. Zero Redundancy Optimizer (ZeRO)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../frameworks/DeepSpeeds/deepspeed_doc.html">7.6.3. DeepSpeed</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../frameworks/mxnet.html">7.7. mxnet库</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../frameworks/mxnets/ndarray.html">7.7.1. nd模块</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../frameworks/mxnets/ndarrays/ndarray.html">ndarray</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../frameworks/mxnets/ndarrays/ndarray.random.html">ndarray.random</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../frameworks/mxnets/gluon.html">7.7.2. gluon模块</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../frameworks/mxnets/autograd.html">7.7.3. autograd模块</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../frameworks/tensorflow.html">7.8. tensorflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../frameworks/Keras.html">7.9. Keras</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../frameworks/Keras/normal.html">7.9.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../frameworks/Keras/demo.html">7.9.2. 实例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../frameworks/Keras/demos/binary_classification.html">二分类问题</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../frameworks/Keras/demos/multiclass_classification.html">多分类问题</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../frameworks/Keras/demos/regression.html">回归问题</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../frameworks/other.html">7.10. 其他</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../website.html">8. 关键网站</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../websites/Papers%20with%20Code.html">8.1. Papers with Code</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../websites/Kaggle.html">8.2. Kaggle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../websites/ArXiv.html">8.3. ArXiv 学术论文预印本平台</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../websites/video.html">8.4. 视频相关</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../websites/normal.html">8.5. 通用</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../practice.html">9. 实践</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../practices/OCR.html">9.1. OCR</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../practices/OCRs/normal.html">9.1.1. 常用</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../practices/AIML.html">9.2. AIML</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../practices/AIMLs/normal.html">9.2.1. 常用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../practices/AIMLs/spec.html">9.2.2. AIML 2.1 Documentation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../opensource.html">10. 开源项目</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../opensources/Agent.html">10.1. Agent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../opensources/RAG.html">10.2. RAG</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../opensources/normal.html">10.3. 常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../opensources/ui.html">10.4. UI界面</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../opensources/finetune.html">10.5. 调优</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../opensources/search.html">10.6. 搜索</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../opensources/LLM-Inference-Engine.html">10.7. LLM Inference Engines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../opensources/LLM-Inference-Tool.html">10.8. 模型推理平台</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../opensources/LLM-inference-accelerate.html">10.9. LLM推理加速</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../opensources/Evaluate.html">10.10. LLM评估</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../opensources/platform.html">10.11. AI平台</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dataset.html">11. 数据集</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../datasets/normal.html">11.1. 常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../datasets/chinese.html">11.2. 中文数据集</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../datasets/chinese_image.html">11.3. 中文图片相关数据集</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../datasets/huggingface.html">11.4. dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../datasets/website.html">11.5. 数据集相关网站</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../model.html">12. 常见模型</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cuda.html">13. 图形&amp;计算加速技术</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../cudas/normal.html">13.1. 常用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../cudas/cuda.html">13.2. cuda</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Evaluate.html">14. Evaluate评测</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../Evaluates/normal.html">14.1. 通用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Evaluates/TruLens.html">14.2. TruLens</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Evaluates/Ragas.html">14.3. Ragas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Evaluates/DeepEval.html">14.4. DeepEval</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Evaluates/UpTrain.html">14.5. UpTrain</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Evaluates/huggingface.html">14.6. evaluate</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../%E4%BC%A0%E7%BB%9FAI.html">15. 传统AI</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">新溪-gordon</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../theory.html"><span class="section-number">2. </span>理论</a> &raquo;</li>
+        
+          <li><a href="../../key.html"><span class="section-number">2.1. </span>关键定义</a> &raquo;</li>
+        
+      <li><span class="section-number">2.1.3. </span>PMF（Probabilistic Matrix Factorization，概率矩阵分解）</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../../_sources/theories/keys/Recommenders/PMF概率矩阵分解.md.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            <nav id="local-table-of-contents" role="navigation" aria-labelledby="local-table-of-contents-title">
+              <h4 id="local-table-of-contents-title">On This Page</h4>
+              <ul>
+<li><a class="reference internal" href="#">2.1.3. PMF（Probabilistic Matrix Factorization，概率矩阵分解）</a><ul>
+<li><a class="reference internal" href="#id1">1. 核心思想：从矩阵分解说起</a></li>
+<li><a class="reference internal" href="#pmf">2. PMF的突破：引入概率视角</a></li>
+<li><a class="reference internal" href="#id2">3. PMF的优势</a></li>
+<li><a class="reference internal" href="#id3">4. 总结与类比</a></li>
+</ul>
+</li>
+</ul>
+
+            </nav>
+  <section class="tex2jax_ignore mathjax_ignore" id="pmf-probabilistic-matrix-factorization">
+<h1><span class="section-number">2.1.3. </span>PMF（Probabilistic Matrix Factorization，概率矩阵分解）<a class="headerlink" href="#pmf-probabilistic-matrix-factorization" title="此标题的永久链接">¶</a></h1>
+<p>简单来说，PMF是<strong>协同过滤</strong>的一种实现方式，更具体地说，它是一种非常成功且经典的<strong>基于模型的协同过滤</strong>方法。它将矩阵分解的思想置于一个概率框架之下，使得模型更加稳健和易于理解。</p>
+<hr class="docutils" />
+<section id="id1">
+<h2>1. 核心思想：从矩阵分解说起<a class="headerlink" href="#id1" title="此标题的永久链接">¶</a></h2>
+<p>要理解PMF，首先要理解它的基础：<strong>矩阵分解（Matrix Factorization, MF）</strong>。</p>
+<ul class="simple">
+<li><p><strong>问题</strong>：我们有一个巨大的用户-物品评分矩阵 <span class="math notranslate nohighlight">\(R\)</span>，其中行代表用户，列代表物品，矩阵中的值 <span class="math notranslate nohighlight">\(R_{ij}\)</span> 代表用户 <span class="math notranslate nohighlight">\(i\)</span> 对物品 <span class="math notranslate nohighlight">\(j\)</span> 的评分。这个矩阵通常非常<strong>稀疏</strong>（大部分值是缺失的，因为用户只给少数物品评过分）。</p></li>
+<li><p><strong>目标</strong>：预测这个矩阵中缺失的值，也就是预测用户会对哪些他们没有评分的物品给出高分。</p></li>
+<li><p><strong>矩阵分解的做法</strong>：
+将这个大而稀疏的矩阵 <span class="math notranslate nohighlight">\(R\)</span> 分解为两个小而稠密的矩阵的乘积：</p>
+<ul>
+<li><p><strong>用户矩阵</strong> <span class="math notranslate nohighlight">\(U\)</span>：大小为 (用户数量 × 潜在特征数量)。每一行代表一个用户在“潜在空间”中的向量（例如，这个向量可能隐含地表示用户对“科幻含量”、“喜剧含量”、“演员影响力”等抽象特征的偏好程度）。</p></li>
+<li><p><strong>物品矩阵</strong> <span class="math notranslate nohighlight">\(V\)</span>：大小为 (物品数量 × 潜在特征数量)。每一行代表一个物品在“潜在空间”中的向量（例如，这个向量可能隐含地表示该物品的“科幻含量”、“喜剧含量”、“演员影响力”等程度）。</p></li>
+<li><p>分解的目标是让 <span class="math notranslate nohighlight">\(U\)</span> 和 <span class="math notranslate nohighlight">\(V\)</span> 的乘积尽可能地逼近原始评分矩阵 <span class="math notranslate nohighlight">\(R\)</span>： <span class="math notranslate nohighlight">\(R \approx U \times V^T\)</span>。</p></li>
+<li><p>用户 <span class="math notranslate nohighlight">\(i\)</span> 对物品 <span class="math notranslate nohighlight">\(j\)</span> 的预测评分 <span class="math notranslate nohighlight">\(\hat{R}_{ij}\)</span> 就是用户向量 <span class="math notranslate nohighlight">\(U_i\)</span> 和物品向量 <span class="math notranslate nohighlight">\(V_j\)</span> 的点积： <span class="math notranslate nohighlight">\(\hat{R}_{ij} = U_i \cdot V_j^T\)</span>。</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="pmf">
+<h2>2. PMF的突破：引入概率视角<a class="headerlink" href="#pmf" title="此标题的永久链接">¶</a></h2>
+<p>PMF的贡献在于，它为上述的矩阵分解过程提供了一个<strong>严格的概率学解释</strong>。它假设整个评分矩阵的生成过程是一个概率事件：</p>
+<ol class="arabic">
+<li><p><strong>先验假设（Prior）</strong>：</p>
+<ul class="simple">
+<li><p>每个用户向量 <span class="math notranslate nohighlight">\(U_i\)</span> 都是从一个均值为0的正态分布（高斯分布）中采样得到的。即 <span class="math notranslate nohighlight">\(U_i \sim \mathcal{N}(0, \sigma_U^2 I)\)</span>。</p></li>
+<li><p>每个物品向量 <span class="math notranslate nohighlight">\(V_j\)</span> 也都是从一个均值为0的正态分布中采样得到的。即 <span class="math notranslate nohighlight">\(V_j \sim \mathcal{N}(0, \sigma_V^2 I)\)</span>。</p></li>
+<li><p>这相当于对模型进行了<strong>正则化（Regularization）</strong>，防止过拟合，假设用户和物品的潜在特征值都不会太大。</p></li>
+</ul>
+</li>
+<li><p><strong>似然函数（Likelihood）</strong>：</p>
+<ul class="simple">
+<li><p>观测到的真实评分 <span class="math notranslate nohighlight">\(R_{ij}\)</span> 是由用户向量和物品向量的点积（即预测评分 <span class="math notranslate nohighlight">\(\hat{R}_{ij} = U_i \cdot V_j^T\)</span>），再加上一个随机噪声生成的。</p></li>
+<li><p>这个噪声也服从一个正态分布： <span class="math notranslate nohighlight">\(R_{ij} \sim \mathcal{N}(U_i \cdot V_j^T, \sigma_R^2)\)</span>。</p></li>
+<li><p>这意味着，在给定用户和物品向量的情况下，观测到某个评分值的概率服从一个以预测值为均值的高斯分布。</p></li>
+</ul>
+</li>
+<li><p><strong>最大后验概率估计（MAP Estimation）</strong>：</p>
+<ul class="simple">
+<li><p>我们的目标是找到最可能的用户矩阵 <span class="math notranslate nohighlight">\(U\)</span> 和物品矩阵 <span class="math notranslate nohighlight">\(V\)</span>，使得它们<strong>在给定观测评分 <span class="math notranslate nohighlight">\(R\)</span> 的条件下的后验概率达到最大</strong>。</p></li>
+<li><p>根据贝叶斯定理，<strong>最大化后验概率</strong> 等价于 <strong>最大化似然函数与先验概率的乘积</strong>。</p></li>
+<li><p>通过数学推导（取对数），最大化后验概率最终等价于最小化以下<strong>目标函数（损失函数）</strong>：</p></li>
+</ul>
+<p><span class="math notranslate nohighlight">\(\sum_{(i,j) \in \text{观测值}} (R_{ij} - U_i V_j^T)^2 + \lambda_U \|U\|_F^2 + \lambda_V \|V\|_F^2\)</span></p>
+<ul class="simple">
+<li><p>第一项：预测评分和真实评分之间的平方误差。这保证了模型的预测准确性。</p></li>
+<li><p>第二项和第三项：用户矩阵和物品矩阵的L2正则化项（来自于先验分布）。这控制了模型的复杂度，防止过拟合。</p></li>
+<li><p><span class="math notranslate nohighlight">\(\lambda_U\)</span> 和 <span class="math notranslate nohighlight">\(\lambda_V\)</span> 是超参数，用于平衡误差项和正则化项的重要性。</p></li>
+</ul>
+</li>
+</ol>
+</section>
+<hr class="docutils" />
+<section id="id2">
+<h2>3. PMF的优势<a class="headerlink" href="#id2" title="此标题的永久链接">¶</a></h2>
+<p>相比于非概率的矩阵分解方法，PMF的优势在于：</p>
+<ol class="arabic simple">
+<li><p><strong>坚实的数学基础</strong>：提供了一个完整的概率生成模型，使得模型的每个部分都有明确的统计意义。</p></li>
+<li><p><strong>优秀的正则化</strong>：通过先验分布自然地将正则化项引入目标函数，有效地控制了模型复杂度，在稀疏数据上表现更好，泛化能力更强。</p></li>
+<li><p><strong>灵活性</strong>：概率框架使其很容易被扩展。例如，后来很多著名的模型都是PMF的扩展，如：</p>
+<ul class="simple">
+<li><p><strong>约束PMF</strong>：加入用户/物品的偏置项（Bias）。</p></li>
+<li><p><strong>社会化PMF</strong>：引入用户的社会关系信息。</p></li>
+<li><p><strong>贝叶斯PMF</strong>：使用更复杂的贝叶斯方法（如马尔可夫链蒙特卡洛，MCMC）进行推理，而不是点估计。</p></li>
+</ul>
+</li>
+</ol>
+</section>
+<hr class="docutils" />
+<section id="id3">
+<h2>4. 总结与类比<a class="headerlink" href="#id3" title="此标题的永久链接">¶</a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head text-left"><p>特性</p></th>
+<th class="head text-left"><p>传统矩阵分解 (MF)</p></th>
+<th class="head text-left"><p>概率矩阵分解 (PMF)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-left"><p><strong>核心</strong></p></td>
+<td class="text-left"><p>直接分解矩阵，最小化重建误差。</p></td>
+<td class="text-left"><p>假设数据由概率模型生成，最大化后验概率。</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p><strong>正则化</strong></p></td>
+<td class="text-left"><p>需要手动添加L2正则化项（如SVD）。</p></td>
+<td class="text-left"><p><strong>天然自带</strong>正则化（通过先验分布）。</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p><strong>视角</strong></p></td>
+<td class="text-left"><p>优化视角（最小化损失函数）。</p></td>
+<td class="text-left"><p><strong>概率生成模型</strong>视角。</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p><strong>关系</strong></p></td>
+<td class="text-left"><p>可以看作是PMF的一个特例。</p></td>
+<td class="text-left"><p>是MF的概率版本解释和升级。</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>一句话总结PMF：</strong>
+<strong>PMF是将矩阵分解技术置于概率图模型框架下的一个贝叶斯方法。它假设观测到的用户评分数据是由用户和物品的潜在特征向量通过一个概率过程生成的，并通过最大化后验概率来学习这些潜在向量，从而实现精准的评分预测。</strong> 它是推荐系统领域一个里程碑式的方法。</p>
+</section>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="Two-TowerModels%E5%8F%8C%E5%A1%94%E6%A8%A1%E5%9E%8B.html" class="btn btn-neutral float-right" title="2.1.4. Two-Tower Models（双塔模型）" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="MF%E6%A6%82%E7%8E%87%E7%9F%A9%E9%98%B5%E5%88%86%E8%A7%A3.html" class="btn btn-neutral" title="2.1.2. MF(Matrix Factorization，矩阵分解)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+  
+  <div id="gitalk-container"></div>
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2010-2025, 新溪-gordon.
+
+    </p>
+  </div>
+  <div>备案号 <a href="http://www.beian.miit.gov.cn">京ICP备16018553号</a></div><div>Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a></div>. 
+
+
+</footer>
+
+<script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?042289284b8eb33866001347a3e0b129";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>     
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'V2025.09',
+            LANGUAGE:'zh-CN',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../../_static/sphinx_highlight.js"></script>
+      <script type="text/javascript" src="../../../_static/clipboard.min.js"></script>
+      <script type="text/javascript" src="../../../_static/copybutton.js"></script>
+      <script type="text/javascript" src="../../../_static/translations.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script type="text/javascript" src="../../../None"></script>
+      <script type="text/javascript" src="https://fastly.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  
+
+  <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+
+
+      // var gitalk = new Gitalk({
+      //         clientID: '565177626b5d46427009',
+      //         clientSecret: 'b2a36e67e1d2a73e43667f46d571c2624f8e1026',
+      //         repo: 'knowledge',
+      //         owner: 'zhaoweiguo',
+      //         admin: ['zhaoweiguo'],
+      //         id: location.pathname,      // Ensure uniqueness and length less than 50
+      //         distractionFreeMode: false  // Facebook-like distraction free mode
+      //       })
+      // gitalk.render('gitalk-container')
+
+  </script>
+
+
+<script type="text/javascript" src="../../../_static/js/table-of-contents-sidebar.js"></script>
+<!-- <script type="text/javascript" src="https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/table-of-contents-sidebar.js"></script> -->
+<script type="text/javascript">
+    window.onload = function(e){
+        TableOfContents.init({
+            basePath: "https://table-of-contents-sidebar.github.io/table-of-contents-sidebar-lib/",
+            querySelector: "body" // or other css querySelector
+        });
+    }
+</script> 
+
+</body>
+</html>

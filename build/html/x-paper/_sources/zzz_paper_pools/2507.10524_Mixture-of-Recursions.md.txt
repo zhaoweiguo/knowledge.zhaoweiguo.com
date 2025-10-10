@@ -4,18 +4,10 @@
 * PDF: <https://arxiv.org/pdf/2507.10524>
 
 
-Mixture-of-Recursions: Learning Dynamic Recursive Depths for Adaptive Token-Level Computation
-
-
-
-当然可以，请继续提供文章的章节内容，我会根据你提供的具体内容进行总结，确保按照你的要求使用中文、保持原文结构、重点内容着重讲解。请将文章的章节内容粘贴过来。
-
 
 ## Abstract
 
 
-
-## Abstract 总结
 
 **Abstract：**  
 扩展语言模型带来了令人印象深刻的能力，但其伴随的计算与内存需求使得训练和部署成本高昂。现有的效率研究通常只关注参数共享或自适应计算中的某一方面，而如何**同时实现这两点**仍然是一个开放问题。
@@ -35,9 +27,6 @@ Mixture-of-Recursions: Learning Dynamic Recursive Depths for Adaptive Token-Leve
 
 ## 1 Introduction
 
-
-
-## 1 Introduction 总结
 
 本节主要介绍 Mixture-of-Recursions（MoR）的研究背景、动机以及其核心思想。
 
@@ -109,12 +98,6 @@ MoR 可以看作是一种在推理过程中 **在隐空间中进行非语言“�
 ## 2 Method
 
 
-
-以下是该论文章节 **2 Method** 的总结，按照原文结构进行讲解，重点内容详细说明，次要内容简要概述：
-
----
-
-## 2 Method
 
 ### 2.1 Preliminary
 
@@ -200,7 +183,7 @@ $$ \mathbf{h}_{t}^{\ell+1} = f(\mathbf{h}_{t}^{\ell}; \Phi_{\ell}) $$
 
 ---
 
-## 总结
+### 总结
 
 - **递归Transformer** 通过参数共享减少模型大小，但存在KV缓存问题和固定递归深度限制。
 - **MoR框架** 提出动态路由机制（Expert-choice / Token-choice）与KV缓存策略（Recursion-wise / Recursive Sharing）来提升模型效率和适应性。
@@ -213,10 +196,6 @@ $$ \mathbf{h}_{t}^{\ell+1} = f(\mathbf{h}_{t}^{\ell}; \Phi_{\ell}) $$
 ## 3 Experiments
 
 
-
-## 3 实验总结
-
-### 模型训练与评估设置
 研究者基于 Llama 的 Transformer 架构从头开始预训练模型，并参考了 SmolLM 的配置。训练数据来自 FineWeb-Edu 数据集的一个去重子集（SmolLM-Corpus）。评估时使用了 FineWeb-Edu 的验证集和六个 few-shot 任务（如 Gao 等人提出的基准）。详细的训练、评估以及吞吐量测量方法在附录 B 中有详细描述。
 
 ### 表格总结（Table 3）
@@ -229,40 +208,40 @@ $$ \mathbf{h}_{t}^{\ell+1} = f(\mathbf{h}_{t}^{\ell}; \Phi_{\ell}) $$
 
 ---
 
-## 3.1 主要结果
+### 3.1 主要结果
 
-### MoR 在相同训练计算资源下表现更优
+#### MoR 在相同训练计算资源下表现更优
 在 16.5e18 FLOPs 的训练预算下，MoR 使用 expert-choice 路由器和 2 层递归，参数比 Vanilla 模型减少近一半，但验证损失更低，平均 few-shot 准确率更高（43.1% vs 42.3%）。其高效计算能力使其在相同计算预算下能处理更多训练 token。
 
-### MoR 在相同数据量下计算效率更高
+#### MoR 在相同数据量下计算效率更高
 在固定 token 数量（20B）下，MoR 使用更少的 FLOPs（比 Vanilla 少 25%），仍能获得更低的验证损失和更高准确率。这表明 MoR 在计算-准确率之间实现了更优的平衡，显著减少了训练时间和内存峰值使用。
 
-### MoR 的性能与路由和缓存策略有关
+#### MoR 的性能与路由和缓存策略有关
 在 Nr=3 的轻量配置下，MoR 使用 token-choice 路由器的表现（40.0%）不如 expert-choice 路由器（42.6%），说明路由粒度对性能有重要影响。KV 缓存共享略有性能下降，但提升了内存效率，适合资源受限的场景。
 
 ---
 
-## 3.2 IsoFLOP 分析
+### 3.2 IsoFLOP 分析
 
-### 实验设置
+#### 实验设置
 研究者在四个模型规模（135M、360M、730M、1.7B 参数）下，使用固定递归深度（3）进行了实验，并在三种计算预算（2e18、5e18、16.5e18 FLOPs）下进行比较。
 
-### MoR 是一种可扩展且高效的架构
+#### MoR 是一种可扩展且高效的架构
 在所有模型规模和计算预算下，MoR 均优于递归基线模型。在 360M 及以上规模中，MoR 不仅与 Vanilla 模型相当，甚至在低预算下表现更好。虽然在最小模型（135M）上略有差距，但随着规模扩大，这种差距迅速缩小。这表明 MoR 是一种高效且可扩展的替代架构。
 
 ---
 
-## 3.3 推理吞吐量评估
+### 3.3 推理吞吐量评估
 
-### 实验设置
+#### 实验设置
 研究者评估了 360M 模型规模下 MoR 的推理吞吐量，递归深度为 2、3、4，训练预算为 16.5e18 FLOPs。通过生成 token 的时间测量吞吐量，并采用不同批次大小进行测试。
 
-### MoR 通过连续深度批处理提升推理吞吐量
+#### MoR 通过连续深度批处理提升推理吞吐量
 MoR 利用连续深度批处理（depth-wise batching）提升吞吐量，通过将已完成序列替换为新 token，保持高 GPU 利用率。递归深度越高，越早退出的 token 越多，KV 缓存使用越少，吞吐量越高（如 MoR-4 在 Max 批次下达到 2.06 倍速）。虽然性能略有下降，但吞吐量的大幅提升使其成为部署的优选方案。
 
 ---
 
-## 总结
+### 总结
 该节实验系统评估了 Mixture-of-Recursions（MoR）模型在不同训练和推理条件下的表现。结果表明：
 
 - MoR 在相同计算条件下比 Vanilla 和 Recursive 模型更高效，参数更少但性能更好。
@@ -273,13 +252,6 @@ MoR 利用连续深度批处理（depth-wise batching）提升吞吐量，通过
 
 ## 4 Ablation Studies
 
-
-
-以下是对该论文章节 **4 Ablation Studies** 的总结，按照原文结构进行整理，重点内容予以详细讲解，次要内容精简说明：
-
----
-
-## 4 Ablation Studies
 
 本节通过消融实验分析了 **MoR（Mixture-of-Recursions）模型** 在不同设计选择下的性能表现，重点包括：
 
@@ -370,7 +342,7 @@ MoR 利用连续深度批处理（depth-wise batching）提升吞吐量，通过
 
 ---
 
-## 总结
+### 总结
 
 本节通过系统性的消融实验，确定了在 MoR 模型中：
 
@@ -385,12 +357,6 @@ MoR 利用连续深度批处理（depth-wise batching）提升吞吐量，通过
 ## 5 Analysis
 
 
-
-以下是该论文 **第5章 Analysis** 的内容总结，按照原文结构进行梳理，保留原标题，并对重点部分进行重点讲解，次要内容适当精简。
-
----
-
-## 5 Analysis
 
 本章主要对 Mixture-of-Recursions (MoR) 模型在训练与测试过程中表现出的性能和行为进行分析，重点包括计算最优缩放、路由机制分析以及测试时缩放策略的效果。
 
@@ -432,7 +398,7 @@ MoR 利用连续深度批处理（depth-wise batching）提升吞吐量，通过
 
 ---
 
-## 总结
+### 总结
 
 - **MoR 在 isoFLOPs 条件下优先通过增加模型大小而非训练步数来获得性能提升**。
 - **递归深度的分配与 token 的语义重要性紧密相关，路由器能有效区分选中和未选中 token**。
@@ -444,8 +410,6 @@ MoR 利用连续深度批处理（depth-wise batching）提升吞吐量，通过
 ## 6 Related Work
 
 
-
-## 6 相关工作（Related Work）
 
 ### Recursive Transformers（递归Transformer）
 **重点内容：**  
@@ -505,8 +469,6 @@ MoR通过引入自适应的递归次数，结合隐式推理，提供了将动�
 
 
 
-## 7 结论
-
 **Mixture-of-Recursions (MoR)** 提出了一种统一的Transformer架构，能够同时利用参数共享、自适应递归深度以及高效的KV缓存机制，且不牺牲模型质量。通过为每个token动态分配递归深度，并通过轻量级路由器选择性地缓存键值状态，MoR显著减少了二次计算开销和冗余内存访问成本。广泛的实验证明，MoR在验证集上的困惑度（perplexity）和平均少样本准确率方面优于标准Transformer和早期递归模型，同时具有更高的推理吞吐量。这些结果表明，MoR为以显著减少的计算和内存开销实现大模型能力提供了一条有效路径。
 
 ---
@@ -543,12 +505,6 @@ MoR的递归块本质上是模态无关的，其自适应深度机制可以扩�
 ## Appendix A Details of Design Choices for Mixture-of-Recursions
 
 
-
-以下是对论文附录 **A. Design Choices for Mixture-of-Recursions** 的详细总结，按照原文结构进行归纳，重点内容进行了强调，非重点内容则适当简化。
-
----
-
-## Appendix A：设计选择的细节（Mixture-of-Recursions）
 
 本节详细描述了 Mixture-of-Recursions（MoR）模型中采用的设计选择，补充了主文中的简要说明。
 
@@ -627,18 +583,13 @@ MoR的递归块本质上是模态无关的，其自适应深度机制可以扩�
 
 ---
 
-## 总结
+### 总结
 
 本附录详细阐述了 MoR 模型在参数共享、路由机制和 KV 缓存策略方面的设计选择，每种策略都有其适用场景和优缺点。建议根据实际应用需求（如计算资源、推理准确性、内存限制等）选择合适的策略组合。其中，**Middle 参数共享策略**、**Token-choice 路由**与**Recursion-wise 缓存策略**在多数情况下表现更佳。
 
 
 ## Appendix B Experimental Setup
 
-
-
-## 附录B 实验设置总结
-
----
 
 ### 训练设置
 
@@ -686,16 +637,14 @@ MoR的递归块本质上是模态无关的，其自适应深度机制可以扩�
 
 
 
-### Appendix C 扩展的IsoFLOP分析结果
-
-#### 总体比较
+### 总体比较
 在正文（§3.2）中，作者对Vanilla、Recursive和Mixture-of-Recursions（MoR）模型在匹配的**训练计算量**（training compute）下进行了比较。研究了四种基础模型容量：135M、360M、730M和1.7B参数。
 
 对于Recursive和MoR模型，固定递归次数为Nr=3，因此其**唯一参数数量约为Vanilla模型的三分之一**。每种架构只在最大的计算预算（16.5EB）下训练一次，然后通过**中间训练检查点**复用得到5EB和2EB版本。
 
 ---
 
-#### Transformer的FLOPs近似计算
+### Transformer的FLOPs近似计算
 FLOPs的计算方法参考了Kaplan等人（2020）的近似方法，**仅考虑前向传播的FLOPs**，因为反向传播的计算量通常只是前向传播的两倍。Transformer的大部分操作是线性投影，其前向传播FLOPs计算为参数数的两倍，**不包括注意力机制**。
 
 在注意力机制中，作者具体计算了查询和键的点积、值的softmax缩放操作。**不计算因因果掩码导致的上三角冗余计算**，同时省略了FlashAttention、归一化和非线性操作的计算成本。
@@ -708,7 +657,7 @@ FLOPs的计算方法参考了Kaplan等人（2020）的近似方法，**仅考虑
 
 ---
 
-#### 带检查点复用的梯形学习率调度
+### 带检查点复用的梯形学习率调度
 为了避免为每个FLOP预算重新训练模型，作者采用了**梯形学习率调度**（Xing et al., 2018）。
 
 学习率调度公式如下：
@@ -731,7 +680,7 @@ $$
 
 ---
 
-#### 结果概览
+### 结果概览
 表7展示了在三种计算预算（2EB、5EB、16.5EB）下，四个基础模型（135M、360M、730M、1.7B）在FineWeb-Edu验证集上的**负对数似然（NLL）**和六个下游任务上的**少样本准确率**。
 
 **主要发现**：
@@ -746,8 +695,6 @@ MoR使用了**expert-choice路由**和**递归级缓存机制**。表中每个�
 ## Appendix D Details of Experimental Settings for Throughput Measurement
 
 
-
-## Appendix D 实验设置细节（吞吐量测量）
 
 ### 实验系统与评估方法
 
@@ -797,9 +744,6 @@ MoR使用了**expert-choice路由**和**递归级缓存机制**。表中每个�
 ## Appendix E Expanded Results of Parameter Sharing Strategy
 
 
-
-## 附录 E 参数共享策略的扩展结果
-
 本节扩展了第4.1节中对参数共享策略的消融实验，提供了图4(b)的完整量化结果。我们重新评估了四种参数共享策略（Cycle、Sequence、Middle-Cycle 和 Middle-Sequence）在两种基础模型规模（135M 和 360M 非嵌入参数）和两种不同的递归深度（Nr=2 和 Nr=3）下的表现。所有模型均在相同优化超参数下从头训练了100亿个token。验证集上的负对数似然（NLL）和六个基准任务上的平均少样本准确率总结在表8中。
 
 ### Middle-Cycle 是最稳定的选择
@@ -834,9 +778,6 @@ MoR使用了**expert-choice路由**和**递归级缓存机制**。表中每个�
 
 ## Appendix F Expanded Results of Design Choices for Router
 
-
-
-## 附录 F：路由器设计选择的扩展结果总结
 
 ### F.1 设计配置细节
 
@@ -907,9 +848,6 @@ $$ H = -\sum_{i=1}^{N_r} \overline{p}_i \log \overline{p}_i $$
 ## Appendix G Expanded Results of KV Cache Sharing Mechanism
 
 
-
-## 附录 G KV 缓存共享机制的扩展结果
-
 ### G.1 递归 Transformer 中的关键值表示趋势
 
 在 **Vanilla Transformer** 中，跨模型深度共享 **KV 缓存** 是一种提升推理吞吐量的有效手段。这种技术可以显著减少 KV 缓存的内存占用，从而允许更大的推理批量。在某些设计中，甚至可以通过跳过 KV 投影和预填充操作来实现显著加速。由于 Vanilla Transformer 模型具有高度的自由度，其可训练参数可以很好地针对共享缓存进行优化，因此共享缓存时性能下降非常小。
@@ -924,7 +862,7 @@ $$ H = -\sum_{i=1}^{N_r} \overline{p}_i \log \overline{p}_i $$
 
 ### G.2 KV 缓存共享策略的性能比较
 
-##### **KV 缓存共享的实验结果**
+#### **KV 缓存共享的实验结果**
 
 在 **表 12** 中，作者展示了在 Vanilla、Recursive 和 MoR 模型中应用 KV 缓存共享策略的性能结果。测试了多种缓存共享策略，包括 **Cycle** 和 **Sequence** 策略，这些策略与参数共享类似（详见附录 A.1）。
 
@@ -932,7 +870,7 @@ $$ H = -\sum_{i=1}^{N_r} \overline{p}_i \log \overline{p}_i $$
 
 此外，作者还探索了一种替代的共享策略（标记为 †），该策略使用共享的缓存初始化非活动位置（未选中的位置），并通过实际计算更新活动位置。尽管这种方法并未带来额外的性能提升，但仍值得进一步探索将 KV 共享与实际更新结合使用的可能性。
 
-##### **KV 共享约束的放松**
+#### **KV 共享约束的放松**
 
 在 **表 13** 中，作者研究了 **放松 KV 共享约束** 的方法，类似于 Bae 等人对参数共享约束的放松。具体而言，作者重新审视了几种放松技术，包括针对递归输出应用可训练嵌入（通过逐元素相乘）以及使用 LoRA、DoRA 和 Adapt-Prompt tuning 等技术。
 
@@ -949,15 +887,6 @@ $$ H = -\sum_{i=1}^{N_r} \overline{p}_i \log \overline{p}_i $$
 
 ## Appendix H Expanded Qualitative Results
 
-
-
-以下是对论文章节 **Appendix H Expanded Qualitative Results** 的总结，按照原文结构进行讲解，重点内容将着重说明，次要内容则予以精简。
-
----
-
-## Appendix H Expanded Qualitative Results
-
----
 
 ### H.1 Analysis on Adaptive Computation Paths
 
