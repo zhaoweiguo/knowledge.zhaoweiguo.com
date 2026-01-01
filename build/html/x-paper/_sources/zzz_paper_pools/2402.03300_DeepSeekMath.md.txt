@@ -2,14 +2,105 @@
 
 * 首页: <https://arxiv.org/abs/2402.03300>
 * PDF: <https://arxiv.org/pdf/2402.03300>
+* 引用: 2956(2025-12-14)
+* 组织:
+    * 1DeepSeek-AI, 
+    * 2Tsinghua University, 
+    * 3Peking University
+* GitHub: <https://github.com/deepseek-ai/DeepSeek-Math>
 
+
+## From Moonlight
+
+
+### 三句摘要
+
+1. 🚀 DeepSeekMath 7B通过对DeepSeek-Coder-Base-v1.5 7B进行continual pre-training，在MATH benchmark上取得了51.7%的top-1准确率，表现接近GPT-4和Gemini-Ultra。
+2. 📚 该研究构建了DeepSeekMath Corpus，一个从Common Crawl中筛选出的120B tokens高质量数学相关数据语料库，并发现code training对数学推理能力有积极影响。
+3. ✨ 论文提出Group Relative Policy Optimization (GRPO)算法，这是一种优化版PPO，通过group scores估计baseline来显著减少训练资源，并有效提升了模型的数学推理能力。
+
+### 关键词
+
+- DeepSeekMath: DeepSeekMath 是该论文中引入的一系列在数学推理领域表现出色的语言模型。该系列模型包括 DeepSeekMath-Base（基础模型）和 DeepSeekMath-Instruct/DeepSeekMath-RL（经过指令微调和强化学习优化的模型）。其目标是提升大型语言模型在处理和解决数学问题时的能力，使其接近甚至媲美顶尖的闭源模型。
+- Mathematical Reasoning: 数学推理是指语言模型在理解、分析和解决数学问题时所展现出的逻辑思考和计算能力。这包括理解数学概念、遵循数学规则、进行多步逻辑推导、执行计算以及生成结构化的数学解决方案。该论文的核心目标就是提升语言模型在这一领域的性能。
+- DeepSeekMath Corpus: DeepSeekMath Corpus 是该论文团队构建的一个大规模、高质量的数学相关预训练数据集。它主要从 Common Crawl 等公开网络数据中，通过精心设计的、迭代式的数据筛选管道（包括使用 fastText 分类器、领域发现和人工标注）提取而成，总量达到 120B（1200 亿）数学相关的 tokens。该语料库的构建旨在为模型提供丰富的数学知识和推理模式，是 DeepSeekMath 模型能力提升的关键因素之一。
+- Group Relative Policy Optimization: Group Relative Policy Optimization (GRPO) 是该论文提出的一种新型强化学习（RL）算法，它是 PPO 的一个变种。GRPO 的核心创新在于它摒弃了 PPO 中通常需要的价值函数（critic model），而是通过估计一组样本输出的平均分数作为基线（baseline）来优化策略模型。这种方法显著减少了训练所需的计算资源和内存占用，同时能够有效地提升模型的数学推理能力。
+- Proximal Policy Optimization: Proximal Policy Optimization (PPO) 是一种广泛应用于强化学习领域的算法，用于训练大型语言模型。PPO 通过最大化一个代理目标函数来更新策略模型（policy model），该目标函数包含一个约束项，以防止策略模型在更新过程中发生过大的变化，从而保证训练的稳定性。GRPO 是 PPO 的一个改进版本，它在 PPO 的基础上进行了优化。
+- Reinforcement Learning: 强化学习（RL）是一种机器学习方法，模型通过与环境互动来学习最优策略。在语言模型领域，RL 通常用于在监督微调（SFT）之后，进一步优化模型的行为，使其在特定任务（如数学推理）上表现得更好。模型根据其生成的输出（response）获得奖励（reward），并通过最大化累积奖励来调整其生成策略。
+- Supervised Fine-Tuning: Supervised Fine-Tuning (SFT) 是在预训练模型之后，使用高质量的标注数据（通常是问题-答案对或指令-输出对）对模型进行微调的阶段。在该论文中，SFT 阶段使用包含 Chain-of-Thought (CoT)、Program-of-Thought (PoT) 和工具集成推理格式的数学指令微调数据集（约 776K 示例），以使模型掌握基本的数学推理模式和指令遵循能力。
+- Chain-of-Thought: Chain-of-Thought (CoT) 是一种提示（prompting）技术，旨在提升大型语言模型在复杂推理任务（尤其是数学问题）中的表现。CoT 提示鼓励模型在给出最终答案之前，生成一系列中间的推理步骤，如同人类思考过程一样。这有助于模型分解问题、展现其推理逻辑，并提高最终答案的准确性。
+- Program-of-Thought: Program-of-Thought (PoT) 是 Chain-of-Thought (CoT) 的一种扩展，它鼓励模型在推理过程中生成程序代码（例如 Python 代码），然后执行这些代码来辅助解决数学问题。PoT 结合了语言模型的推理能力和代码执行的精确计算能力，特别适用于需要复杂计算或符号操作的问题。
+- Tool-Integrated Reasoning: Tool-Integrated Reasoning 指的是模型不仅能够进行文本推理，还能调用外部工具（如计算器、代码解释器、搜索引擎等）来辅助解决问题。这使得模型能够处理其自身能力范围之外的任务，例如进行高精度计算或访问实时信息。论文中评估了模型在这一能力上的表现。
+- MATH Benchmark: MATH Benchmark 是一个由 Hendrycks 等人（2021）提出的、用于评估模型数学问题解决能力的竞赛级基准测试。它包含 12,500 个多项选择题，涵盖代数、几何、微积分、概率论等多个高中至大学水平的数学领域。该基准测试旨在衡量模型在不同数学领域的综合推理能力。
+- GSM8K Benchmark: GSM8K Benchmark 是由 Cobbe 等人（2021）提出的一个用于评估模型解决数学应用题能力的基准测试。它包含 8,500 个小学数学应用题，要求模型通过链式思考（Chain-of-Thought）来生成详细的逐步解题过程并给出最终答案。该基准测试是衡量模型在自然语言理解和定量推理方面能力的重要指标。
+- Common Crawl: Common Crawl 是一个开源项目，它会定期抓取和存档互联网上的网页数据，并以非常大的规模（PB 级别）公开发布。该论文利用 Common Crawl 作为主要的数据源，从中提取了大量的网页文本，并通过一系列数据处理和筛选技术（如 fastText 分类器）来识别和收集与数学相关的 tokens，用于构建 DeepSeekMath Corpus。
+
+
+### 摘要
+
+DeepSeekMath 论文介绍了一种名为 DeepSeekMath 7B 的语言模型，旨在大幅提升开源模型在数学推理方面的能力。该模型在不依赖外部工具和投票技术的情况下，在竞赛级别的 MATH 基准测试上取得了 51.7% 的优异成绩，接近 Gemini-Ultra 和 GPT-4 的性能水平。通过 64 个样本的 Self-consistency，其在 MATH 上的准确率达到 60.9%。该模型数学推理能力的提升主要归因于两个关键因素：精心设计的数据选择流程，充分利用了公共网络数据；以及引入了一种名为 Group Relative Policy Optimization (GRPO) 的强化学习算法，作为 Proximal Policy Optimization (PPO) 的变体，它在增强数学推理能力的同时优化了 PPO 的内存使用。
+
+**核心方法和技术细节：**
+
+1.  **DeepSeekMath Corpus 的构建与质量验证：**
+    *   **数据收集：** 从 Common Crawl 中提取 120B 的数学相关 tokens。采用迭代式 pipeline，首先使用 OpenWebMath 作为正例训练 fastText 分类器，从 Common Crawl 中召回数学网页。然后通过识别数学相关域名和人工标注 URL 路径，丰富 seed corpus，更新分类器，进行多轮迭代。最终收集了 35.5M 数学网页。
+    *   **数据去污染：** 过滤掉与 GSM8K、MATH、CMATH 和 AGIEval 等评估基准测试集中的问题或答案完全匹配的文本片段，以避免数据泄露。
+    *   **质量验证：** 通过预训练 DeepSeek-LLM 1.3B 模型并对比 MathPile、OpenWebMath、Proof-Pile-2 等现有数学语料库，验证了 DeepSeekMath Corpus 的高质量、多语言覆盖和大规模优势。实验结果表明，该语料库训练的模型在多种数学基准测试上表现更优，学习曲线更陡峭，且能显著提升中文数学基准测试的性能。
+
+2.  **DeepSeekMath-Base 7B 模型的训练与评估：**
+    *   **初始化与训练：** DeepSeekMath-Base 7B 以 DeepSeek-Coder-Base-v1.5 7B 作为初始化，并额外训练了 500B tokens。数据分布为 56% DeepSeekMath Corpus、4% AlgebraicStack、10% arXiv、20% Github code 以及 10% 自然语言数据。
+    *   **性能评估：**
+        *   **数学问题求解 (CoT)：** 在 GSM8K、MATH、OCW、SAT、MMLU-STEM 等英文基准和 CMATH、Gaokao-MathCloze、Gaokao-MathQA 等中文基准上，DeepSeekMath-Base 7B 均超越了所有开源 Base 模型（如 Mistral 7B、Llemma 34B），甚至在 MATH 上超越了规模更大的闭源模型 Minerva 540B。
+        *   **数学问题求解 (Tool Use)：** 在 GSM8K+Python 和 MATH+Python 上，DeepSeekMath-Base 7B 同样优于 Llemma 34B。
+        *   **形式数学：** 在 miniF2F 的 informal-to-formal theorem proving 任务中表现出色。
+        *   **通用能力：** 数学预训练对 MMLU 和 BBH 的语言理解和推理能力有积极影响，同时通过包含代码 tokens 维持了 DeepSeek-Coder-Base-v1.5 在 HumanEval 和 MBPP 上的代码能力。
+
+3.  **DeepSeekMath-Instruct 7B 的 Supervised Fine-Tuning (SFT)：**
+    *   **SFT 数据集：** 构建了一个包含 776K 训练示例的数学指令微调数据集，涵盖英语和中文问题，以及 Chain-of-Thought (CoT)、Program-of-Thought (PoT) 和 Tool-integrated reasoning 等解决方案格式。数据来源包括 GSM8K、MATH、MathInstruct、Lila-OOD 和中文 K-12 数学问题。
+    *   **训练与评估：** 在 DeepSeekMath-Base 的基础上进行 SFT。在 MATH 等基准上，DeepSeekMath-Instruct 7B 显著超越了多数开源模型和部分闭源模型。在允许工具使用的场景下，DeepSeekMath-Instruct 7B 接近 60% 的 MATH 准确率。
+
+4.  **Group Relative Policy Optimization (GRPO)：**
+    *   **PPO 的局限性：** 传统的 PPO 算法需要训练一个 critic model 来估计 value function，带来了显著的内存和计算负担。
+    *   **GRPO 的创新：** GRPO 摒弃了 critic model，转而通过对同一问题采样的多个输出（一个 group）的平均得分来估计 baseline。这种方式与奖励模型的比较性质（通常基于同一问题输出的比较进行训练）相契合。
+    *   **目标函数：** GRPO 的目标函数为：
+        $$J_{GRPO}(\theta) = \mathbb{E}[q \sim P(Q), \{o_i\}_{i=1}^G \sim \pi_{\theta_{old}}(O|q)]\frac{1}{G}\sum_{i=1}^G\frac{1}{|o_i|}\sum_{t=1}^{|o_i|}\left[\min\left(\frac{\pi_{\theta}(o_{i,t}|q, o_{i,<t})}{\pi_{\theta_{old}}(o_{i,t}|q, o_{i,<t})}\hat{A}_{i,t}, \text{clip}\left(\frac{\pi_{\theta}(o_{i,t}|q, o_{i,<t})}{\pi_{\theta_{old}}(o_{i,t}|q, o_{i,<t})}, 1-\epsilon, 1+\epsilon\right)\hat{A}_{i,t}\right)\right] - \beta D_{KL}[\pi_{\theta}||\pi_{ref}]$$
+        其中，$\hat{A}_{i,t}$ 是基于 group scores 计算的优势函数。GRPO 不在奖励中添加 KL 惩罚项，而是直接将当前策略与参考策略之间的 KL 散度作为正则化项添加到损失中。KL 散度的无偏估计器为：
+        $$D_{KL}[\pi_{\theta}||\pi_{ref}] = \frac{\pi_{ref}(o_{i,t}|q, o_{i,<t})}{\pi_{\theta}(o_{i,t}|q, o_{i,<t})} - \log \frac{\pi_{ref}(o_{i,t}|q, o_{i,<t})}{\pi_{\theta}(o_{i,t}|q, o_{i,<t})} - 1$$
+    *   **Outcome Supervision RL with GRPO：** 对每个输出 $o_i$ 采样 $G$ 个输出，通过奖励模型得到 $G$ 个奖励 $r = \{r_1, r_2, \cdots, r_G\}$。通过减去组平均值并除以组标准差对奖励进行标准化，即 $\hat{A}_{i,t} = \tilde{r}_i = \frac{r_i - \text{mean}(r)}{\text{std}(r)}$。
+    *   **Process Supervision RL with GRPO：** 对每个推理步骤提供奖励。将每个 tokens 的优势定义为后续步骤标准化奖励之和，即 $\hat{A}_{i,t} = \sum_{index(j) \ge t} \tilde{r}_{index(j),i}$。
+    *   **Iterative RL with GRPO：** 迭代地更新奖励模型和策略模型，通过重放机制整合历史数据，确保奖励模型的有效性。
+
+5.  **DeepSeekMath-RL 7B 模型的训练与评估：**
+    *   **训练设置：** 在 DeepSeekMath-Instruct 7B 基础上进行 RL 训练，使用来自 SFT 数据集中与 GSM8K 和 MATH 相关的 CoT 格式问题（约 144K 个问题）。KL 系数为 0.04，每个问题采样 64 个输出。
+    *   **性能提升：** DeepSeekMath-RL 7B 在 GSM8K 和 MATH 上分别达到 88.2% 和 51.7% 的准确率，超越了所有 7B 到 70B 的开源模型以及大多数闭源模型。即使训练数据受限，它在所有评估基准上仍优于 DeepSeekMath-Instruct 7B，展示了强化学习的有效性。
+
+6.  **预训练经验分享：**
+    *   **代码训练对数学推理的益处：** 实验表明，代码训练能够提升模型在有无工具使用情况下的数学推理能力。
+        *   **两阶段训练：** “代码训练 -> 数学训练”的路径显著提升了模型使用 Python 解决 GSM8K 和 MATH 问题的能力，且对无工具数学推理也有适度增强。
+        *   **一阶段混合训练：** 将代码 tokens 和数学 tokens 混合训练能有效缓解两阶段训练带来的灾难性遗忘，并协同提升编码能力和程序辅助数学推理能力。
+    *   **arXiv 论文的低效性：** 出乎意料的是，在目前的实验中，arXiv 论文在提升数学推理方面似乎没有显著效果，甚至可能导致性能下降。这可能与 arXiv 数据的处理方式、评估任务的局限性或模型规模有关。
+
+7.  **强化学习的洞察与统一范式：**
+    *   **统一范式：** 提出一个统一范式来分析 SFT、RFT、DPO、PPO、GRPO 等不同训练方法，其梯度更新可表示为：
+        $$\nabla_{\theta} J_A(\theta) = \mathbb{E}[(q, o) \sim \mathcal{D}] \left[\frac{1}{|o|}\sum_{t=1}^{|o|} GC_A(q, o, t, \pi_{ref}) \nabla_{\theta} \log \pi_{\theta}(o_t|q, o_{<t})\right]$$
+        该范式包含三个关键组件：**数据源 ($\mathcal{D}$)**、**奖励函数 ($\pi_{ref}$)** 和 **算法 (梯度系数 $GC$)**。
+    *   **关键观察：**
+        *   **数据源 (在线 vs. 离线)：** 发现在线采样（从实时策略模型采样）比离线采样（从 SFT 模型采样）更具优势，尤其是在训练后期。Online RFT 显著优于 RFT。
+        *   **梯度系数 (规则 vs. 模型)：** GRPO 超越 Online RFT，表明改变正负梯度系数的效率更高。GRPO+PS 优于 GRPO+OS，体现了使用细粒度、步长感知梯度系数的益处。
+        *   **迭代 RL：** 迭代 RL 显著提升了性能，尤其是在第一次迭代时。
+    *   **RL 工作原理：** 实验发现 RL 主要通过提升模型的 Maj@K 性能（而非 Pass@K）来增强整体表现，这表明 RL 使得输出分布更加鲁棒，提高了正确响应在 TopK 候选中的出现率，而不是根本能力的提升。
+
+8.  **未来研究方向：**
+    *   **数据源：** 探索 RL 管道在 out-of-distribution 问题提示上的应用，结合先进的采样（解码）策略（如 tree-search 方法），以及高效推理技术。
+    *   **算法：** 开发对噪声奖励信号鲁棒的强化学习算法，探索 WEAK-TO-STRONG 对齐方法。
+    *   **奖励函数：** 提升奖励模型的泛化能力，使其能处理 out-of-distribution 问题和高级解码输出；反映奖励模型的不确定性；高效构建高质量的过程奖励模型。
+
+**局限性：**
+
+尽管 DeepSeekMath 在量化推理基准上取得了令人印象深刻的成绩，但其在几何和定理证明方面的能力相对较弱，可能存在预训练和微调过程中的数据选择偏差。此外，受限于模型规模，DeepSeekMath 在 few-shot 学习能力上仍不及 GPT-4。
 
 
 ## Abstract
-
-
-
-本节介绍了**DeepSeekMath 7B**这一语言模型在数学推理任务上的研究与进展。
 
 ### 主要内容总结：
 

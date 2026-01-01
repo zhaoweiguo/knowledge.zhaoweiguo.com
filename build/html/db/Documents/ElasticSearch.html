@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>3.2. ElasticSearch &mdash; 新溪-gordon V2025.11 文档</title>
+  <title>3.2. ElasticSearch &mdash; 新溪-gordon V2025.12 文档</title>
   
 
   
@@ -108,7 +108,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             
               <div class="version">
-                V2025.11
+                V2025.12
               </div>
             
           
@@ -343,7 +343,20 @@ document.addEventListener('DOMContentLoaded', function() {
 </li>
 </ul>
 </li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">3.2. ElasticSearch</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">3.2. ElasticSearch</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">3.2.1. 索引创建</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id2">字段类型详解</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#settings">索引设置 (settings)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id3">示例:</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">3.2.2. 搜索</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id5">示例</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id6">查询示例</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../Column.html">4. 列式存储 DB</a><ul>
@@ -826,7 +839,7 @@ document.addEventListener('DOMContentLoaded', function() {
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="../_sources/Documents/ElasticSearch.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/Documents/ElasticSearch.md.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -838,17 +851,28 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-  <table class="docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
-<td><p><a class="reference internal" href="../genindex.html"><span class="std std-ref">索引</span></a></p></td>
-<td><p><a class="reference internal" href="../py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
-<td><p><a class="reference internal" href="../search.html"><span class="std std-ref">搜索页面</span></a></p></td>
-</tr>
-</tbody>
-</table>
-<section id="elasticsearch">
-<span id="id2"></span><h1><span class="section-number">3.2. </span>ElasticSearch<a class="headerlink" href="#elasticsearch" title="此标题的永久链接">¶</a></h1>
+            <nav id="local-table-of-contents" role="navigation" aria-labelledby="local-table-of-contents-title">
+              <h4 id="local-table-of-contents-title">On This Page</h4>
+              <ul>
+<li><a class="reference internal" href="#">3.2. ElasticSearch</a><ul>
+<li><a class="reference internal" href="#id1">3.2.1. 索引创建</a><ul>
+<li><a class="reference internal" href="#id2">字段类型详解</a></li>
+<li><a class="reference internal" href="#settings">索引设置 (settings)</a></li>
+<li><a class="reference internal" href="#id3">示例:</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id4">3.2.2. 搜索</a><ul>
+<li><a class="reference internal" href="#id5">示例</a></li>
+<li><a class="reference internal" href="#id6">查询示例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            </nav>
+  <section class="tex2jax_ignore mathjax_ignore" id="elasticsearch">
+<h1><span class="section-number">3.2. </span>ElasticSearch<a class="headerlink" href="#elasticsearch" title="此标题的永久链接">¶</a></h1>
 <p>ElasticSearch是一个基于Lucene的搜索服务器。它提供了一个分布式多用户能力的全文搜索引擎，基于RESTful web接口。Elasticsearch是用Java开发的，并作为Apache许可条款下的开放源码发布，是当前流行的企业级搜索引擎。设计用于云计算中，能够达到实时搜索，稳定，可靠，快速，安装使用方便。</p>
 <p>cluster
 代表一个集群，集群中有多个节点，其中有一个为主节点，这个主节点是可以通过选举产生的，主从节点是对于集群内部来说的。es的一个概念就是去中心化，字面上理解就是无中心节点，这是对于集群外部来说的，因为从外部来看es集群，在逻辑上是个整体，你与任何一个节点的通信和与整个es集群通信是等价的。
@@ -866,15 +890,271 @@ discovery.zen
 代表es的自动发现节点机制，es是一个基于p2p的系统，它先通过广播寻找存在的节点，再通过多播协议来进行节点之间的通信，同时也支持点对点的交互。
 Transport
 代表es内部节点或集群与客户端的交互方式，默认内部是使用tcp协议进行交互，同时它支持http协议（json格式）、thrift、servlet、memcached、zeroMQ等的传输协议（通过插件方式集成）。</p>
-<table class="docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference external" href="/index.html">主页</a></p></td>
-<td><p><a class="reference internal" href="../genindex.html"><span class="std std-ref">索引</span></a></p></td>
-<td><p><a class="reference internal" href="../py-modindex.html"><span class="std std-ref">模块索引</span></a></p></td>
-<td><p><a class="reference internal" href="../search.html"><span class="std std-ref">搜索页面</span></a></p></td>
-</tr>
-</tbody>
-</table>
+<section id="id1">
+<h2><span class="section-number">3.2.1. </span>索引创建<a class="headerlink" href="#id1" title="此标题的永久链接">¶</a></h2>
+<ul class="simple">
+<li><p>mapping 定义了索引的结构，类似于数据库表结构</p></li>
+</ul>
+<section id="id2">
+<h3>字段类型详解<a class="headerlink" href="#id2" title="此标题的永久链接">¶</a></h3>
+<p>基础类型：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>&quot;long&quot;：长整型数字（如：id）
+&quot;keyword&quot;：不分词的字符串，用于精确匹配、聚合、排序
+&quot;text&quot;：分词文本，用于全文搜索
+&quot;date&quot;：日期类型（指定了格式 yyyy-MM-dd HH:mm:ss）
+&quot;float&quot;：浮点数
+&quot;dense_vector&quot;：稠密向量（用于向量搜索）
+</pre></div>
+</div>
+<p>多字段特性 (fields)：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;app_id&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;keyword&quot;</span><span class="p">,</span>  <span class="c1"># 主字段：精确匹配</span>
+    <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;text&quot;</span><span class="p">}</span>  <span class="c1"># 子字段：支持全文搜索</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1"># app_id 可以通过：</span>
+<span class="n">app_id</span> <span class="n">进行精确匹配</span>
+<span class="n">app_id</span><span class="o">.</span><span class="n">text</span> <span class="n">进行全文搜索</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>向量字段配置：</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;embedding&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;dense_vector&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;dims&quot;</span><span class="p">:</span> <span class="mi">1024</span><span class="p">,</span>      <span class="c1"># 向量维度</span>
+    <span class="s2">&quot;index&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>     <span class="c1"># 启用索引</span>
+    <span class="s2">&quot;similarity&quot;</span><span class="p">:</span> <span class="s2">&quot;cosine&quot;</span>  <span class="c1"># 相似度计算方式</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>嵌套对象：</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;metadata&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;properties&quot;</span><span class="p">:</span> <span class="p">{</span>  <span class="c1"># 嵌套结构</span>
+        <span class="s2">&quot;app_id&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;keyword&quot;</span><span class="p">},</span>
+        <span class="s2">&quot;user_id&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;keyword&quot;</span><span class="p">},</span>
+        <span class="o">...</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="settings">
+<h3>索引设置 (settings)<a class="headerlink" href="#settings" title="此标题的永久链接">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;settings&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;number_of_shards&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>       <span class="c1"># 主分片数（数据拆分单元）</span>
+    <span class="s2">&quot;number_of_replicas&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>     <span class="c1"># 副本数（保证高可用）</span>
+    <span class="s2">&quot;refresh_interval&quot;</span><span class="p">:</span> <span class="s2">&quot;1s&quot;</span>     <span class="c1"># 数据刷新频率（近实时搜索）</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="id3">
+<h3>示例:<a class="headerlink" href="#id3" title="此标题的永久链接">¶</a></h3>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span>mapping = {
+    &quot;mappings&quot;: {
+        &quot;properties&quot;: {
+            &quot;id&quot;: {&quot;type&quot;: &quot;long&quot;},
+            &quot;app_id&quot;: {
+                &quot;type&quot;: &quot;keyword&quot;,
+                &quot;fields&quot;: {
+                    &quot;text&quot;: {&quot;type&quot;: &quot;text&quot;}
+                }
+            },
+            &quot;user_id&quot;: {
+                &quot;type&quot;: &quot;keyword&quot;,
+                &quot;fields&quot;: {
+                    &quot;text&quot;: {&quot;type&quot;: &quot;text&quot;}
+                }
+            },
+            &quot;type&quot;: {
+                &quot;type&quot;: &quot;keyword&quot;,
+                &quot;fields&quot;: {
+                    &quot;text&quot;: {&quot;type&quot;: &quot;text&quot;}
+                }
+            },
+            &quot;memory_info&quot;: {&quot;type&quot;: &quot;text&quot;},
+            &quot;memory_time&quot;: {
+                &quot;type&quot;: &quot;date&quot;,
+                &quot;format&quot;: &quot;yyyy-MM-dd HH:mm:ss&quot;
+            },
+            &quot;weight&quot;: {&quot;type&quot;: &quot;float&quot;},
+            &quot;embedding&quot;: {
+                &quot;type&quot;: &quot;dense_vector&quot;,
+                &quot;dims&quot;: 1024,
+                &quot;index&quot;: true,
+                &quot;similarity&quot;: &quot;cosine&quot;,
+                &quot;index_options&quot;: {
+                    &quot;type&quot;: &quot;int8_hnsw&quot;,
+                    &quot;m&quot;: 16,
+                    &quot;ef_construction&quot;: 100
+                }
+            },
+            &quot;metadata&quot;: {
+                &quot;properties&quot;: {
+                    &quot;app_id&quot;: {&quot;type&quot;: &quot;keyword&quot;},
+                    &quot;user_id&quot;: {&quot;type&quot;: &quot;keyword&quot;},
+                    &quot;type&quot;: {&quot;type&quot;: &quot;keyword&quot;},
+                    &quot;weight&quot;: {&quot;type&quot;: &quot;float&quot;}
+                }
+            }
+        }
+    },
+    &quot;settings&quot;: {
+        &quot;number_of_shards&quot;: 1,          # 通常每分片20-50GB数据
+        &quot;number_of_replicas&quot;: 1,
+        &quot;refresh_interval&quot;: &quot;30s&quot;        # 减少频繁刷新开销
+    }
+}
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;dynamic_templates&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;message_full&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;match&quot;</span><span class="p">:</span> <span class="s2">&quot;message_full&quot;</span><span class="p">,</span>        <span class="c1"># 匹配字段名</span>
+        <span class="s2">&quot;mapping&quot;</span><span class="p">:</span> <span class="p">{</span>
+          <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;keyword&quot;</span><span class="p">:</span> <span class="p">{</span>                <span class="c1"># 同时创建keyword子字段</span>
+              <span class="s2">&quot;ignore_above&quot;</span><span class="p">:</span> <span class="mi">2048</span><span class="p">,</span>     <span class="c1"># 超过2048字符不索引</span>
+              <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;keyword&quot;</span>
+            <span class="p">}</span>
+          <span class="p">},</span>
+          <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;match_only_text&quot;</span>     <span class="c1"># 节省空间的文本类型，适合日志类数据</span>
+        <span class="p">}</span>
+      <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;match&quot;</span><span class="p">:</span> <span class="s2">&quot;message&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;mapping&quot;</span><span class="p">:</span> <span class="p">{</span>
+          <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;match_only_text&quot;</span>     <span class="c1"># 仅用于匹配，不存储统计信息</span>
+        <span class="p">}</span>
+      <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;strings&quot;</span><span class="p">:</span> <span class="p">{</span>                      <span class="c1"># 所有字符串类型</span>
+        <span class="s2">&quot;match_mapping_type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;mapping&quot;</span><span class="p">:</span> <span class="p">{</span>
+          <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;keyword&quot;</span>             <span class="c1"># 默认映射为keyword类型：自动将字符串映射为keyword（而不是text）</span>
+        <span class="p">}</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">],</span>
+  <span class="s2">&quot;properties&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;metadata&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s2">&quot;properties&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;appId&quot;</span><span class="p">:</span> <span class="p">{</span>
+          <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;keyword&quot;</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;createTime&quot;</span><span class="p">:</span> <span class="p">{</span>
+          <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;long&quot;</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;score&quot;</span><span class="p">:</span> <span class="p">{</span>
+          <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;double&quot;</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="p">{</span>
+          <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;keyword&quot;</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;updateCycle&quot;</span><span class="p">:</span> <span class="p">{</span>
+          <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;integer&quot;</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;weight&quot;</span><span class="p">:</span> <span class="p">{</span>
+          <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;float&quot;</span>
+        <span class="p">}</span>
+      <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;text&quot;</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;vector&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;dense_vector&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;dims&quot;</span><span class="p">:</span> <span class="mi">1024</span><span class="p">,</span>
+      <span class="s2">&quot;index&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span>
+      <span class="s2">&quot;similarity&quot;</span><span class="p">:</span> <span class="s2">&quot;cosine&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;index_options&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;int8_hnsw&quot;</span><span class="p">,</span>                    <span class="c1"># 使用int8量化，节省75%空间</span>
+        <span class="s2">&quot;m&quot;</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span>                                <span class="c1"># HNSW图连接数（平衡精度和性能）</span>
+        <span class="s2">&quot;ef_construction&quot;</span><span class="p">:</span> <span class="mi">100</span>                  <span class="c1"># 构建时的候选集大小</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id4">
+<h2><span class="section-number">3.2.2. </span>搜索<a class="headerlink" href="#id4" title="此标题的永久链接">¶</a></h2>
+<section id="id5">
+<h3>示例<a class="headerlink" href="#id5" title="此标题的永久链接">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># 精确匹配 app_id</span>
+<span class="p">{</span><span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;term&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;app_id&quot;</span><span class="p">:</span> <span class="s2">&quot;app123&quot;</span><span class="p">}}}</span>
+
+<span class="c1"># 全文搜索 app_id</span>
+<span class="p">{</span><span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;match&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;app_id.text&quot;</span><span class="p">:</span> <span class="s2">&quot;app&quot;</span><span class="p">}}}</span>
+
+<span class="c1"># 向量相似度搜索</span>
+<span class="p">{</span><span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;script_score&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;match_all&quot;</span><span class="p">:</span> <span class="p">{}},</span>
+    <span class="s2">&quot;script&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;source&quot;</span><span class="p">:</span> <span class="s2">&quot;cosineSimilarity(params.query_vector, &#39;embedding&#39;) + 1.0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;query_vector&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">...</span><span class="p">]}</span>
+    <span class="p">}</span>
+<span class="p">}}}</span>
+
+<span class="c1"># 范围查询日期</span>
+<span class="p">{</span><span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;range&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;memory_time&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;gte&quot;</span><span class="p">:</span> <span class="s2">&quot;2024-01-01&quot;</span><span class="p">}}}}</span>
+</pre></div>
+</div>
+</section>
+<section id="id6">
+<h3>查询示例<a class="headerlink" href="#id6" title="此标题的永久链接">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>向量相似度搜索：
+{
+  &quot;knn&quot;: {
+    &quot;field&quot;: &quot;vector&quot;,
+    &quot;query_vector&quot;: [0.1, 0.2, ...],
+    &quot;k&quot;: 10,
+    &quot;num_candidates&quot;: 100
+  },
+  &quot;fields&quot;: [&quot;text&quot;, &quot;metadata.*&quot;]
+}
+
+过滤+向量搜索：
+{
+  &quot;knn&quot;: {
+    &quot;field&quot;: &quot;vector&quot;,
+    &quot;query_vector&quot;: [...],
+    &quot;k&quot;: 10,
+    &quot;filter&quot;: {
+      &quot;term&quot;: {&quot;metadata.userId&quot;: &quot;user123&quot;}
+    }
+  }
+}
+
+
+文本+元数据组合查询：
+{
+  &quot;bool&quot;: {
+    &quot;must&quot;: [
+      {&quot;match&quot;: {&quot;text&quot;: &quot;错误信息&quot;}},
+      {&quot;term&quot;: {&quot;metadata.appId&quot;: &quot;app001&quot;}},
+      {&quot;range&quot;: {&quot;metadata.createTime&quot;: {&quot;gte&quot;: 1633046400000}}}
+    ]
+  }
+}
+
+
+
+</pre></div>
+</div>
+</section>
+</section>
 </section>
 
 
@@ -930,7 +1210,7 @@ Transport
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'V2025.11',
+            VERSION:'V2025.12',
             LANGUAGE:'zh-CN',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',

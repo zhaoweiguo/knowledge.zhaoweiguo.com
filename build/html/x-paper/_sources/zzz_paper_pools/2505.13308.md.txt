@@ -1,0 +1,1210 @@
+# 2505.13308_*Seek in the Dark*: Reasoning via Test-Time Instance-Level Policy Gradient in Latent Space
+
+
+
+* 首页: <https://arxiv.org/abs/2505.13308>
+* PDF: <https://arxiv.org/pdf/2505.13308>
+* 引用: 
+* 组织: 
+* GitHub:
+  - **代码开源**：GitHub 地址：<https://github.com/bigai-nlco/LatentSeek>
+  - **项目主页**：<https://bigai-nlco.github.io/LatentSeek/>
+
+## 总结
+
+
+## From Moonlight
+
+
+### 三句摘要
+
+
+### 关键词
+
+
+
+### 摘要
+
+
+
+##  Abstract
+
+- **总结**：LatentSeek 是一种轻量级、可扩展的测试时优化方法，通过在潜在空间中应用策略梯度，显著提升 LLM 的推理能力。
+- **未来方向**：
+  - 探索更稳定的潜在空间优化策略。
+  - 结合 token 空间与潜在空间的联合优化。
+  - 提高优化后的输出的语义一致性。
+
+
+- **核心创新**：首次在潜在空间中进行测试时优化，提升推理能力。
+- **方法亮点**：使用策略梯度 + 自生成奖励，无需参数更新。
+- **实验优势**：在多个数学推理任务上超越 CoT 和 RL 微调。
+- **效率高**：通常 3~5 次迭代即可收敛。
+- **局限性**：优化后的输出可能语义不一致，需进一步研究。
+
+
+## 1 Introduction
+
+
+
+## 1 引言（Introduction）
+
+### 1.1 大型语言模型（LLMs）的推理挑战
+
+大型语言模型在多种任务中表现出色，尤其是在复杂推理和演绎分析方面（Brown et al., 2020；Chowdhery et al., 2022；OpenAI, 2023；Zhao et al., 2025）。然而，LLMs 在结构化思维和逐步分析任务中仍存在困难（Wei et al., 2022；Kojima et al., 2022）。
+
+### 1.2 现有改进方法及其局限性
+
+常见的提升推理能力的方法包括：
+
+- **参数训练**：在推理导向数据集上进行微调；
+- **反馈机制**：提供推理相关的反馈信息。
+
+具体训练方法包括：
+- 监督微调（SFT）；
+- 强化学习（RL）；
+- 测试时训练（test-time training）。
+
+这些方法需要更新模型参数，存在以下问题：
+- **计算成本高**；
+- **灾难性遗忘**：可能丢失通用能力（Luo et al., 2025）；
+- **探索能力下降**：强化学习可能限制模型探索（Yue et al., 2025）；
+- **生成冗长响应**：某些情况下生成内容过于冗长（Aggarwal & Welleck, 2025；Wu et al., 2025）。
+
+### 1.3 提出的替代方法：测试时实例级适应（TTIA）
+
+本文提出一种**无需参数更新**、在测试阶段对每个实例进行适应的方法：**Test-Time Instance-Level Adaptation (TTIA)**。
+
+### 1.4 现有TTIA方法的局限性
+
+- **Prompt Engineering（提示工程）**：表达能力有限；
+- **Latent Space Fine-tuning（潜空间微调）**：如 Deng et al. (2022) 和 Hao et al. (2024) 所示，推理能力可在潜空间内实现，但训练策略会显著改变潜空间结构，未能充分利用其语义丰富性，效果仍不如 Chain-of-Thought (CoT)。
+
+### 1.5 本文贡献：LatentSeek 框架
+
+受上述研究启发，提出 **LatentSeek**，首次尝试在潜空间中进行“探索”以提升推理能力。
+
+#### 核心思想：
+- 不修改模型参数；
+- 在测试时更新**实例特定的潜表示（latent representations）**；
+- 这些表示作为“规划”或“控制”机制，引导模型走向更优的推理路径。
+
+#### 算法机制：
+- 使用 **Policy Gradient（策略梯度）** 方法（Williams, 1992）优化潜表示；
+- 每次迭代中：
+  - 更新 token-wise 的潜表示；
+  - 解码为 tokens；
+  - 计算奖励（reward）；
+- 奖励函数为**自奖励机制**，不依赖外部信息；
+- 迭代终止条件：奖励超过阈值或达到最大迭代次数。
+
+### 1.6 实验结果与性能提升
+
+#### 主要结果：
+- 在 **GSM8K** 数据集上，平均提升 **10.75%**；
+- 在 **MATH-500** 上提升 **3.93%**；
+- 在 **AIME2024** 上提升 **4.73%**；
+- 使用 LLaMA3.1-8B-Instruct 时，优于 SimpleRL-Zoo（+18.1%）和 Genius（+12.7%）。
+
+#### 理想化实验（Perfect Verifier）：
+- 使用基于真实标签的完美验证器提供稀疏奖励；
+- 平均提升 **19.12%**；
+- 表明 LatentSeek 的知识提取机制有效。
+
+#### 测试时扩展性实验：
+- 模型性能随更新迭代次数增加而提升；
+- 使用理想验证器时，1.5B 参数模型在 MATH-500 上从 **54.8% 提升至 82.8%**，接近 OpenAI o1-preview 模型表现；
+- 表明**潜空间测试时扩展**是可行的，可替代传统的 token 空间扩展策略（Liu et al., 2025；Yeo et al., 2025；Xu et al., 2025b）。
+
+---
+
+### 总结：
+
+本节介绍了当前 LLMs 在推理任务中的挑战，分析了现有训练方法的局限性，提出了无需参数更新的 TTIA 方法，并引入 LatentSeek 框架，通过在潜空间中使用策略梯度优化潜表示，显著提升了推理性能。实验结果表明其在多个数据集上优于 CoT 和其他 SOTA 方法，尤其在理想验证器下表现接近 OpenAI 的 o1-preview 模型。
+
+
+## 2 Test-Time Instance-Level Policy Gradient in Latent Space
+
+
+
+## 2 测试时实例级潜在空间策略梯度
+
+### 2.1 问题定义：测试时实例级推理
+
+本节定义了测试时推理任务的数学形式。给定一个推理问题的上下文提示 **c** 和一个预训练的自回归语言模型 **π**（由 Transformer 主干网络 π_Transformer 和语言模型头 π_LM-head 组成），对于一个推理序列 **x = (x₁, x₂, ..., x_T)**，其联合概率分布为：
+
+$$
+\pi(\mathbf{x} \mid \mathbf{c}) = \prod_{t=1}^{T} \pi(x_t \mid \mathbf{x}_{<t}, \mathbf{c}), \quad \pi(x_t \mid \mathbf{x}_{<t}, \mathbf{c}) = \pi_{\text{LM-head}}(x_t \mid z_t)
+$$
+
+其中 **zₜ = π_Transformer(x<sub><t</sub>, c)** 是 xₜ 对应的潜在表示。
+
+测试时，真实标签未知，因此引入奖励函数 **R(x, c)** 来评估生成的推理序列。最终目标是找到最优推理路径：
+
+$$
+\mathbf{x}^* = \arg\max_{\mathbf{x}} R(\mathbf{x}, \mathbf{c})
+$$
+
+> **重点**：本节建立了测试时推理的数学框架，强调了潜在空间表示 **zₜ** 的作用，并引入奖励函数作为优化目标。
+
+---
+
+### 2.2 潜在空间中的策略梯度推理
+
+为了解决上述优化问题，作者将任务重新定义为在潜在空间中进行序列优化，而非直接在 token 空间搜索。定义潜在表示序列 **z = (z₁, z₂, ..., z_N)**，其中 **N ≤ T**。
+
+目标是找到最优潜在表示序列：
+
+$$
+\mathbf{z}^* = \arg\max_{\mathbf{z}} \mathbb{E}_{\mathbf{x} \sim \pi(\mathbf{x} \mid \mathbf{z}, \mathbf{c})}[R(\mathbf{x}, \mathbf{c})]
+$$
+
+生成序列 **x ∼ π(x ∣ z, c)** 的方式是：先将潜在表示 **z** 解码为 token，然后继续自回归生成，其联合概率可分解为：
+
+$$
+\pi(\mathbf{x} \mid \mathbf{z}, \mathbf{c}) = \left( \prod_{t=1}^{N} \pi_{\text{LM-head}}(x_t \mid z_t) \right) \left( \prod_{t=N+1}^{T} \pi(x_t \mid \mathbf{x}_{<t}, \mathbf{c}) \right)
+$$
+
+#### 测试时潜在表示的优化
+
+使用基于 REINFORCE 的策略梯度方法优化潜在表示：
+
+$$
+\mathbf{z} \leftarrow \mathbf{z} + \eta \nabla_{\mathbf{z}} \mathcal{J}(\mathbf{z})
+$$
+
+其中目标函数的梯度为：
+
+$$
+\nabla_{\mathbf{z}} \mathcal{J}(\mathbf{z}) = \mathbb{E}_{\mathbf{x} \sim \pi(\mathbf{x} \mid \mathbf{z}, \mathbf{c})} \left[ R(\mathbf{x}, \mathbf{c}) \nabla_{\mathbf{z}} \log \pi(\mathbf{x} \mid \mathbf{z}, \mathbf{c}) \right]
+$$
+
+对于第 t 个潜在表示，其梯度为：
+
+$$
+[\nabla_{\mathbf{z}} \mathcal{J}(\mathbf{z})]_t = \mathbb{E}_{\mathbf{x} \sim \pi(\mathbf{x} \mid \mathbf{z}, \mathbf{c})} \left[ R(\mathbf{x}, \mathbf{c}) \nabla_{z_t} \log \pi(x_t \mid z_t) \right]
+$$
+
+> **重点**：通过策略梯度方法在潜在空间中进行优化，避免直接在 token 空间搜索，提升了搜索效率和稳定性。公式 (4) 和 (7) 是核心数学表达。
+
+---
+
+### 2.3 LatentSeek 算法
+
+#### 算法流程
+
+**输入**：问题上下文 **c**、学习率 η、预训练模型 π、奖励阈值 τ、序列比例 ρ、最大迭代次数 K
+
+**初始化**：
+- 用 CoT（Chain-of-Thought）生成初始序列 **x** 和潜在表示 **z**
+- 计算初始奖励 **r = R(x, c)**，其中奖励由自奖励机制生成：
+
+$$
+R(\mathbf{x}, \mathbf{c}) \sim \pi(\cdot \mid \mathbf{x}, \mathbf{c}, \text{prompt}_{\text{self-reward}})
+$$
+
+- 保留前 **ρT** 个潜在表示，进行部分序列优化
+
+**迭代优化**（最多 K 次）：
+1. 更新潜在表示：**z ← z + η ∇ₐJ(z)**
+2. 采样新序列：**x ∼ π(x ∣ z, c)**
+3. 计算新奖励：**r ← R(x, c)**
+4. 若奖励超过阈值 τ，则提前终止
+
+**输出**：优化后的推理序列 **x̃**
+
+> **重点**：LatentSeek 是一个迭代优化算法，结合了策略梯度和自奖励机制，在潜在空间中逐步提升推理质量。
+
+#### 增强技术
+
+1. **CoT 初始化**：使用 CoT 生成的推理路径作为潜在表示的初始值，提升优化起点。
+2. **部分序列优化**：仅优化前 **ρT** 个潜在表示，平衡探索能力和优化效率。ρ 是一个超参数，通常取 20%。
+
+> **重点**：这两个技术提升了算法的稳定性和效率，防止对不连贯的潜在表示进行过度优化，从而影响奖励函数的可靠性。
+
+---
+
+### 总结
+
+本章提出了一种在测试时通过潜在空间策略梯度进行推理的方法，核心思想是将推理路径搜索转化为潜在表示的优化问题。通过 LatentSeek 算法，结合 REINFORCE 策略梯度和自奖励机制，实现了在无监督条件下的高效推理优化。文中强调了潜在空间建模、策略梯度更新公式和部分序列优化等关键技术点，并通过 CoT 初始化和序列截断策略提升了算法的实用性和稳定性。
+
+
+## 3 Empirical Results
+
+
+
+### 3. Empirical Results 总结
+
+本节主要介绍实验设置、结果分析以及方法在多个数学推理任务上的表现。内容结构如下：
+
+---
+
+### 3.1 Experimental Setup（实验设置）
+
+#### **Reward Mechanism（奖励机制）**
+- 使用Lifshitz等人（2025）提出的数学推理提示来引导模型进行自我奖励计算。
+- 对特定任务引入基于格式的奖励机制（DeepSeek-AI, 2025）。
+- 引入**Perfect Sparse Reward Model (PSRM)**，用于验证方法在稀疏奖励下的潜力。
+
+#### **Prompt Designation（提示设计）**
+- 使用两种提示格式进行评估：
+  - Prompt 1：要求答案用 `\boxed{}` 包裹。
+  - Prompt 2：要求答案以 JSON 格式输出。
+
+#### **Backbones（模型基座）**
+- 使用多个不同家族和规模的预训练大语言模型：
+  - Qwen2系列（1.5B~14B）
+  - LLaMA3.1-8B
+  - Mistral-7B
+
+#### **Benchmarks（基准数据集）**
+- 评估集中在数学推理任务上，使用以下三个数据集：
+  - **GSM8K**：用于基础推理能力评估。
+  - **MATH-500**：用于中等难度的数学问题评估。
+  - **AIME2024**：用于高难度复杂推理任务评估。
+
+#### **Baselines（对比方法）**
+- **Prompting（无训练）**：CoT、Few-Shot CoT
+- **Explicit Search（无训练）**：Best-of-N (BoN)
+- **Reinforcement Learning（强化学习）**：
+  - 自我奖励：Self-Rewarding、ScPO、CoH、Genius
+  - 可验证奖励：SimpleRL-Zoo、GRPO、SPIN
+- **Latent Chain-of-Thought（隐式推理链）**：iCoT
+- **监督微调（SFT）**：在Magpie 25K或GSM8K训练集上微调
+
+#### **表格数据（Table 1 和 Table 2）**
+- 表1展示了不同模型和提示下 LatentSeek 与基线方法在多个数据集上的准确率对比。
+- 表2展示了使用 LLaMA3.1-8B-Instruct 作为基座模型时，LatentSeek 与更多基线方法的对比。
+- **关键结果**：
+  - LatentSeek（PSRM）在多个数据集上显著优于 CoT、BoN、SFT 等方法。
+  - 在 AIME2024 上，LatentSeek（PSRM）平均提升 CoT 4.73%。
+  - PSRM 在稀疏奖励下仍能取得优异表现，平均提升 CoT 19.12%。
+
+---
+
+### 3.2 State-of-the-art Test-time Reasoning Performance（测试时推理性能）
+
+#### **GSM8K 和 MATH-500 的最佳表现**
+- 使用 LLaMA3.1-8B-Instruct 作为基座模型：
+  - 相比 CoT，LatentSeek 提升 14.6%（GSM8K）和 7.0%（MATH-500）。
+  - 相比 BoN，提升 7.7%（GSM8K）和 3.4%（MATH-500）。
+  - 超过 iCoT（需训练）36.6%，超过 Genius（RL-based）20.0%。
+
+#### **挑战性问题：AIME2024**
+- LatentSeek 平均提升 CoT 4.73%，在 Prompt 1 下 Qwen2.5-7B-Instruct 提升 13.33%。
+- 即使是较小模型（如 Mistral），也有平均 1.67% 的提升。
+
+#### **模型泛化能力**
+- **模型家族**：在 Qwen2、Qwen2.5、LLaMA3.1 上表现最佳，Mistral 上次优。
+- **模型规模**：
+  - 1.5B 模型在 GSM8K（Prompt 2）提升 CoT 28.89%。
+  - 7–8B 模型平均提升 BoN 11.75%。
+  - 14B 模型在 AIME2024 提升 6.67%。
+
+#### **模型特定提示的泛化**
+- Qwen2.5 系列使用其训练时的 Prompt 1，LatentSeek 仍提升 0.91%（GSM8K）和 2.47%（MATH-500）。
+- 其他模型在 Prompt 1 下也有显著提升（如 Qwen2 提升 16.37%）。
+
+---
+
+### 3.3 Ideal Experiment: Perfect Sparse Reward Model（理想实验：完美稀疏奖励模型）
+
+- **PSRM 设计**：仅当答案完全正确时奖励为 0，否则为 -1。
+- **结果**：
+  - PSRM 平均提升 CoT 19.12%，优于 Self-Reward 模型 12.57%。
+  - 小模型（Qwen2.5-1.5B）在 PSRM 下表现优于大模型（Qwen2.5-7B）。
+  - 说明小模型具备知识但缺乏有效激活机制，LatentSeek 可激活其潜在能力。
+
+---
+
+### 3.4 Test-Time Scaling: scaling up the iteration of LatentSeek（测试时扩展：增加 LatentSeek 迭代次数）
+
+#### **迭代次数与性能关系**
+- 随着迭代次数增加，PSRM 持续提升性能，Self-Reward 则在初期提升后趋于稳定。
+- 图2显示不同模型在 GSM8K 上的准确率随迭代次数变化。
+
+#### **极端扩展实验（Extreme Scaling）**
+- 使用 Qwen2.5-1.5B-Instruct 模型，在 PSRM 下进行极端扩展：
+  - 在 AIME2024 上超越 GPT-4o 14%。
+  - 在 MATH-500 上仅次于 o1-preview，仅需平均 61.8 次迭代。
+  - 表明在合适奖励模型下，隐空间搜索比显式空间扩展更高效。
+
+---
+
+### 3.5 Algorithmic Statistics（算法统计）
+
+#### **关键统计指标**
+- **答案长度 / CoT 长度比值**：除 Qwen2.5-1.5B（Prompt 2）外，其余均 ≤ 1.1，说明不依赖长输出。
+- **平均迭代次数**：
+  - GSM8K：平均 0.86 次
+  - MATH-500：平均 1.23 次
+- 表明算法收敛快，计算效率高。
+
+---
+
+### 3.6 Qualitative Analysis（定性分析）
+
+- 分析模型生成的 CoT 和 LatentSeek 推理路径：
+  - 模型生成的前几个 token 中出现“thecy”、“theella”等无意义词汇。
+  - 示例显示模型即使生成语法错误的中间步骤，也能得出正确答案。
+- 表明模型的推理路径与人类不同，更适合在隐空间中优化。
+
+---
+
+### 总结
+
+本节通过大量实验验证了 **LatentSeek** 在多个数学推理任务上的优越性，尤其在使用 **PSRM** 和 **测试时迭代扩展** 的情况下，显著优于 CoT、BoN、SFT 和 RL-based 方法。方法在不同模型家族和规模上均表现出良好的泛化能力，且计算效率高，适合实际部署。
+
+
+## 4 Related Work
+
+
+
+## 4 相关工作（Related Work）总结
+
+本章节从四个主要方向回顾了与本文研究相关的已有工作，分别是：语言模型的推理能力、语言模型的强化学习、可控生成与测试时优化、以及提示调优与软提示方法。以下是对各部分的重点内容进行结构化总结：
+
+---
+
+### 一、语言模型的推理能力（Reasoning in Language Models）
+
+**重点内容：**
+- **思维链提示（CoT prompting）**：通过引导模型生成中间推理步骤来提升推理能力，代表工作包括 Wei et al. (2022)、Kojima et al. (2022) 等。
+- **动态推理优化**：与静态的 CoT 不同，本文提出的方法是**动态优化每个问题实例的推理过程**。
+- **计算最优扩展（Compute-optimal scaling）**：根据任务复杂度自适应调整推理策略（Snell et al., 2025; Misaki et al., 2025）。
+- **潜在空间推理（Latent CoT）**：使用连续表示替代显式的文本推理步骤（Hao et al., 2024; Shen et al., 2025 等）。
+- **学习推理的更广泛领域**：包括过程监督（Uesato et al., 2022）和自我批评机制（Huang et al., 2022）。
+
+**总结：**
+该部分强调了当前推理提示方法的局限性（如静态性），并指出本文方法通过动态优化潜在空间推理过程，具有更强的适应性。
+
+---
+
+### 二、语言模型的强化学习（Reinforcement Learning for Language Models）
+
+**重点内容：**
+- **人类反馈强化学习（RLHF）**：以 PPO 算法为基础（Schulman et al., 2017），结合人类偏好进行模型优化。
+- **新方法进展**：
+  - **DPO（Direct Preference Optimization）**
+  - **SRS（Statistical Rejection Sampling）**
+  - **GRPO（Guo et al., 2025）**：专门针对推理任务设计。
+- **奖励建模创新**：包括基于人类偏好的架构、自动化语言模型驱动设计、多智能体验证框架等。
+- **Chen et al. (2024b)**：使用变分方法改进潜在轨迹的拟合。
+
+**关键区别：**
+这些方法主要在**训练阶段修改模型参数**，而本文则是在**测试阶段优化潜在表示**，不改变模型参数。
+
+---
+
+### 三、可控生成与测试时优化（Controllable Generation and Test-Time Optimization）
+
+**重点内容：**
+- **控制生成的方法**：
+  - 控制码（control codes）
+  - 梯度引导（gradient-based steering）
+  - 提示优化（prompt optimization）
+- **测试阶段优化技术**：
+  - 自洽性（self-consistency）
+  - 引用增强生成（recitation-augmented generation）
+  - 测试时对齐（test-time alignment）
+- **测试时训练（Test-Time Training, TTT）**：通过自监督目标进行在线模型更新（Sun et al., 2020, 2024）。
+- **与本文方法的区别**：本文是在**连续潜在空间中优化**，而非进行离散搜索（如 Hao et al., 2023）。
+
+**总结：**
+强调本文方法在测试阶段通过潜在空间操作实现高效控制，区别于传统搜索或参数更新方法。
+
+---
+
+### 四、提示调优与软提示（Prompt Tuning and Soft Prompt）
+
+**重点内容：**
+- **提示调优（Prompt Tuning）与前缀调优（Prefix Tuning）**：通过在输入或隐藏状态前添加可训练向量来调整模型行为。
+- **代表工作**：Lester et al. (2021)、Liu et al. (2024a)、Li and Liang (2021) 等。
+
+**局限性：**
+- 需要**标注数据**和**完整反向传播**，计算成本高。
+
+**本文方法优势：**
+- 无需训练数据或模型更新
+- 通过潜在空间操作实现**高效灵活的适配**
+
+---
+
+### 总体总结：
+
+本章节系统回顾了与本文方法相关的多个研究方向，包括推理提示、强化学习、测试时优化和提示调优。文章强调其方法的三个核心优势：
+
+1. **动态优化推理过程**（区别于静态 CoT）
+2. **测试阶段优化潜在表示**（不修改模型参数）
+3. **在连续潜在空间中进行高效控制**（不同于离散搜索或参数调优）
+
+这些特点使得本文提出的方法在效率、灵活性和适应性方面优于现有技术。
+
+
+## 5 Conclusion
+
+
+
+## 5 结论
+
+本节总结了LatentSeek框架的主要贡献和实验结果，强调其在提升大语言模型（LLMs）推理能力方面的有效性。
+
+### 主要内容：
+
+- **LatentSeek框架概述**：  
+  LatentSeek提出了一种新颖且高效的方法，通过在**潜在空间（latent space）中应用测试时输入调整（TTIA）**，来增强LLMs的推理能力。与传统方法不同，它**无需更新模型参数**，而是通过**策略梯度优化潜在表示**，从而避免了大规模重训练或强化学习的需要。
+
+- **实验结果表现优异**：  
+  在多个推理基准任务上的实验表明，LatentSeek在性能上**优于现有的基线方法**，包括思维链（Chain-of-Thought, CoT）和基于强化学习的技术。
+
+- **计算效率高**：  
+  该框架具有**快速收敛性**，尤其在中等难度问题上表现突出，显示出良好的计算效率。
+
+- **未来研究方向**：  
+  本研究为在潜在空间中进行**测试时扩展（test-time scaling）** 提供了新的可能性，为未来改进LLMs推理能力的研究指明了方向。
+
+### 总结：
+
+LatentSeek代表了在提升LLMs推理能力方面的重要进展，特别是在TTIA范式下提供了一种参数高效、训练高效的新方法。
+
+
+## Acknowledgement
+
+
+
+## Acknowledgement（致谢）
+
+本节为论文的致谢部分，内容较为简短，主要表达了对以下两位专家的感谢：
+
+- **Yanpeng Zhao**（来自BIGAI）
+- **Haoran Sun**（来自北京大学）
+
+作者感谢他们在论文撰写过程中提供的有益审阅和建议。这部分内容属于论文的辅助性信息，不涉及数学公式、算法步骤或具体数据，因此无需深入展开。
+
+
+## Appendix A Discussion and future works
+
+
+
+以下是论文附录 **A：Discussion and future works** 的总结，按照原文结构进行讲解：
+
+---
+
+## **A. 讨论与未来工作**
+
+### **Reward Models（奖励模型）**
+
+**重点内容：**
+
+- 当前方法的主要局限性在于依赖**自奖励机制（self-rewarding mechanism）**。虽然该机制有效，但其优化过程受限于基础模型自身的评估能力与潜在偏见，缺乏**客观的外部信号**。
+- 理想情况下应使用**结果奖励模型（Outcome Reward Model, ORM）**，该模型能评估最终答案并提供明确的优化方向。
+- 实验表明（见附录E.5节），目前公开的ORM在复杂推理任务中**不够鲁棒和通用**，其信号噪声较大，不如自奖励机制稳定有效。
+
+**未来方向：**
+- 开发更强大的**验证器（verifiers）**，能够可靠地评估复杂推理任务的质量。
+
+---
+
+### **Latent Optimization（潜在空间优化）**
+
+**重点内容：**
+
+- 当前实现采用的是**标准的策略梯度方法**（policy-gradient methods）。
+- 未来可探索更先进的**强化学习算法**，如**PPO（Proximal Policy Optimization）**，以提升优化效果。
+- 可进一步研究**针对潜在空间设计的优化策略**，提升搜索效率。
+
+---
+
+### **Large Base Model（大基础模型）**
+
+**简要内容：**
+
+- 目前实验仅在最大**14B参数规模**的模型上进行，受限于计算资源。
+- 未来工作可探索将该方法**扩展到更大规模的基础模型**，以验证其在更大模型上的有效性与可扩展性。
+
+---
+
+总结：本节主要讨论了当前方法在奖励机制、优化算法和模型规模方面的局限性，并提出了多个未来研究方向，其中**开发更强大的外部奖励模型**是关键突破口。
+
+
+## Appendix B Methods of Test-Time Instance-Level Reasoning
+
+
+
+### 附录 B 测试时实例级推理方法
+
+本节介绍了两种经典的**测试时实例级推理方法**，并给出了它们的数学形式。
+
+---
+
+#### • 提示工程（Prompt Engineering）
+
+**核心思想**：直接使用语言模型的分布来生成最优输出。
+
+**数学公式**：
+$$
+\mathbf{x}^* = \operatorname{arg\,max}_{\mathbf{x}} \pi(\mathbf{x} \mid \mathbf{c})
+$$
+（公式 9）
+
+**解释**：  
+给定一个输入提示（prompt）$\mathbf{c}$，模型根据语言模型 $\pi$ 的概率分布选择最可能的输出 $\mathbf{x}^*$。这是最基础的推理方式，即贪心地选择概率最高的输出。
+
+---
+
+#### • N选最优（Best-of-N，BoN）
+
+**核心思想**：从多个独立同分布的生成结果中，选出在给定奖励函数下表现最好的一个。
+
+**步骤**：
+1. 从语言模型 $\pi(\cdot \mid \mathbf{c})$ 中采样 $N$ 个序列：  
+   $\mathbf{x}_{(1)}, \mathbf{x}_{(2)}, \ldots, \mathbf{x}_{(N)}$
+2. 使用奖励函数 $R(\mathbf{x}, c)$ 评估每个序列。
+3. 选择奖励最高的序列作为最终输出。
+
+**数学公式**：
+$$
+\mathbf{x}^* = \operatorname{arg\,max}_{\mathbf{x} \in \{\mathbf{x}_{(1)}, \mathbf{x}_{(2)}, \ldots, \mathbf{x}_{(N)}\}} R(\mathbf{x}, c)
+$$
+（公式 10）
+
+**重点说明**：  
+这种方法通过多采样+排序的方式，可以在不改变模型参数的前提下提升推理质量，尤其适用于有明确奖励函数的任务（如文本生成中使用BLEU、ROUGE等指标作为奖励）。
+
+---
+
+### 总结
+
+- **提示工程**是直接使用语言模型概率进行最大似然解码。
+- **Best-of-N** 则是通过采样多个候选并用奖励函数评估，选出最优解，适用于有外部评估标准的场景。
+- 两者都是**测试时推理策略**，不涉及模型训练或参数更新。
+
+
+## Appendix C Theoretical Analysis
+
+
+
+## 附录 C 理论分析总结
+
+### C.1 预备知识：多证明者交互证明与 NEXP
+
+本节介绍了**多证明者交互证明（MIP）**和**NEXP**的基本概念，为后续理论分析提供基础。
+
+#### 定义 C.1（多证明者交互）
+描述了验证者 $ V $ 与多个证明者 $ P_1, P_2, \ldots, P_k $ 之间的交互过程。每个证明者在每轮中根据验证者的问题 $ q_{ij} $ 提供回答 $ a_{ij} $，验证者根据这些回答决定最终输出 $ v $。
+
+#### 定义 C.2（k-MIP）
+语言 $ L \in k\text{-MIP} $，如果存在一个多项式时间验证者 $ V $，满足以下条件：
+- **效率性**：通信轮数和消息长度为多项式级别。
+- **完备性**：若 $ x \in L $，存在一组证明者使得验证者接受的概率 $ \geq 2/3 $。
+- **可靠性**：若 $ x \notin L $，任何证明者组合使得验证者接受的概率 $ \leq 1/3 $。
+
+#### 定义 C.3（MIP）
+MIP 是所有 $ k\text{-MIP} $ 的并集。
+
+#### 定义 C.4–C.6（NTIME、NP、NEXP）
+- **NTIME**：非确定图灵机在时间 $ T(n) $ 内能解决的语言类。
+- **NP**：多项式时间非确定图灵机可验证的语言类。
+- **NEXP**：指数时间非确定图灵机可验证的语言类。
+
+> **重点**：MIP 与 NEXP 等价（后续定理 C.13 会说明），这为理解 LatentSeek 的表达能力提供了理论基础。
+
+---
+
+### C.2 理论分析：独立更新
+
+本节分析了 LatentSeek 中**潜在变量独立更新**的表达能力，尽管变量之间相互独立，但其理论表达能力依然强大。
+
+#### 核心思想
+- LatentSeek 的更新机制类似于 MIP 模型，其中每个 token 的更新相当于一个“证明者”。
+- 不同于 MIP 中证明者可输出任意长度字符串，LatentSeek 中每个 token 输出长度受限（即“MIP-Bounded”）。
+
+#### 定义 C.7（多证明者交互）
+与定义 C.1 相同，用于描述交互过程。
+
+#### 定义 C.8（MIP-Bounded）
+语言 $ L \in \text{MIP-Bounded} $，如果存在验证者 $ V $ 和多项式函数 $ \text{poly}(\cdot) $，满足：
+- **有界性**：每个证明者的输出长度不超过常数 $ C $。
+- **完备性与可靠性**：与 MIP 类似，接受概率分别为 $ \geq 2/3 $ 和 $ \leq 1/3 $。
+
+#### 定理 C.10
+> **MIP-Bounded = MIP**
+
+说明即使每个 token 的输出长度受限，其表达能力仍等价于标准 MIP，即具有强大的理论表达能力。
+
+#### 推论 C.11
+> **NP ⊂ NEXP = MIP-Bounded**
+
+说明 LatentSeek 所属的复杂度类（MIP-Bounded）包含 NP，并等价于 NEXP，意味着其具有解决复杂决策问题的能力。
+
+---
+
+### C.3 定理 C.10 与推论 C.11 的证明
+
+#### 定理 C.12（重复定理 C.10）
+> **MIP-Bounded = MIP**
+
+**证明思路**：
+1. **MIP ⊆ MIP-Bounded**：
+   - 将 MIP 中两个证明者的输出拆分为多个受限输出（每个长度为常数 $ C $）。
+   - 通过构造足够多的“受限证明者”，模拟原 MIP 的交互过程。
+
+2. **MIP-Bounded ⊆ MIP**：
+   - 将多个受限证明者的输出合并为两个证明者（奇数和偶数编号）。
+   - 通过截断机制确保输出长度不超过限制，从而模拟 MIP-Bounded 的行为。
+
+#### 定理 C.13（Babai et al., 1990）
+> **MIP = 2-MIP = NEXP**
+
+说明 MIP 的表达能力等价于两个证明者的情况，并且等价于 NEXP。
+
+#### 推论 C.15（重复推论 C.11）
+> **NP ⊂ NEXP = MIP-Bounded**
+
+进一步确认了 LatentSeek 的理论表达能力，其复杂度类强于 NP，属于 NEXP，说明其具有处理复杂问题的潜力。
+
+---
+
+## 总结
+
+| 章节 | 内容概要 | 重点 |
+|------|----------|------|
+| C.1 | 介绍 MIP 和 NEXP 的定义与关系 | MIP = NEXP，为后续分析提供理论基础 |
+| C.2 | 分析 LatentSeek 的独立更新机制 | 提出 MIP-Bounded 模型，证明其等价于 MIP |
+| C.3 | 证明 MIP-Bounded = MIP | 通过构造性证明，说明受限输出不影响表达能力 |
+
+> **核心结论**：LatentSeek 虽然采用独立更新机制，但其理论表达能力等价于 MIP/NEXP，具备解决复杂决策问题的能力。
+
+
+## Appendix D Derivation of Policy Gradient
+
+
+
+## 附录 D 策略梯度的推导
+
+本节的目标是推导出论文中给出的公式（公式7）：
+
+$$
+[\nabla_{\mathbf{z}}\mathcal{J}(\mathbf{z})]_{t} = \mathbb{E}_{\mathbf{x} \sim \pi(\mathbf{x} \mid \mathbf{z}, \mathbf{c})}\left[R(\mathbf{x}, \mathbf{c}) \nabla_{z_{t}}\log\pi(x_{t} \mid z_{t})\right]
+$$
+
+### 1. 初始目标函数
+
+目标函数定义为：
+
+$$
+\mathcal{J}(\mathbf{z}) := \mathbb{E}_{\mathbf{x} \sim \pi(\mathbf{x} \mid \mathbf{z}, \mathbf{c})}[R(\mathbf{x}, \mathbf{c})]
+$$
+
+即：在给定潜变量 $\mathbf{z}$ 和上下文 $\mathbf{c}$ 的条件下，对奖励函数 $R(\mathbf{x}, \mathbf{c})$ 求期望。
+
+### 2. 对 $\mathbf{z}$ 求梯度
+
+对目标函数 $\mathcal{J}(\mathbf{z})$ 关于 $\mathbf{z}$ 求梯度，得到：
+
+$$
+\nabla_{\mathbf{z}}\mathcal{J}(\mathbf{z}) = \nabla_{\mathbf{z}} \int_{\mathbf{x}} R(\mathbf{x}, \mathbf{c}) \pi(\mathbf{x} \mid \mathbf{z}, \mathbf{c}) d\mathbf{x} = \int_{\mathbf{x}} R(\mathbf{x}, \mathbf{c}) \nabla_{\mathbf{z}} \pi(\mathbf{x} \mid \mathbf{z}, \mathbf{c}) d\mathbf{x}
+$$
+
+### 3. 利用对数导数技巧
+
+利用恒等式：
+
+$$
+\nabla_{\mathbf{z}} \log \pi(\mathbf{x} \mid \mathbf{z}, \mathbf{c}) = \frac{1}{\pi(\mathbf{x} \mid \mathbf{z}, \mathbf{c})} \nabla_{\mathbf{z}} \pi(\mathbf{x} \mid \mathbf{z}, \mathbf{c})
+$$
+
+代入后得到：
+
+$$
+\nabla_{\mathbf{z}}\mathcal{J}(\mathbf{z}) = \int_{\mathbf{x}} R(\mathbf{x}, \mathbf{c}) \pi(\mathbf{x} \mid \mathbf{z}, \mathbf{c}) \nabla_{\mathbf{z}} \log \pi(\mathbf{x} \mid \mathbf{z}, \mathbf{c}) d\mathbf{x}
+$$
+
+即：
+
+$$
+\nabla_{\mathbf{z}}\mathcal{J}(\mathbf{z}) = \mathbb{E}_{\mathbf{x} \sim \pi(\mathbf{x} \mid \mathbf{z}, \mathbf{c})}[R(\mathbf{x}, \mathbf{c}) \nabla_{\mathbf{z}} \log \pi(\mathbf{x} \mid \mathbf{z}, \mathbf{c})]
+$$
+
+### 4. 利用策略的分解形式
+
+根据策略的分解形式：
+
+$$
+\pi(\mathbf{x} \mid \mathbf{z}, \mathbf{c}) = \prod_{t=1}^{N} \pi(x_{t} \mid z_{t}) \prod_{t=N+1}^{T} \pi(x_{t} \mid x_{<t}, \mathbf{c})
+$$
+
+因此：
+
+$$
+\nabla_{\mathbf{z}} \log \pi(\mathbf{x} \mid \mathbf{z}, \mathbf{c}) = \sum_{t=1}^{N} \nabla_{\mathbf{z}} \log \pi(x_{t} \mid z_{t}) + \sum_{t=N+1}^{T} \nabla_{\mathbf{z}} \log \pi(x_{t} \mid x_{<t})
+$$
+
+注意到第二部分不依赖于 $\mathbf{z}$，所以梯度为 0，仅保留第一部分：
+
+$$
+\nabla_{\mathbf{z}}\mathcal{J}(\mathbf{z}) = \mathbb{E}_{\mathbf{x} \sim \pi(\mathbf{x} \mid \mathbf{z}, \mathbf{c})}\left[R(\mathbf{x}, \mathbf{c}) \nabla_{\mathbf{z}} \left( \sum_{t=1}^{N} \log \pi(x_{t} \mid z_{t}) \right) \right]
+$$
+
+### 5. 得到最终结果
+
+对第 $t$ 个分量，有：
+
+$$
+[\nabla_{\mathbf{z}}\mathcal{J}(\mathbf{z})]_{t} = \mathbb{E}_{\mathbf{x} \sim \pi(\mathbf{x} \mid \mathbf{z}, \mathbf{c})}[R(\mathbf{x}, \mathbf{c}) \nabla_{z_{t}} \log \pi(x_{t} \mid z_{t})]
+$$
+
+这正是我们想要推导的公式。
+
+---
+
+### 总结
+
+- **重点内容**：本节完整推导了策略梯度公式，核心是通过对数导数技巧将梯度表达式转化为期望形式。
+- **关键公式**：
+  - 策略梯度公式：$$
+    [\nabla_{\mathbf{z}}\mathcal{J}(\mathbf{z})]_{t} = \mathbb{E}_{\mathbf{x} \sim \pi(\mathbf{x} \mid \mathbf{z}, \mathbf{c})}[R(\mathbf{x}, \mathbf{c}) \nabla_{z_{t}} \log \pi(x_{t} \mid z_{t})]
+    $$
+  - 对数导数技巧：$$
+    \nabla_{\mathbf{z}} \log \pi(\mathbf{x} \mid \mathbf{z}, \mathbf{c}) = \frac{1}{\pi(\mathbf{x} \mid \mathbf{z}, \mathbf{c})} \nabla_{\mathbf{z}} \pi(\mathbf{x} \mid \mathbf{z}, \mathbf{c})
+    $$
+- **不重要内容**：中间的积分推导过程较为标准，可略去细节，重点在于最终的期望形式。
+
+
+## Appendix E Additional Experimental Results
+
+
+
+### 附录 E：更多实验结果总结
+
+---
+
+#### **E.1 LatentSeek 与 BoN（N=10）对比**
+
+- **核心结论**：  
+  即使在 N=10 的情况下，LatentSeek 仍全面优于 BoN，且计算成本更低（BoN 至少需要 LatentSeek 的 5 倍序列级计算量）。
+
+- **关键数据（表6）**：
+  - 在 **GSM8K** 上，LatentSeek 的平均准确率比 BoN 高 **10.45%**。
+  - 在 **MATH-500** 上，LatentSeek 平均高出 **3.24%**。
+  - 在 **AIME2024** 上，LatentSeek 平均高出 **2.67%**。
+  - 所有模型（Qwen2、Qwen2.5、LLaMA3.1）下，LatentSeek 均表现更优。
+
+- **重点强调**：  
+  LatentSeek 在保持低计算成本的同时，显著提升推理准确率，尤其在大模型（如 Qwen2.5-14B）上表现稳定。
+
+---
+
+#### **E.2 Qwen3 在 AIME 数据集上的表现**
+
+- **实验模型**：Qwen3-4B-Instruct-2507
+- **数据集**：AIME2024
+- **对比方法**：Chain-of-Thought (CoT)、Best-of-N (BoN)
+
+- **关键发现**：
+  - **Prompt 1**：LatentSeek 达到 **73.3%** 准确率，比 CoT 和 BoN 高 **10%**。
+  - **Prompt 2**：LatentSeek 准确率为 **56.7%**，分别比 CoT 高 **16.7%**，比 BoN 高 **3.4%**。
+  - BoN 在 Prompt 1 下未能提升 CoT 表现。
+
+- **结论**：  
+  LatentSeek 在 AIME 这类高难度数学任务中显著优于传统方法，尤其在 Prompt 2 下表现更稳健。
+
+---
+
+#### **E.3 与 BoN 的 Token 效率比较**
+
+- **评估方式**：使用 Prompt 2（JSON 格式），统计每题平均 token 消耗。
+- **数据集**：GSM8K、MATH-500
+
+- **关键结果**：
+  - LatentSeek 的 token 消耗略低于 BoN。
+  - 在所有模型家族和大小中，LatentSeek 均实现更高推理准确率（见表1）和更低 token 成本。
+
+- **图示说明（图4）**：
+  - 图 (a) GSM8K 和图 (b) MATH-500 均显示 LatentSeek 的 token 消耗更优。
+  - 特别是在 BoN 需要极高计算量时（如 N=10），LatentSeek 的效率优势更明显（见表6）。
+
+- **重点强调**：  
+  LatentSeek 在提升性能的同时，不增加 token 成本，体现了其在隐空间优化上的高效性。
+
+---
+
+#### **E.4 贪心解码 vs 采样解码**
+
+- **实验设置**：温度为 0.7 的采样 vs 贪心解码
+- **数据集**：MATH-500
+
+- **关键数据（表7）**：
+  - 贪心解码在大多数模型和 Prompt 设置下表现略优于采样。
+  - 例如在 Qwen2.5-1.5B 上，Prompt 2 下贪心解码准确率高出 **12%**。
+
+- **结论**：
+  - 贪心解码能更好避免采样带来的近似误差。
+  - 因此，主实验中采用贪心解码策略。
+
+---
+
+#### **E.5 结果奖励模型的局限性**
+
+- **对比方法**：使用数学奖励模型 vs 自我奖励机制（Self-rewarding）
+
+- **关键数据（表8）**：
+  - 数学奖励模型平均准确率为 **64.79%**，仅比 CoT 高 **3.23%**。
+  - 自我奖励机制达到 **77.18%**，显著优于数学奖励模型。
+
+- **结论**：
+  - 当前基于结果的奖励模型在缺乏真实标签的场景下表现有限。
+  - 强调开发更鲁棒的奖励模型的重要性。
+
+---
+
+#### **E.6 性能与分数比（Fraction Ratio）关系**
+
+- **实验模型**：包括 Qwen2、Qwen2.5、LLaMA3.1、Mistral-7B 等
+- **分数比范围**：0.1 到 0.8
+
+- **主要趋势**：
+  - **Qwen2.5-14B-Instruct**：性能最稳定，整体高于 91%，在 0.6 时达到峰值。
+  - **Qwen2.5-7B-Instruct**：在 0.2 后性能下降明显。
+  - **Qwen2-7B-Instruct**：随分数比上升持续下降。
+  - **LLaMA3.1-8B-Instruct**：轻微下降趋势。
+  - **Qwen2.5-1.5B-Instruct**：表现最不稳定，0.8 时性能最低。
+  - **Mistral-7B-Instruct**：在 0.2 时有小峰值，整体较稳定。
+
+- **图示说明（图5）**：
+  - 展示了不同模型在不同分数比下的性能曲线。
+
+- **结论**：
+  - 大模型（如 Qwen2.5-14B）对分数比变化更鲁棒。
+  - 小模型（如 Qwen2.5-1.5B）对分数比更敏感，性能波动大。
+
+---
+
+### 总结
+
+附录 E 提供了对 LatentSeek 在多个维度上的补充实验验证，包括：
+
+- **与 BoN 的对比**：LatentSeek 在准确率和 token 效率上均占优。
+- **Qwen3 在 AIME 上的表现**：显著优于 CoT 和 BoN。
+- **解码策略选择**：贪心解码优于采样。
+- **奖励模型局限性**：当前模型在无真值数据下表现有限。
+- **分数比影响分析**：大模型更稳定，小模型更敏感。
+
+这些结果进一步验证了 LatentSeek 方法的**有效性、鲁棒性与高效性**。
+
+
+## Appendix F Experimental Details
+
+
+
+# 附录 F 实验细节总结
+
+## F.1 提示设计
+本节主要展示了不同任务使用的提示模板:
+- CoT提示: 引用表格10和11
+- 奖励提示: 引用表格18-21
+
+重点: 提供了不同数据集(GSM8K, MATH-500, AIME2024)使用的具体提示模板, 这些模板定义了模型输入输出的格式要求。
+
+## F.2 模型主干
+列出了实验中使用的5个主要语言模型:
+1. Qwen2-7B-Instruct
+2. Qwen2.5-1.5B-Instruct
+3. Qwen2.5-7B-Instruct
+4. Qwen2.5-14B-Instruct
+5. LLaMA3.1-8B-Instruct
+
+重点: 每个模型的参数规模、用途和访问地址都有详细说明。
+
+## F.3 基线方法
+详细描述了13种对比方法:
+- Chain-of-Thought (CoT)
+- Few-Shot CoT
+- Best-of-NN (BoN)
+- Self-Consistency
+- Self-Rewarding
+- ScPO
+- CoH
+- Genius
+- SimpleRL-Zoo
+- GRPO
+- SPIN
+- iCoT
+- Supervised Fine-Tuning (SFT)
+
+重点: 对每种方法的核心思想进行了简要说明, 特别是SFT给出了具体的训练参数(学习率1×10−5, 余弦学习率调度器等)。
+
+## F.4 GSM8K实验
+### 数据集
+- GSM8K包含8500个数学推理问题, 用于评估模型的数学问题解决能力
+- 训练集7473个样本, 测试集1319个样本
+
+### 实验细节
+- 使用贪心解码
+- LatentSeek(Self)和LatentSeek(PSRM)的超参数分别见表格12和13
+- 自奖励机制从4个维度评估答案: 最终答案正确性(1)、问题理解准确性(1)、数值计算正确性(2)、答案清晰度(2), 总分归一化到[-1,0]
+
+重点: 表格12和13详细列出了不同模型和提示设置下的超参数配置, 包括学习率、优化器、ρ比率等。
+
+## F.5 MATH-500实验
+### 数据集
+- MATH-500是MATH基准的子集, 包含500个数学问题
+
+### 实验细节
+- 超参数配置见表格14(LatentSeek(Self))和15(LatentSeek(PSRM))
+- 评估维度与GSM8K相同, 但部分模型的权重比例有所调整
+
+重点: 表格14和15提供了不同模型在MATH-500数据集上的具体超参数设置。
+
+## F.6 AIME2024实验
+### 数据集
+- AIME2024包含30个精心设计的数学问题, 反映AIME竞赛的风格和难度
+
+### 实验细节
+- 超参数配置见表格16(LatentSeek(Self))和17(LatentSeek(PSRM))
+- 评估维度与GSM8K相同
+
+重点: 表格16和17提供了不同模型在AIME2024数据集上的具体超参数设置。
+
+## 评估提示模板
+提供了详细的评估提示模板:
+- 表格18: 答案正确性检查
+- 表格19: 计算过程检查
+- 表格20: 问题理解检查
+- 表格21: 答案完整性检查
+
+重点: 这些模板定义了自奖励机制的具体评估标准和输出格式。
+
+## 计算量估计
+表格22提供了LLaMA3.1-8B模型单次前向计算的FLOPs估计, 包括prefill和decode阶段各组件的计算量。
+
+重点: 详细列出了模型各组件在不同阶段的计算需求, 有助于理解模型的计算复杂度。
+
+
+## Appendix G Detailed FLOPs Calculation
+
+
+
+## 附录 G：详细 FLOPs 计算总结
+
+本节详细分析了 Genius 基线方法和本文提出的 LatentSeek 方法在 LLaMA3.1-8B-Instruct 模型下的浮点运算量（FLOPs）。
+
+---
+
+### G.1 前向传播 FLOPs 估算
+
+前向传播的总 FLOPs 由模型各组件的运算量相加得出，具体数值如下：
+
+$$
+\text{FLOPs}_{\text{forward}} = (227.5 \times 10^9) + (1573.1 \times 10^6) + (155.7 \times 10^3) \approx 2.29 \times 10^{11} \text{ FLOPs}
+$$
+
+这是后续所有计算的基础。
+
+---
+
+### G.2 Genius 方法的总 FLOPs
+
+Genius 方法在 GSM8K 数据集上进行训练和测试：
+
+- **训练阶段**：对 100,000 个样本进行训练，每个样本需要 1 次前向传播和 1 次反向传播（反向传播成本为前向的 2 倍）：
+  
+  $$
+  \text{FLOPs}_{\text{train}} = 100000 \times (1 + 2) \times \text{FLOPs}_{\text{forward}} = 300000 \times \text{FLOPs}_{\text{forward}}
+  $$
+
+- **测试阶段**：对 1319 个样本进行推理，每个样本只需 1 次前向传播：
+  
+  $$
+  \text{FLOPs}_{\text{test}} = 1319 \times \text{FLOPs}_{\text{forward}}
+  $$
+
+- **总 FLOPs**：
+  
+  $$
+  \text{FLOPs}_{\text{Genius}} = (300000 + 1319) \times 2.29 \times 10^{11} \approx 6.90 \times 10^{16} \text{ FLOPs}
+  $$
+
+**重点**：Genius 的训练阶段占用了绝大部分计算资源。
+
+---
+
+### G.3 LatentSeek 方法的总 FLOPs
+
+LatentSeek 仅在测试阶段运行，对 1319 个样本进行推理，每个样本平均迭代 1.27 次：
+
+- 每次迭代包含 2 次前向传播（生成 + 奖励评估）和 1 次仅作用于 LM 头的反向传播。
+- 总前向传播次数 ≈ 3350 次
+- 总反向传播次数 ≈ 1675 次
+- 每次反向传播的 FLOPs 为：
+
+  $$
+  \text{FLOPs}_{\text{backward\_LATENTSEEK}} = 2 \times (525 \times 10^6) = 1.05 \times 10^9 \text{ FLOPs}
+  $$
+
+- **总 FLOPs**：
+  
+  $$
+  \text{FLOPs}_{\text{LATENTSEEK}} = (3350 \times 2.29 \times 10^{11}) + (1675 \times 1.05 \times 10^9) \approx 7.67 \times 10^{14} + 1.76 \times 10^{12} \approx 7.69 \times 10^{14} \text{ FLOPs}
+  $$
+
+**重点**：LatentSeek 的计算量远低于 Genius，尤其避免了大规模训练阶段。
+
+---
+
+### G.4 效率阈值分析
+
+计算当推理样本数 $ x $ 达到多少时，Genius 的总计算成本等于 LatentSeek：
+
+$$
+6.90 \times 10^{16} + x \cdot (2.29 \times 10^{11}) = 1.27 \times (2 \times 2.29 \times 10^{11} + 1.05 \times 10^9) \cdot x
+$$
+
+解得：
+
+$$
+x \approx 1.94 \times 10^5
+$$
+
+**结论**：当推理样本数小于约 194,000 时，LatentSeek 更高效，远超 Genius 的训练样本数（100,000），说明 LatentSeek 在实际应用中具有显著优势。
+
+---
+
+### 总结
+
+- **Genius**：训练阶段计算量巨大（约 $ 6.90 \times 10^{16} $ FLOPs），适合大规模训练后部署。
+- **LatentSeek**：仅需测试时计算，总 FLOPs 约 $ 7.69 \times 10^{14} $，比 Genius 小两个数量级。
+- **效率对比**：在推理样本数小于 194,000 时，LatentSeek 更高效，适合小样本、低资源场景。
+
+**核心结论**：LatentSeek 在保持性能的同时，大幅降低了计算成本，尤其适合测试时优化场景。
+
+
+## Appendix H Qualitative Analysis and Case Studies
+
+
+
+## 附录 H 定性分析与案例研究（Qualitative Analysis and Case Studies）
+
+### 1. 生成序列的词云分析（Wordclouds of the First Three Words）
+
+本节分析了在 GSM8K 数据集上，使用 Llama3.1-8B-Instruct 模型和 Prompt 2 生成的响应序列的前三个 token 的分布情况，并通过词云图（Figure 7）进行可视化。
+
+- **第一词（First Words）**：主要为介词或引导词，如 "let"、"we"、"to" 等，表明模型倾向于以结构化方式开始推理。
+- **第二词（Second Words）**：多为动词，如 "find"、"solve"、"calculate"，显示模型在生成解题思路时的动词使用偏好。
+- **第三词（Third Words）**：多为专有名词，如 "Mark"、"John" 或无意义词如 "thecy"、"theella"，说明模型在生成过程中可能偏离人类逻辑，但仍能输出看似合理的答案。
+
+**重点结论**：
+- 模型生成的推理路径与人类思维存在显著差异。
+- 尽管生成的文本可能在语法或语义上不连贯，但最终答案仍可能正确。
+- 模型错误在文本层面可能看起来与正确答案差异很大，但在潜在空间（latent space）中可能仅需微调即可修正。
+
+---
+
+### 2. 案例研究（Case Studies）
+
+论文通过多个案例展示了模型推理与人类认知的差异，并验证了在潜在空间中通过微调嵌入向量即可修正错误的假设。
+
+#### **案例 23：下载量总和问题**
+- **TRUE ANSWER**: 366
+- **ORIGINAL MODEL**：输出错误答案 213，推理过程合理但计算错误。
+- **OURS**：虽然生成了“total downloads of downloads”等语法不通的短语，但最终答案正确。
+
+#### **案例 24：彩票概率问题**
+- **TRUE ANSWER**: 116
+- **ORIGINAL MODEL**：答案为 5，明显错误。
+- **OURS**：生成“let need calculate to calculate”等不规范表达，但最终正确得出 116。
+
+#### **案例 25：火车行驶距离问题**
+- **TRUE ANSWER**: 230
+- **ORIGINAL MODEL**：错误地计算为 197.5。
+- **OURS**：尽管语言表达混乱，但正确得出 230。
+
+#### **案例 26：柠檬树收益问题**
+- **TRUE ANSWER**: 13
+- **ORIGINAL MODEL**：错误回答 7。
+- **OURS**：生成“tree tree”等重复词，但最终正确。
+
+#### **案例 27：平均猜测值问题**
+- **TRUE ANSWER**: 80
+- **ORIGINAL MODEL**：错误回答 76。
+- **OURS**：推理过程虽有重复用词，但正确得出 80。
+
+#### **案例 28：电视观看时间问题**
+- **TRUE ANSWER**: 3
+- **ORIGINAL MODEL**：错误输出 197.5。
+- **OURS**：成功修正为 3。
+
+#### **案例 29：鸡蛋收入问题**
+- **TRUE ANSWER**: 294
+- **ORIGINAL MODEL**：错误回答 5880（单位错误）。
+- **OURS**：正确计算为 294。
+
+---
+
+### **关键发现总结**
+
+1. **模型推理路径与人类不同**：
+   - 模型倾向于使用特定的句法结构（如“let find...”、“we calculate...”）。
+   - 即使生成的文本语法不通，逻辑仍可能正确。
+
+2. **潜在空间修正机制有效**：
+   - 模型错误在文本层面可能显著偏离正确答案，但在潜在空间中只需微调即可修正。
+   - 这表明模型的错误并非本质性逻辑错误，而是解码过程中的表达偏差。
+
+3. **语言表达与逻辑解耦**：
+   - 模型可以在语言表达不规范的情况下，仍保持逻辑正确性。
+   - 这为通过潜在空间优化提升推理能力提供了实证支持。
+
+---
+
+### **总结**
+
+本附录通过词云分析和多个具体案例，揭示了语言模型在数学推理任务中与人类思维的差异，并展示了通过潜在空间微调修正错误的可行性。尽管模型生成的文本可能存在语法或语义上的异常，但其逻辑路径仍可能正确，这为未来改进模型推理能力提供了新的方向。
+
+
+## Appendix I Computational Resources
+
+
+
+## 附录I 计算资源
+
+本节简要说明了实验所使用的计算硬件资源。所有实验均在以下四种GPU中的一种上完成：
+
+- 单块 A100
+- 单块 L40
+- 单块 4090
+- 单块 3090
+
+**重点内容：**
+- 实验环境统一使用单块GPU，说明实验设计注重在单卡条件下的性能评估，而非多卡并行。
+- 所选GPU均为NVIDIA主流消费级或服务器级显卡，具有较强的深度学习计算能力（如A100和4090），或针对推理优化的型号（如L40）。
+
+本节内容较为简短，未涉及数学公式、算法步骤或表格数据。
+
+
+## Appendix J The Use of Large Language Models (LLMs)
+
+
+
+### 附录 J：大语言模型（LLMs）的使用
+
+本论文中对**大语言模型（LLMs）的使用**被**严格限制在润色语言和生成图表**方面。所有论文的核心研究内容和学术成果，包括以下关键部分，**均由作者独立完成，未借助LLMs辅助**：
+
+- **LatentSeek框架的设计与实现**
+- **理论基础的构建**
+- **实验设计**
+- **结果分析**
+
+#### 重点内容说明：
+
+- **LLMs的使用范围**：仅用于语言润色和图表生成，未参与任何研究思路、方法设计或数据分析。
+- **研究原创性声明**：强调论文的**所有核心内容**（如模型设计、理论推导、实验分析）均由作者团队独立完成，确保研究的原创性和学术诚信。
+
+#### 其他信息：
+
+- 文档末尾显示该文件由 [LaTeXML](http://dlmf.nist.gov/LaTeXML/) 于 2025年10月30日 生成。
+- 包含LaTeXML的 mascot（吉祥物）Sammy 的 base64 图像数据，属于文档生成工具的标识信息，**非重点内容**，可忽略。
+
+---
+
+**总结**：本附录明确说明LLMs在本研究中的使用边界，强调作者对论文核心内容的独立贡献，保障了研究的原创性与严谨性。

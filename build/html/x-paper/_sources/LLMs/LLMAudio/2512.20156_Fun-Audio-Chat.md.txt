@@ -1,0 +1,667 @@
+# 2512.20156_Fun-Audio-Chat Technical Report
+
+
+
+* 首页: <https://arxiv.org/abs/2512.20156>
+* PDF: <https://arxiv.org/pdf/2512.20156>
+* 引用: 
+* 组织: 
+    * Tongyi Fun Team, Alibaba Group
+
+## 总结
+
+![](https://img.zhaoweiguo.com/uPic/2025/12/hrjEKA.png)
+
+Figure 2:Overview of Fun-Audio-Chat. (a) Fun-Audio-Chat architecture. (b) Full-duplex mode (Fun-Audio-Chat-Duplex).
+
+
+
+
+## From Moonlight
+
+
+### 三句摘要
+
+1. 🔊 Fun-Audio-Chat是一个大型音频语言模型 (LALM)，通过采用Dual-Resolution Speech Representations (DRSR)架构，使LLM backbone能以5Hz的帧率高效处理音频，同时通过Speech Refined Head (SRH)确保25Hz的高质量语音生成。
+2. 💡 该模型利用Core-Cocktail Training策略缓解了多模态训练中的灾难性遗忘问题，并进一步通过Multi-Task DPO Training增强了鲁棒性、音频理解、指令遵循和语音同理心等能力。
+3. 🏆 Fun-Audio-Chat在多项语音问答、音频理解和语音功能调用基准测试中表现出领先或有竞争力的性能，并开源了8B模型及其训练与推理代码，同时支持全双工交互。
+
+### 关键词
+
+- Fun-Audio-Chat: Fun-Audio-Chat 是阿里巴巴通义千问团队开发的一款大型音频语言模型（LALM），旨在解决现有语音-文本联合模型在时间分辨率不匹配、计算成本高昂以及多模态训练易导致文本 LLM 知识遗忘等方面的挑战。它通过创新的双分辨率语音表示（DRSR）架构和多阶段后训练策略，实现了高效的音频理解、推理和生成能力，并保留了原始文本 LLM 的知识。该模型包含 8B 参数的密集模型和 30B 参数的 MoE 模型。
+- Large Audio Language Model (LALM): 大型音频语言模型（Large Audio Language Model, LALM）是一类能够理解和生成音频及文本的语言模型。与仅处理文本的 LLM 不同，LALM 能够处理音频输入（如语音）并生成音频或文本输出。Fun-Audio-Chat 就是一个 LALM，它结合了音频处理能力与大型语言模型的通用能力。
+- Dual-Resolution Speech Representations (DRSR): 双分辨率语音表示（Dual-Resolution Speech Representations, DRSR）是 Fun-Audio-Chat 模型的核心架构创新之一。它解决了语音信号（通常以 25Hz 的高帧率表示）与文本 LLM 的处理需求（通常以 3Hz 的低帧率处理文本）之间的时间分辨率不匹配问题。DRSR 架构通过一个分组机制，将 25Hz 的语音 token 映射到 5Hz 的低分辨率表示，供共享 LLM 主干高效处理。同时，一个专门的语音精炼头（SRH）负责生成高分辨率（25Hz）的语音 token，以保证语音合成质量。这种设计平衡了计算效率和生成质量。
+- DRSR: 详见：[Dual-Resolution Speech Representations (DRSR)]
+- Core-Cocktail Training: Core-Cocktail Training 是一种用于多模态模型训练的策略，旨在解决微调过程中文本 LLM 知识的“灾难性遗忘”问题。它包含两个主要阶段：
+- Catastrophic forgetting: 灾难性遗忘（Catastrophic forgetting）是指在神经网络训练过程中，当模型学习新任务或新数据时，会突然、完全地遗忘之前学到的知识，尤其是在多模态模型训练中，将文本 LLM 调整为能处理音频时，很容易丢失其原有的文本理解能力。Fun-Audio-Chat 通过 Core-Cocktail Training 等方法来缓解这一问题。
+- Multi-Task DPO Training: 多任务 DPO 训练（Multi-Task DPO Training）是在 Core-Cocktail Training 之后进行的一个后训练阶段，用于进一步增强模型的鲁棒性、音频理解能力、指令遵循能力和语音共情能力。DPO（Direct Preference Optimization）是一种通过直接优化偏好数据来训练模型的范式。在该模型中，它整合了多种偏好学习目标，包括：鲁棒性偏好（应对嘈杂或多样的语音输入）、指令遵循偏好（准确执行语音指令，包括情感、风格和韵律控制）、音频理解偏好（准确理解音频内容）以及语音共情偏好（理解情感并生成共情回应）。通过这种多任务 DPO 训练，模型能更好地与人类偏好对齐，提升在真实对话场景中的表现。
+- Speech Refined Head (SRH): 语音精炼头（Speech Refined Head, SRH）是 Fun-Audio-Chat 模型 DRSR 架构中的一个关键组成部分。尽管通过分组机制将语音 token 降至 5Hz 以提高 LLM 的处理效率，但这会丢失一些精细的声学信息。SRH 的作用是补偿这一损失，它接收来自共享 LLM 主干的低分辨率（5Hz）隐藏状态，并通过一个“解分组”（ungrouping）操作，将其扩展并生成高分辨率（25Hz）的语音 token。这使得模型在保持计算效率的同时，能够生成高质量、细节丰富的语音。
+- SRH: 详见：[Speech Refined Head (SRH)]
+- Full-duplex variant: 全双工（Full-duplex）变体指的是 Fun-Audio-Chat 模型的一个特殊版本，称为 Fun-Audio-Chat-Duplex。全双工通信允许在同一时间段内进行双向数据传输，即用户在说话时，助手也能同时生成语音回应，实现无缝的、实时的双向对话。这与半双工（一次只能在一个方向上发送数据）或单工（只能在一个方向上发送数据）模式不同。Fun-Audio-Chat-Duplex 通过引入并训练并行语音-文本输入流架构，实现了这种自然的人机交互。
+- Spoken Question Answering (SQA): 语音问答（Spoken Question Answering, SQA）是指模型接收语音输入（问题）后，能够理解并生成回答，回答可以是文本形式（S → T）或语音形式（S → S）。这是衡量模型音频理解和对话能力的重要基准任务。Fun-Audio-Chat 在多个 SQA 基准上进行了评估，如 OpenAudioBench 和 VoiceBench。
+- SQA: 详见：[Spoken Question Answering (SQA)]
+- Audio Understanding: 音频理解（Audio Understanding）是指模型对输入的音频内容进行分析和理解的能力，而不仅仅是语音识别。这包括对语音（如语言、情绪、语调）、音乐、环境声音等的识别、分类和推理。Fun-Audio-Chat 在 MMAU、MMAU-Pro、MMSU 等音频理解基准上进行了评估，以展示其广泛的音频感知和推理能力。
+- Speech Function Calling: 语音功能调用（Speech Function Calling）是指模型能够根据用户的语音指令，识别并调用预定义的功能（如 API 调用、执行特定操作）来完成任务。这对于构建智能语音助手至关重要，例如，用户说“帮我设置明天早上 7 点的闹钟”，模型需要识别“设置闹钟”的功能，并提取“明天早上 7 点”的参数。Fun-Audio-Chat 在 Speech-ACEBench、Speech-BFCL、Speech-SmartInteract 等基准上评估了其语音功能调用能力。
+- Speech Instruction-Following: 语音指令遵循（Speech Instruction-Following）是指模型能够准确理解并执行用户通过语音发出的指令，特别是涉及控制生成语音的属性（如情感、说话风格、语速、音高、音量）或执行特定任务的指令。Fun-Audio-Chat 在 VStyle 基准以及内部测试集上评估了其语音指令遵循能力。
+- Voice Empathy: 语音共情（Voice Empathy）是指模型能够理解用户语音中所蕴含的情感状态，并生成富有同理心、情感上恰当的回应。这包括识别用户的情绪（如愤怒、悲伤、焦虑、喜悦），并以理解和支持的方式回应。Fun-Audio-Chat 在内部测试集上评估了其语义共情（仅基于文本语义判断）和语谱共情（需要利用语谱线索判断）能力，以展示其在情感智能方面的表现。
+
+### 摘要
+
+Fun-Audio-Chat 是一项旨在克服现有联合语音-文本模型局限性的大型音频语言模型 (LALM)，以实现无缝语音交互。该模型扩展了先前的 DrVoice 工作，引入了双分辨率语音表示 (DRSR) 架构和 Core-Cocktail Training 策略，并将其扩展到更大的数据和模型规模，同时通过 Multi-Task DPO Training 和全双工交互训练进一步增强了其能力。
+
+**核心方法学**
+
+Fun-Audio-Chat 的架构包括语音编码器 (Speech Encoder) 和语音分词器 (Speech Tokenizer)、多模态大型语言模型 (MLLM) 以及语音去分词器 (Speech Detokenizer)。
+
+1.  **双分辨率语音表示 (DRSR) 架构**
+    为解决语音 token（通常 25Hz）和文本 token（约 3Hz）之间的时间分辨率不匹配问题，并提高计算效率，Fun-Audio-Chat 采用了 DRSR 架构。
+    *   **语音 token 分组 (Speech Token Grouping)**：
+        该机制将 25Hz 的语音 token 降采样到 5Hz 的表示，供共享 LLM 主干网络处理。通过将 $k=5$ 个语音 token 进行拼接 (Concat) 并通过一个线性层 (Linear) 映射到文本 LLM 的隐空间维度，实现了序列长度的缩减。
+        其转换公式为：
+        $g_i = \text{Linear}(\text{Concat}(\bigcup_{j=ik}^{(i+1)k-1} s_j)) \in \mathbb{R}^{d_{\text{text}}}$
+        其中 $s_j$ 表示单个语音 token，$k=5$ 是基于语音 token 频率 (25Hz) 与所需 LLM 处理频率 (5Hz) 之比的分组因子。这使得共享 LLM 能以 5Hz 的帧率运行，大幅降低了计算开销（训练 GPU 小时数减少约 50%），同时保留了 LLM 的语义推理能力。
+    *   **语音细化头 (Speech Refined Head, SRH)**：
+        尽管分组提高了效率，但其牺牲了细粒度的声学信息。SRH 旨在弥补这一限制，以 25Hz 的完整分辨率生成高质量语音 token。SRH 首先将共享 LLM 的最终隐藏状态 $h_{L}^{[\text{SLLM}]}$ 通过线性投影转换为分组大小的嵌入：
+        $h_{\text{ug}} = W_p h_{L}^{[\text{SLLM}]}$
+        其中 $W_p \in \mathbb{R}^{d_g \times d_h}$。接着，这个嵌入被分解为 $k$ 个片段：
+        $H = \text{Split}_k(h_{\text{ug}}) = [h_{\text{ug}}^{(1)}, h_{\text{ug}}^{(2)}, \dots, h_{\text{ug}}^{(k)}]$
+        其中 $h_{\text{ug}}^{(i)} \in \mathbb{R}^{d_{\text{ug}}/k}$。SRH 将 $H$ 作为条件上下文，自回归地生成 25Hz 的语音 token。训练目标是优化语音 token 的预测：
+        $\mathcal{L}_{\text{SRH}} = -\sum_{i=1}^{T} \log P(s_i|s_{<i}, H_{<i})$
+        这种双分辨率框架使得 Fun-Audio-Chat 在共享 LLM 层实现计算效率 (5Hz 处理) 的同时，通过 SRH 实现高保真语音合成 (25Hz 生成)。
+
+2.  **多模态大型语言模型 (MLLM)**
+    MLLM 扩展了预训练的文本 LLM，支持统一的音频-文本处理，能够接受语音或文本输入，并同时生成语音和文本输出。Fun-Audio-Chat 是一个并行联合语音-文本模型，其设计集中于助手侧的模态对齐，利用 LLM 的自回归特性迭代地将语音 token $s_t$ 和文本 token $t_t$ 整合到共享 LLM 层中。组合嵌入 $c_t$ 定义为：
+    $c_t = E_{\text{speech}}(s_t) + E_{\text{text}}(t_t)$
+    其中 $E_{\text{speech}}$ 和 $E_{\text{text}}$ 分别表示语音和文本 token 的嵌入函数。为了处理语音和文本序列之间的长度不匹配，较短的序列会用特殊的静音 token `<|SIL|>` 填充。生成过程遵循自回归模式：
+    $P(y_t|y_{<t}, x) = \prod_{i=1}^{t} P(y_i|y_{<i}, x)$
+    其中 $x$ 是输入，$y_t = (s_t, t_t)$ 表示在步骤 $t$ 结合的语音-文本输出。
+
+3.  **多阶段后训练 (Multi-Stage Post-Training)**
+    Fun-Audio-Chat 利用现有预训练模型进行多阶段后训练：
+    *   **预对齐 (Pre-Alignment)**：
+        首先，模型组件被初始化：语音编码器使用 Whisper-Large-v3 权重，共享 LLM 层使用 Qwen3-30B-A3B 或 Qwen3-VL-8B，预训练的 S3Tokenizer 和 CosyVoice 3 的 Detokenizer 保持冻结。预对齐阶段使用大规模语音-文本配对数据来对齐语音编码器、Adapter 和 SRH，同时冻结共享 LLM 层以保留其预训练能力。
+    *   **Core-Cocktail Training**：
+        为了解决多模态训练中灾难性遗忘 (catastrophic forgetting) 的问题，采用了这种两阶段训练方法。
+        *   **阶段 1：高学习率微调 (High Learning Rate Fine-tuning)**：在这一阶段，对所有 MLLM 参数、音频编码器和 Adapter 进行全微调，使用较高的学习率（从 $1 \times 10^{-4}$ 余弦退火到 $1 \times 10^{-5}$）。这有助于模型参数快速适应多模态学习。
+        *   **中间模型合并 (Intermediate Model Merging)**：为缓解阶段 1 训练可能导致的 MLLM 性能下降，通过加权插值合并阶段 1 训练后的 MLLM 参数 ($M_1$) 和原始预训练 LLM ($M_0$)：
+            $M_r \leftarrow \alpha M_1 + (1 - \alpha)M_0$
+            其中 $\alpha$ 控制插值平衡，本文中设为 0.5。这有助于将基础 LLM 的知识重新引入，保护原始文本理解能力。
+        *   **阶段 2：低学习率细化 (Low Learning Rate Refinement)**：对合并后的模型 $M_r$ 进行全微调，使用较低的学习率（从 $1 \times 10^{-5}$ 余弦退火到 $1 \times 10^{-6}$）。这使得模型性能能稳定、精确地优化。
+    *   **多任务 DPO 训练 (Multi-Task DPO Training)**：
+        在 Core-Cocktail 训练之后，通过 Multi-Task DPO Training (Direct Preference Optimization) 进一步提升模型性能。该阶段融合了多种偏好学习目标，包括鲁棒性、指令遵循能力、音频理解能力和语音同理心 (voice empathy) 能力。DPO 损失在多个偏好维度上计算，使模型能够学习一个平衡所有能力的统一偏好信号，更好地与人类偏好对齐，提升在真实世界对话场景中的表现。
+    *   **全双工交互训练 (Full-duplex Interaction Training)**：
+        为了实现实时全双工语音交互，Fun-Audio-Chat 扩展到 Fun-Audio-Chat-Duplex 变体。通过并行语音-文本输入流架构，模型能够接受用户语音，即使助手正在生成语音。全双工训练使用通过增强高质量半双工对话数据集并模拟全双工交互行为（例如，用户和助手可以同时说话）合成的数据。这使得模型能够学习自然的轮流、打断处理和反向通道 (backchanneling) 行为。
+
+**实验设置与评估**
+
+*   **训练数据**：模型在数百万小时的包含多种领域和任务的音频数据上进行训练，包括对话和多语言语音、用于理解任务的音频以及内部的文本、ASR、TTS、音频理解、语音指令遵循和语音同理心数据。
+*   **评估数据集**：涵盖了广泛的基准，包括：
+    *   **Speech-to-Text (S→T)** 和 **Speech-to-Speech (S→S) Spoken Question Answering**：使用 VoiceBench (AlpacaEval, CommonEval, SD-QA, MMSU, OpenBookQA, IFEval, AdvBench) 和 OpenAudioBench (AlpacaEval, Llama Q., Reasoning QA, TriviaQA, Web Q.) 进行 S→T 评估；使用 UltraEval-Audio 进行 S→S 评估。
+    *   **Audio Understanding**：MMAU、MMAU-Pro 和 MMSU。
+    *   **Speech Recognition**：Librispeech (EN) 和 Common Voice (EN, ZH)。
+    *   **Speech Function Calling**：Speech-ACEBench、Speech-BFCL 和 Speech-SmartInteract。
+    *   **Speech Instruction-Following and Voice Empathy**：VStyle 基准和内部测试集。
+*   **评估指标**：根据不同任务类型使用 Accuracy、G-Eval、Refusal Rate、ASR-WER、UTMOS 等。对于指令遵循和同理心任务，使用 LALM 作为评判者进行 1-5 分的评分。全双工交互评估使用 S2M-T (text output accuracy in multimodal response)、S2M-S (speech output accuracy in multimodal response) 和 Turn-taking Success Rate。
+*   **基线模型**：针对不同模型规模（约 8B 和大型模型），与 GLM-4-Voice、MiniCPM-o 2.6、Baichuan-Omni-1.5、Kimi-Audio、Step-Audio2-Mini、MiMo-Audio 等开源 LALM 进行比较；与 Longcat-Flash-Omni-Instruct、GPT-Audio、Gemini-2.5-Pro 等大型或闭源模型进行比较。
+
+**实验结果**
+
+*   **口语问答 (Spoken Question Answering)**：Fun-Audio-Chat-8B 在 OpenAudioBench (76.61%) 和 VoiceBench (83.21%) 上取得了同等规模模型中的最佳整体性能。Fun-Audio-Chat-30B-A3B 与大型闭源模型相比也表现出竞争力。
+*   **语音质量 (Speech Quality)**：Fun-Audio-Chat-8B 在 UltraEval-Audio 的 Llama Q. 测试集上取得了 4.37 的 UTMOS 分数（优秀整体语音质量）和 4.32% 的 ASR-WER（生成的语音与文本高度对齐）。
+*   **音频理解 (Audio Understanding)**：Fun-Audio-Chat 在 MMAU (77.9%)、MMAU-Pro (59.9%) 和 MMSU (70.1%) 上取得了最佳性能，超越了现有强劲的开源基线。
+*   **语音功能调用 (Speech Function Calling)**：Fun-Audio-Chat-30B-A3B 取得了最高的整体分数 (79.63%)，在 Speech-ACEBench (Single: 76.40%) 和 Speech-SmartInteract (84.13%) 上表现尤为出色。模型在并行功能调用场景中也表现强劲，Fun-Audio-Chat-8B 在 BFCL-Parallel 上甚至超越了 GPT-Audio 和 Gemini-2.5-Pro。
+*   **语音指令遵循和语音同理心 (Speech Instruction-Following and Voice Empathy)**：Fun-Audio-Chat 在 VStyle 基准上表现出与商业模型相当的竞争力，并在内部测试集上超越了 GPT-Audio 在语义同理心和副语言线索同理心 (Paralinguistic-Cue-based Empathy) 方面的性能。
+*   **全双工交互 (Full-Duplex Interaction)**：Fun-Audio-Chat-Duplex-30B-A3B 在知识理解 (S2M-T: 54.89%, S2M-S: 49.28%) 和轮流成功率 (100.00%) 方面均表现卓越，显著优于 Moshi 和 FreezeOmni。
+*   **计算效率 (Computational Efficiency)**：Fun-Audio-Chat 的 LLM 主干网络以 5Hz 的帧率运行（输入/输出帧率：5/5 Hz），相较于其他模型（通常 12.5Hz 或 25Hz），输入帧率降低了 1.25 到 5 倍。这种效率的提升显著减少了计算需求和潜在延迟，同时保持了高质量的语音生成。
+
+**贡献与局限性**
+
+Fun-Audio-Chat 开源了密集型 Fun-Audio-Chat-8B 模型及其训练和推理代码，并提供了交互式 Demo。
+
+尽管取得了显著进展，Fun-Audio-Chat 仍存在一些局限性。首先，在多轮对话中处理复杂问答时，模型有时会出现上下文记忆丢失。其次，语音指令遵循的表达能力存在一些不稳定性。第三，语音同理心能力在某些场景下表现出不稳定性。这些限制为未来的研究指明了方向，包括改善多轮对话中的长期上下文管理、增强语音指令遵循的稳定性和表现力，以及开发在多样化情感场景中更鲁棒和一致的语音同理心能力。
+
+
+
+## Abstract
+
+
+本节介绍了**Fun-Audio-Chat**，一种新型的**大型音频语言模型（LALM）**，旨在解决当前语音-文本联合模型在语音交互中面临的关键问题：
+
+### 核心挑战
+1. **语音与文本token的时间分辨率不匹配**：
+   - 语音token通常为25Hz，而文本token约为3Hz。
+   - 导致语义信息稀释、计算成本高，限制了模型部署。
+2. **灾难性遗忘（Catastrophic Forgetting）**：
+   - 在多模态训练过程中，原始文本大语言模型（LLM）的知识容易丢失。
+
+---
+
+### 创新方法
+
+#### 1. **双分辨率语音表示（Dual-Resolution Speech Representations, DRSR）**
+- **结构设计**：
+  - **共享LLM主干（Shared LLM Backbone）**：以5Hz帧率处理音频（通过语音token分组实现），提升计算效率。
+  - **语音精炼头（Speech Refined Head, SRH）**：生成高质量的25Hz语音token。
+- **优势**：
+  - 显著降低GPU计算时间（减少约50%）。
+  - 平衡了语音生成质量与效率。
+
+#### 2. **核心-鸡尾酒训练策略（Core-Cocktail Training）**
+- **两阶段训练 + 中间模型融合**：
+  - 有效缓解灾难性遗忘问题。
+- **后续引入：多任务DPO训练（Multi-Task DPO Training）**：
+  - 提升模型在语音理解、指令跟随、语音共情等方面的能力。
+
+---
+
+### 模型特点与成果
+
+- **不依赖大规模语音-文本预训练**，仅使用预训练模型 + 广泛的后训练（post-training）。
+- 推出了两个版本：
+  - **Fun-Audio-Chat-8B（Dense）**
+  - **Fun-Audio-Chat-MoE 30B-A3B**
+- **性能表现**：
+  - 在多个语音问答（Spoken QA）任务中表现优异，**在同规模模型中排名第一**。
+  - 在以下任务中也表现优异或领先：
+    - 音频理解（Audio Understanding）
+    - 语音函数调用（Speech Function Calling）
+    - 语音指令跟随（Speech Instruction-Following）
+    - 语音共情（Voice Empathy）
+
+---
+
+### 扩展应用
+
+- **Fun-Audio-Chat-Duplex**：
+  - 全双工变体，支持实时语音交互。
+  - 在语音问答和全双工交互任务中表现良好。
+
+---
+
+### 开源与演示
+
+- 开源了 Fun-Audio-Chat-8B 模型权重、训练与推理代码。
+- 提供了交互式演示页面。
+
+---
+
+### 图表信息（Figure 1）
+
+- **图(a)**：在多个语音问答（Spoken QA）任务上的性能对比，包括：
+  - Speech-to-Speech SQA（LlamaQ、TriviaQ、WebQ）
+  - Speech-to-Text SQA（ReasoningQA、CommonEval、SD-QA、MMSU、IFEval）
+- **图(b)**：在其他任务上的表现，包括：
+  - 音频理解（MMAU、MMAU-Pro、MMSU）
+  - 语音函数调用（Speech-ACEBench、Speech-BFCL、Speech-SmartInteract）
+  - 语音指令跟随与语音共情（VStyle 英文与中文子集）
+
+> 图表显示 Fun-Audio-Chat-8B 在多个任务上优于或与当前最先进的约8B规模模型相当。
+
+---
+
+### 总结
+
+Fun-Audio-Chat 通过**双分辨率架构**与**多阶段训练策略**，解决了语音-文本联合建模中的关键问题，在保持文本LLM知识的同时，显著提升了语音理解与生成能力。其开源与演示支持也增强了模型的可访问性与实用性。
+
+
+## 1 Introduction
+
+### 1.1 研究背景与意义
+
+随着人机交互技术的发展，**语音对话系统**在自然语言交互中扮演着关键角色。近年来，基于**大语言模型**（LLM）的语音对话系统（如 GPT-4o）展现出强大的语音交互能力。这类系统主要分为两类：
+
+- **级联式系统**（Cascaded）：语音与文本处理分离，先识别后生成。
+- **端到端系统**（E2E）：LLM 直接理解语音输入并生成语音输出。
+
+当前的 E2E 模型多采用**联合语音-文本建模**（Joint Speech-Text Models），但面临以下三大挑战：
+
+1. **时间分辨率不匹配**：语音 token（25Hz）与文本 token（约 3Hz）之间存在显著差异，导致语义信息稀释。
+2. **灾难性遗忘**：在将文本 LLM 扩展为多模态模型时，原有知识容易丢失。
+3. **计算成本高**：高帧率音频处理（如 25Hz）导致训练和推理资源消耗大。
+
+### 1.2 本文工作：Fun-Audio-Chat
+
+本文提出 **Fun-Audio-Chat**，一个基于**双分辨率语音表示**（Dual-Resolution Speech Representations, DRSR）架构的**并行大音频语言模型**（LALM），是对前期工作 DrVoice 的扩展与升级，主要体现在：
+
+- **更大规模的数据训练**：使用数百万小时的多样化音频数据。
+- **更大模型规模**：包括 dense 8B 和 MoE 30B-A3B（其中 A3B 表示 MoE 模型总参数为 30B，激活参数为 3B）。
+
+#### 1.2.1 核心架构设计
+
+- **语音理解**：通过 grouping 机制将 25Hz 的音频 token 映射为 5Hz 的语音表示，使 LLM 主干以 5Hz 高效处理音频。
+- **语音生成**：LLM 隐藏状态并行输入两个头部：
+  - **文本头**（Text Head）：生成文本 token。
+  - **语音精炼头**（Speech Refined Head, SRH）：生成 25Hz 高质量语音 token。
+
+该设计在**计算效率**（GPU 小时减少约 50%）与**语音生成质量**之间取得了良好平衡。
+
+#### 1.2.2 多阶段后训练范式（Multi-Stage Post-Training）
+
+不同于以往依赖大规模音频-文本预训练的方法（如 Kimi-Audio、Step-Audio 2 等），Fun-Audio-Chat：
+
+- **基于预训练模型初始化**（来自文本或视觉语言模型）。
+- 采用**多阶段后训练策略**，主要包括：
+
+1. **预对齐阶段**（Pre-alignment）：
+   - 使用大量语音-文本配对数据更新音频编码器、适配器（adapter）和 SRH。
+
+2. **Core-Cocktail 训练策略**（DrVoice 中提出）：
+   - **Stage 1**：高学习率微调，快速适应新任务。
+   - **中间模型融合**：将 Stage-1 模型与原始 LLM 主干融合，防止知识遗忘。
+   - **Stage 2**：低学习率微调，稳定优化。
+
+3. **多任务 DPO 训练**（Multi-Task DPO Training）：
+   - 提升模型在真实语音数据中的鲁棒性、语音指令理解、语音功能调用、语音共情等能力。
+   - 区别于传统监督微调，DPO 更好地对齐人类偏好，增强模型在真实对话场景中的表现力。
+
+### 1.3 主要贡献
+
+#### 1.3.1 大规模后训练与模型扩展
+
+- 验证了 DRSR 和 Core-Cocktail 训练策略在更大数据和模型规模下的有效性。
+- DRSR 在 8B 和 30B-A3B 模型中均保持高效（GPU 小时减少约 50%）。
+- Core-Cocktail 成功缓解灾难性遗忘问题。
+
+#### 1.3.2 多任务 DPO 训练提升鲁棒性与泛化能力
+
+- 引入 DPO 方法提升语音理解、语音指令执行、语音共情等能力。
+- 实现语音功能调用、语音情感识别与回应等高级功能。
+
+#### 1.3.3 全面评估与优异性能
+
+- 在多个语音任务中表现优异，包括：
+  - 语音问答（Speech-to-Text 与 Speech-to-Speech）
+  - 音频理解（Audio Understanding）
+  - 语音功能调用（Speech Function Calling）
+  - 语音指令执行（Speech Instruction-Following）
+  - 语音共情（Voice Empathy）
+
+- 使用的评估基准包括：
+  - OpenAudioBench、VoiceBench、UltraEval-Audio、MMAU、MMAU-Pro、MMSU、VStyle 等。
+
+#### 1.3.4 全双工语音交互（Full-Duplex Voice Interaction）
+
+- 提出 **Fun-Audio-Chat-Duplex**，支持双向实时语音交互。
+- 在语音问答与对话轮转（turn-taking）方面表现优异。
+
+#### 1.3.5 开源与演示
+
+- 开源 dense 8B 模型及其训练/推理代码。
+- 提供交互式语音对话演示，推动相关研究发展。
+
+---
+
+### 总结
+
+本章系统介绍了 Fun-Audio-Chat 的设计动机、核心架构、训练策略与主要贡献。其核心创新点在于：
+
+- **双分辨率语音表示**（DRSR）：兼顾效率与质量。
+- **Core-Cocktail 训练策略**：有效缓解灾难性遗忘。
+- **多任务 DPO 训练**：提升模型在真实语音场景中的泛化能力。
+- **大规模后训练与模型扩展**：验证了方法在更大模型与数据下的可扩展性。
+- **全双工语音交互与开源贡献**：推动语音对话系统实用化与研究开放化。
+
+
+## 2 Methodology
+
+
+本章介绍了 **Fun-Audio-Chat** 及其全双工变体 **Fun-Audio-Chat-Duplex** 的整体架构与核心技术。该系统由三个主要模块组成：
+
+1. **语音编码与解码器**（Speech Tokenization and Detokenization）  
+2. **双分辨率语音表示**（Dual-Resolution Speech Representations, DRSR）  
+3. **多模态大语言模型**（Multimodal Large Language Model, MLLM）
+
+系统支持统一的音频-文本编码与同步的语音-文本生成，在推理阶段可接受文本或音频输入，并同时生成语音和文本输出。
+
+---
+
+### 2.1 语音分词与解分词（Speech Tokenization and Detokenization）
+
+#### 重点内容：
+- 使用 **Whisper-Large-v3** 作为语音编码器，提取用户语音的连续表示。
+- 引入 **Adapter** 模块降低时间分辨率并匹配LLM的隐藏空间维度。
+- 使用 **S3Tokenizer** 将语音波形转换为离散的语义token序列：
+  $$
+  \mathbf{S} = [s_0, s_1, \cdots, s_{T-1}]
+  $$
+  其中 $T$ 为序列长度。
+- 解码阶段使用 **Flow Matching** 模型生成Mel频谱图，并通过 **HiFi-GAN** 转换为语音波形。
+- 引入说话人嵌入（speaker-specific embeddings）以保留音色等声学特征。
+
+#### 非重点内容：
+- 对S3Tokenizer和Flow Matching的背景引用略作精简。
+
+---
+
+### 2.2 双分辨率语音表示（Dual-Resolution Speech Representations, DRSR）
+
+#### 重点内容：
+该模块旨在解决语音token（25Hz）与文本token（约3Hz）之间的时间分辨率不匹配问题，提升计算效率并保持语音生成质量。
+
+##### 语音token分组（Speech Token Grouping）：
+- 使用分组技术将25Hz的语音token压缩为5Hz表示，以适配LLM处理速度。
+- 分组公式如下：
+  $$
+  \mathbf{g}_i = \text{Linear}\left(\text{Concat}_{j=ik}^{(i+1)k-1}(\mathbf{s}_j)\right) \in \mathbb{R}^{d_{\text{text}}}
+  $$
+  其中 $k=5$，表示每5个语音token合并为一个组，序列长度从 $T$ 缩短为 $T/k$，训练GPU小时减少约50%。
+
+##### 语音精炼头（Speech Refined Head, SRH）：
+- 为弥补分组带来的声学细节损失，SRH负责以25Hz生成高质量语音token。
+- SRH执行“解分组”操作，将LLM输出的隐藏状态线性投影为组大小嵌入：
+  $$
+  \mathbf{h}_{ug} = \mathbf{W}_p \mathbf{h}_L^{[SLLM]}, \quad \mathbf{W}_p \in \mathbb{R}^{d_g \times d_h}
+  $$
+- 然后将其拆分为 $k$ 个段：
+  $$
+  \mathbf{H} = \text{Split}_k(\mathbf{h}_{ug}) = [\mathbf{h}_{ug}^{(1)}, \mathbf{h}_{ug}^{(2)}, \ldots, \mathbf{h}_{ug}^{(k)}]
+  $$
+- SRH以自回归方式生成语音token，训练目标为：
+  $$
+  \mathcal{L}_{\text{SRH}} = -\sum_{i=1}^{T} \log P(s_i | s_{<i}, \mathbf{H}_{<i})
+  $$
+
+#### 总结：
+该模块实现了LLM在5Hz下的高效处理与SRH在25Hz下的高质量语音生成，兼顾效率与质量。
+
+---
+
+### 2.3 多模态大语言模型（MLLM）
+
+#### 重点内容：
+- Fun-Audio-Chat 是一个**并行联合语音-文本模型**，支持单模输入（语音或文本）与多模输出（语音+文本）。
+- 在LLM中同时处理语音token $s_t$ 与文本token $t_t$，通过以下方式融合：
+  $$
+  c_t = E_{\text{speech}}(s_t) + E_{\text{text}}(t_t)
+  $$
+  其中 $E_{\text{speech}}$ 和 $E_{\text{text}}$ 分别为语音和文本的嵌入函数。
+- 序列长度不匹配时，使用特殊token `<|SIL|>` 填充。
+- 生成过程为自回归形式：
+  $$
+  P(y_t | y_{<t}, x) = \prod_{i=1}^{t} P(y_i | y_{<i}, x)
+  $$
+  其中 $y_t = (s_t, t_t)$ 表示在第 $t$ 步的联合输出。
+
+#### 非重点内容：
+- 对Moshi和DrVoice的引用略作精简。
+
+---
+
+### 2.4 后训练（Post-Training）
+
+#### 重点内容：
+Fun-Audio-Chat 采用多阶段后训练流程，利用数百万小时语音数据提升模型能力。
+
+##### 1. 预对齐（Pre-Alignment）：
+- 初始化语音编码器（Whisper-Large-v3）、LLM（Qwen3-30B-A3B）和语音分词/解分词器（CosyVoice 3）。
+- 使用大规模语音-文本对数据对齐语音编码器、Adapter和SRH，LLM保持冻结。
+
+##### 2. 核心鸡尾酒训练（Core-Cocktail Training）：
+- **阶段1：高学习率微调**  
+  学习率从 $1 \times 10^{-4}$ 衰减至 $1 \times 10^{-5}$，加速模型向多模态方向调整。
+- **中间模型融合**  
+  使用加权插值融合训练后的模型 $M_1$ 与原始LLM $M_0$：
+  $$
+  M_r \leftarrow \alpha M_1 + (1 - \alpha) M_0
+  $$
+  $\alpha = 0.5$，保留原始LLM知识。
+- **阶段2：低学习率精调**  
+  学习率从 $1 \times 10^{-5}$ 衰减至 $1 \times 10^{-6}$，稳定优化模型。
+
+##### 3. 多任务DPO训练（Multi-Task DPO Training）：
+- 使用偏好学习增强模型在以下方面的能力：
+  - 噪声语音下的鲁棒性
+  - 情感、风格、语调控制
+  - 音频理解
+  - 情感共情响应
+- DPO损失在多个偏好维度上联合优化，使模型更贴近人类偏好。
+
+##### 4. 全双工交互训练（Full-duplex Interaction Training）：
+- 扩展模型为 **Fun-Audio-Chat-Duplex**，支持实时双向语音交互。
+- 使用合成的全双工对话数据进行训练，模拟用户与助手同时说话的场景。
+- 训练目标包括自然对话切换、打断处理和反馈行为。
+
+#### 非重点内容：
+- 对训练数据来源（如Audio-Flamingo-3、CosyVoice 3）的引用略作精简。
+
+---
+
+### 总结
+
+本章系统介绍了 Fun-Audio-Chat 的整体架构与关键技术，包括语音编码/解码、双分辨率语音表示、多模态大语言模型设计，以及多阶段后训练策略。该模型通过SRH与LLM的协同设计，实现了高效的语音处理与高质量的语音生成，并通过全双工训练支持自然的实时语音交互。
+
+
+## 3 Experiments
+
+
+本章节系统评估了 Fun-Audio-Chat 在多个语音相关任务上的性能，包括语音问答、音频理解、语音功能调用、语音指令跟随与语音共情、全双工交互以及计算效率等方面。
+
+---
+
+### 3.1 实验设置（Experimental Setup）
+
+#### 评估数据集（Evaluation Datasets）
+
+Fun-Audio-Chat 在多个语音任务基准上进行了全面评估，包括：
+
+- **语音到文本（S→T）问答任务**：使用 VoiceBench 和 OpenAudioBench，涵盖指令跟随、常识问答、鲁棒性等。
+- **语音到语音（S→S）问答任务**：使用 UltraEval-Audio，评估端到端语音问答能力。
+- **音频理解任务**：使用 MMAU、MMAU-Pro 和 MMSU，测试模型对语音、音乐、环境音等音频内容的理解能力。
+- **语音识别任务**：使用 Librispeech 和 Common Voice，评估英文和中文语音识别性能。
+- **语音功能调用任务**：使用 Speech-ACEBench、Speech-BFCL 和 Speech-SmartInteract，测试模型根据语音指令调用功能的能力。
+- **语音指令跟随与语音共情任务**：使用 VStyle 基准和内部测试集，评估模型对语音指令的执行能力及情感共情能力。
+- **全双工交互任务**：评估模型在实时语音交互中的表现。
+
+#### 评估指标（Evaluation Metrics）
+
+不同任务使用不同指标：
+
+- **问答任务**：使用 Accuracy（闭合式问答）和 G-Eval（开放式问答）。
+- **语音质量评估**：使用 ASR-WER（生成语音与文本一致性）和 UTMOS（语音质量评分）。
+- **音频理解任务**：使用 Accuracy。
+- **语音识别任务**：使用 WER（词错误率）。
+- **语音功能调用任务**：使用 Accuracy。
+- **语音指令跟随与共情任务**：使用 LALM 评分（1-5 分），涵盖声学属性、指令执行、角色扮演、共情等维度。
+- **全双工交互**：使用 S2M-T（文本输出准确率）、S2M-S（语音输出准确率）和 Turn-taking Success Rate（转场成功率）。
+
+#### 基线模型（Baselines）
+
+对比模型包括：
+
+- **约8B参数模型**：GLM-4-Voice、MiniCPM-o 2.6、Baichuan-Omni-1.5、Kimi-Audio、Step-Audio2-Mini、MiMo-Audio。
+- **大规模模型**：Longcat-Flash-Omni-Instruct、GPT-Audio、Gemini-2.5-Pro。
+- **音频理解模型**：Audio-Flamingo-3。
+- **语音共情模型**：Baichuan-Audio、GPT-4o、Doubao。
+- **全双工交互模型**：Moshi、FreezeOmni。
+
+---
+
+### 3.2 语音问答（Spoken Question Answering）
+
+#### 准确率（Accuracy）
+
+- **大模型对比（Table 1）**：
+  - Fun-Audio-Chat-30B-A3B 在多个任务上表现良好，尤其在 AlpacaEval（88.89%）和 Llama Q.（85.00%）上优于 Gemini-2.5-Pro 和 Longcat-Flash。
+  - 在 VoiceBench 上整体得分为 85.63%，仅次于 GPT-Audio（90.06%）。
+
+- **约8B模型对比（Table 2）**：
+  - Fun-Audio-Chat-8B 在 OpenAudioBench（76.61%）和 VoiceBench（83.21%）上均排名第一。
+  - 在 SD-QA、MMSU、OpenBookQA 等任务上显著优于其他模型。
+
+#### 语音质量（Speech Quality）
+
+- Fun-Audio-Chat-8B 在 UltraEval-Audio 上 UTMOS 得分为 4.37，ASR-WER 为 4.32%，表明其语音生成质量高且与文本一致性强。
+- 使用 Dual-Resolution Speech Representations（DRSR）架构，在 5Hz 帧率下仍保持高质量语音生成，验证了其效率与质量的平衡能力。
+
+---
+
+### 3.3 音频理解（Audio Understanding）
+
+- **Table 3** 显示 Fun-Audio-Chat 在 MMAU（77.9%）、MMAU-Pro（59.9%）、MMSU（70.1%）上均优于 Kimi-Audio、Audio-Flamingo-3、Step-Audio2-Mini、MiMo-Audio 等开源模型。
+- 在语音识别任务中，Fun-Audio-Chat 在 Librispeech 和 Common Voice 上的 WER 表现具有竞争力，显示其跨语言、跨领域的音频理解能力。
+
+---
+
+### 3.4 语音功能调用（Speech Function Calling）
+
+- **Table 4** 显示 Fun-Audio-Chat-30B-A3B 在整体任务上得分最高（79.63%），尤其在 Speech-ACEBench（单任务 76.40%）和 Speech-SmartInteract（84.13%）上表现突出。
+- 在并行功能调用场景中，Fun-Audio-Chat-8B 在 BFCL-Parallel 上得分 87.63%，优于 GPT-Audio 和 Gemini-2.5-Pro，显示其处理复杂语音指令的能力。
+
+---
+
+### 3.5 语音指令跟随与语音共情（Speech Instruction-Following and Voice Empathy）
+
+- **Table 5（VStyle 基准）**：
+  - Fun-Audio-Chat-8B 在 Overall 得分分别为 3.35（英文）和 3.46（中文），显著优于 Baichuan-Audio 和 Kimi-Audio。
+  - 在情绪控制（emotion control）和音量控制（volume control）上表现优异，尤其在中文语境下。
+  - 在角色扮演（role-play）方面，中文表现优于英文。
+
+- **Table 6（内部测试集）**：
+  - Fun-Audio-Chat 在语义共情（Semantics-based Empathy）和副语言共情（Paralinguistic-Cue-based Empathy）上均优于 GPT-Audio，显示其更强的情感理解和表达能力。
+
+---
+
+### 3.6 全双工交互（Full-Duplex Interaction）
+
+- **知识理解（Table 7）**：
+  - Fun-Audio-Chat-Duplex-30B-A3B 在 S2M-T（54.89%）和 S2M-S（49.28%）上均优于 Moshi 和 FreezeOmni。
+  - 在 Llama Q.、AlpacaEval、TriviaQA 上表现最佳，显示其在全双工对话中保持上下文理解的能力。
+
+- **交互表现**：
+  - Fun-Audio-Chat-Duplex-30B-A3B 的 Turn-taking Success Rate 达到 100%，Fun-Audio-Chat-Duplex-8B 为 99.94%，远超 Moshi（99.77%）和 FreezeOmni（93.87%），表明其具备自然流畅的语音交互能力。
+
+---
+
+### 3.7 计算效率（Computational Efficiency）
+
+- Fun-Audio-Chat 的输入/输出帧率为 5Hz，显著低于其他模型（6.25Hz~25Hz），实现 1.25× 到 5× 的效率提升。
+- 使用 DRSR 架构，训练时 GPU 小时数减少约 50%，且未牺牲语音质量。
+- 高效设计使其在保持高性能的同时，具备更强的部署和应用潜力。
+
+--- 
+
+**总结**：  
+Fun-Audio-Chat 在语音问答、音频理解、语音功能调用、语音指令跟随、语音共情、全双工交互等多个任务上均表现出色，尤其在语音生成质量、情感理解和交互流畅性方面具有显著优势。同时，其高效的 Dual-Resolution 架构在保持性能的同时大幅降低计算资源消耗，具备良好的实用价值。
+
+
+## 4 Conclusion
+
+本章节总结了 Fun-Audio-Chat 的设计目标、关键技术、训练策略、性能表现及其开源贡献，强调其在语音交互系统中的创新意义。
+
+### 1. 模型架构创新：Dual-Resolution Speech Representations (DRSR)
+
+Fun-Audio-Chat 是一个大规模的音频语言模型（Large Audio Language Model, LALM），其核心创新在于引入了 **Dual-Resolution Speech Representations (DRSR)** 架构。该架构在保持语音生成质量的同时显著提升了计算效率：
+
+- **Shared LLM 主干**：以 5Hz 的帧率处理音频输入（Frame Rate-In/Out: 5/5 Hz），大幅降低计算开销。
+- **Speech Refined Head**：在输出阶段生成高质量的语音 token，分辨率达到 25Hz。
+- **优势**：这种双分辨率设计在语音质量与计算效率之间取得了良好平衡，**GPU 计算时间减少了近 50%**。
+
+### 2. 多模态训练策略：Core-Cocktail 与 Multi-Task DPO
+
+为解决多模态学习中的**灾难性遗忘**问题，Fun-Audio-Chat 延续了 DrVoice 中提出的 **Core-Cocktail Training** 策略，采用两阶段训练并结合参数融合机制。
+
+在此基础上，进一步引入 **Multi-Task DPO Training**，以增强以下能力：
+- 对真实语音数据的鲁棒性；
+- 语音指令跟随（Speech Instruction-Following）；
+- 音频理解（Audio Understanding）；
+- 语音共情（Voice Empathy）。
+
+这种多阶段后训练范式使模型在保留原始文本语言模型能力的同时，获得强大的多模态交互能力。
+
+### 3. 规模与性能表现
+
+Fun-Audio-Chat 在数百万小时的多样化语音数据上训练，模型规模扩展至：
+- **Dense 8B 参数**
+- **MoE 30B-A3B 参数**
+
+在多个语音任务中表现优异：
+- **口语问答（Spoken QA）**：在 Speech-to-Text 和 Speech-to-Speech 生成任务中，性能在同规模模型中排名第一。
+- **其他任务**：在音频理解、语音功能调用、语音指令跟随、语音共情等任务中也表现优异。
+
+评估基准包括：
+- OpenAudioBench、VoiceBench、UltraEvalAudio、MMAU、MMAU-Pro、MMSU、Speech-ACEBench、Speech-BFCL、Speech-SmartInteract、VStyle。
+
+此外，还开发了 **Fun-Audio-Chat-Duplex** 全双工变体，在口语问答和全双工交互中表现良好。
+
+### 4. 开源与未来展望
+
+作者开源了 Fun-Audio-Chat-8B 模型，包括：
+- 模型权重（checkpoint）
+- 训练与推理代码
+- 提供交互式演示（demo）
+
+此举旨在鼓励研究人员和开发者体验并在此基础上进行扩展。
+
+### 总结
+
+Fun-Audio-Chat 通过精心设计的架构创新（如 DRSR）和大规模后训练策略，显著提升了 LALM 在音频理解、推理和语音生成方面的能力，同时保持了高计算效率。该工作代表了语音交互系统领域的重要进展。
+
+
+## 5 Limitations
+
+
+
+## 5 局限性（Limitations）
+
+本节总结了 Fun-Audio-Chat 在当前版本中存在的三个主要局限性，并指出了未来研究的方向。
+
+### 1. 多轮对话中的上下文记忆问题
+
+在处理多轮对话中的复杂问答任务时，模型偶尔会出现**上下文记忆丢失**的问题。即，早期对话轮次中的信息可能无法被持续保留，尤其在需要**长上下文理解**和**跨轮次复杂推理**的场景中更为明显。这是影响对话连贯性和准确性的重要问题。
+
+> **重点内容**：  
+> - 模型在长对话中可能出现信息遗忘  
+> - 影响复杂推理和上下文依赖任务的表现
+
+### 2. 语音指令跟随的表达稳定性问题
+
+尽管模型在语音指令任务中整体表现良好，但在生成语音时，有时**无法准确体现指令中指定的情感色彩、说话风格或韵律变化**。这种表达上的不稳定性会影响语音输出的自然度和适用性。
+
+> **重点内容**：  
+> - 语音生成在情感和风格表达上存在波动  
+> - 可能影响语音交互的真实感和用户体验
+
+### 3. 语音共情能力的不稳定性
+
+虽然 Fun-Audio-Chat 在共情评估基准（包括语义共情和副语言共情）上表现优异，但其在不同场景和情绪背景下的**情感识别与共情响应存在不一致**的问题。这可能会影响在需要高度情感理解的实际应用中的可靠性。
+
+> **重点内容**：  
+> - 共情能力在不同情绪场景中表现波动  
+> - 影响实际应用中情感交互的稳定性
+
+### 总结与未来方向
+
+作者指出，未来的研究应重点关注以下方向：
+
+1. **改进多轮对话中的长期上下文管理**
+2. **增强语音指令跟随的表达稳定性和多样性**
+3. **提升语音共情能力在不同情绪场景下的鲁棒性和一致性**
+
+> 本节未涉及数学公式、算法步骤或表格数据。
+
+
+## 6 Contributions and Acknowledgments
+
+
+
+### 6 贡献与致谢
+
+本章节主要列出了 Fun-Audio-Chat 项目的贡献者名单，未涉及复杂的数学公式、算法步骤或表格数据，内容较为简洁。
+
+#### **重点内容：**
+
+- 所有贡献者按照姓氏的字母顺序排列，未区分贡献大小，体现了对所有参与者的平等认可。
+- 贡献者分为两类：**核心贡献者（Core contributors）** 和 **一般贡献者（Contributors）**。
+
+##### **核心贡献者：**
+包括 Qian Chen、Luyao Cheng、Chong Deng、Xiang Li 等共 12 人，他们在项目中承担了关键角色。
+
+##### **一般贡献者：**
+包括 Zhifu Gao、Weiqin Li、Mengge Liu 等共 10 人，也为项目提供了重要支持。
+
+#### **非重点内容精简说明：**
+本节未展开描述每位贡献者的具体工作内容，仅以列表形式呈现。
+
+---
+
+总结：本章为项目致谢部分，主要列出所有贡献者名单，强调团队合作，未涉及技术细节。

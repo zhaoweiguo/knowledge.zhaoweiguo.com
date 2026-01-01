@@ -1,0 +1,329 @@
+# ElasticSearch
+
+
+
+ElasticSearch是一个基于Lucene的搜索服务器。它提供了一个分布式多用户能力的全文搜索引擎，基于RESTful web接口。Elasticsearch是用Java开发的，并作为Apache许可条款下的开放源码发布，是当前流行的企业级搜索引擎。设计用于云计算中，能够达到实时搜索，稳定，可靠，快速，安装使用方便。
+
+cluster
+代表一个集群，集群中有多个节点，其中有一个为主节点，这个主节点是可以通过选举产生的，主从节点是对于集群内部来说的。es的一个概念就是去中心化，字面上理解就是无中心节点，这是对于集群外部来说的，因为从外部来看es集群，在逻辑上是个整体，你与任何一个节点的通信和与整个es集群通信是等价的。
+shards
+代表索引分片，es可以把一个完整的索引分成多个分片，这样的好处是可以把一个大的索引拆分成多个，分布到不同的节点上。构成分布式搜索。分片的数量只能在索引创建前指定，并且索引创建后不能更改。
+replicas
+代表索引副本，es可以设置多个索引的副本，副本的作用一是提高系统的容错性，当某个节点某个分片损坏或丢失时可以从副本中恢复。二是提高es的查询效率，es会自动对搜索请求进行负载均衡。
+recovery
+代表数据恢复或叫数据重新分布，es在有节点加入或退出时会根据机器的负载对索引分片进行重新分配，挂掉的节点重新启动时也会进行数据恢复。
+river
+代表es的一个数据源，也是其它存储方式（如：数据库）同步数据到es的一个方法。它是以插件方式存在的一个es服务，通过读取river中的数据并把它索引到es中，官方的river有couchDB的，RabbitMQ的，Twitter的，Wikipedia的。
+gateway
+代表es索引快照的存储方式，es默认是先把索引存放到内存中，当内存满了时再持久化到本地硬盘。gateway对索引快照进行存储，当这个es集群关闭再重新启动时就会从gateway中读取索引备份数据。es支持多种类型的gateway，有本地文件系统（默认），分布式文件系统，Hadoop的HDFS和amazon的s3云存储服务。
+discovery.zen
+代表es的自动发现节点机制，es是一个基于p2p的系统，它先通过广播寻找存在的节点，再通过多播协议来进行节点之间的通信，同时也支持点对点的交互。
+Transport
+代表es内部节点或集群与客户端的交互方式，默认内部是使用tcp协议进行交互，同时它支持http协议（json格式）、thrift、servlet、memcached、zeroMQ等的传输协议（通过插件方式集成）。
+
+
+
+## 索引创建
+
+* mapping 定义了索引的结构，类似于数据库表结构
+
+### 字段类型详解
+
+
+基础类型：
+```
+"long"：长整型数字（如：id）
+"keyword"：不分词的字符串，用于精确匹配、聚合、排序
+"text"：分词文本，用于全文搜索
+"date"：日期类型（指定了格式 yyyy-MM-dd HH:mm:ss）
+"float"：浮点数
+"dense_vector"：稠密向量（用于向量搜索）
+```
+
+多字段特性 (fields)：
+```
+"app_id": {
+    "type": "keyword",  # 主字段：精确匹配
+    "fields": {
+        "text": {"type": "text"}  # 子字段：支持全文搜索
+    }
+}
+
+# app_id 可以通过：
+app_id 进行精确匹配
+app_id.text 进行全文搜索
+```
+
+* 向量字段配置：
+```
+"embedding": {
+    "type": "dense_vector",
+    "dims": 1024,      # 向量维度
+    "index": True,     # 启用索引
+    "similarity": "cosine"  # 相似度计算方式
+}
+```
+
+* 嵌套对象：
+```
+"metadata": {
+    "properties": {  # 嵌套结构
+        "app_id": {"type": "keyword"},
+        "user_id": {"type": "keyword"},
+        ...
+    }
+}
+```
+
+
+### 索引设置 (settings)
+
+```
+"settings": {
+    "number_of_shards": 1,       # 主分片数（数据拆分单元）
+    "number_of_replicas": 1,     # 副本数（保证高可用）
+    "refresh_interval": "1s"     # 数据刷新频率（近实时搜索）
+}
+```
+
+
+### 示例:
+```json
+mapping = {
+    "mappings": {
+        "properties": {
+            "id": {"type": "long"},
+            "app_id": {
+                "type": "keyword",
+                "fields": {
+                    "text": {"type": "text"}
+                }
+            },
+            "user_id": {
+                "type": "keyword",
+                "fields": {
+                    "text": {"type": "text"}
+                }
+            },
+            "type": {
+                "type": "keyword",
+                "fields": {
+                    "text": {"type": "text"}
+                }
+            },
+            "memory_info": {"type": "text"},
+            "memory_time": {
+                "type": "date",
+                "format": "yyyy-MM-dd HH:mm:ss"
+            },
+            "weight": {"type": "float"},
+            "embedding": {
+                "type": "dense_vector",
+                "dims": 1024,
+                "index": true,
+                "similarity": "cosine",
+                "index_options": {
+                    "type": "int8_hnsw",
+                    "m": 16,
+                    "ef_construction": 100
+                }
+            },
+            "metadata": {
+                "properties": {
+                    "app_id": {"type": "keyword"},
+                    "user_id": {"type": "keyword"},
+                    "type": {"type": "keyword"},
+                    "weight": {"type": "float"}
+                }
+            }
+        }
+    },
+    "settings": {
+        "number_of_shards": 1,          # 通常每分片20-50GB数据
+        "number_of_replicas": 1,
+        "refresh_interval": "30s"        # 减少频繁刷新开销
+    }
+}
+```
+
+
+
+```
+{
+  "dynamic_templates": [
+    {
+      "message_full": {
+        "match": "message_full",        # 匹配字段名
+        "mapping": {
+          "fields": {
+            "keyword": {                # 同时创建keyword子字段
+              "ignore_above": 2048,     # 超过2048字符不索引
+              "type": "keyword"
+            }
+          },
+          "type": "match_only_text"     # 节省空间的文本类型，适合日志类数据
+        }
+      }
+    },
+    {
+      "message": {
+        "match": "message",
+        "mapping": {
+          "type": "match_only_text"     # 仅用于匹配，不存储统计信息
+        }
+      }
+    },
+    {
+      "strings": {                      # 所有字符串类型
+        "match_mapping_type": "string",
+        "mapping": {
+          "type": "keyword"             # 默认映射为keyword类型：自动将字符串映射为keyword（而不是text）
+        }
+      }
+    }
+  ],
+  "properties": {
+    "metadata": {
+      "properties": {
+        "appId": {
+          "type": "keyword"
+        },
+        "createTime": {
+          "type": "long"
+        },
+        "score": {
+          "type": "double"
+        },
+        "type": {
+          "type": "keyword"
+        },
+        "updateCycle": {
+          "type": "integer"
+        },
+        "weight": {
+          "type": "float"
+        }
+      }
+    },
+    "text": {
+      "type": "text"
+    },
+    "vector": {
+      "type": "dense_vector",
+      "dims": 1024,
+      "index": true,
+      "similarity": "cosine",
+      "index_options": {
+        "type": "int8_hnsw",                    # 使用int8量化，节省75%空间
+        "m": 16,                                # HNSW图连接数（平衡精度和性能）
+        "ef_construction": 100                  # 构建时的候选集大小
+      }
+    }
+  }
+}
+```
+
+
+## 搜索
+
+### 示例
+
+```
+# 精确匹配 app_id
+{"query": {"term": {"app_id": "app123"}}}
+
+# 全文搜索 app_id
+{"query": {"match": {"app_id.text": "app"}}}
+
+# 向量相似度搜索
+{"query": {"script_score": {
+    "query": {"match_all": {}},
+    "script": {
+        "source": "cosineSimilarity(params.query_vector, 'embedding') + 1.0",
+        "params": {"query_vector": [...]}
+    }
+}}}
+
+# 范围查询日期
+{"query": {"range": {"memory_time": {"gte": "2024-01-01"}}}}
+```
+
+
+### 查询示例
+
+```
+向量相似度搜索：
+{
+  "knn": {
+    "field": "vector",
+    "query_vector": [0.1, 0.2, ...],
+    "k": 10,
+    "num_candidates": 100
+  },
+  "fields": ["text", "metadata.*"]
+}
+
+过滤+向量搜索：
+{
+  "knn": {
+    "field": "vector",
+    "query_vector": [...],
+    "k": 10,
+    "filter": {
+      "term": {"metadata.userId": "user123"}
+    }
+  }
+}
+
+
+文本+元数据组合查询：
+{
+  "bool": {
+    "must": [
+      {"match": {"text": "错误信息"}},
+      {"term": {"metadata.appId": "app001"}},
+      {"range": {"metadata.createTime": {"gte": 1633046400000}}}
+    ]
+  }
+}
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

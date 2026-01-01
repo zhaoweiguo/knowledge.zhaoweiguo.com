@@ -1,0 +1,68 @@
+# 激活函数-SiLU
+
+
+SiLU（Sigmoid-weighted Linear Unit）也称为 **Swish 激活函数**，由 Google 的研究人员在 2017 年提出，是一种平滑、非单调的激活函数。
+
+## 1. **数学定义**
+\[
+\text{SiLU}(x) = x \cdot \sigma(x) = \frac{x}{1 + e^{-x}}
+\]
+其中 \(\sigma(x)\) 是 Sigmoid 函数。
+
+## 2. **特性**
+- **平滑性**：处处可微，导数连续
+- **非单调性**：在 \(x<0\) 时先略微下降，再随 \(x\) 增大而上升
+- **下界有界，上界无界**：当 \(x \to -\infty\) 时趋近于 0；当 \(x \to +\infty\) 时趋近于线性函数
+- **自门控机制**：Sigmoid 部分充当“门控”，调节输入 \(x\) 的输出幅度
+
+## 3. **导数**
+\[
+\frac{d}{dx}\text{SiLU}(x) = \sigma(x) + x \cdot \sigma(x)(1 - \sigma(x))
+\]
+
+## 4. **优点**
+- **改善梯度流**：相比 ReLU，负区域也有梯度，缓解神经元“死亡”问题
+- **平滑优化**：在损失曲面中提供更平滑的过渡，有助于优化稳定性
+- **性能优异**：在多种深度学习任务（尤其是大规模模型）中表现优于 ReLU 和 Leaky ReLU
+
+## 5. **与其他激活函数对比**
+| 激活函数 | 公式 | 特点 |
+|----------|------|------|
+| ReLU | \(\max(0, x)\) | 简单，但负区域梯度为零 |
+| Leaky ReLU | \(\max(0.01x, x)\) | 缓解死亡神经元问题 |
+| SiLU/Swish | \(x \cdot \sigma(x)\) | 平滑，自门控，优化友好 |
+
+## 6. **应用**
+- 最初在 Transformer 模型和大规模图像分类任务中表现突出
+- 被用于 BERT、EfficientNet 等现代架构
+- 在需要平滑优化的场景（如强化学习、生成模型）中也有应用
+
+## 7. **代码示例（PyTorch）**
+```python
+import torch
+import torch.nn as nn
+
+# 内置实现
+silu = nn.SiLU()
+
+# 手动实现
+def silu(x):
+    return x * torch.sigmoid(x)
+
+# 在模型中使用
+model = nn.Sequential(
+    nn.Linear(10, 50),
+    nn.SiLU(),  # 替代 ReLU
+    nn.Linear(50, 1)
+)
+```
+
+## 8. **变体**
+- **Swish with β**：\(\text{Swish}_\beta(x) = x \cdot \sigma(\beta x)\)，通过 β 控制门控强度
+- **Hard Swish**：在移动端设备上近似实现，计算更高效
+
+SiLU 因其平衡了**表达能力和优化稳定性**，已成为现代深度学习模型中 ReLU 的有力竞争者。
+
+
+
+
