@@ -1,0 +1,1257 @@
+# 2504.03182_Graphiti: Bridging Graph and Relational Database Queries
+
+
+
+* 首页: <https://arxiv.org/abs/2504.03182>
+* PDF: <https://arxiv.org/pdf/2504.03182>
+* 引用: 
+* 组织: 
+
+## 总结
+
+
+## From Moonlight
+
+
+### 三句摘要
+
+
+### 关键词
+
+
+
+### 摘要
+
+
+## Abstract
+
+本论文提出了一种**自动化推理技术**，用于**验证图数据库查询语言 Cypher 与关系型数据库查询语言 SQL 之间的等价性**。为了在这一背景下形式化“等价性”的概念，作者引入了**数据库转换器**（database transformers）的概念，该转换器能够在图模型与关系模型之间转换数据库实例。
+
+接着，作者提出了一种新的验证方法：通过给定的转换器，将原问题**归约成两个 SQL 查询之间的等价性验证问题**。这种归约是通过**语法导向翻译**（syntax-directed translation）的方式，将 Cypher 的一个子集嵌入到 SQL 中实现的。这种方法的优势在于可以**复用已有的 SQL 自动推理研究成果**，而无需同时处理两种不同的数据模型。
+
+作者将该方法实现为一个名为 **Graphiti** 的工具，并进行了实验验证。实验结果表明，Graphiti 在验证和反例生成方面都具有实用性，甚至能够发现一些**Cypher 教程和学术论文中的细微错误**。
+
+### 关键点总结：
+- **核心目标**：验证 Cypher（图数据库）与 SQL（关系数据库）查询之间的等价性。
+- **关键概念**：数据库转换器、语法导向翻译、等价性归约。
+- **方法优势**：利用已有 SQL 推理工具，避免跨模型推理的复杂性。
+- **实现与验证**：开发工具 Graphiti，实验证明其有效性，能发现真实场景中的错误。
+
+### 附加信息：
+- 关键词：程序验证、等价性检查、关系数据库、图数据库。
+- 分类：软件工程、自动编程、程序验证、形式化验证等领域。
+
+
+## 1. Introduction
+
+
+### 背景与问题
+随着图数据库（graph databases）在工业界和学术界的广泛应用，其相比关系型数据库（relational databases）提供了更灵活的数据模型。越来越多的开发者希望将关系型数据库应用迁移到图数据库，例如 Apache Age 等系统正尝试将图模型集成到关系型数据库中以支持这种迁移。
+
+然而，关系型数据库与图数据库之间的迁移面临一个关键挑战：**查询语义的转换**。开发者需要将 SQL 查询转换为 Cypher（图数据库主流查询语言）查询，但这一过程存在诸多误解和错误。例如，JOIN 与图关系、聚合语义等的差异导致转换困难。已有研究和社区讨论中出现了大量错误的查询转换案例，说明**缺乏对图与关系型查询等价性的系统性验证方法**。
+
+### 研究目标
+本文首次提出一种**自动化验证图数据库（Cypher）与关系数据库（SQL）查询等价性**的方法。核心思想是将 Cypher 查询嵌入到 SQL 中，通过路径匹配与 JOIN 的对应关系实现语义等价性验证。
+
+### 核心贡献
+本文提出的方法包含三个关键组成部分：
+
+1. **图与关系数据库等价性的形式化基础**  
+   引入“**数据库转换器（database transformer）**”概念，用于在图数据库与关系数据库之间进行实例映射，定义等价性。
+
+2. **构造性翻译方法（Correct-by-construction transpilation）**  
+   提出“**标准数据库转换器（SDT）**”，将图结构（节点、边）映射为关系表结构（主键、外键），并定义语法导向的翻译规则，将 Cypher 查询转换为 SQL 查询。核心思想是将 Cypher 的路径匹配（path pattern matching）转换为 SQL 的 JOIN 操作。
+
+3. **支持任意模式的等价性验证方法**  
+   将图与关系查询的等价性验证问题转化为两个 SQL 查询在不同模式下的等价性验证问题，从而利用现有的 SQL 等价性验证工具（如 VeriEQL、Mediator）进行验证。
+
+### 方法流程（图1）
+1. 输入：Cypher 查询 $ Q_G $、SQL 查询 $ Q_R $、图与关系数据库模式、数据库转换器 $ \Phi $
+2. 构建 SDT 与诱导关系模式（induced relational schema）
+3. 使用 SDT 将 $ Q_G $ 转换为 SQL 查询 $ Q_R' $
+4. 构建残差数据库转换器（residual database transformer）对齐 $ Q_R' $ 与 $ Q_R $ 的模式
+5. 使用 SQL 等价性验证工具验证 $ Q_R' $ 与 $ Q_R $ 是否等价
+
+### 实验与实现
+作者实现了一个名为 **Graphiti** 的工具，并在 410 个基准测试中进行了评估，包括：
+- 45 个来自 StackOverflow、教程和论文的公开查询
+- 160 个由有 Cypher 经验的学生手动翻译的 SQL 查询
+- 205 个由 ChatGPT 自动生成的翻译
+
+实验结果：
+- 使用 VeriEQL 检测出 34 个等价性违反案例（包括 3 个真实场景、4 个手动翻译、27 个 GPT 生成）
+- 使用 Mediator 对无聚合子集进行无界验证，约 80% 的查询可自动验证等价性
+- Graphiti 生成的 SQL 查询在执行效率上与手动编写相当
+
+### 总结贡献
+本文的主要贡献包括：
+
+1. 提出首个**图与关系型查询等价性验证技术**，基于数据库转换器的形式化定义。
+2. 引入**标准数据库转换器（SDT）**，作为 Cypher 与 SQL 查询等价性的默认正确性规范。
+3. 开发**可证明正确**的翻译技术，将 Cypher 查询转换为 SQL 查询，确保在 SDT 下语义等价。
+4. 提出将图与关系查询等价性验证问题**归约**为 SQL 查询等价性验证问题，利用现有工具进行验证。
+5. 实现工具 **Graphiti**，并在大规模基准测试中验证其有效性，支持等价性验证与错误检测。
+
+
+## 2. Motivating Example
+
+
+### 2.1 图数据库与关系数据库的对应关系
+
+本节通过一个来自Lin等人（2016）的研究案例，说明图数据库（graph database）与关系数据库（relational database）之间的查询语义差异。该案例基于一个真实的生物医学研究数据库（NLM, 2024）。
+
+#### 图模式（Graph Schema）
+- 包含三种节点类型：`CONCEPT`、`PA`（predication argument）和`SENTENCE`。
+- `CONCEPT`有两个属性键：`CID`和`Name`。
+- `PA`有两个属性键：`PID`和`CSID`。
+- `SENTENCE`有两个属性键：`SID`和`PMID`。
+- 边关系：
+  - `CS`：连接`CONCEPT`和`PA`。
+  - `SP`：连接`PA`和`SENTENCE`。
+
+#### 关系模式（Relational Schema）
+- 对应图模式，包含五个表：`Concept`、`Cs`、`Pa`、`Sp`、`Sentence`。
+- 主键（Primary Key）用粗体表示，外键（Foreign Key）用下划线表示，并通过箭头连接引用。
+
+#### 示例数据实例
+- 图数据库实例包含两个`CONCEPT`节点（“Atropine”和“Aspirin”）、两个`PA`节点（`PA0`和`PA1`）和两个`SENTENCE`节点（`S0`和`S1`）。
+- 关系数据库实例展示了对应的表结构和数据，如：
+  - `Concept`表：`CID`和`Name`。
+  - `Cs`表：`CID`和`CSID`。
+  - `Pa`表：`PID`和`CSID`。
+  - `Sp`表：`SPID`、`SID`和`PID`。
+  - `Sentence`表：`SID`和`PMID`。
+
+---
+
+### 2.2 SQL 与 Cypher 查询的语义差异
+
+#### 查询目标
+- SQL 查询：查找所有与`CID=1`的`CONCEPT`节点相连的概念，并统计通过`Cs`、`Pa`、`Sp`表连接的路径频率。
+- Cypher 查询：查找所有通过`CS-PA-SP`路径连接到`CID=1`节点的句子，并统计这些句子到所有概念的路径频率。
+
+#### 查询结果对比
+- SQL 查询结果：
+  - `CID=1`，`Count(*)=2`。
+- Cypher 查询结果：
+  - `CID=1`，`Count(*)=4`。
+- 两者在`CID`上一致，但在路径频率统计上存在差异。
+
+#### 语义差异分析
+- 尽管两个查询在结构上看似等价，但由于SQL和Cypher在语义处理上的差异（如路径遍历方式、聚合逻辑等），导致最终结果不同。
+- 该示例说明：**图数据库与关系数据库在查询语义上的细微差异可能导致结果不一致**，因此需要自动化工具来检测这种差异。
+
+---
+
+### 2.3 数据库转换器（Database Transformer）
+
+#### 问题背景
+- 为了判断SQL与Cypher查询是否等价，需要在**相同数据**上进行比较。
+- 但由于图数据库与关系数据库的数据模型不同，直接比较不可行。
+- 因此引入**数据库转换器**（Database Transformer）来定义“数据等价”。
+
+#### 数据库转换器定义
+- 输入：图数据库实例 D（schema Ψ）。
+- 输出：关系数据库实例 D’（schema Ψ’）。
+- 转换规则基于图节点与边生成关系表。
+  - 例如：`CONCEPT(cid, _), CS(cid, csid, cid, pid), PA(pid, csid) → Cs(cid, csid)`。
+
+#### 示例转换器（图5）
+- 描述了图数据库与关系数据库之间的映射规则。
+- 每条规则表示如何从图结构生成关系表。
+
+---
+
+### 2.4 诱导关系模式（Induced Relational Schema）
+
+#### 构建方法
+- 将图模式中的节点和边类型转换为关系表。
+- 将节点与边之间的关联信息转换为函数依赖（functional dependencies）。
+- 引入额外属性（如`SRC`和`TGT`）作为外键，表示边的起点和终点。
+
+#### 示例（图6）
+- `CONCEPT`节点 → `Concept`表。
+- `CS`边 → `Cs`表，包含`SRC`（指向`Concept.CID`）和`TGT`（指向`Pa.PID`）。
+- 其他边类似处理。
+
+#### 标准数据库转换器（Φ_sdt）
+- 用于将图数据库实例转换为诱导关系模式下的关系数据库实例。
+- 建立图数据库与关系数据库之间的“一一对应”关系。
+
+---
+
+### 2.5 语法导向的转译（Syntax-Directed Transpilation）
+
+#### 转译原理
+- 利用标准转换器Φ_sdt，将Cypher查询转换为SQL查询。
+- Cypher路径查询对应SQL的JOIN操作。
+  - 例如：`MATCH (u)-[:CS]->(v)` → `JOIN Concept, Cs, Pa`。
+
+#### 示例转译结果（图7）
+- Cypher查询被拆分为多个CTE（Common Table Expression）：
+  - T1：匹配第一个路径模式。
+  - T2：提取中间结果。
+  - T3：匹配第二个路径模式。
+  - T4：连接T2与T3。
+  - 最终通过`GROUP BY`实现聚合。
+
+---
+
+### 2.6 查询等价性验证
+
+#### 问题与挑战
+- 虽然转译是“构造正确”的，但不保证效率。
+- 用户可能使用自定义的关系模式。
+- 转译规则仅支持Cypher到SQL，不支持反向。
+
+#### 解决方案：残差数据库转换器（Residual Database Transformer）
+- 推断从诱导关系模式到目标关系模式的转换规则。
+- 示例（图8）：将图6的诱导模式转换为图2(b)的目标模式。
+
+#### 等价性验证工具
+- 使用SQL等价性检查工具（如VeriEQL）验证SQL查询是否等价。
+- 若不等价，可生成反例（如图3中的数据实例）。
+
+---
+
+### 总结
+
+本节通过一个实际案例，揭示了图数据库与关系数据库在查询语义上的差异，并提出了以下关键方法：
+
+1. **数据库转换器**：定义图数据库与关系数据库之间的数据等价。
+2. **诱导关系模式**：将图结构自然映射为关系表结构。
+3. **语法导向转译**：将Cypher查询转换为SQL查询。
+4. **残差转换器 + SQL验证工具**：验证任意Cypher与SQL查询的等价性。
+
+这些方法为跨数据库系统的查询一致性分析提供了理论基础与实践工具。
+
+
+## 3. Preliminaries
+
+
+
+### 3. Preliminaries（预备知识）
+
+本节为后续内容提供基础背景，包括图数据库、查询语言和关系数据库的定义与结构。
+
+---
+
+#### 3.1. 图数据库背景（Background on Graph Databases）
+
+**核心内容：**
+
+- **图数据库实例**（Graph Database Instance）是一个**属性图**（Property Graph），由节点和边组成，每个节点或边都带有属性（键值对）和标签（Label）。
+- **图模式**（Graph Schema）定义了图数据库的结构，包括节点类型和边类型的集合。
+
+##### 定义 3.1（节点/边类型）
+
+- **节点类型** $ t_{\mathsf{node}} = (l, K_1, \ldots, K_n) $：
+  - $ l $ 是节点的标签（如 `Actor`）。
+  - $ K_1, \ldots, K_n $ 是该节点类型的属性键（如 `name`, `dob`）。
+  - $ K_1 $ 是默认属性键，类似于关系数据库的主键。
+
+- **边类型** $ t_{\mathsf{edge}} = (l, t_{\mathsf{src}}, t_{\mathsf{tgt}}, K_1, \ldots, K_m) $：
+  - $ l $ 是边的标签（如 `ACTS_IN`）。
+  - $ t_{\mathsf{src}} $ 和 $ t_{\mathsf{tgt}} $ 分别是源节点和目标节点的类型。
+  - $ K_1, \ldots, K_m $ 是边的属性键（如 `role`）。
+
+##### 定义 3.2（图数据库模式）
+
+- 图数据库模式 $ \Psi_G = (T_N, T_E) $：
+  - $ T_N $ 是节点类型集合。
+  - $ T_E $ 是边类型集合。
+- 每个类型通过其标签唯一标识，属性键在整个模式中也唯一。
+
+##### 定义 3.3（图数据库实例）
+
+- 图数据库实例 $ G = (N, E, P, T) $：
+  - $ N $ 是节点集合。
+  - $ E \subseteq N \times N $ 是边集合。
+  - $ P $ 是属性映射函数，$ P(n, k) $ 表示节点 $ n $ 的属性键 $ k $ 的值。
+  - $ T $ 是类型映射函数，给出每个节点或边的类型。
+
+---
+
+#### 3.2. 图数据库查询语言（Query Language for Graph Databases）
+
+**核心内容：**
+
+- 使用**轻量级 Cypher**（Featherweight Cypher）作为图数据库查询语言的子集。
+- 查询语法如图9所示，支持模式匹配、排序、联合等操作。
+
+##### 查询结构
+
+- **Query**：可以是返回查询（Return Query）、排序（OrderBy）、联合（Union）等。
+- **Return Query**：将图模式匹配结果转换为表格。
+- **Match Clause**：用于匹配图中的路径模式（Path Pattern）。
+- **Path Pattern**：由节点模式（Node Pattern）和边模式（Edge Pattern）组成。
+
+##### 示例 3.4
+
+- 查询语句：
+  ```cypher
+  MATCH (n:EMP)-[:WORK_AT]->(m:DEPT) RETURN m.dname AS name, Count(n) AS num
+  ```
+- 转换为轻量级 Cypher 表示：
+  ```cypher
+  Return(Match([(n,EMP),(e,WORK_AT,→),(m,DEPT)],⊤),[m.dname,Count(n.id)],[name,num])
+  ```
+- 该查询匹配所有从 EMP 到 DEPT 的 WORK_AT 边，并返回部门名称和员工数量。
+
+---
+
+#### 3.3. 关系数据库（Relational Databases）
+
+**核心内容：**
+
+- 定义了关系数据库的模式和实例，以及 SQL 查询语言的子集。
+
+##### 定义 3.5（关系数据库模式）
+
+- 关系数据库模式 $ \Psi_R = (S, \xi) $：
+  - $ S $ 是从关系名到属性列表的映射。
+  - $ \xi $ 是完整性约束，包括：
+    1. **主键约束**（Primary Key）：$ \mathsf{PK}(R) = a $
+    2. **外键约束**（Foreign Key）：$ \mathsf{FK}(R.a) = R'.a' $
+    3. **非空约束**（Not Null）：$ \mathsf{NotNull}(R, a) $
+
+##### 定义 3.6（关系数据库实例）
+
+- 关系数据库实例 $ R $ 是一组元组 $ \{r_1, \ldots, r_m\} $，每个元组形式为：
+  $$
+  (a_1:v_1, \ldots, a_n:v_n)
+  $$
+- $ a_1, \ldots, a_n $ 是属性名，$ v_1, \ldots, v_n $ 是对应的值。
+- 使用 $ R \triangleright \Psi_R $ 表示 $ R $ 是模式 $ \Psi_R $ 的实例。
+
+##### SQL 查询语言
+
+- 使用的 SQL 子集如图10所示，支持：
+  - 投影（Projection）：$ \Pi_L(Q) $
+  - 选择（Selection）：$ \sigma_\phi(Q) $
+  - 重命名（Renaming）：$ \rho_R(Q) $
+  - 连接（Join）：$ Q \otimes Q $
+  - 分组（GroupBy）、排序（OrderBy）、With 子句等。
+
+- **查询结构**：
+  - 支持基本关系代数操作，以及聚合（Agg）、类型转换（Cast）、逻辑运算（IsNull、Exists）等。
+
+---
+
+### 总结
+
+- **图数据库**：以属性图为基础，定义了节点和边的类型、属性和标签，以及图数据库的实例结构。
+- **查询语言**：使用轻量级 Cypher，支持图模式匹配和结果转换为表格。
+- **关系数据库**：定义了关系模式（含完整性约束）和实例结构，以及 SQL 查询语言的子集，用于后续图与关系数据库之间的转换和比较。
+
+
+## 4. Problem Statement
+
+
+
+### 4. 问题陈述（Problem Statement）总结
+
+本节首先介绍了用于数据库转换的领域特定语言（DSL），然后正式定义了图数据库与关系数据库之间的等价性检查问题。
+
+---
+
+### 4.1 数据库转换语言（Language for Database Transformers）
+
+#### 语言结构（DSL语法）
+
+DSL 包含以下三类语法结构：
+
+- **Transformer（转换器）**：  
+  `Φ ::= P1, ..., Pn → P0 | Φ Φ`  
+  表示一个转换规则，即如果源数据库中满足前提谓词 `P1,...,Pn`，则目标数据库中应满足结果谓词 `P0`。
+
+- **Predicate（谓词）**：  
+  `P ::= E(t1, ..., tn)`  
+  表示数据库中的元素，如关系表、图节点或边。`E` 是表名、节点标签或边标签，`t` 是项（常量、变量或通配符 `_`）。
+
+- **Term（项）**：  
+  `t ::= c | v | _`  
+  `c` 是常量，`v` 是变量，`_` 表示未命名变量。
+
+#### 语义定义
+
+- 每个转换器 `Φ` 被解释为一组一阶逻辑公式，记作 `⟦Φ⟧`。
+- 数据库实例 `D` 被映射为一组 ground predicate（具体谓词），记作 `𝒞(D)`。
+  - 对于关系数据库：表 `R` 的每条记录 `(a1,...,an)` 被转换为 `R(a1,...,an)`。
+  - 对于图数据库：节点 `N(l, a1,...,an)` 被转换为 `l(a1,...,an)`；边 `E(l, s, t, a1,...,an)` 被转换为 `l(a1,...,an, s, t)`。
+
+- 转换器的语义定义为：
+  ```
+  Φ(D) = D' ⇔ 𝒞(D) ∪ 𝒞(D') ⊧ ⟦Φ⟧
+  ```
+  即：当源数据库 `D` 和目标数据库 `D'` 的谓词集合共同满足 `Φ` 的逻辑公式时，表示 `Φ` 将 `D` 转换为 `D'`。
+
+#### 示例
+
+示例 4.1 展示了图数据库 `G` 和关系数据库 `R` 之间的转换，通过转换器 `Φ` 可以实现 `Φ(G) = R`。
+
+---
+
+### 4.2 等价性检查问题（Equivalence Checking Problem）
+
+#### 核心定义
+
+- **数据库查询（Definition 4.2）**：  
+  查询 `Q` 接收一个符合模式 `Ψ` 的数据库实例 `D`，输出一个表，记作 `⟦Q⟧_D`。
+
+- **数据库等价性（Definition 4.3）**：  
+  若 `Φ(D) = D'`，则称 `D` 与 `D'` 在 `Φ` 下等价，记作 `D ∼_Φ D'`。
+
+- **表等价性（Definition 4.4）**：  
+  表 `T ≡ T'` 当且仅当存在列名的双射映射 `π`，使得每行数据在映射后一致（忽略列顺序和列名）。
+
+- **图-关系查询等价性（Definition 4.5）**：  
+  若对所有满足 `G ∼_Φ R` 的图数据库 `G` 和关系数据库 `R`，都有 `⟦Q⟧_G ≡ ⟦Q'⟧_R`，则称图查询 `Q` 与关系查询 `Q'` 在 `Φ` 下等价，记作 `Q ≃_Φ Q'`。
+
+- **等价性检查问题（Definition 4.6）**：  
+  给定图查询 `Q`、关系查询 `Q'` 和转换器 `Φ`，判断是否 `Q ≃_Φ Q'`。
+
+#### 图形说明
+
+图12 展示了图查询（Cypher）与关系查询（SQL）在转换器 `Φ` 下的等价性定义：当图数据库 `G` 和关系数据库 `R` 满足 `Φ(G) = R` 时，两个查询应返回等价的表。
+
+---
+
+### 总结
+
+- **4.1** 定义了一个用于描述数据库转换的 DSL，支持图与关系数据库之间的结构映射。
+- **4.2** 提出了图查询与关系查询在给定转换器下的等价性定义，并形式化为判定问题。
+- **重点内容**：
+  - DSL 的语法与语义
+  - 数据库与表的等价性定义
+  - 查询等价性的形式化定义
+- **次要内容**：
+  - 示例中的具体转换过程（4.1 示例）
+  - 表等价性中对列顺序和名称的忽略（4.4）
+
+该章节为后续的等价性验证方法提供了理论基础和形式化框架。
+
+
+## 5. Equivalence Checking Algorithm
+
+
+### 概述
+
+本节介绍用于检查Cypher查询和SQL查询之间等价性的算法，如算法1所示。该算法分为三个步骤：
+
+1. **模式和转换器推断**：给定图数据库模式ΨG，首先推断出诱导的关系模式ΨR'和标准数据库转换器Φsdt。
+2. **语法导向的转译**：使用推断出的转换器和完整性约束，将Cypher查询QG转译为等价的SQL查询QR'。
+3. **检查SQL等价性**：最后，计算残差数据库转换器Φrdt，并检查SQL查询QR和QR'之间的等价性。
+
+### 5.1. 诱导关系模式和标准转换器推断
+
+#### 诱导关系模式
+诱导关系模式是图数据库模式ΨG的"最接近"的关系表示。每个节点和边类型都被表示为一个关系表。
+
+- **节点规则**：对于每个节点类型t_node = (l, K1, ..., Kn)，引入一个表Rl，其属性为K1, ..., Kn。K1作为主键。
+- **边规则**：对于每个边类型t_edge = (l, tsrc, ttgt, K1, ..., Km)，引入一个表Rl，其属性为K1, ..., Km, fks, fkt。K1作为主键，fks和fkt作为外键，分别引用源节点和目标节点的主键。
+
+#### 标准数据库转换器（SDT）
+SDT用于将图模式实例转换为关系模式实例。它将每个节点和边类型转换为单独的表，图数据库中的每个元素类型实例都成为关系数据库中相应表的元组。
+
+- **节点转换**：生成公式l(K1, ..., Kn) → Rl(K1, ..., Kn)。
+- **边转换**：生成公式l(K1, ..., Km, fks, fkt) → Rl(K1, ..., Km, fks, fkt)。
+
+### 5.2. 语法导向的转译
+
+#### 查询翻译
+查询翻译规则使用形式为Φsdt, ΨR ⊢ Q ⟶query Q'的判断，表示Cypher查询Q被转换为SQL查询Q'。
+
+- **无聚合函数**：使用Q-Ret规则，将Cypher查询转换为简单的SQL投影。
+- **有聚合函数**：使用Q-Agg规则，生成GroupBy查询。
+
+#### 子句翻译
+子句翻译需要跟踪子句中使用的节点和边变量，以确保不同子句中相同变量的引用一致。
+
+- **Match子句**：使用内连接模拟图模式匹配。
+- **OptMatch子句**：使用左外连接模拟可选匹配。
+- **With子句**：通过重命名操作实现列的投影和重命名。
+
+#### 模式翻译
+模式翻译使用形式为Φsdt, ΨR ⊢ PP ⟶pattern 𝒳, Q'的判断，表示Cypher模式PP被转换为SQL查询Q'。
+
+- **单节点模式**：使用PT-Node规则，将节点变量映射到相应的关系表。
+- **路径模式**：使用PT-Path规则，通过连接操作模拟路径匹配。
+
+#### 定理
+- **翻译的正确性**：如果Φsdt, ΨR ⊢ Q ⟶query Q'，则Q'与Q在Φsdt下等价。
+- **翻译的完备性**：对于任何Cypher查询Q，存在一个SQL查询Q'，使得Φsdt, ΨR ⊢ Q ⟶query Q'。
+
+### 5.3. 归约到SQL等价性检查
+
+#### 算法
+ReduceToSQL过程通过简单的语法替换推断出残差数据库转换器Φrdt，然后使用现有的SQL等价性检查工具进行检查。
+
+#### 定理
+- **正确性**：如果CheckEquivalence返回⊤，则QG与QR在Φ下等价。
+- **完备性**：如果QG与QR在Φ下等价，则CheckEquivalence返回⊤。
+
+
+## 6. Evaluation
+
+
+本节描述了对 Graphiti 的三项实验评估。由于 Graphiti 的验证方法将 Cypher-SQL 等价性检查问题转化为纯 SQL 问题，因此其结果依赖于所使用的 SQL 等价性检查后端。因此，实验分别使用 **VeriEQL**（有界模型检查器）和 **Mediator**（演绎验证器）作为后端进行评估，并进一步评估了 Graphiti 的转译质量。
+
+---
+
+### Benchmarks（基准测试集）
+
+Graphiti 在 410 对 SQL 和 Cypher 查询上进行评估，数据来源如下：
+
+- **StackOverflow**（12 对）：用户提问中涉及 SQL 与 Cypher 互译的等价性问题。
+- **Tutorial**（26 对）：来自 Neo4j 官方教程的 SQL 与 Cypher 等价示例。
+- **Academic**（7 对）：学术论文中提供的 SQL 与 Cypher 转换示例。
+- **VeriEQL**（60 对）：从 VeriEQL 论文中采样 SQL 查询，并由有经验的用户编写等价 Cypher。
+- **Mediator**（100 对）：将 Mediator 的 SQL 查询对转换为 (Cypher, SQL) 对。
+- **GPT-Translate**（205 对）：使用 GPT 自动生成 Cypher 查询，用于评估 Graphiti 检测自动翻译错误的能力。
+
+**数据库转换器（Database Transformers）**：  
+由于图数据库与关系数据库的模式可能不同，Graphiti 需要数据库转换器来描述两者之间的关系。平均每个转换器包含 5.9 条规则，编写时间约 1 分钟。
+
+---
+
+### 6.1. 使用 BMC 后端的 Graphiti 评估（VeriEQL）
+
+**实验设置**：  
+使用 VeriEQL 作为 SQL 等价性检查的后端，设置 10 分钟时间限制，逐步增加符号表大小，直到找到反例或超时。
+
+**结果（见表2）**：
+
+| 数据集       | 总数 | 非等价数 | 平均检查边界 | 平均反例时间（秒） |
+|--------------|------|-----------|----------------|----------------------|
+| StackOverflow | 12   | 1         | 9.2            | 0.6                  |
+| Tutorial      | 26   | 1         | 7.7            | 56.2                 |
+| Academic      | 7    | 1         | 2.5            | 5.4                  |
+| VeriEQL       | 60   | 4         | 7.2            | 8.5                  |
+| Mediator      | 100  | 0         | 33.2           | N/A                  |
+| GPT-Translate | 205  | 27        | 18.7           | 25.9                 |
+| **总计**      | 410  | **34**    | 19.6           | 23.4                 |
+
+**发现的 bug**：  
+Graphiti 找到了 34 个非等价查询，其中 GPT 生成的查询中 13% 存在语义错误。此外，Graphiti 还在 Neo4j 教程中发现了一个错误的 SQL-Cypher 等价示例。
+
+**假阴性分析**：  
+对 50 个未被反例的查询进行人工检查，发现 48 个确实等价，2 个错误但未被发现（4% 的误判率）。
+
+**关键发现**：  
+使用 BMC 后端，Graphiti 在 GPT 生成的 205 个查询中找到 27 个错误；在 205 个人工编写的查询中也发现 7 个错误。
+
+---
+
+### 6.2. 使用演绎验证器的 Graphiti 评估（Mediator）
+
+**实验设置**：  
+使用 Mediator 作为后端，它是一个基于 SMT 的演绎验证器，但不支持聚合和外连接。它只能证明等价或返回“未知”。
+
+**结果（见表3）**：
+
+| 数据集       | 总数 | 支持数 | 已验证数 | 未知数 | 平均时间（秒） |
+|--------------|------|--------|----------|--------|----------------|
+| StackOverflow | 12   | 1      | 1        | 0      | 1.0            |
+| Tutorial      | 26   | 1      | 1        | 0      | 0.2            |
+| Academic      | 7    | 0      | 0        | 0      | N/A            |
+| VeriEQL       | 60   | 0      | 0        | 0      | N/A            |
+| Mediator      | 100  | 100    | 77       | 23     | 20.5           |
+| GPT-Translate | 205  | 94     | 73       | 21     | 23.5           |
+| **总计**      | 410  | 196    | 152      | 44     | 16.8           |
+
+**定性分析**：  
+44 个未验证的查询中，2 个被 BMC 后端反例，14 个因超时失败，28 个返回“未知”。主要原因是 Mediator 需要推导复杂的归纳双模拟不变式，对长连接链查询处理困难。
+
+**关键发现**：  
+在 Mediator 支持的 196 个查询中，Graphiti 成功验证了约 80% 的 (Cypher, SQL) 查询对。
+
+---
+
+### 6.3. 转译质量评估
+
+**转译效率**：  
+Graphiti 成功转译了全部 410 个 Cypher 查询，平均耗时 6.3 毫秒，中位数 3.0 毫秒，最大 180.2 毫秒。
+
+**执行效率对比（见表4）**：
+
+| 数据集       | 转译查询平均执行时间（秒） | 手写 SQL 平均执行时间（秒） | 转译更快占比 | 1.1x 内 | 1.2x 内 | 超过 1.2x |
+|--------------|-----------------------------|------------------------------|----------------|-----------|-----------|--------------|
+| StackOverflow | 1.9                         | 1.8                          | 41.7%          | 8.3%      | 50.0%     | 0.0%         |
+| Tutorial      | 2.3                         | 1.7                          | 19.2%          | 11.5%     | 46.2%     | 23.1%        |
+| Academic      | 2.4                         | 3.2                          | 71.4%          | 0.0%      | 14.3%     | 14.3%        |
+| **总计**      | 2.2                         | 2.0                          | **33.3%**      | 8.9%      | 42.2%     | 15.6%        |
+
+**关键发现**：  
+Graphiti 能在毫秒级将 Cypher 转译为 SQL。在 33.3% 的基准中，转译 SQL 比手写更快；在 51.1% 的基准中，执行时间在 1.2x 以内。
+
+---
+
+### 总结
+
+Graphiti 在多个方面表现出色：
+
+- **验证能力**：使用 BMC 后端可有效发现 GPT 生成的翻译错误（27/205），并发现人工编写的错误（7/205）；
+- **演绎验证**：在 Mediator 支持的 SQL 子集上，成功验证 80% 的查询对；
+- **转译性能**：转译速度快（平均 6.3 毫秒），生成的 SQL 查询执行效率接近甚至优于手写 SQL。
+
+这些结果表明 Graphiti 在实际应用中具有很高的实用价值，特别是在自动化翻译验证和图数据库与关系数据库之间的互操作性方面。
+
+
+## 7. Related Work
+
+
+
+本节讨论了与本文技术最相关的先前工作，特别是关于图数据库查询语言 Cypher 与 SQL 查询之间的等价性验证技术。
+
+---
+
+### 1. **SQL 的自动推理（Automated reasoning for SQL）**
+
+- **核心问题**：SQL 查询等价性判断是不可判定的（Trakhtenbrot, 1950），但已有大量研究尝试解决这一问题。
+- **分类**：
+  - **第一类**：针对 SQL 的可判定子集提出判定算法（如 Aho et al., 1979；Chandra and Merlin, 1977；Green, 2011）。
+  - **第二类**：为不可判定子集提出**完备但不完整**的算法（如 Zhou et al., 2019, 2022；Chu et al., 2017b, 2018）。
+  - **第三类**：进行**有界验证**以发现 SQL 查询中的错误（如 Cosette、Qex、VeriEQL）。
+- **本文方法**：将图查询与关系查询的等价性验证问题转化为两个关系查询之间的等价性验证，从而可以利用这些已有技术。
+
+---
+
+### 2. **数据库实例之间的迁移（Migration between database instances）**
+
+- **研究方向**：数据在不同模式之间的迁移（如 Jin et al., 2017；Yaghmazadeh et al., 2016, 2018；Wang et al., 2017, 2020）。
+- **最相关的工作**：Dynamite（Wang et al., 2020）实现了图数据库与关系数据库之间的数据迁移，但**仅限于数据迁移**，不支持查询转换。
+- **查询转换相关工作**：SQL 查询的转译（如 Wang et al., 2019；Curino et al., 2008, 2013）。
+- **本文贡献**：首次**形式化**从 Cypher 到 SQL 的查询转译过程，并用于**形式化等价性验证**。
+
+---
+
+### 3. **数据表示重构（Data representation refactoring）**
+
+- **研究方向**：程序或规范在不同数据表示之间的重构（如 Solidare、QBS）。
+- **本文视角**：将图与关系模式视为不同的数据表示方式，将查询转译视为一种**数据表示重构**。
+- **创新点**：
+  - 提出引入一个**中间表示**（auxiliary representation）来简化重构过程。
+  - 通过语法导向的翻译实现更有效的验证。
+- **现有技术不足**：尚无技术解决图与关系数据之间的查询转译问题。
+
+---
+
+### 4. **图数据库查询语言（Graph database query languages）**
+
+- **研究背景**：图数据库与查询语言的语义基础研究（如 Francis et al., 2018；van Rest et al., 2016）。
+- **核心观点**：图数据库模式可视为关系数据库 ER 图的图形化表示。
+- **Cypher 与其他图查询语言的关系**：语义与语法上高度相似。
+- **本文适用性**：所提方法可扩展至其他图查询语言。
+
+---
+
+### 5. **数据库查询测试（Testing database queries）**
+
+- **相关技术**：
+  - **差分测试**（differential testing）与**变异测试**（metamorphic testing）用于发现数据库系统中的错误。
+  - **基于突变的测试**用于 SQL 编程作业评分。
+  - **溯源技术**（provenance-based）用于解释错误 SQL 查询。
+- **本文定位**：Graphiti 通过将图查询转译为 SQL 查询，利用已有 SQL 自动推理工具进行等价性验证，**与测试方法互补**。
+
+---
+
+### 6. **Cypher 查询转译工具（Transpiling Cypher queries）**
+
+- **现有工具**：
+  - **OpenCypherTranspiler**（Liang, 2025）：将 Cypher 转换为逻辑计划并生成关系查询，但支持的 Cypher 子集有限，且**无正确性保证**。
+  - **Kuzu**（Team, 2025）：在关系数据库上执行 Cypher 查询，但**不生成 SQL**，而是直接执行中间表示。
+- **Graphiti 的优势**：
+  - **保证转译的正确性**（soundness）。
+  - 支持更广泛的 Cypher 查询子集。
+
+---
+
+### 总结
+
+本节系统回顾了与本文相关的多个研究方向，包括 SQL 自动推理、数据库迁移、数据表示重构、图数据库语言、数据库测试与 Cypher 转译工具。Graphiti 的核心贡献在于：
+
+- **首次形式化 Cypher 到 SQL 的转译过程**；
+- **引入中间表示辅助验证**；
+- **保证转译正确性并支持更广泛 Cypher 子集**；
+- **与现有 SQL 验证和测试技术兼容并互补**。
+
+
+## 8. Limitation
+
+
+本节总结了 Graphiti 系统当前版本的局限性。
+
+### 主要局限：
+Graphiti 当前版本仅支持 SQL 和 Cypher 查询语言的一个子集，尚未涵盖所有现代特性。例如，Cypher 中的**变长模式匹配**（variable-length pattern matching）功能目前还未被支持。
+
+### 重点说明：
+尽管存在这些限制，作者指出在图数据库与关系数据库查询等价性推理这一领域，此前研究几乎空白。因此，Graphiti 所选择的语言子集为该研究方向提供了坚实的基础。
+
+### 实用性验证：
+通过在多种基准测试（包括真实世界查询）上的评估表明，当前的查询子集在实际应用中已经具备足够的表达能力。
+
+### 未来方向：
+作者建议未来的工作可以：
+- 扩展现有的**转译规则**（transpilation rules）；
+- 增强后端的**等价性验证器**（equivalence verifiers）；
+- 支持更多 SQL 和 Cypher 的高级功能。
+
+### 总结：
+本节强调了 Graphiti 当前的语言限制，但也指出其在研究和实用层面的价值，并为未来扩展提供了明确方向。
+
+
+## 9. Conclusion and Future Work
+
+
+
+### 9. 结论与未来工作
+
+本论文提出了一种在图查询与关系型数据库查询之间的自动推理技术。主要内容如下：
+
+#### 1. 图与关系型查询的等价性定义
+作者首先**形式化地定义了图查询与关系型查询之间的等价性**，这是整个研究的理论基础。该定义确保了在不同数据模型之间进行查询转换时的**正确性**。
+
+#### 2. 基于诱导关系模式的转译策略
+基于上述定义，论文提出了一种**构造即正确（correct-by-construction）的转译方法**，可以将 Cypher 查询（图数据库查询语言）转换为 SQL 查询，前提是使用一种称为**诱导关系模式（induced relational schema）**的结构。该方法保证了转换后的 SQL 查询与原始 Cypher 查询在语义上是等价的。
+
+#### 3. 在任意模式下的等价性验证
+论文进一步展示了如何利用现有的 SQL 查询推理技术，来验证在**任意数据库模式**下 Cypher 查询与 SQL 查询之间的等价性。这扩展了方法的适用范围，使其不局限于特定的模式结构。
+
+#### 4. 实验评估
+作者开发了一个系统 **Graphiti** 来实现所提出的方法，并在真实世界的 Cypher 和 SQL 查询上进行了等价性检查任务的评估。实验结果表明：
+
+- Graphiti 能够发现 Cypher 查询中与参考 SQL 实现本应等价但存在**细微错误的 bug**；
+- Graphiti 可以用于**验证 Cypher 与 SQL 查询之间的完全等价性**，具有实际应用价值。
+
+#### 5. 未来工作方向
+未来的研究方向包括开发一个**图形化界面**，用于在图数据库和关系型数据库之间指定数据库转换器。该想法受到先前**模式映射可视化**工作的启发（Robertson 等人，2005）。该界面旨在：
+
+- 减少用户手动验证查询等价性的负担；
+- 提供更直观、用户友好的交互方式。
+
+作者认为这是未来研究中一个**有前景的方向**。
+
+---
+
+**重点总结**：
+- 提出了图查询与关系查询之间的**形式化等价性定义**；
+- 构建了**正确性保证的 Cypher 到 SQL 转译方法**；
+- 利用现有 SQL 推理工具实现了**任意模式下的等价性验证**；
+- 实验表明系统 Graphiti 在发现 bug 和验证等价性方面有效；
+- 未来计划开发**可视化界面**以提升用户体验与验证效率。
+
+
+## Appendix A Semantics of Cypher Queries
+
+
+
+### 查询语义
+
+图 19 展示了使用标准函数组合器（如 `map`、`filter`、`foldl`、`head` 和 `zip`）定义的 featherweight Cypher 的形式化语义。根据标准 Cypher 语义，查询 Q 被视为从图数据库实例到表的函数，因此 ⟦Q⟧ 接受属性图 G 作为输入并输出表。
+
+- **`Union`、`UnionAll` 和 `OrderBy` 的语义**：这些操作的语义与 SQL 中的对应操作类似。
+- **`Return(C, E¯, k¯)` 的语义**：给定属性图 G，首先通过评估子句 C 获取子图列表，然后使用参数 E¯ 和 k¯ 将结果转换为表。E¯ 指定要针对子图评估的表达式列表，k¯ 指定返回值的列名列表。
+
+### 子句语义
+
+Cypher 子句 C 的语义是将输入属性图 G 转换为子图列表，每个子图对应于输入图 G 上的模式匹配结果。Cypher 中有四种不同类型的子句：
+
+1. **`Match(PP, ϕ)`**：返回所有匹配模式 PP 并满足谓词 ϕ 的 G 的子图。
+2. **`Match(C, PP, ϕ)`**：在输入图 G 上评估子句 C 和匹配子句 `Match(PP, ϕ)`，然后合并它们的结果。
+3. **`OptMatch(C, PP, ϕ)`**：类似于前一个匹配子句，但对模式中缺失部分使用空值。
+4. **`With(C, X¯, Y¯)`**：首先将嵌套子句 C 应用于输入图 G，然后根据旧名称和新名称 X¯ 和 Y¯ 重命名节点和边。
+
+#### 示例 A.1
+
+图 20(a) 显示了一个图数据库实例，其中员工 A 在 CS 部门工作，而员工 B 没有部门。运行以下 Cypher 查询：
+
+```cypher
+Return(OptMatch(Match([(n, EMP)], ⊤), [(n, EMP), (e, WORK_AT, →), (m, DEPT)], ⊤), [n.name, m.dname], [n.name, m.dname])
+```
+
+在图数据库上运行此查询会产生图 20(b) 中的结果。由于表示员工 B 的节点没有出边，其在结果表中的 "department" 条目为空。
+
+### 路径模式语义
+
+给定图数据库实例 G 和路径模式 PP，⟦PP⟧G 返回匹配给定模式的 G 的子图列表。路径模式可以有两种形式：
+
+1. **节点模式 NP**：是一个对 (X, l)，其中 l 是节点的类型，X 是匹配节点的变量。
+2. **路径模式 PP**：可以是 NP, EP, PP 的形式，其中 EP 是边模式 (X, l, d)，l 是边的类型，d 是其方向，X 是匹配边的变量。
+
+### 表达式语义
+
+表达式 E 的语义是 ⟦E⟧G,gs，其中 G 是输入图数据库实例，gs 是子图列表（G 的子图），表示在 G 上执行路径模式匹配的结果。表达式 E 可以是属性键 k、值 v、聚合表达式、`Cast(ϕ)` 表达式和算术表达式 E⊕E。
+
+- **属性键 k**：通过查找 gs 列表中第一个子图的该键值进行评估。
+- **聚合表达式**：涉及 `Count`、`Sum`、`Avg`、`Min`、`Max` 操作符，其语义类似于 SQL。
+- **`Cast(ϕ)` 表达式**：将谓词 ϕ 转换为 0、1 或空值。
+
+### 谓词语义
+
+给定谓词 ϕ、属性图 G 和子图列表 gs，⟦ϕ⟧G,gs 定义了如何在 G, gs 上评估 ϕ。类似于 SQL，我们采用三值逻辑解释布尔谓词 ϕ，这意味着评估结果可以包含空值，并且可以执行涉及 ⊤、⊥ 和空值的布尔算术运算。
+
+
+## Appendix B Transpilation of Cypher Predicates and Expressions
+
+
+
+### 1. 表达式的转译规则（Figure 21）
+
+本节给出了将 Cypher 表达式转译为 SQL 表达式的规则，主要包括以下几种情况：
+
+- **(E-Prop)**：属性访问（如 `k`）直接转译为 SQL 中的属性访问。
+- **(E-Value)**：常量值（如 `v`）保持不变地转译。
+- **(E-Pred)**：谓词 `Cast(ϕ)` 被转译为 SQL 中的 `Cast(ϕ')`，其中 `ϕ'` 是转译后的谓词。
+- **(E-Agg)**：聚合函数 `Agg(E)` 被转译为 SQL 中的聚合函数 `Agg(E')`，其中 `E'` 是转译后的表达式。
+- **(E-Arith)**：算术表达式 `E1 ⊕ E2`（如加法、减法等）被转译为 SQL 中的 `E1' ⊕ E2'`。
+
+这些规则表明，大多数表达式的转译是直接的结构映射。
+
+---
+
+### 2. 谓词的转译规则（Figure 22）
+
+本节给出了将 Cypher 谓词转译为 SQL 谓词的规则，包括以下几种主要情况：
+
+- **(P-True) 和 (P-False)**：布尔常量 `⊤` 和 `⊥` 分别转译为 SQL 中的 `TRUE` 和 `FALSE`。
+- **(P-Logic)**：逻辑比较 `E1 ⊙ E2`（如等于、大于等）被转译为 SQL 中的 `E1' ⊙ E2'`。
+- **(P-IsNull)**：`IsNull(E)` 被转译为 SQL 中的 `IS NULL` 判断。
+- **(P-In)**：`E ∈ v̄`（判断某个值是否在集合中）被转译为 SQL 中的 `E' IN v̄`。
+- **(P-Not)**：逻辑非 `¬ϕ` 被转译为 SQL 中的 `NOT ϕ'`。
+- **(P-AndOr)**：逻辑与和或 `ϕ1 ∧ ϕ2` 或 `ϕ1 ∨ ϕ2` 被转译为 SQL 中的 `ϕ1' AND ϕ2'` 或 `ϕ1' OR ϕ2'`。
+
+#### **(P-Exists)**：最复杂的转译规则
+
+该规则用于转译 Cypher 中的 `Exists(PP)` 谓词。具体步骤如下：
+
+1. 将路径模式 `PP` 转译为一个 SQL 查询 `Q`。
+2. 使用 SQL 的 `IN` 谓词来判断是否存在匹配，即转译为 `ā ∈ Πā(Q)`。
+   - `ā` 是路径中首尾节点对应关系的主键（如 `[PK(Rl1), PK(Rl2)]`）。
+   - `Πā(Q)` 表示从子查询 `Q` 中投影出 `ā` 的值集合。
+   - `ā ∈ Πā(Q)` 表示当前查询中使用的 `ā` 是否存在于子查询结果中。
+
+这个规则体现了 Cypher 中路径存在性检查如何映射为 SQL 的子查询存在性判断。
+
+---
+
+### 示例 B.1
+
+考虑以下 Cypher 谓词：
+
+```cypher
+Exists([(n, EMP), (e, WORK_AT, →), (m, DEPT)])
+```
+
+根据 **(P-Exists)** 规则，它被转译为 SQL 中的：
+
+```sql
+[n.id, m.dnum] ∈ Π[n.id, m.dnum] (
+    ρn(emp) ⋈ n.id = e.SRC ρe(work_at) ⋈ e.TGT = m.dnum ρm(dept)
+)
+```
+
+其中：
+
+- `ρn(emp)` 表示将节点 `n` 映射到表 `emp`。
+- `⋈` 表示 SQL 中的连接操作。
+- `Π[n.id, m.dnum]` 表示从连接结果中投影出 `n.id` 和 `m.dnum`。
+- `IN` 谓词用于判断当前查询中使用的 `[n.id, m.dnum]` 是否存在于该投影结果中。
+
+---
+
+### 总结
+
+- **表达式转译**：大多数是结构化映射，如属性、常量、算术运算和聚合函数。
+- **谓词转译**：逻辑判断、集合判断、空值判断等也基本是直接映射。
+- **关键难点**：`Exists(PP)` 的转译需要将路径模式转换为 SQL 子查询，并使用 `IN` 谓词进行存在性判断。
+- **数学公式与算法**：重点在于 `ā ∈ Πā(Q)` 这一结构，它体现了路径匹配到关系查询的语义映射。
+- **表格数据**：Figure 21 和 Figure 22 分别列出了表达式和谓词的转译规则，结构清晰，便于实现。
+
+
+## Appendix C An Equivalent Cypher Query of Motivating Example
+
+
+
+本节延续第 2 节中关于 SQL 与 Cypher 查询不等价问题的讨论。重点在于解释原始 Cypher 查询为何会导致结果不一致，并提供一个等价的修正版本。
+
+### 原始 Cypher 查询的问题
+
+原始 Cypher 查询使用 `WITH` 子句对 `s:SENTENCE` 进行过滤，但这种过滤方式**没有在第二个 `MATCH` 子句中对每个匹配路径进行限制**，导致系统探索了**比预期更多的路径**，从而出现**重复计数（double counting）**的问题。
+
+### 修正后的 Cypher 查询
+
+为了解决上述问题，作者提出了一个**等价的正确 Cypher 查询**，其核心改进在于：
+
+- 将原本在 `WITH` 中的过滤条件移入 `EXISTS` 子句中。
+- 使用 `EXISTS { ... }` 来确保每个 `SENTENCE` 节点只有在满足第一个模式匹配的前提下才会被考虑。
+
+这样修改后，查询逻辑与 SQL 查询保持一致，避免了重复计数的问题。
+
+### 查询结构（重点内容）
+
+```cypher
+MATCH (s:SENTENCE)<-[r3:SP]-(p2:PA)<-[r4:CS]-(c2:CONCEPT)
+WHERE EXISTS {
+    MATCH (c1:CONCEPT {CID: 1})-[r1:CS]->(p1:PA)-[r2:SP]->(s:SENTENCE)
+}
+RETURN c2.CID, Count(*)
+```
+
+- **第一行**：匹配从 `CONCEPT` 到 `SENTENCE` 的路径。
+- **第二至四行**：使用 `EXISTS` 子句确保 `s:SENTENCE` 满足特定的连接模式（即与 CID=1 的概念相连）。
+- **返回结果**：按 `c2.CID` 分组，统计匹配的路径数量。
+
+### 总结
+
+本节通过引入 `EXISTS` 子句，解决了原始 Cypher 查询中因过滤逻辑不当导致的重复计数问题，提供了一个与 SQL 查询等价的正确 Cypher 实现。这是理解 Graphiti 系统如何桥接图数据库与关系数据库查询语义差异的关键部分。
+
+
+## Appendix D Qualitative Analysis of Manually-Written Buggy Queries
+
+
+在第 6.1 节中提到的错误查询基础上，作者进行了手动检查，以理解常见的错误根源。总体来看，手写基准测试中的错误主要有以下几类：
+
+---
+
+### 1. 使用嵌套 MATCH 而非存在性模式（Existential Pattern）
+
+这是常见的错误之一，已在第 2 节（Motivating Example）中举例说明。  
+**重点**：Cypher 查询中使用了嵌套的 `MATCH`，而实际上应使用 `OPTIONAL MATCH` 或其他存在性模式来模拟 SQL 中的左连接（LEFT JOIN）行为。这种误用会导致结果集不完整或错误。
+
+---
+
+### 2. 错误使用路径模式（Path Pattern）进行 OPTIONAL MATCH
+
+**重点**：作者引用了 Neo4j 教程中的一个例子，展示了 Cypher 查询与 SQL 查询之间的不等价性。
+
+#### SQL 查询（左连接）：
+```sql
+SELECT P.ProductName, SUM(OD.UnitPrice * OD.Quantity) AS Volume
+FROM Customers AS C
+LEFT JOIN Orders ON C.CustomerID = Orders.CustomerID
+LEFT JOIN OrderDetails ON Orders.OrderID = OrderDetails.OrderID
+LEFT JOIN Products ON OrderDetails.ProductID = Products.ProductID
+WHERE C.CompanyName = 'Drachenblut Delikatessen'
+GROUP BY P.ProductName
+```
+
+#### Cypher 查询（错误实现）：
+```cypher
+MATCH (C:Customer {CompanyName: 'Drachenblut Delikatessen'})
+OPTIONAL MATCH (P:Product)<-[:OrderDetails]-(:Order)<-[:Purchased]-(C)
+RETURN P.ProductName, SUM(OD.UnitPrice * OD.Quantity) AS Volume
+```
+
+**问题分析**：
+- Cypher 查询使用了路径模式 `(P:Product)<-...-(:Order)<-...-(C)`，但未正确模拟 SQL 中的“左连接”语义。
+- 转译为 SQL 后发现，Cypher 查询内部使用了 **INNER JOIN**，而原 SQL 使用的是 **LEFT JOIN**。
+- 这导致在产品缺失时（即没有订单细节），Cypher 查询不会返回 NULL，而 SQL 会返回 NULL，造成语义差异。
+
+---
+
+### 3. 同一标签的节点或边使用不当
+
+**重点**：作者从 VeriEQL 数据集中选取了一个 SQL 查询，并对比了手写的 Cypher 查询。
+
+#### SQL 查询：
+```sql
+SELECT t0.EmpNo, t0.DeptNo, t1.DeptNo AS DeptNo0
+FROM (
+    SELECT EmpNo, EName, DeptNo, DeptNo + EmpNo AS f9
+    FROM EMP
+    WHERE EmpNo = 10
+) AS t0
+JOIN (
+    SELECT DeptNo, Name, DeptNo + 5 AS f2
+    FROM DEPT
+) AS t1
+ON t0.EmpNo = t1.DeptNo AND t0.f9 = t1.f2
+```
+
+#### Cypher 查询（错误实现）：
+```cypher
+MATCH (t0:EMP {EmpNo: 10})-[:WORK_AT]->(t1:DEPT)
+WHERE t1.DeptNo + t0.EmpNo = t1.DeptNo + 5
+RETURN t0.EmpNo, t1.DeptNo, t1.DeptNo AS DeptNo0
+```
+
+**问题分析**：
+- Cypher 查询中没有引入与 `t1` 不同的 `DEPT` 节点，导致连接条件错误。
+- Graphiti 通过反例验证了该 Cypher 查询与 SQL 查询不等价。
+
+#### 反例数据（图 23）：
+
+**(a) 关系数据库：**
+
+| EMP     |       |        |
+|---------|-------|--------|
+| EmpNo   | EName | DeptNo |
+| 0       | A     | 10     |
+| 10      | B     | 5      |
+
+| DEPT    |        |
+|---------|--------|
+| DeptNo  | DName  |
+| 5       | C      |
+| 10      | D      |
+
+**(b) 图数据库：**
+- 实心节点为 EMP，虚线节点为 DEPT。
+
+**执行结果对比**：
+- SQL 查询返回一行：`(10, 5, 10)`
+- Cypher 查询返回空结果
+
+**结论**：由于 Cypher 查询未能正确建模 SQL 中的连接逻辑，导致结果不一致。
+
+---
+
+### 总结
+
+本附录通过分析手动编写的错误查询，揭示了 Cypher 与 SQL 在语义建模上的常见问题，主要包括：
+
+1. **路径模式误用**：如使用嵌套 `MATCH` 而非 `OPTIONAL MATCH`。
+2. **JOIN 语义不一致**：Cypher 转译后使用 `INNER JOIN` 而非 `LEFT JOIN`。
+3. **节点/边标签重复使用**：导致连接条件错误。
+
+这些分析为 Graphiti 的验证机制提供了实际依据，也揭示了图数据库查询语言在表达关系型语义时的潜在陷阱。
+
+
+## Appendix E Comparing Graphiti’s Transpiler with OpenCypherTranspiler
+
+
+### 原文结构总结
+
+### 1. 总体比较
+
+本节对 Graphiti 和 OpenCypherTranspiler（Liang, 2025）在 410 个基准查询上的表现进行了比较。结果显示，OpenCypherTranspiler 无法支持其中 284 个（69%）查询，这些查询超出了其支持的 Cypher 子集范围。在剩余的 126 个查询中，OpenCypherTranspiler 错误地将 2 个 Cypher 查询转译为语法错误的 SQL 查询，另有 2 个查询被手动检查发现语义错误。这表明 OpenCypherTranspiler 是一个“尽力而为”的工具，缺乏转译结果的正确性保证，无法保持语义等价性。
+
+相比之下，**Graphiti 能够正确转译我们评估中使用的全部 410 个 Cypher 查询**。
+
+---
+
+### 2. 转译结果表格分析（Table 5）
+
+| 数据集         | 总数 | 不支持 | 语法错误 | 错误结果 | 正确 |
+|----------------|------|--------|----------|----------|------|
+| StackOverflow  | 12   | 8      | 0        | 0        | 4    |
+| Tutorial       | 26   | 14     | 0        | 0        | 12   |
+| Academic       | 7    | 6      | 0        | 0        | 1    |
+| VeriEQL        | 60   | 44     | 1        | 0        | 15   |
+| Mediator       | 100  | 100    | 0        | 0        | 0    |
+| GPT-Translate  | 205  | 112    | 1        | 2        | 90   |
+| **总计**       | 410  | 284    | 2        | 2        | 122  |
+
+- **不支持的查询**：共 284 个，占总数的 69%，说明 OpenCypherTranspiler 支持的 Cypher 子集有限。
+- **语法错误**：2 个，表明其在语法处理上存在缺陷。
+- **语义错误**：2 个，通过人工检查发现，说明其生成的 SQL 虽然语法正确，但逻辑错误。
+- **正确转译**：仅 122 个查询被正确转译。
+
+---
+
+### 3. OpenCypherTranspiler 的典型错误示例
+
+#### （1）不支持聚合函数表达式
+
+**Cypher 查询：**
+```cypher
+MATCH (N:PERSON)
+WITH N.ZIPCODE AS ZIP, Count(*) AS POPULATION
+WHERE POPULATION > 3
+RETURN ZIP, POPULATION
+```
+
+**问题：**
+OpenCypherTranspiler 不支持 `Count(*)` 或 `Avg(*)` 等聚合表达式。
+
+---
+
+#### （2）生成包含未定义变量的 SQL 查询
+
+**Cypher 查询：**
+```cypher
+MATCH (X:USR), (U:PIC), (V:PIC), (W:PIC)
+WHERE X.USRUID = U.PICUID AND X.USRUID = V.PICUID AND X.USRUID = W.PICUID
+  AND W.PRICSIZE = V.PRICSIZE AND U IS NOT NULL AND V IS NULL
+RETURN DISTINCT X.USRUID AS XID, X.USRNAME AS XNAME
+```
+
+**OpenCypherTranspiler 输出：**
+```sql
+SELECT DISTINCT __X_USRUID AS XID, ...
+FROM ( ... WHERE ... AND ((U) IS NOT NULL) AND ... ) AS _proj
+```
+
+**问题：**
+SQL 查询中使用了未定义的表名 `U`，导致语法错误。
+
+---
+
+#### （3）语义错误的转译结果
+
+**Cypher 查询：**
+```cypher
+MATCH (e1:EMPLOYEES)
+OPTIONAL MATCH (e2:EMPLOYEEUNI)-[:IS]->(e1)
+RETURN e2.UNIQUE_ID, e1.NAME
+```
+
+**OpenCypherTranspiler 输出：**
+```sql
+SELECT UNIQUE_ID, NAME FROM (
+  SELECT * FROM EMPLOYEEUNI JOIN IS ON ...
+) AS T1
+LEFT JOIN EMPLOYEES AS T2 ON ...
+```
+
+**正确 SQL 应为：**
+```sql
+SELECT UNIQUE_ID, NAME FROM (
+  SELECT * FROM EMPLOYEEUNI JOIN IS ON ...
+) AS T1
+RIGHT JOIN EMPLOYEES AS T2 ON ...
+```
+
+**问题：**
+OpenCypherTranspiler 将 `OPTIONAL MATCH` 错误地转译为 `LEFT JOIN`，而正确的语义应为 `RIGHT JOIN`，导致结果语义错误。
+
+---
+
+### 总结
+
+- **OpenCypherTranspiler 的局限性：**
+  - 支持的 Cypher 子集有限（69% 查询不支持）。
+  - 存在语法错误（2 例）和语义错误（2 例）。
+  - 缺乏形式化保证，属于“尽力而为”工具。
+
+- **Graphiti 的优势：**
+  - 成功转译全部 410 个 Cypher 查询。
+  - 保证语义等价性，具备更高的正确性和完整性。
+
+该比较表明，Graphiti 在功能覆盖和转译正确性方面显著优于 OpenCypherTranspiler。
+
+
+## Appendix F Proofs
+
+
+### 定理 F.1（翻译的正确性）
+
+设 ΨG 是一个图模式，Q 是一个在 ΨG 上的 Cypher 查询。设 ΨR 是 ΨG 的诱导关系模式，Φsdt 是从 ΨG 到 ΨR 的标准数据库转换器。如果 Φsdt, ΨR ⊢ Q ⟶query Q′，则 Q′ 与 Q 在 Φsdt 下等价，即 Q ≃Φsdt Q′。
+
+#### 证明
+通过结构归纳法对 Q 进行证明。
+
+#### 基本情况：Q = Return(C, E¯, k¯)
+根据归纳假设，我们有 Φsdt(⟦C⟧G) = ⟦Q′⟧R。讨论 ¬hasAgg(E¯) 的两种情况：
+
+1. **如果 ¬hasAgg(E¯) = ⊤**，则对于所有表达式 e ∈ E¯，IsAgg(e) = ⊥。通过 Cypher 和 SQL 语义，我们证明了 Φsdt(⟦Return(C, E¯, k¯)⟧G) = ⟦Πρk¯(E′¯)(Q′)⟧R。
+2. **如果 ¬hasAgg(E¯) = ⊥**，则存在某些表达式 E ∈ E¯，IsAgg(E) = ⊤。通过 Cypher 和 SQL 语义，我们证明了 Φsdt(⟦Return(C, E¯, k¯)⟧G) = ⟦GroupBy(Q′, A′¯, ρk¯(E′¯), ⊤)⟧。
+
+### 引理 F.2
+设 ΨG 是一个图模式，C 是一个 Cypher 子句。设 ΨR 是一个关系模式，Φsdt 是从 ΨG 到 ΨR 的标准数据库转换器。如果 Φsdt, ΨR ⊢ C ⟶clause 𝒳, Q，则对于所有图 G 和关系数据库 R，G ⊲ ΨG ∧ R ⊲ ΨR ∧ G ∼Φsdt R ⇒ Φsdt(⟦C⟧G) = ⟦Q⟧R。
+
+#### 证明
+通过结构归纳法对 C 进行证明。
+
+#### 基本情况：C = Match(PP, ϕ)
+根据引理 F.3 和 F.5，我们有 Φsdt(⟦Match(PP, ϕ)⟧G) = ⟦σϕ′(Q)⟧R。
+
+### 引理 F.3
+设 ΨG 是一个图模式，PP 是一个 Cypher 模式。设 ΨR 是一个关系模式，Φsdt 是从 ΨG 到 ΨR 的标准数据库转换器。如果 Φsdt, ΨR ⊢ PP ⟶pattern 𝒳, Q，则对于所有图 G 和关系数据库 R，G ⊲ ΨG ∧ R ⊲ ΨR ∧ G ∼Φsdt R ⇒ Φsdt(⟦PP⟧G) = ⟦Q⟧R。
+
+#### 证明
+通过结构归纳法对 PP 进行证明。
+
+#### 基本情况：PP = NP
+根据图 19，我们有 Φsdt(⟦NP⟧G) = ρX(R(Λ(l))) = ⟦ρX(Λ(l))⟧R。
+
+### 引理 F.4
+设 ΨG 是一个图模式，E 是一个 Cypher 表达式。设 ΨR 是一个关系模式，Φsdt 是从 ΨG 到 ΨR 的标准数据库转换器。如果 Φsdt, ΨR ⊢ E ⟶expr E′，则对于所有图 G 和关系数据库 R，G ⊲ ΨG ∧ R ⊲ ΨR ∧ G ∼Φsdt R ∧ (∀i.Φsdt(gi) = ti) ⇒ ⟦E⟧G,gs = ⟦E′⟧R,𝒯。
+
+#### 证明
+通过结构归纳法对 E 进行证明。
+
+#### 基本情况：E = k
+根据图 19，我们有 ⟦k⟧G,gs = lookup(head(gs), k) = lookup(head(𝒯), k) = ⟦k⟧R,𝒯。
+
+### 引理 F.5
+设 ΨG 是一个图模式，ϕ 是一个 Cypher 谓词。设 ΨR 是一个关系模式，Φsdt 是从 ΨG 到 ΨR 的标准数据库转换器。如果 Φsdt, ΨR ⊢ ϕ ⟶pred ϕ′，则对于所有图 G 和关系数据库 R，G ⊲ ΨG ∧ R ⊲ ΨR ∧ G ∼Φsdt R ∧ (∀i.Φsdt(gi) = ti) ⇒ ⟦ϕ⟧G,gs = ⟦ϕ′⟧R,𝒯。
+
+#### 证明
+通过结构归纳法对 ϕ 进行证明。
+
+#### 基本情况：ϕ = ⊤
+根据图 19，我们有 ⟦⊤⟧G,gs = ⊤ = ⟦⊤⟧R,𝒯。
+
+### 定理 F.6（翻译的完备性）
+设 ΨG 是一个图模式，ΨR 是 ΨG 的诱导关系模式。对于任何在 ΨG 上的 Cypher 查询 Q，存在一个在 ΨR 上的 SQL 查询 Q′，使得 Φsdt, ΨR ⊢ Q ⟶query Q′。
+
+#### 证明
+通过结构归纳法对 Q 进行证明。
+
+#### 基本情况：Q = Return(C, E¯, k¯)
+根据引理 F.7 和 F.9，我们有 Φsdt, ΨR ⊢ Return(C, E¯, k¯) ⟶query Q′′。
+
+### 引理 F.7
+设 ΨG 是一个图模式，ΨR 是 ΨG 的诱导关系模式，Λ 是相应的模式映射。对于任何接受的 Cypher 子句 C，存在一个 SQL 查询 Q，使得 Φsdt, ΨR ⊢ C ⟶clause 𝒳, Q。
+
+#### 证明
+通过结构归纳法对 C 进行证明。
+
+#### 基本情况：C = Match(PP, ϕ)
+根据引理 F.8 和 F.10，我们有 Φsdt, ΨR ⊢ Match(PP, ϕ) ⟶clause 𝒳, σϕ′(Q)。
+
+### 引理 F.8
+设 ΨG 是一个图模式，ΨR 是 ΨG 的诱导关系模式，Λ 是相应的模式映射。对于任何接受的 Cypher 模式 PP，存在一个 SQL 查询 Q，使得 Φsdt, ΨR ⊢ PP ⟶pattern 𝒳, Q。
+
+#### 证明
+通过结构归纳法对 PP 进行证明。
+
+#### 基本情况：PP = NP = (X, l)
+根据图 18，我们有 Φsdt, ΨR ⊢ NP ⟶pattern 𝒳, Q。
+
+### 引理 F.9
+设 ΨG 是一个图模式，ΨR 是 ΨG 的诱导关系模式，Λ 是相应的模式映射。对于任何接受的 Cypher 表达式 E，存在一个 SQL 表达式 E′，使得 Φsdt, ΨR ⊢ E ⟶expr E′。
+
+#### 证明
+通过结构归纳法对 E 进行证明。
+
+#### 基本情况：E = k
+根据图 21，我们有 Φsdt, ΨR ⊢ k ⟶expr E′。
+
+### 引理 F.10
+设 ΨG 是一个图模式，ΨR 是 ΨG 的诱导关系模式，Φ 是相应的数据库转换器。对于任何接受的 Cypher 谓词 ϕ，存在一个 SQL 谓词 ϕ′，使得 Φsdt, ΨR ⊢ ϕ ⟶pred ϕ′。
+
+#### 证明
+通过结构归纳法对 ϕ 进行证明。
+
+#### 基本情况：ϕ = ⊤
+根据图 22，我们有 Φsdt, ΨR ⊢ ⊤ ⟶pred ϕ′。
+
+### 引理 F.11
+设 G 是一个在图模式 ΨG 上的图数据库实例，Φsdt 是在 ΨG 和 ΨR 之间的标准数据库转换器，ΨR′ 是 ΨG 的诱导关系模式，D′ 是一个关系数据库，使得 D′ = Φsdt(G)。设 Φ 是从 ΨG 到 ΨR 的数据库转换器，Φrdt 是残差数据库转换器，且 D 是一个关系数据库实例，使得 D = Φ(G)，则 D′ ∼Φrdt D。
+
+#### 证明
+通过算法 2，我们知道残差数据库转换器是通过语法替换获得的。讨论替换的两种情况：
+
+1. 对于任何节点 N(l, a1, ..., an)，存在相应的子句 l(a1, ..., an) → l′(a1, ..., an)。
+2. 对于任何边 E(l, s, t, a1, ..., an)，存在相应的子句 s(...), l(s, t, a, ..., an), t(...) → s′(...), l′(a1, ..., an, s, t), t′(...)。
+
+### 引理 F.12
+设 ΨG 是一个图模式，ΨR′ 是 ΨG 的诱导关系模式。设 QG 是在 ΨG 上的图查询，QR′ 是在 ΨR′ 上的 SQL 查询，使得 Φsdt, ΨR ⊢ QG ⟶query QR′。设 Φ 是从 ΨG 到 ΨR 的数据库转换器，Φrdt 是在 ΨR′ 和 ΨR 之间的残差数据库转换器。如果 QG ≃Φ QR，则 QR′ ≃Φrdt QR。
+
+#### 证明
+根据定义 4.5，如果 QG ≃Φ QR 成立，则 ⟦QG⟧G ≡ ⟦QR⟧D。根据引理 F.11，我们有 Φrdt(D′) = D。根据引理 5.7，我们有 QG ≃Φsdt QR′ ⇒ ⟦QG⟧G ≡ ⟦QR′⟧D′。因此，我们有 ⟦QR⟧D ≡ ⟦QG⟧G ≡ ⟦QR′⟧D′。
+
+### 定理 F.13（正确性）
+设 CheckSQL(ΨR, Q, ΨR′, Q′, Φrdt) 是一个用于检查 SQL 查询 Q, Q′ 在关系模式 ΨR, ΨR′ 上的等价性的正确过程。设 QG 是在图模式 ΨG 上的 Cypher 查询，QR 是在关系模式 ΨR 上的 SQL 查询，且它们的数据库转换器为 Φ。如果 CheckEquivalence(ΨG, QG, ΨR, QR, Φ) 返回 ⊤，则 QG ≃Φ QR。
+
+#### 证明
+根据引理 F.1，我们有 QG ≃Φsdt QR′，即 ⟦QG⟧G ≡ ⟦QR′⟧D′。如果 CheckEquivalence 返回 ⊤，则 CheckSQL 也返回 ⊤，即 ⟦QR′⟧D′ ≡ ⟦QR⟧D。因此，QG ≃Φ QR。
+
+### 定理 F.14（完备性）
+设 CheckSQL(ΨR, Q, ΨR′, Q′, Φrdt) 是一个用于检查 SQL 查询 Q, Q′ 在模式 ΨR, ΨR′ 上的等价性的完备过程。设 QG 是在图模式 ΨG 上的 Cypher 查询，QR 是在关系模式 ΨR 上的 SQL 查询，且它们的数据库转换器为 Φ。如果 QG ≃Φ QR，则 CheckEquivalence(ΨG, QG, ΨR, QR, Φ) 返回 ⊤。
+
+#### 证明
+如果 QG ≃Φ QR 成立，则根据引理 F.12，QR′ ≃Φrdt QR 成立。进一步，我们知道如果 QR′ ≃Φrdt QR，则 CheckSQL 返回 ⊤。因此，CheckSQLEquivalence(ΨG, QG, ΨR, QR, Φ) 返回 ⊤。

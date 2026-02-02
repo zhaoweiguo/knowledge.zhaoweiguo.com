@@ -1,0 +1,509 @@
+# 2407.04153_PEER: Mixture of A Million Experts
+
+* 首页: <https://arxiv.org/abs/2407.04153>
+* PDF: <https://arxiv.org/pdf/2407.04153>
+* 引用: 
+    * 61(2026-01-19)
+* 组织: 
+    * Google DeepMind
+
+
+
+
+## 总结
+
+
+## From Moonlight
+
+
+### 三句摘要
+
+1. ⚙️ 本文提出了一种名为PEER（Parameter Efficient Expert Retrieval）的新型MoE层，它通过产品键检索技术实现从超过百万个微型专家池中进行稀疏检索。
+2. 📈 PEER层结合了高效的产品键路由和单神经元专家，能够动态组合小型专家，从而在保持计算效率的同时，显著扩展模型容量。
+3. 🚀 实验结果表明，在相同的计算预算下，PEER模型在语言建模任务上实现了最优的困惑度，优于密集型FFW层、粗粒度MoE和Product Key Memory层。
+
+### 关键词
+
+- Mixture-of-Experts (MoE): 混合专家模型是一种解决Transformer中前馈（FFW）层计算成本随隐藏层宽度线性增长问题的架构。它通过稀疏激活一组专家模块（通常是FFW层）来替代单一的密集FFW层，从而解耦模型大小与计算成本。研究表明，增加专家数量可以提高性能，而细粒度（即激活的专家数量）也是一个重要的性能提升维度。
+- Feedforward layers (FFW): 前馈层（FFW）是标准Transformer架构中的一个重要组成部分，主要负责存储事实性知识。然而，其缺点是计算量（FLOPs）和设备内存消耗与参数数量呈线性关系。因此，FFW层是模型中主要的计算瓶颈和参数密集区域。
+- Parameter Efficient Expert Retrieval (PEER): PEER（Parameter Efficient Expert Retrieval）是本文提出的一种新颖的层设计。它利用“积键检索”（Product Key Retrieval）技术，能够从海量的（超过一百万个）微小专家模块中进行稀疏检索。PEER旨在以参数高效的方式扩展Transformer模型的容量，同时保持计算效率，尤其是在语言模型预训练任务中，它展现了比密集FFW层和粗粒度MoE更好的计算-性能权衡。
+- Product Key Retrieval: 积键检索（Product Key Retrieval）是一种高效检索大量键值对的技术，由Lample等人在2019年提出，并被PEER层用作路由机制。其核心思想是将每个N维的键向量Ki分解为两个d/2维的子键向量c和c'（Ki = [c; c']），使得总键数量N可以达到（d/2）^2。查询向量q(x)也被分解为q1和q2。通过对子键和子查询进行检索，可以在显著降低计算复杂度（从O(N*d)降至O(sqrt(N) + k^2)*d）的情况下，找到与查询向量最匹配的k个键。这使得模型能够高效地从海量专家库中选择少量专家。
+- Granularity: 粒度（Granularity）在MoE模型中被定义为每个token激活的专家数量与单个专家大小的比值，即 `G := Pactive / Pexpert`（Pactive是每个token激活的总参数数，Pexpert是单个专家的大小）。本文和Krajewski等人（2024）的研究表明，细粒度的MoE（即较高的粒度G）能够带来更好的模型性能。PEER通过采用大量微小专家和多头检索来实现高粒度。
+- Single-neuron experts: 单个神经元专家（Single-neuron experts）是PEER层中构成专家池的基本单元。每个专家`ei(x)`被设计成一个极其简单的MLP，仅包含一个隐藏层和一个神经元，形式为 `σ(ui^T x)vi`。这种设计极大地减小了单个专家的参数量（Pexpert）。通过结合多个这样的微小专家，再通过多头检索机制动态地组合它们的输出来模拟一个更复杂的FFW层，从而在不显著增加计算开销的情况下大幅提升模型容量。
+- Multi-head retrieval: 多头检索（Multi-head retrieval）是PEER层用于增强模型表达能力的一种机制，类似于Transformer中的多头自注意力（Multi-Head Attention）。PEER层使用h个独立的查询网络，每个查询网络独立计算查询向量并从共享的专家池中检索一组独立的专家。这h个头的输出随后被简单地加起来。这种设计允许模型从不同的角度或表示子空间中检索信息，提高了层的表达能力，并且可以通过调整`h`和`k`（每个头检索的专家数量）来控制激活的专家总数（`hk`）。
+- IsoFLOP analysis: IsoFLOP分析是一种评估模型性能与计算成本（FLOPs）之间关系的方法。它通过在固定的计算预算（FLOPs）下，联合调整模型大小（参数量）和训练数据量（训练tokens），来生成一条“等FLOPs曲线”。然后，在曲线上评估模型的最终验证损失（或困惑度），从而直观地展示在相同计算预算下，不同方法或模型配置所能达到的最佳性能。本文使用IsoFLOP分析来比较PEER、密集FFW、粗粒度MoE和PKM的性能-计算效率。
+- Learned routers: 学习型路由器（Learned routers）是指在MoE架构中，用于决定将哪个token路由到哪个专家（或反之）的机制是可学习的。与固定或基于哈希的非学习型路由器相比，研究表明学习型路由器在提高MoE模型性能方面具有显著优势，能够更好地适应数据分布和模式。PEER层使用了基于积键检索的学习型路由器，其复杂度相比传统的token-choice或expert-choice路由器（复杂度至少为O(N)）有了显著降低。
+- Fine-grained MoE: 细粒度MoE（Fine-grained MoE）指的是一种Mixture-of-Experts架构，其特点是拥有大量数量庞大但单个规模微小的专家，并且能够有效地激活其中一小部分专家来处理输入的token。与粗粒度MoE（拥有较少但规模较大的专家）不同，细粒度MoE通过“大量微小专家”的设计，能够在保持计算量（Pactive）相对较低的同时，显著提升总参数量（P）和粒度（G），从而获得更好的模型性能，这符合本文提出的PEER架构的设计理念。
+
+### 摘要
+
+这篇论文介绍了 PEER（Parameter Efficient Expert Retrieval），一种新颖的层设计，旨在解决标准 Transformer 架构中前馈层（FFW）的计算成本和激活内存随隐藏层宽度线性增长的问题。MoE 架构通过解耦模型大小与计算成本，提供了一种替代方案。近期发现的细粒度 MoE 缩放定律表明，更高的粒度（granularity）能带来更好的性能。然而，现有的 MoE 模型由于计算和优化挑战，通常局限于少数专家。PEER 利用 Product Key Retrieval 技术，实现了从包含大量微小专家（超过一百万）的巨大专家池中进行稀疏检索。
+
+**核心方法学**
+
+PEER 层是一个函数 $f: R^n \to R^m$，包含三个主要部分：
+1.  **专家池（Pool of Experts）**：一个由 $N$ 个专家组成的集合 $E = \{e_i\}_{i=1}^N$，每个专家 $e_i: R^n \to R^m$ 具有相同的签名。
+2.  **产品键（Product Keys）**：与专家一一对应的 $N$ 个产品键集合 $K = \{k_i\}_{i=1}^N \subset R^d$。
+3.  **查询网络（Query Network）**：一个将输入向量 $x \in R^n$ 映射到查询向量 $q(x) \in R^d$ 的网络 $q: R^n \to R^d$。
+
+PEER 层的计算流程如下：
+1.  **检索（Retrieval）**：给定输入 $x$，首先通过查询网络 $q(x)$ 生成查询向量。然后，检索与查询向量 $q(x)$ 内积最高的 $k$ 个专家所对应的产品键。
+    $$I = T_k(\{q(x)^T k_i\}_{i=1}^N)$$
+    其中 $T_k$ 表示 top-$k$ 操作。
+2.  **计算路由器分数（Compute Router Scores）**：对这些 top $k$ 个专家，计算其查询-键内积的非线性激活（例如 softmax 或 sigmoid），得到路由器分数。
+    $$g_i(x) = s(q(x)^T k_i)$$
+3.  **聚合专家输出（Aggregate Expert Outputs）**：最后，通过路由器分数对选定专家的输出进行线性组合，得到 PEER 层的最终输出。
+    $$f(x) = \sum_{i \in I} g_i(x) e_i(x)$$
+
+**产品键检索（Product Key Retrieval）**
+
+为了高效处理大量的专家（$N \ge 10^6$），PEER 采用了 Product Key Retrieval 技术。
+*   **键结构**：产品键 $k_i$ 并非独立的 $d$ 维向量，而是通过拼接两个 $d/2$ 维的子键 $c \in C$ 和 $c' \in C'$ 构建而成，即 $k_i = \begin{bmatrix} c \\ c' \end{bmatrix}$。集合 $C$ 和 $C'$ 的基数均为 $\sqrt{N}$。
+*   **高效检索**：查询向量 $q(x)$ 被拆分为两个子查询 $q_1$ 和 $q_2$。对 $q_1$ 和 $q_2$ 分别与 $C$ 和 $C'$ 中的子键进行 top $k$ 操作：
+    $$I_C = T_k((q_1^T c_i))$$
+    $$I_{C'} = T_k((q_2^T c_j))$$
+    这生成了一个包含 $k^2$ 个候选键的集合 $K'$。由于 $q(x)^T \begin{bmatrix} c_i \\ c_j \end{bmatrix} = q_1^T c_i + q_2^T c_j$，可以在 $k^2$ 个候选键中再次应用 top-$k$ 操作，从而获得最终的 $k$ 个匹配键。这种方法将 top-$k$ 专家检索的复杂度从天真的 $O(Nd)$ 降低到 $O((\sqrt{N} + k^2)d)$。
+
+**参数高效专家与多头检索（Parameter Efficient Experts and Multi-Head Retrieval）**
+
+*   **单神经元 MLP 专家**：与传统 MoE 架构不同，PEER 中的每个专家 $e_i$ 都是一个单神经元 MLP：
+    $$e_i(x) := \sigma(u_i^T x)v_i$$
+    其中 $u_i, v_i$ 是与输入 $x$ 维度相同的向量，$\sigma$ 是非线性激活函数。这种设计使得每个专家都非常小，实现了参数高效性。
+*   **多头检索**：为了增加 PEER 层的表达能力，PEER 采用多头检索机制，类似于 Transformer 中的多头注意力。使用 $h$ 个独立的查询网络，每个网络计算其自身的查询并检索一组独立的 $k$ 个专家。所有头共享同一个专家池。最终输出是这些头输出的简单求和：
+    $$f(x) := \sum_{i=1}^h f_i(x) = \sum_{i=1}^h \sum_{j \in I_i} g_j(x) e_j(x)$$
+    当每个头只检索一个专家（$k=1$）时，一个具有 $h$ 个头的 PEER 层等效于一个具有 $h$ 个隐藏神经元的 MLP，通过聚合从共享存储库中检索到的 $h$ 个单例 MLP 来动态组装。
+
+**大量小专家的必要性**
+
+论文基于 MoE 模型的缩放定律（Krajewski et al., 2024）解释了为何需要大量小专家。缩放定律形式为 $L(P, D, G) = c + (g/G^\gamma + a)P^{-\alpha} + b D^{-\beta}$，其中 $L$ 是测试损失，$P$ 是总参数量，$D$ 是训练 Token 数量，$G$ 是粒度（active experts 数量）。为了提高模型性能，需要增加 $P, D, G$，但同时要限制每个 Token 的激活参数量 $P_{active}$，因为其决定了训练和推理的计算和内存成本。
+由于 $P_{expert} = P_{active}/G$ 且 $N = P/P_{expert} = P \cdot G / P_{active}$，这意味着为了在固定 $P_{active}$ 下增加 $P$ 和 $G$，必须减小每个专家的大小 $P_{expert}$ 并增加专家数量 $N$。PEER 通过设置 $d_{expert}=1$（单个隐藏神经元）来实现最小的专家尺寸，从而能容纳大量专家，其粒度 $G = hk$。
+
+**实验结果**
+
+*   **IsoFLOP 分析**：在 C4 数据集上，PEER 与 Dense FFW、Coarse-grained MoE 和 Product Key Memory (PKM) 进行了 isoFLOP 曲线比较。在相同的 FLOP 预算下，PEER 模型实现了最低的计算最优困惑度（perplexity），表明其在性能-计算权衡方面优于其他基线。
+*   **语言模型数据集评估**：在 Curation Corpus, Lambada, Pile, Wikitext 和 C4 等多个语言模型数据集上，PEER 在相同的 FLOP 预算下，其计算最优模型通常取得了最低的困惑度，性能优于其他方法。
+*   **消融研究**：
+    *   **总专家数量 N 的影响**：随着总专家数量从 $128^2$ 增加到 $1024^2$，PEER 的性能持续提升，证明了增加专家数量可以提高模型性能。
+    *   **活跃专家数量 hk 的影响**：在考虑的范围内，增加活跃专家数量 $hk$ 通常能带来性能提升。但是，性能提升会逐渐饱和，并且增加活跃专家数量会增加设备内存消耗。
+    *   **专家使用率和 Query Batch Normalization**：即使对于一百万个专家，PEER 的专家使用率也接近 100%。使用 Query Batch Normalization 可以使专家利用更均衡，并略微降低困惑度，尤其是在 isoFLOP 最优区域。
+
+**结论**
+
+PEER 架构通过将极宽的密集前馈层分解为大量微小专家，并结合 Product Key Retrieval 实现高效路由，有效解决了大型 Transformer 模型中 FFW 层的扩展挑战。它利用细粒度 MoE 缩放定律，在保持计算效率的同时，显著提升了模型容量和性能。实验结果证明 PEER 在性能-计算权衡方面优于密集 Transformer、粗粒度 MoE 和 PKM 层，为未来 Transformer 模型的进一步扩展提供了新的可能性。
+
+
+## Abstract
+
+本论文提出了一种新的稀疏专家模型结构——**PEER（Parameter Efficient Expert Retrieval）**，用于解决Transformer模型中前馈网络（FFW）在计算成本和激活内存上的线性增长问题。
+
+### 研究背景与动机
+- 标准的Transformer前馈层（FFW）随着隐藏层宽度增加，计算和内存开销线性增长。
+- 为了解决这一问题，**稀疏混合专家（MoE）架构**被提出，通过解耦模型大小与计算成本。
+- 最近研究表明，**细粒度MoE**具有更好的性能，但现有MoE模型受限于专家数量少，存在计算和优化难题。
+
+### 方法创新
+- 本文提出**PEER**，一种新型的MoE层设计。
+- PEER使用**product key检索技术**，从**超过百万个小专家（tiny experts）**中进行稀疏检索，实现高效推理。
+- 这种方法显著提升了专家数量的可扩展性，同时保持了计算效率。
+
+### 实验结果
+- 在语言建模任务中，PEER在**性能-计算成本权衡**上优于密集FFW和粗粒度MoE。
+- 图1展示了在C4数据集上，不同FLOPs预算（6e18和2e19）下PEER与其他基线模型的对比结果（以对数尺度展示x轴）。
+
+### 结论
+- PEER通过高效利用大量专家，为Transformer模型的进一步扩展提供了新路径，同时保持了计算效率。
+
+
+## 1 Introduction
+
+### 核心背景与问题提出
+近年来，模型的**规模扩展**（scaling）被证明是提升性能的有效策略（Kaplan et al., 2020；Hoffmann et al., 2022）。在Transformer模型中，**前馈网络层**（Feedforward, FFW）占总参数量的三分之二，负责存储事实性知识（Geva et al., 2021；Dai et al., 2022）。然而，FFW层的计算成本（FLOPs）和内存消耗与参数数量成正比，限制了其扩展效率。
+
+为了解耦计算成本与参数数量之间的关系，研究者提出了**专家混合架构**（Mixture-of-Experts, MoE），通过稀疏激活多个专家模块（通常是FFW）替代单一密集FFW。MoE在语言模型扩展中展现出潜力（Shazeer et al., 2017；Lepikhin et al., 2020；Fedus et al., 2022；Zhou et al., 2022），Clark et al. (2022) 也验证了MoE的扩展规律，指出增加专家数量可在不增加推理成本的前提下提升性能。
+
+### MoE的挑战与改进方向
+然而，MoE的效率提升在模型达到一定规模后趋于饱和（Clark et al., 2022）。Krajewski et al. (2024) 指出，这种饱和是由于训练token数量固定所致。当训练token数量达到计算最优时，MoE在FLOP效率上显著优于密集模型。此外，他们引入了**粒度**（granularity，即激活专家数量）作为新的扩展维度，并实验证明更高粒度有助于提升性能。由此推测，未来模型将趋向于**大量细粒度专家**的架构。
+
+### MoE的另一应用场景：终身学习（Lifelong Learning）
+MoE还被广泛应用于**终身学习**场景（Aljundi et al., 2017；Chen et al., 2023；Yu et al., 2024；Li et al., 2024）。例如，Chen et al. (2023) 提出通过新增专家并进行适当正则化，MoE模型可以适应连续数据流。冻结旧专家、仅更新新专家的设计可防止灾难性遗忘，保持模型的可塑性。在终身学习中，数据流可能是无限的，因此需要不断扩展专家池。
+
+### 现有MoE架构的局限性
+尽管高效扩展和终身学习都要求支持**大量专家**的MoE架构，但目前唯一支持上万个专家的模型是**MoWE**（Mixture of Word Experts）（dos Santos et al., 2023），其缺点在于语言特定性和固定路由机制。已有研究表明，**可学习的路由机制**（learned router）优于非可训练路由（Clark et al., 2022；Dikkala et al., 2023）。因此，设计一个支持**百万级专家**、具备可学习路由机制的MoE架构仍是一个开放问题。
+
+### 本文贡献与PEER架构介绍
+本文提出**参数高效专家检索架构**（Parameter Efficient Expert Retrieval, PEER），基于**乘积键检索**（product key retrieval）（Lample et al., 2019）实现对**极大量专家**的高效路由，解耦计算成本与参数数量。PEER在实验中展现出优越的计算-性能权衡，成为密集FFW层的有力替代方案。
+
+#### 主要贡献包括：
+1. **极端MoE设置的探索**：不同于以往研究关注少量大专家，本文首次系统研究**大量微小专家**的可行性。
+2. **可学习索引结构用于路由**：首次验证**可学习索引结构**（Kraska et al., 2018）可用于高效路由至**超过百万级专家**。
+3. **新型层设计**：结合乘积键路由与**单神经元专家**，提出**PEER层**，在不显著增加计算开销的前提下扩展模型容量。实验表明其在语言建模任务中优于密集FFW、粗粒度MoE和PKM层。
+4. **全面的消融实验**：研究PEER设计中不同因素（专家数量、活跃参数、查询头数、查询归一化等）对性能的影响。
+
+### PEER层结构示意图（图2）
+PEER层可插入Transformer主干中或替代FFW层。其流程如下：
+- 输入状态向量 $ x $ 经查询网络 $ q(x) $ 映射为查询向量；
+- 查询向量与**乘积键**（product keys）比较，计算路由得分并检索前 $ k $ 个专家 $ e_1, ..., e_k $；
+- 各专家输出预测结果 $ e_i(x) $；
+- 使用softmax归一化的路由得分作为权重，对专家输出进行线性加权。
+
+该结构实现了高效路由与参数扩展，是本文方法的核心创新点。
+
+
+## 2 Method
+
+本节介绍 **PEER 层（Parameter Efficient Expert Retrieval Layer）**，它是一种基于产品键（product keys）的 MoE（Mixture of Experts）架构。PEER 使用单神经元 MLP 作为专家，并通过产品键检索机制实现高效的专家选择。图2展示了 PEER 层的计算流程。
+
+---
+
+### PEER 概览（Overview）
+
+PEER 层是一个函数 $ f: \mathbb{R}^n \to \mathbb{R}^m $，由三部分组成：
+
+1. **专家池（Experts Pool）**：包含 $ N $ 个专家 $ \mathbb{E} = \{e_i\}_{i=1}^N $，每个专家 $ e_i: \mathbb{R}^n \to \mathbb{R}^m $。
+2. **产品键集合（Product Keys）**：对应 $ N $ 个键 $ \mathbb{K} = \{k_i\}_{i=1}^N \subset \mathbb{R}^d $。
+3. **查询网络（Query Network）**：将输入 $ x \in \mathbb{R}^n $ 映射为查询向量 $ q(x) \in \mathbb{R}^d $。
+
+计算流程如下：
+
+1. **检索 top-k 专家**：
+   $$
+   \mathbb{I} = \mathcal{T}_k\left(\{q(x)^T k_i\}_{i=1}^N\right)
+   $$
+   选择与查询向量内积最大的前 $ k $ 个专家。
+
+2. **计算路由得分（Router Scores）**：
+   $$
+   g_i(x) = s(q(x)^T k_i)
+   $$
+   对 top-k 专家的查询-键内积应用非线性激活函数（如 softmax 或 sigmoid）得到得分。
+
+3. **加权聚合专家输出**：
+   $$
+   f(x) = \sum_{i \in \mathbb{I}} g_i(x) e_i(x)
+   $$
+
+---
+
+### 产品键检索（Product Key Retrieval）
+
+当专家数量 $ N \geq 10^6 $ 时，直接计算所有键与查询的内积代价高昂。为此，PEER 使用**产品键结构**来加速检索。
+
+- 每个键 $ k_i $ 不是独立的 $ d $ 维向量，而是由两个 $ d/2 $ 维子键拼接而成：
+  $$
+  \mathbb{K} = \left\{ \begin{bmatrix} c \\ c' \end{bmatrix} \mid c \in \mathbb{C}, c' \in \mathbb{C}' \right\}
+  $$
+  其中 $ |\mathbb{C}| = |\mathbb{C}'| = \sqrt{N} $，每个子键维度为 $ d/2 $。
+
+- 查询向量 $ q(x) $ 也被拆分为两个子查询 $ q_1, q_2 $，分别与两个子键集合进行 top-k 检索：
+  $$
+  \mathbb{I}_{\mathbb{C}} = \mathcal{T}_k\left((q_1^T c_i)\right), \quad \mathbb{I}_{\mathbb{C}'} = \mathcal{T}_k\left((q_2^T c_j')\right)
+  $$
+
+- 得到 $ k^2 $ 个候选键，从中再选出 top-k 个最终匹配键。
+
+该方法将检索复杂度从 $ O(Nd) $ 降低到 $ O((\sqrt{N} + k^2)d) $。
+
+---
+
+### 参数高效专家与多头检索（Parameter Efficient Experts and Multi-Head Retrieval）
+
+不同于传统 MoE 使用多层 MLP 作为专家，PEER 的每个专家是一个**单神经元 MLP**：
+
+$$
+e_i(x) = \sigma(u_i^T x) v_i
+$$
+
+其中 $ u_i, v_i $ 是输入维度的向量，$ \sigma $ 是激活函数（如 ReLU 或 GELU）。
+
+为了提升表达能力，PEER 使用**多头检索机制**：
+
+- 使用 $ h $ 个独立查询网络，每个检索一组 top-k 专家。
+- 所有头共享同一个专家池和键集合。
+- 最终输出为各头输出的加权和：
+  $$
+  f(x) = \sum_{i=1}^h \sum_{j \in \mathbb{I}^i} g_j(x) e_j(x)
+  $$
+
+当每头只检索一个专家（$ k=1 $）时，PEER 层等价于一个具有 $ h $ 个隐藏神经元的 MLP：
+
+$$
+f(x) = V \sigma(W^T x), \quad W = [u_1, \cdots, u_h], \quad V = [v_1, \cdots, v_h]
+$$
+
+这种设计使得专家之间共享隐藏层参数，提升知识迁移和参数效率。
+
+---
+
+### 为何使用大量小型专家？（Why A Large Number of Small Experts?）
+
+MoE 层可通过三个超参数刻画：
+
+- 总参数量 $ P $
+- 每 token 激活参数量 $ P_{\text{active}} $
+- 单个专家参数量 $ P_{\text{expert}} $
+
+Krajewski 等人（2024）提出 MoE 模型的扩展定律：
+
+$$
+\mathcal{L}(P, D, G) = c + \left( \frac{g}{G^\gamma} + a \right) \frac{1}{P^\alpha} + \frac{b}{D^\beta}
+$$
+
+其中 $ G = \frac{P_{\text{active}}}{P_{\text{expert}}} $ 是激活专家数（granularity）。
+
+目标是提升 $ P, D, G $，同时控制 $ P_{\text{active}} $（因训练和推理成本主要由其决定）。
+
+因此，应**减小专家大小 $ P_{\text{expert}} $，增加专家数量 $ N $**。
+
+在 PEER 中：
+
+- 每个专家仅 1 个隐藏神经元（$ d_{\text{expert}} = 1 $）
+- 每 token 激活神经元数为 $ d_{\text{active}} = hk $
+- 激活专家数 $ G = hk $
+
+---
+
+### PEER 前向实现（算法1）
+
+PEER 的前向传播通过嵌入层存储专家参数，并使用 einsum 操作进行高效计算。该实现可扩展至 GLU 类变体（如 Shazeer, 2020）。
+
+```python
+def peer_forward(self, x):
+    # 嵌入层存储所有专家的 down/up 投影权重
+    self.w_down_embed = nn.Embed(num_embeddings=self.n_experts, features=self.d_model)
+    self.w_up_embed = nn.Embed(num_embeddings=self.n_experts, features=self.d_model)
+
+    # 使用 product keys 检索 top-k 专家
+    indices, scores = self.get_indices(self.query_proj(x), self.sub_keys, top_k=self.k)
+    w_down = self.w_down_embed(indices)
+    w_up = self.w_up_embed(indices)
+
+    # 加权聚合专家输出
+    x = jnp.einsum('btd, btthd -> btthd', x, w_down)
+    x = self.activation(x)
+    x = x * nn.softmax(scores)
+    x = jnp.einsum('btthd, btthd -> btd', x, w_up)
+    return x
+```
+
+该实现依赖于高效的嵌入查找和 einsum 操作，实际部署中可能需要专用硬件加速。
+
+---
+
+### 小结
+
+PEER 是一种参数高效的 MoE 架构，其核心创新包括：
+
+- **产品键结构**：大幅降低大规模专家检索的计算复杂度。
+- **单神经元专家**：提升参数效率和知识共享。
+- **多头检索机制**：增强模型表达能力。
+- **理论分析**：解释为何使用大量小型专家更优。
+
+这些设计使得 PEER 在保持高性能的同时，显著降低训练和推理成本。
+
+
+### ???
+
+
+本节主要介绍了 PEER 层前向传播的伪代码实现（Algorithm 1），并指出 `get_indices` 和 `query_proj` 函数的一个示例实现在 Lample 等人（2021）的 PyTorch 项目中可以找到。
+
+### 内容总结：
+
+- **核心内容**：
+  - 提供了 PEER 层的前向传播算法伪代码（Algorithm 1），这是论文中提出的一种新型神经网络层结构。
+  - 指出 `get_indices` 和 `query_proj` 函数的具体实现可参考 Lample 等人（2021）的工作，表明该实现具有可复现性基础。
+
+- **不重要内容（简要）**：
+  - 未详细展开伪代码的具体步骤，也未提供完整的实现细节，仅指出参考来源。
+
+### 备注：
+- 虽然本节未展示完整的算法伪代码细节，但通过引用已有实现，为读者提供了实现 PEER 层的技术路径支持。如需深入理解，建议查阅所引用的 Lample 等人（2021）的论文和相关 PyTorch 实现。
+
+
+## 3 Experiments
+
+### 3.1 PEER 的 isoFLOP 分析
+
+本节通过 **isoFLOP 分析**（固定计算量）比较了 PEER 与多种基线方法的性能。作者设定了两个固定的 FLOP 预算（6e18 和 2e19），并联合调整模型大小和训练 token 数量（来自 C4 数据集），以绘制 isoFLOP 曲线。每条曲线上所有点的计算成本相同，横轴为模型大小，纵轴为在 C4 上的验证困惑度（perplexity）。
+
+- **Dense 基线**：通过调整层数、注意力头数和模型维度来改变模型大小。
+- **MoE、PKM、PEER 方法**：将 Dense 模型中的中间 FFN 层替换为 MoE、PKM 或 PEER 层。
+
+#### MoE 设置：
+- 使用 **expert-choice 路由算法**，解决专家负载不均衡问题，性能优于 token-choice。
+- 每个专家大小与原始 MLP 相同，使用 128 个专家。
+
+#### PKM 设置：
+- 使用 1024² 个记忆单元（memory），8 个头（h=8），每个头选择 32 个记忆（k=32）。
+- 使用 query batch normalization（BN）以提升记忆使用效率。
+
+#### PEER 设置：
+- 使用 1024² 个专家，8 个头（h=8），每个头选择 16 个专家（k=16）。
+- 默认启用 query BN。
+- 与 MoE 不同，PEER 是一种**细粒度稀疏方法**，使用大量小专家。
+
+所有模型保持相同的 batch size（128）和 sequence length（2048）。训练步数由总计算预算除以每步 FLOPs 得出。
+
+**结果**：如图 1 所示，与 Dense 基线相比，稀疏方法（MoE、PKM、PEER）的 isoFLOP 曲线向右下方偏移，说明它们虽然总参数数 P 更大，但活跃参数数 P_active 更少。在相同计算预算下，**PEER 模型达到了最低的困惑度**。
+
+---
+
+### 3.2 在语言建模数据集上的评估
+
+在 isoFLOP 曲线上确定每种方法的“计算最优”模型后，作者在多个语言建模数据集上评估了这些模型的性能，包括：
+
+- Curation Corpus
+- Lambada
+- The Pile
+- Wikitext
+- 预训练数据集 C4
+
+**结果**：见表 1。PEER 模型在两个 FLOP 预算下均表现最优，尤其在 2e19 预算下，PEER 在所有数据集上都取得了最低的困惑度。
+
+| 方法 | Curation | Lambada | Pile | Wikitext | C4 |
+| --- | --- | --- | --- | --- | --- |
+| PEER (6e18) | 20.68 | 17.65 | 19.01 | 25.48 | 20.63 |
+| PEER (2e19) | 16.34 | 10.33 | 14.99 | 19.09 | 16.45 |
+
+---
+
+### 3.3 消融实验
+
+#### 1. 专家总数 N 的影响
+
+在 isoFLOP 曲线最优模型基础上，改变 PEER 层中专家总数 N（128², 256², 512², 1024²），保持活跃专家数 h=8, k=16 不变。
+
+**结果**：如图 3(a) 所示，随着专家总数增加，模型性能提升，说明**增加专家数量有助于提升性能**。
+
+#### 2. 活跃专家数 hk 的影响
+
+保持专家总数 N=1024² 不变，改变活跃专家数 hk（32, 64, 128, 256, 512），并联合调整 h 和 k。
+
+**结果**：如图 3(b) 所示，**hk 越高，性能越好**，但性能逐渐趋于饱和。同时，hk 增大会增加设备内存消耗，可能需要更多加速器设备。因此，实际中应根据性能与资源之间的权衡选择 hk。
+
+#### 3. 专家使用率与 Query BatchNorm
+
+为评估 PEER 中专家的使用情况，作者统计了每个专家在验证集上的累计路由得分 zi'，并计算以下指标：
+
+- **专家使用率**：被选中的专家比例（zi ≠ 0）
+- **不均衡度（Unevenness）**：KL 散度，衡量专家使用分布与均匀分布的差异
+
+**结果**：见表 2。即使在 1M 专家的情况下，专家使用率接近 100%。使用 query BN 可以显著提升专家使用的均衡性，并略微降低困惑度。
+
+图 4 显示，使用 query BN 的 PEER 模型在 isoFLOP 曲线上整体困惑度更低，尤其在最优区域附近差异更明显。
+
+---
+
+### 总结
+
+- **PEER 在 isoFLOP 分析中表现最优**，尤其在高计算预算下。
+- **消融实验表明**：
+  - 增加专家总数可提升性能；
+  - 增加活跃专家数 hk 也有助于性能提升，但存在资源限制；
+  - 使用 query BN 可提升专家使用均衡性并略微降低困惑度。
+- **PEER 是一种细粒度稀疏结构**，相比 MoE 和 PKM，更适合大规模参数扩展和高效训练。
+
+
+## 4 Related Works
+
+本章节从三个主要方向回顾了与本文提出方法PEER相关的研究工作：**专家混合模型（Mixture of Experts, MoE）**、**基于检索的增强模型（Retrieval-Augmented Models）**，以及**高效的前馈网络（Efficient Feedforward Layers）**。以下是对各部分内容的结构化总结：
+
+---
+
+### 一、专家混合模型（Mixture of Experts, MoE）
+
+#### 1.1 稀疏门控MoE的发展
+- **Shazeer et al. (2017)** 首次提出稀疏门控MoE，在GPU集群上有效提升了模型容量。
+- 后续研究（如 Fedus et al., Lepikhin et al., Du et al.）主要解决MoE在训练稳定性、负载均衡和通信开销方面的问题。
+- 通常做法是将Transformer中的前馈网络（FFW）替换为MoE层，每个token选择top-k个专家进行计算，称为**token-choice**方法。
+
+#### 1.2 专家选择路由（Expert Choice）
+- **Zhou et al. (2022)** 提出**专家选择路由**，即专家选择token而非token选择专家。
+- 但无论是token-choice还是expert-choice，都需要在N×M的门控矩阵上进行top-k操作，导致路由复杂度至少为O(N)，限制了专家数量（通常<128）。
+
+#### 1.3 哈希路由方法
+- 一些研究（Roller et al., dos Santos et al.）尝试使用**确定性哈希表**作为路由器，平均查找复杂度为O(1)，理论上可扩展至大量专家。
+- 但这些方法的路由策略是**固定的、不可学习的**，限制了其性能。
+
+#### 1.4 可学习路由的优势
+- **Clark et al. (2022)** 表明，可学习的路由机制比固定路由更具扩展性。
+- **Dikkala et al. (2023)** 从理论上证明了可学习路由在去除虚假方向和识别数据潜在聚类方面的优势。
+- **本文贡献**：提出的PEER采用**可学习路由机制**，且路由复杂度为**O(√N)**，显著优于O(N)的传统方法。
+
+#### 1.5 参数高效MoE
+- **Wang et al. (2022)** 和 **Zadouri et al. (2024)** 提出使用**参数高效微调（PEFT）适配器**作为专家，减少微调时的参数更新量。
+- 与之不同，PEER关注的是**推理和训练时的计算效率**，即MoE层中活跃参数的数量。
+
+---
+
+### 二、基于检索的增强模型（Retrieval-Augmented Models）
+
+#### 2.1 检索机制的应用
+- 这类模型通过从外部数据库中检索知识，增强模型的记忆能力，提升在知识密集型任务上的表现。
+- 代表工作包括：Khandelwal et al.（检索token）、Borgeaud et al.（检索文本块）、Kang et al.（检索知识图谱）。
+
+#### 2.2 与PEER的区别
+- 现有方法主要检索**数据**（如token、文本块、知识图谱），而PEER检索的是**函数（即专家网络）**。
+- 这种区别使得PEER在参数效率和模型灵活性方面具有独特优势。
+
+---
+
+### 三、高效的前馈网络（Efficient Feedforward Layers）
+
+#### 3.1 条件计算（Conditional Computation）
+- 该方向的核心思想是通过**门控机制**选择性地激活神经元，以提升计算效率。
+- 例如：Davis & Arel (2013) 利用低秩矩阵估计激活符号，跳过负激活神经元；Bengio et al. (2015) 使用强化学习决定神经元块的激活。
+
+#### 3.2 快速前馈网络（Fast FeedForward, FFF）
+- Belcak & Wattenhofer (2023) 提出FFF层，使用**可微分平衡二叉树**选择神经元块。
+- 推理复杂度为O(logN)，但训练时需激活所有节点，复杂度为O(N)，限制了块的数量。
+
+#### 3.3 产品键记忆（Product Key Memory, PKM）
+- Lample et al. (2019) 提出PKM，使用检索机制选择记忆向量。
+- 与PEER相关：PEER的路由机制借鉴了PKM的检索技术。
+- **关键区别**：PKM检索的是**静态记忆向量**，而PEER检索的是**输入依赖的专家网络**，因此PEER在效率和灵活性上更优。
+
+#### 3.4 统一视角与改进
+- Csordás et al. (2023) 提出统一视角，涵盖FFW、MoE和PKM，并建议将MoE和PKM中的路由归一化函数从softmax改为sigmoid或ReLU。
+
+---
+
+### 总结
+
+本节系统回顾了与PEER相关的三类研究方向：
+
+1. **MoE**：强调路由机制的演进，指出传统方法在专家数量和路由效率上的局限，突出PEER在**可学习性**与**复杂度**上的优势。
+2. **检索增强模型**：强调PEER与现有方法在**检索对象（数据 vs 函数）**上的本质区别。
+3. **高效前馈网络**：将PEER置于条件计算和检索机制的统一框架中，突出其在**计算效率**和**模型灵活性**上的创新。
+
+重点内容包括：
+- PEER的路由机制为**O(√N)**，优于传统O(N)方法；
+- PEER检索的是**输入依赖的专家网络**，区别于PKM等检索静态向量的方法；
+- 与参数高效MoE不同，PEER关注的是**活跃参数数量**，从而提升训练和推理效率。
+
+
+## 5 Conclusion
+
+本节总结了论文的核心贡献和实验结果。
+
+作者提出了一种**细粒度的MoE（Mixture of Experts，专家混合）架构**，该架构将传统的宽全连接前馈层分解为大量小型专家（expert）。这种设计基于最近发现的**细粒度MoE扩展定律**。为了应对在大量专家中路由所带来的计算开销，作者引入了**乘积键（product keys）机制**，从而高效地从宽MLP层中选择一小部分隐藏神经元进行计算。
+
+在语言建模任务上的实验表明，在相同的计算预算下，**PEER模型显著优于密集Transformer、粗粒度MoE以及乘积键记忆层**。
+
+### 重点内容：
+- **PEER的核心创新**：使用乘积键实现高效的细粒度专家选择机制。
+- **实验结果**：在语言模型任务中，PEER在性能上优于现有多种模型，同时控制计算成本。
+
+本节未涉及具体数学公式或表格数据，主要为方法概述与实验结论的总结。
+
+
+## Acknowledgments
+
+本节为论文的致谢部分，作者对多位研究人员和工程师表示感谢：
+
+- **感谢对象**：Adam Santoro、Arthur Guez、Arthur Szlam 等人，他们提供了**深入的讨论和宝贵建议**。
+- **技术支持**：Zhitao Gong、Daniel Toyama、Qixuan Feng 和 Jiajun Shen 提供了技术帮助。
+- **特别致谢**：
+  - **Adam Santoro** 分享了用于计算等FLOPs（isoFLOP）分析的脚本，这对实验分析可能起到了关键作用。
+  - **Andy Brock** 负责构建和维护用于训练模型的内部代码库，对项目基础设施有重要贡献。
+
+这部分内容**不涉及数学公式、算法步骤或表格数据**，主要为对合作者和贡献者的致谢说明。
