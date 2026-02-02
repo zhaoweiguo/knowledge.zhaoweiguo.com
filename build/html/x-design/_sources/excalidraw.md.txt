@@ -1,0 +1,137 @@
+# excalidraw
+
+
+
+* <https://excalidraw.com>
+* Excalidraw 图 ≈ 一个空间化的对象图（Object Graph）
+* A plugin to edit and view Excalidraw drawings in Obsidian: <https://github.com/zsviczian/obsidian-excalidraw-plugin>
+
+## 定义
+
+从格式角度看，Excalidraw 文件（`.excalidraw`）是一个 JSON 文档，用来描述一个无限画布上的一组元素：
+
+* 矩形、圆、箭头、线段、文本
+* 每个元素都有位置、尺寸、旋转角度、样式
+* 元素之间可以用箭头表达“关系”
+
+非常适合：
+
+* 架构图
+* 系统流程图
+* 思维草图
+* 技术方案讨论图
+
+## 核心设计哲学
+
+Excalidraw 的格式设计里有几个很“工程师味”的思想：
+
+1. **结构优先，而非视觉优先**
+   不追求像 Visio / Figma 那样的像素精度
+   而是确保“这个矩形是什么、它在哪里、它连着谁”
+
+2. **草图是合法状态**
+   歪的线、抖的边框不是 bug，是 feature
+   这降低了“画得不标准”的心理压力，反而提高沟通效率
+
+3. **天然适合协作与版本控制**
+   因为是 JSON：
+
+   * 可以 diff
+   * 可以生成
+   * 可以被 AI / 程序修改
+
+
+## 对比
+
+* **PNG / SVG**：
+  像素或路径，信息被“压扁”成视觉结果
+
+* **Mermaid / PlantUML**：
+  强语法，先有逻辑结构，再渲染图形
+
+* **Excalidraw**：
+  先有空间直觉，再附带结构信息
+  更接近人类在白板上思考系统的方式
+
+
+
+## 示例
+
+```json
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "https://excalidraw.com",
+  "elements": [
+    {
+      "id": "box-A",
+      "type": "rectangle",
+      "x": 100,
+      "y": 100,
+      "width": 160,
+      "height": 80,
+      "angle": 0,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "#e3f2fd",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "seed": 123456,
+      "version": 1,
+      "versionNonce": 111,
+      "isDeleted": false
+    },
+    {
+      "id": "box-B",
+      "type": "rectangle",
+      "x": 360,
+      "y": 100,
+      "width": 160,
+      "height": 80,
+      "angle": 0,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "#e8f5e9",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "seed": 654321,
+      "version": 1,
+      "versionNonce": 222,
+      "isDeleted": false
+    },
+    {
+      "id": "arrow-AB",
+      "type": "arrow",
+      "x": 260,
+      "y": 140,
+      "width": 100,
+      "height": 0,
+      "angle": 0,
+      "strokeColor": "#1e1e1e",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "seed": 999999,
+      "version": 1,
+      "versionNonce": 333,
+      "isDeleted": false,
+      "points": [
+        [0, 0],
+        [100, 0]
+      ],
+      "startBinding": { "elementId": "box-A" },
+      "endBinding": { "elementId": "box-B" }
+    }
+  ],
+  "appState": {
+    "viewBackgroundColor": "#ffffff"
+  },
+  "files": {}
+}
+
+```
+
+
+
