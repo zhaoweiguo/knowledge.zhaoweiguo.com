@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>pnpm简介 &mdash; 新溪-gordon V2026.01 文档</title>
+  <title>pnpm简介 &mdash; 新溪-gordon V2026.02 文档</title>
   
 
   
@@ -70,8 +70,8 @@ document.addEventListener('DOMContentLoaded', function() {
   <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
     <link rel="index" title="索引" href="../../../genindex.html" />
     <link rel="search" title="搜索" href="../../../search.html" />
-    <link rel="next" title="corepack" href="corepack.html" />
-    <link rel="prev" title="yarn命令" href="yarn.html" /> 
+    <link rel="next" title="yarn命令" href="yarn.html" />
+    <link rel="prev" title="npm命令" href="npm.html" /> 
 
   
   <script src="../../../_static/js/modernizr.min.js"></script>
@@ -108,7 +108,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             
               <div class="version">
-                V2026.01
+                V2026.02
               </div>
             
           
@@ -1458,10 +1458,11 @@ document.addEventListener('DOMContentLoaded', function() {
 </li>
 <li class="toctree-l2 current"><a class="reference internal" href="../../tool.html">6.4. 工具</a><ul class="current">
 <li class="toctree-l3 current"><a class="reference internal" href="../../tool.html#package-managers">6.4.1. 包管理工具(Package Managers)</a><ul class="current">
-<li class="toctree-l4"><a class="reference internal" href="npm.html">npm命令</a></li>
-<li class="toctree-l4"><a class="reference internal" href="yarn.html">yarn命令</a></li>
-<li class="toctree-l4 current"><a class="current reference internal" href="#">pnpm简介</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bun.html">bun 命令简介</a></li>
 <li class="toctree-l4"><a class="reference internal" href="corepack.html">corepack</a></li>
+<li class="toctree-l4"><a class="reference internal" href="npm.html">npm命令</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">pnpm简介</a></li>
+<li class="toctree-l4"><a class="reference internal" href="yarn.html">yarn命令</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../tool.html#id3">6.4.2. 版本管理工具</a><ul>
@@ -1719,6 +1720,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <li><a class="reference internal" href="#id2">核心特点</a></li>
 <li><a class="reference internal" href="#id3">设置环境变量</a></li>
 <li><a class="reference internal" href="#id4">基本使用</a></li>
+<li><a class="reference internal" href="#id5">生命周期</a></li>
 </ul>
 </li>
 </ul>
@@ -1787,9 +1789,6 @@ source /Users/zhaoweiguo/.zshrc
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># 初始化项目</span>
 <span class="n">pnpm</span> <span class="n">init</span>
 
-<span class="c1"># 安装依赖</span>
-<span class="n">pnpm</span> <span class="n">install</span>
-
 
 <span class="c1"># 添加依赖</span>
 <span class="n">pnpm</span> <span class="n">add</span> <span class="o">&lt;</span><span class="n">package</span><span class="o">&gt;</span>
@@ -1805,11 +1804,60 @@ source /Users/zhaoweiguo/.zshrc
 <span class="n">pnpm</span> <span class="n">run</span> <span class="o">&lt;</span><span class="n">script</span><span class="o">&gt;</span>
 </pre></div>
 </div>
+</section>
+<section id="id5">
+<h2>生命周期<a class="headerlink" href="#id5" title="此标题的永久链接">¶</a></h2>
+<p>1️⃣ 安装相关（install pipeline）:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span># 安装依赖
+pnpm install
+
+1. 安装 dependencies
+2. 安装 devDependencies
+3. 创建 node_modules/.bin
+     为可执行工具生成软链接
+4. 依次执行：
+        preinstall
+        ↓
+        install
+        ↓
+        postinstall
+        ↓
+        prepare
+</pre></div>
+</div>
+<p>2️⃣ 发布相关（publish pipeline）:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>prepublish
+↓
+prepare
+↓
+prepublishOnly
+↓
+publish
+↓
+postpublish
+</pre></div>
+</div>
+<p>3️⃣ 卸载相关（remove pipeline）:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>preuninstall
+↓
+uninstall
+↓
+postuninstall
+</pre></div>
+</div>
+<p>4️⃣ 版本相关（version pipeline）:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>preversion
+↓
+version
+↓
+postversion
+</pre></div>
+</div>
 <p>pnpm vs npm vs yarn:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>对比项                     pnpm            npm                     yarn
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>对比项                             pnpm            npm                     yarn
 磁盘占用                    🥇 最低            高                       中等
 安装速度                    🥇 最高            低                       中等
-依赖管理                    严格                      宽松                      宽松
+依赖管理                    严格              宽松                      宽松
 Monorepo支持                内置            无                       有
 并行下载                    ✅ 是             ❌ 否             ✅ 是
 全局缓存                    ✅ 是             ❌ 否             ✅ 是
@@ -1835,10 +1883,10 @@ Monorepo支持                内置            无                       有
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="corepack.html" class="btn btn-neutral float-right" title="corepack" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="yarn.html" class="btn btn-neutral float-right" title="yarn命令" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="yarn.html" class="btn btn-neutral" title="yarn命令" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="npm.html" class="btn btn-neutral" title="npm命令" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -1880,7 +1928,7 @@ Monorepo支持                内置            无                       有
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../../',
-            VERSION:'V2026.01',
+            VERSION:'V2026.02',
             LANGUAGE:'zh-CN',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
