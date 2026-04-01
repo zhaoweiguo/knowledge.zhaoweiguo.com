@@ -1,0 +1,1081 @@
+# 2602.02474_MemSkill: Learning and Evolving Memory Skills for Self-Evolving Agents
+
+
+
+* 首页: <https://arxiv.org/abs/2602.02474>
+* PDF: <https://arxiv.org/pdf/2602.02474>
+* 引用: 
+* 组织: 
+
+## 总结
+
+### **1. 背景、研究目的与问题概述**
+
+**背景：**
+随着大语言模型（LLM）在智能体领域的应用日益深入，智能体需要处理越来越长的交互历史。为了保持连贯性和积累经验，构建有效的记忆系统至关重要。目前的记忆系统大多依赖于**静态、手工设计**的操作（如固定的“增加/更新/删除”流程）或启发式模块。
+
+**研究问题：**
+现有的手工设计记忆机制存在明显的局限性：
+*   **僵化：** 难以适应多样化的交互模式。
+*   **低效：** 在处理超长历史时往往力不从心。
+*   **先验依赖强：** 过度依赖人类设定的“什么值得记忆”的假设，缺乏根据任务反馈自我调整的能力。
+
+**研究目的：**
+本文提出了 **MemSkill**，旨在将记忆操作重构为**可学习、可演化**的“记忆技能”。其核心目标是建立一个闭环系统，不仅能学习如何使用现有的记忆技能，还能根据任务中的“困难案例”自动进化和扩展技能库，从而实现自适应、自进化的记忆管理。
+
+---
+
+### **2. 研究方法、关键数据与主要发现**
+
+**核心方法：MemSkill 框架**
+MemSkill 将记忆管理分解为三个核心组件的协作，并形成了一个闭环优化过程：
+
+1.  **技能库：**
+    *   存储可复用的记忆操作技能。
+    *   每个技能包含“描述”（用于检索）和“内容”（指导执行器如何操作）。
+    *   **初始化：** 仅包含四个基础原语：`Insert`（插入）、`Update`（更新）、`Delete`（删除）、`Skip`（跳过）。
+
+2.  **控制器 - 学习使用技能：**
+    *   **功能：** 根据当前的文本片段和已检索到的记忆，从技能库中选择 Top-K 个最相关的技能。
+    *   **机制：** 使用轻量级 MLP 网络计算状态嵌入与技能嵌入的语义距离。为了适应技能库的动态变化（技能数量不固定），采用了基于嵌入相似度的打分机制，而非固定维度的输出头。
+    *   **训练：** 使用 **PPO（近端策略优化）** 强化学习算法进行训练。奖励信号来源于下游任务的表现（如 F1 分数或任务成功率）。
+
+3.  **执行器 - 技能引导的记忆提取：**
+    *   **功能：** 这是一个固定的大语言模型（LLM）。
+    *   **流程：** 接收当前的文本片段、检索到的记忆以及控制器选出的技能，一次性生成记忆更新操作（如插入新记忆或修改旧记忆）。这打破了传统的“逐轮处理”模式，支持更大粒度的处理。
+
+4.  **设计师 - 技能进化：**
+    *   **功能：** 周期性地分析训练过程中的“困难案例”，利用 LLM 自动优化技能库。
+    *   **机制：**
+        *   维护一个滑动窗口的**困难案例缓冲区**。
+        *   对失败案例进行聚类，挖掘具有代表性的错误模式。
+        *   **两阶段进化：** 先分析缺失的记忆行为，再提出具体的技能修改（细化旧技能或增加新技能）。
+    *   **安全机制：** 包含早停和回滚机制，防止错误的技能更新导致性能退化。
+
+**闭环优化：**
+系统交替进行“控制器训练（学习使用技能）”和“设计师更新（进化技能库）”两个阶段。
+
+**实验设置：**
+*   **数据集：**
+    *   **对话基准：** LoCoMo, LongMemEval（侧重长对话记忆）。
+    *   **具身交互任务：** ALFWorld（侧重多步动作执行）。
+    *   **分布外泛化：** HotpotQA（用于测试跨域泛化能力）。
+*   **基线模型：** MemoryBank, Mem0, A-MEM, MemoryOS 等当前主流记忆系统。
+*   **底层模型：** LLaMA-3.3-70B 和 Qwen3-Next-80B。
+
+**主要发现：**
+1.  **性能提升：** MemSkill 在 LoCoMo、LongMemEval 和 ALFWorld 上均显著优于所有基线，证明了其在对话理解和具身决策中的有效性。
+2.  **泛化能力：**
+    *   **跨模型泛化：** 在 LLaMA 上训练的技能库可以直接迁移到 Qwen 模型上，依然保持领先性能。
+    *   **跨任务泛化：** 在 LoCoMo（对话）上学到的技能可以直接应用于 HotpotQA（文档问答），表现出强大的鲁棒性。
+3.  **消融实验：** 移除控制器（随机选技能）或移除设计师（固定技能）都会导致性能明显下降，验证了“学习选择”和“自动进化”两个模块的必要性。
+
+---
+
+### **3. 新颖概念通俗解释**
+
+为了帮助理解本文的逻辑与创新点，以下是几个关键概念的通俗解释：
+
+*   **记忆技能 vs. 记忆操作：**
+    *   *传统视角：* 就像给智能体一本死板的操作手册，规定遇到任何情况都只能按“添加”、“修改”或“删除”按钮。
+    *   *MemSkill 视角：* 将这些操作视为“技能”。技能是可以成长的。例如，初始只会“添加”，后来进化出了“记录时间上下文”的技能，甚至进化出“处理实体细微差别”的技能。这就像员工从只会机械录入数据，进化到懂得如何提炼关键信息。
+
+*   **技能引导的生成：**
+    *   *比喻：* 厨师做菜。传统的 LLM 记忆提取就像让厨师看着一堆食材（文本）随意发挥。MemSkill 则是由**控制器**先点菜（选出“切菜”、“爆炒”等技能），然后**执行器**（厨师）根据这些具体的指令来处理食材。这样生成的记忆更有针对性。
+
+*   **设计师与闭环进化：**
+    *   *比喻：* 公司的“复盘机制”。员工（控制器）在工作（处理记忆），系统会记录下员工犯错最严重的案例（困难案例）。定期由一位顾问（设计师 LLM）分析这些错误，发现“原来是因为我们不懂得处理时间信息”，于是修改员工手册（技能库），增加一条关于“处理时间”的规则。这就是“自进化”。
+
+*   **Top-K 无替换选择：**
+    *   控制器不是只选一个技能，而是选出一组技能（如 K=3），且不重复。这允许执行器组合多种技能来处理复杂的文本片段，例如同时进行“插入新信息”和“更新旧信息”。
+
+*   **控制器与执行器的分离**：
+    *   **控制器**是“大脑”，负责决策。它不直接处理文本，而是判断：“这段话看起来像是在安排日程，我需要调用‘提取日程’和‘更新时间’这两个技能。”
+    *   **执行器**是“手”，负责干活。它接到指令后，利用 LLM 强大的理解能力，根据选定的技能指南，把具体的记忆写进数据库。
+
+
+
+
+---
+
+### **4. 优缺点评价与后续研究方向**
+
+**优点：**
+1.  **创新性强：** 首次将记忆操作显式地定义为可进化的“技能”，并引入了基于 RL 的技能选择和基于 LLM 的技能进化机制，摆脱了对静态手工规则的依赖。
+2.  **自适应能力：** 通过 Designer 机制，系统能根据实际任务中的失败案例自动调整记忆策略，真正实现了“从经验中学习”。
+3.  **架构解耦：** 将技能库（共享知识）与记忆库（特定会话数据）分离，使得学到的记忆策略可以跨会话、跨模型复用。
+4.  **验证充分：** 实验涵盖了对话、具身智能、跨域迁移等多种场景，证明了方法的通用性。
+
+**缺点：**
+1.  **计算成本：** 引入了强化学习（PPO）训练控制器，以及周期性的 LLM 设计师分析，相比简单的启发式记忆系统，训练阶段的计算开销较大。
+2.  **复杂性：** 系统包含 Controller、Executor、Designer 三个模型以及复杂的交互逻辑，工程实现和调试难度较高。
+3.  **依赖基座模型能力：** Executor 和 Designer 的表现高度依赖底层 LLM 的能力。如果基座模型较弱，技能进化的质量可能受限。
+
+**后续研究方向：**
+1.  **更高效的进化策略：** 探索更轻量级的进化机制，减少对 LLM 设计师调用的频率和成本。
+2.  **多模态记忆技能：** 将 MemSkill 扩展到多模态领域，处理图像、音频等非文本记忆的提取和进化。
+3.  **技能遗忘与合并：** 研究如何自动识别冗余或过时的技能，或者将相似的技能合并，以控制技能库的规模，防止“技能爆炸”。
+4.  **更广泛的应用：** 将这种“技能进化”框架应用到智能体的其他模块，如“规划技能进化”或“工具使用技能进化”。
+
+---
+
+**总结：**
+MemSkill 为构建具有长期记忆和自我进化能力的 AI 智能体提供了一条极具潜力的路径。它通过将记忆管理从“硬编码”转变为“软技能”，并通过闭环反馈不断优化，展示了 AI 系统从被动执行指令向主动优化自身认知能力的迈进。
+
+
+## 关键摘录
+
+### 关键图片
+
+![](https://img.zhaoweiguo.com/uPic/2026/03/Irm69z.png)
+
+Figure 1:Comparison between (a) prior turn-level, handcrafted operations and (b) MemSkill’s span-level, skill-conditioned generation.
+
+**图解**
+* 以往方法将手工设计的操作与 LLM 调用交错进行，逐轮地提取并修订记忆；
+* 而 MemSkill 则从共享的技能库中选择一小组技能，在一次处理过程中应用这些技能，从而生成由技能引导的记忆。
+
+
+![](https://img.zhaoweiguo.com/uPic/2026/03/3mJjjW.png)
+
+Figure 2:MemSkill architecture overview. 
+
+**图解**
+* 给定一段交互轨迹，MemSkill 按片段（span）逐段处理：
+  * 控制器根据当前文本片段以及检索到的记忆，从共享的技能库中选择一个 Top-K 的技能子集；
+  * 随后由 LLM 执行器在一次处理过程中应用这些选定的技能，来更新该轨迹对应的记忆库。
+* 构建完成的记忆会在依赖记忆的训练查询上进行评估，从而为优化控制器提供任务奖励；
+  * 与此同时，以查询为中心的失败案例会被记录到一个滑动的困难样本缓冲区中。
+  * 系统会周期性地从这些具有代表性的困难样本中进行挖掘，用于改进已有技能并提出新技能，从而形成“技能使用”和“技能进化”交替进行的过程。
+
+![](https://img.zhaoweiguo.com/uPic/2026/03/93quTq.png)
+
+Figure 4:Case study. We show representative evolved skills learned on LoCoMo and ALFWorld. (“Description” is omitted for brevity.)
+
+
+
+## 附录-SKILL
+
+### SKILL-Initial Primitive Skills
+
+
+#### Initial Primitive Skill - INSERT
+```
+Skill: Insert New Memory
+Description: Memory management skill for capturing new, durable facts from the current text chunk that are not already in memory.
+Purpose: Capture new, durable facts from the current text chunk that are missing in memory.
+When to use:
+- The text chunk introduces new facts, events, plans, or context worth storing.
+- The information is stable and likely useful later.
+How to apply:
+- Compare against retrieved memories to avoid duplicates.
+- Split distinct facts into separate items.
+- Keep each item concise and specific.
+Constraints:
+- Skip trivial, fleeting, or speculative content.
+- Do not update or delete existing memories.
+Action type: INSERT only.
+
+```
+
+#### Initial Primitive Skill - UPDATE
+```
+Skill: Update Existing Memory
+Description: Memory management skill for revising an existing memory item when the text chunk provides corrections or new details.
+Purpose: Revise a retrieved memory with new or corrected information from the text chunk.
+When to use:
+- The text chunk clarifies, corrects, or extends a retrieved memory.
+How to apply:
+- Select the best matching memory item.
+- Merge new details into a single updated item.
+- Preserve accurate details that still hold.
+Constraints:
+- Do not create new memories.
+- Do not delete items.
+Action type: UPDATE only.
+```
+
+
+#### Initial Primitive Skill - DELETE
+```
+Skill: Delete Invalid Memory
+Description: Memory management skill for removing memory items that are incorrect, outdated, or superseded.
+Purpose: Remove a retrieved memory that is wrong, outdated, or superseded by the text chunk.
+When to use:
+- The text chunk clearly contradicts a memory.
+- A plan or fact is explicitly canceled or replaced.
+How to apply:
+- Only delete when evidence is explicit.
+Constraints:
+- If uncertain, prefer no action over deletion.
+Action type: DELETE only.
+```
+
+#### Initial Primitive Skill - SKIP
+```
+Skill: No Operation
+Description: Memory management skill for confirming that no memory changes are required.
+Purpose: Confirm no memory changes are needed for the text chunk.
+When to use:
+- The text chunk contains no new, corrective, or actionable information.
+Constraints:
+- Emit NOOP only if none of the selected skills produce actions.
+Action type: NOOP only.
+```
+
+
+
+
+
+### SKILL-Evolved Skills on LoCoMo
+
+#### Evolved Skill on LoCoMo - CAPTURE\_ACTIVITY\_DETAILS
+```markdown
+Skill: Capture Activity Details
+Purpose: Capture detailed information about activities mentioned in the text chunk, including the type of activity, location, participants, temporal details, and any relevant contextual information.
+When to use:
+- The text chunk mentions a specific activity or event with contextual details.
+How to apply:
+- Identify the key elements of the activity (e.g., type, location, participants, temporal details).
+- Capture any relevant contextual information that provides additional insight into the activity.
+- Keep the activity details specific, actionable, and concise.
+Constraints:
+- Focus on explicit activity details and contextual information mentioned in the text chunk.
+- Avoid inferring activity details or context not directly stated.
+Action type: INSERT only.
+
+
+技能：捕获活动细节（Capture Activity Details）
+
+**目的：**
+捕获文本片段中提到的活动的详细信息，包括活动类型、地点、参与者、时间信息以及任何相关的上下文信息。
+
+**使用时机：**
+* 当文本片段中提到了具有上下文细节的具体活动或事件时。
+
+**应用方法：**
+* 识别活动的关键要素（例如：类型、地点、参与者、时间信息）。
+* 捕获任何能够提供额外洞察的相关上下文信息。
+* 保持活动细节具体、可执行且简洁。
+
+**约束：**
+* 仅关注文本片段中明确提到的活动细节和上下文信息。
+* 避免推断文本中未直接说明的活动细节或背景。
+
+**操作类型：**
+* 仅允许 INSERT（插入）。
+
+```
+
+
+#### Evolved Skill on LoCoMo - CAPTURE\_ENTITY\_NUANCES
+```
+Skill: Capture Entity Nuances
+Purpose: Capture nuanced details about entities mentioned in the text chunk, such as nicknames, aliases, or comparative statements.
+When to use:
+- The text chunk mentions an entity with nuanced details (e.g., nickname, alias, comparison).
+How to apply:
+- Identify the entity and its associated nuances.
+- Capture these nuances in a way that distinguishes them from the entity’s primary information.
+Constraints:
+- Focus on explicit nuances mentioned in the text chunk.
+- Avoid inferring nuances not directly stated.
+Action type: INSERT only.
+
+**技能：** 捕获实体细节（Capture Entity Nuances）
+**目的：** 捕获文本片段中提到的实体的细粒度信息，例如昵称、别名或比较性描述。
+**使用时机：**
+
+* 文本片段中提到带有细节信息的实体（如昵称、别名、对比描述）。
+  **应用方法：**
+* 识别实体及其相关的细节特征。
+* 以区别于实体主要信息的方式记录这些细节。
+  **约束：**
+* 仅关注文本中明确提到的细节。
+* 避免推断未直接说明的内容。
+  **操作类型：** 仅 INSERT（插入）
+
+```
+
+
+#### Evolved Skill on LoCoMo - CAPTURE\_TEMPORAL\_CONTEXT
+```
+Skill: Capture Temporal Context
+Purpose: Capture the temporal context of events, activities, or facts mentioned in the text chunk, including any relevant dates, times, durations, or sequential information.
+When to use:
+- The text chunk mentions a specific event, activity, or fact with associated temporal information.
+How to apply:
+- Identify the key temporal elements (e.g., start time, end time, duration, sequence).
+- Capture the temporal context in a concise and specific format, considering any sequential relationships.
+Constraints:
+- Focus on explicit temporal information mentioned in the text chunk.
+- Avoid inferring temporal details not directly stated.
+Action type: INSERT only.
+
+**技能：** 捕获时间上下文（Capture Temporal Context）
+**目的：** 捕获文本片段中事件、活动或事实的时间上下文，包括日期、时间、持续时长或顺序关系等信息。
+**使用时机：**
+
+* 文本片段中提到带有时间信息的事件、活动或事实。
+  **应用方法：**
+* 识别关键时间要素（如开始时间、结束时间、持续时间、顺序）。
+* 以简洁且具体的形式记录时间上下文，并考虑顺序关系。
+  **约束：**
+* 仅关注明确提到的时间信息。
+* 避免推断未直接说明的时间细节。
+  **操作类型：** 仅 INSERT（插入）
+```
+
+
+#### Evolved Skill on LoCoMo - HANDLE\_ENTITY\_RELATIONSHIPS
+```
+Skill: Handle Entity Relationships
+Purpose: Capture and manage complex relationships between entities mentioned in the text chunk, including nuanced details.
+When to use:
+- The text chunk mentions interactions, associations, or relationships between entities with specific details.
+How to apply:
+- Identify the entities involved and their roles in the relationship.
+- Capture the nature of the relationship and any nuanced details (e.g., nicknames, comparative statements).
+- Update existing memories to reflect the new relationship information.
+Constraints:
+- Focus on explicit relationships mentioned in the text chunk.
+- Avoid inferring relationships not directly stated.
+Action type: INSERT only.
+
+**技能：** 处理实体关系（Handle Entity Relationships）
+**目的：** 捕获并管理文本片段中实体之间的复杂关系，包括细粒度信息。
+**使用时机：**
+* 文本片段中提到实体之间的交互、关联或关系，并包含具体细节。
+
+**应用方法：**
+* 识别涉及的实体及其在关系中的角色。
+* 捕获关系的性质及细节（如昵称、对比描述）。
+* 更新已有记忆以反映新的关系信息。
+
+**约束：**
+* 仅关注明确提到的关系。
+* 避免推断未直接说明的关系。
+  **操作类型：** 仅 INSERT（插入）
+```
+
+#### Evolved Skill on LoCoMo - REFINE\_TEMPORAL\_DETAILS\_WITH\_CONTEXT
+```
+Skill: Refine Temporal Details with Context
+Purpose: Update the temporal context of existing memories with new information from the text chunk, considering the context in which the information is provided.
+When to use:
+- The text chunk provides new or corrected temporal information relevant to an existing memory, and the context suggests a need for refinement.
+How to apply:
+- Identify the relevant existing memory and its current temporal context.
+- Update the temporal details to reflect the new information, ensuring consistency with the provided context.
+Constraints:
+- Focus on explicit temporal information mentioned in the text chunk and supported by the context.
+- Avoid inferring temporal details not directly stated or implied by the context.
+Action type: UPDATE only.
+
+
+**技能：** 结合上下文细化时间信息（Refine Temporal Details with Context）
+**目的：** 基于文本片段中的新信息，对已有记忆的时间上下文进行更新与细化。
+**使用时机：**
+* 文本片段提供了与已有记忆相关的新时间信息或修正信息，且上下文表明需要更新。
+
+**应用方法：**
+* 识别相关已有记忆及其当前时间信息。
+* 根据新信息更新，并确保与上下文一致。
+
+**约束：**
+* 仅基于文本中明确或上下文支持的信息。
+* 避免推断未直接说明的时间细节。
+  **操作类型：** 仅 UPDATE（更新）
+
+
+```
+
+
+#### Evolved Skill on LoCoMo - INSERT
+```
+Skill: Insert New Memory
+Purpose: Capture new, durable facts from the current text chunk that are missing in memory, including specific temporal details such as dates or time frames and detailed activity information.
+When to use:
+- The text chunk introduces new facts, events, plans, or context worth storing.
+- The information is stable and likely useful later.
+How to apply:
+- Compare against retrieved memories to avoid duplicates.
+- Split distinct facts into separate items.
+- Keep each item concise and specific, including relevant temporal information and activity details.
+Constraints:
+- Skip trivial, fleeting, or speculative content.
+- Do not update or delete existing memories.
+Action type: INSERT only.
+```
+
+#### Evolved Skill on LoCoMo - NOOP
+```
+Skill: No Operation
+Purpose: Confirm no memory changes are needed for the text chunk.
+When to use:
+- The text chunk contains no new, corrective, or actionable information.
+Constraints:
+- Emit NOOP only if none of the selected skills produce actions.
+Action type: NOOP only.
+```
+
+
+#### Evolved Skill on LoCoMo - UPDATE
+```
+Skill: Update Existing Memory
+Purpose: Revise a retrieved memory with new or corrected information from the text chunk, including entity-specific details.
+When to use:
+- The text chunk clarifies, corrects, or extends a retrieved memory.
+- The text chunk provides new information about a specific entity or its activities.
+How to apply:
+- Select the best matching memory item.
+- Merge new details into a single updated item.
+- Preserve accurate details that still hold, and ensure entity-specific information is accurately captured and updated.
+Constraints:
+- Do not create new memories.
+- Do not delete items.
+Action type: UPDATE only.
+```
+
+#### Evolved Skill on LoCoMo - DELETE
+```
+Skill: Delete Invalid Memory
+Purpose: Remove a retrieved memory that is wrong, outdated, or superseded by the text chunk.
+When to use:
+- The text chunk clearly contradicts a memory.
+- A plan or fact is explicitly canceled or replaced.
+How to apply:
+- Only delete when evidence is explicit.
+Constraints:
+- If uncertain, prefer no action over deletion.
+Action type: DELETE only.
+```
+
+
+
+
+### SKILL-Evolved Skills on ALFWorld
+
+#### Evolved Skill on ALFWorld - CAPTURE\_ACTION\_CONSTRAINTS
+```
+Skill: Capture Action Constraints
+Purpose: Capture detailed constraints on actions, including object states and movements, necessary for task completion.
+When to use:
+- The text chunk mentions constraints on actions, including object states and movements.
+- The constraints are crucial for future task steps.
+How to apply:
+- Identify the action, its constraints, and relevant object states and movements from the text chunk.
+- Create a new memory item with the action-constraint pair, including object states and movements.
+Constraints:
+- Only capture constraints on actions relevant to the task.
+- Update existing constraint memories if new information is provided.
+Action type: INSERT only.
+
+**技能：** 捕获动作约束（Capture Action Constraints）
+**目的：** 捕获完成任务所需的动作约束细节，包括物体状态和运动信息。
+**使用时机：**
+* 文本片段提到动作的约束（包括物体状态和运动）。
+* 这些约束对后续任务步骤至关重要。
+
+**应用方法：**
+* 从文本片段中识别动作、其约束，以及相关的物体状态和运动。
+* 创建新的记忆条目，记录“动作-约束”对，并包含物体状态与运动信息。
+
+**约束：**
+* 仅捕获与任务相关的动作约束。
+* 如果有新信息，更新已有的约束类记忆。
+**操作类型：** 仅 INSERT（插入）
+```
+
+#### Evolved Skill on ALFWorld - TRACK\_OBJECT\_LOCATION
+```
+Skill: Track Object Location
+Purpose: Explicitly track the location and state of an object necessary for task completion.
+When to use:
+- The text chunk mentions an object’s location or state.
+- The object’s location or state is crucial for future task steps.
+How to apply:
+- Identify the object, its location, and relevant state from the text chunk.
+- Create a new memory item with the object-location-state triplet.
+Constraints:
+- Only track locations and states of objects relevant to the task.
+- Update existing location memories if new information is provided.
+Action type: INSERT only.
+
+
+**技能：** 跟踪物体位置（Track Object Location）
+**目的：** 明确跟踪完成任务所需的物体位置及其状态。
+**使用时机：**
+* 文本片段提到某个物体的位置或状态。
+* 该信息对后续任务步骤至关重要。
+
+**应用方法：**
+* 从文本片段中识别物体、其位置以及相关状态。
+* 创建新的记忆条目，记录“物体-位置-状态”三元组。
+
+**约束：**
+* 仅跟踪与任务相关的物体位置和状态。
+* 如果有新信息，更新已有的位置类记忆。
+**操作类型：** 仅 INSERT（插入）
+```
+
+#### Evolved Skill on ALFWorld - TRACK\_OBJECT\_MOVEMENTS
+```
+Skill: Track Object Movements
+Purpose: Track movements of objects necessary for task completion.
+When to use:
+- The text chunk mentions an object’s movement.
+- The object’s movement is crucial for future task steps.
+How to apply:
+- Identify the object and its movement from the text chunk.
+- Create a new memory item with the object-movement pair.
+Constraints:
+- Only track movements of objects relevant to the task.
+- Update existing movement memories if new information is provided.
+Action type: INSERT only.
+
+
+**技能：** 跟踪物体移动（Track Object Movements）
+**目的：** 跟踪完成任务所需的物体移动情况。
+**使用时机：**
+* 文本片段提到物体的移动。
+* 该移动对后续任务步骤至关重要。
+
+**应用方法：**
+* 从文本片段中识别物体及其移动。
+* 创建新的记忆条目，记录“物体-移动”对。
+
+**约束：**
+* 仅跟踪与任务相关的物体移动。
+* 如果有新信息，更新已有的移动类记忆。
+**操作类型：** 仅 INSERT（插入）
+```
+
+#### Evolved Skill on ALFWorld - DELETE
+```
+Skill: Delete Invalid Memory
+Purpose: Remove a retrieved memory that is wrong, outdated, or superseded by the text chunk.
+When to use:
+- The text chunk clearly contradicts a memory.
+- A plan or fact is explicitly canceled or replaced.
+How to apply:
+- Only delete when evidence is explicit.
+Constraints:
+- If uncertain, prefer no action over deletion.
+Action type: DELETE only.
+```
+
+#### Evolved Skill on ALFWorld - INSERT
+```
+Skill: Insert New Memory
+Purpose: Capture new, durable facts, including procedural knowledge and action sequences, from the current text chunk that are missing in memory.
+When to use:
+- The text chunk introduces new facts, events, plans, or context worth storing.
+- The information is stable and likely useful later.
+How to apply:
+- Compare against retrieved memories to avoid duplicates.
+- Split distinct facts into separate items, including action sequences.
+- Keep each item concise and specific.
+Constraints:
+- Skip trivial, fleeting, or speculative content.
+- Do not update or delete existing memories.
+Action type: INSERT only.
+```
+
+#### Evolved Skill on ALFWorld - NOOP
+```
+Skill: No Operation
+Purpose: Confirm no memory changes are needed for the text chunk.
+When to use:
+- The text chunk contains no new, corrective, or actionable information.
+Constraints:
+- Emit NOOP only if none of the selected skills produce actions.
+Action type: NOOP only.
+```
+
+#### Evolved Skill on ALFWorld - UPDATE
+```
+Skill: Update Existing Memory
+Purpose: Revise a retrieved memory with new or corrected information from the text chunk.
+When to use:
+- The text chunk clarifies, corrects, or extends a retrieved memory.
+How to apply:
+- Select the best matching memory item.
+- Merge new details into a single updated item.
+- Preserve accurate details that still hold.
+Constraints:
+- Do not create new memories.
+- Do not delete items.
+Action type: UPDATE only.
+```
+
+
+## 附录-PROMPT
+
+### LoCoMo Answer Prompt
+```
+Based on the above context, write an answer in the form of a short phrase for the following question. Answer with exact words from the context whenever possible.
+Question: {} Short answer:
+```
+
+### LongMemEval Answer Prompt
+```
+I will give you several history chats between you and a user. Please answer the question based on the relevant chat history.
+History Chats: {}
+Current Date: {}
+Question: {}
+Short Answer:
+```
+
+### HotpotQA Answer Prompt
+```
+Based on the following context, answer the question. The question may require reasoning across multiple pieces of information.
+{context}
+Question: {question}
+Instructions:
+- Read the context carefully and identify relevant information
+- If the answer can be found in the context, provide a short, precise answer
+- Output your answer within <answer></answer>tags
+<answer>your answer here</answer>
+```
+
+### ALFWorld Env Interaction Prompt
+```
+You are controlling a text-based ALFWorld environment. Your job: choose the NEXT action as ONE text command. Output ONLY the command string, with no extra text. You MUST choose an action from the admissible actions list and copy it EXACTLY.
+Goal: {goal}
+Retrieved procedural tips (optional, short & actionable): {retrieved\_memory}
+Interaction history so far (most recent info matters most): {history}
+Admissible actions (choose exactly ONE and copy it verbatim): {actions}
+Now output exactly one line: the chosen action (must match one item above).
+```
+
+### Executor Prompt
+```
+You are a memory management executor. Apply the selected skills to the input text chunk and retrieved memories, then output memory actions.
+Input Text Chunk: {session\_text}
+Retrieved Memories (0-based index): {mem\_text}
+Selected Skills: {skills\_text}
+Guidelines:
+- Apply any skill as needed; a skill may be used multiple times.
+- Read the input text chunk carefully line by line and apply any skill as needed.
+- Only use action types supported by the selected skills.
+- MEMORY\_INDEX is 0-based and must reference the retrieved memories list.
+- Output only action blocks in the format below.
+- Do not include explanations or REASONING lines.
+Output format (repeat as needed). Use ONE block per action and separate blocks with a blank line:
+INSERT block:
+ACTION: INSERT
+MEMORY\_ITEM: [concise but complete summary with essential details]
+UPDATE block:
+ACTION: UPDATE
+MEMORY\_INDEX: [0-based index]
+UPDATED\_MEMORY: [concise but complete merged summary with essential updates]
+DELETE block:
+ACTION: DELETE
+MEMORY\_INDEX: [0-based index]
+
+你是一个记忆管理执行器。请根据选定的技能，对输入的文本片段和已检索的记忆进行处理，并输出对应的记忆操作。
+
+**输入文本片段：** {session_text}
+**已检索记忆（从 0 开始索引）：** {mem_text}
+**选定技能：** {skills_text}
+
+**指导原则：**
+
+* 根据需要应用任意技能；同一个技能可以多次使用。
+* 逐行仔细阅读输入文本片段，并按需应用技能。
+* 仅使用所选技能支持的操作类型。
+* MEMORY_INDEX 为从 0 开始的索引，必须引用已检索记忆列表。
+* 只输出操作块（action blocks），格式如下。
+* 不要包含解释或 REASONING 内容。
+
+**输出格式（可重复使用）：**
+每个操作使用一个独立的 block，多个 block 之间用空行分隔：
+
+**INSERT 块：**
+ACTION: INSERT
+MEMORY_ITEM: [简洁但完整的摘要，包含关键细节]
+
+**UPDATE 块：**
+ACTION: UPDATE
+MEMORY_INDEX: [从 0 开始的索引]
+UPDATED_MEMORY: [简洁但完整的合并摘要，包含必要更新]
+
+**DELETE 块：**
+ACTION: DELETE
+MEMORY_INDEX: [从 0 开始的索引]
+
+```
+
+### Designer Analysis Prompt
+`````markdown
+You are an expert analyst for a memory-augmented QA system. Analyze the failure cases below to identify why the system failed and how the memory management skills should change.
+## How This System Works
+1. \*\*Memory Storage\*\*: The system applies memory management skills to decide what information to store from the text chunk.
+2. \*\*Memory Retrieval\*\*: At question time, it retrieves the most relevant memories by semantic similarity.
+3. \*\*Answer Generation\*\*: An LLM answers using the retrieved memories.
+Failures can occur at any stage:
+- \*\*Storage failure\*\*: Important information was never stored (skill missing or misapplied)
+- \*\*Retrieval failure\*\*: Relevant memory exists but was not retrieved (embedding mismatch)
+- \*\*Memory quality failure\*\*: Memory exists but is too vague or incomplete to answer
+## Current Memory Management Skills
+{operation\_bank\_description}
+## Operation Evolution Feedback
+{evolution\_feedback}
+## Failure Cases ({num\_failure\_cases} cases)
+{failure\_cases\_details}
+## Analysis Instructions
+This is round 1 of a reflection loop. Produce a strong initial analysis that can be critiqued and improved.
+1. For each case, check whether the retrieved memories contain the answer or the needed evidence.
+2. If missing, decide whether it was never stored (storage failure) or stored but too weak (memory quality failure).
+3. If the answer is present but not retrieved, label it retrieval failure and avoid changing skills unless the pattern repeats.
+4. Group cases into patterns tied to information types, entities, temporal details, or constraints.
+5. For each pattern, propose a concrete skill change: add a new skill or refine an existing one to capture missing details.
+6. Provide up to {max\_changes} recommendations total (use fewer if only one change is justified).
+## Output Format
+Provide your analysis as JSON:
+{
+“failure\_patterns”: [
+{
+“pattern\_name”: “[descriptive name for this failure pattern]”,
+“affected\_cases”: [list of case numbers, e.g., 1, 3, 5],
+“root\_cause”: “[storage\_failure—retrieval\_failure—memory\_quality\_failure]”,
+“explanation”: “[why this pattern of failures is occurring]”,
+“potential\_fix”: “[what kind of operation change could address this]”
+}
+],
+“recommendations”: [
+{
+“action”: “[add\_new\_operation—refine\_existing\_operation—no\_change]”,
+“target\_operation”: “[operation name to refine, or null if adding new]”,
+“rationale”: “[clear explanation of why this is the best improvement]”,
+“priority”: “[high—medium—low]”
+}
+],
+“summary”: “[1-2 sentence summary of main findings]”
+}
+Focus on actionable insights. What specific change to the skill bank would prevent these failures?
+Output ONLY the JSON, no other text.
+
+
+你是一名面向“记忆增强问答系统”的专家分析师。请分析下面的失败案例，找出系统失败的原因，以及记忆管理技能应如何改进。
+
+## 系统工作原理
+1. **记忆存储（Memory Storage）**：系统应用记忆管理技能，从文本片段中决定存储哪些信息。
+2. **记忆检索（Memory Retrieval）**：在提问时，根据语义相似度检索最相关的记忆。
+3. **答案生成（Answer Generation）**：LLM 基于检索到的记忆生成答案。
+
+失败可能发生在任意阶段：
+* **存储失败（Storage failure）**：重要信息从未被存储（技能缺失或使用不当）
+* **检索失败（Retrieval failure）**：相关记忆存在但未被检索到（嵌入不匹配）
+* **记忆质量失败（Memory quality failure）**：记忆存在，但过于模糊或不完整，无法用于回答
+
+## 当前记忆管理技能
+{operation_bank_description}
+
+## 操作进化反馈
+{evolution_feedback}
+
+## 失败案例（{num_failure_cases} 个）
+{failure_cases_details}
+
+## 分析指引
+这是反思循环的第 1 轮。请给出一个强有力的初始分析，以便后续改进。
+1. 对每个案例，检查检索到的记忆是否包含答案或必要证据。
+2. 若缺失，判断是未存储（存储失败）还是存储但质量不足（记忆质量失败）。
+3. 若答案存在但未被检索，标记为检索失败，除非该问题反复出现，否则不要修改技能。
+4. 将案例按信息类型、实体、时间细节或约束进行模式分组。
+5. 针对每种模式，提出具体的技能改进：新增技能或优化已有技能。
+6. 最多给出 {max_changes} 条建议（如果只需要一条，则少于该数量）。
+
+## 输出格式
+请以 JSON 格式输出分析结果：
+```json
+{
+  "failure_patterns": [
+    {
+      "pattern_name": "[该失败模式的描述性名称]",
+      "affected_cases": [案例编号列表，如 1, 3, 5],
+      "root_cause": "[storage_failure—retrieval_failure—memory_quality_failure]",
+      "explanation": "[该失败模式出现的原因]",
+      "potential_fix": "[可能的操作改进方式]"
+    }
+  ],
+  "recommendations": [
+    {
+      "action": "[add_new_operation—refine_existing_operation—no_change]",
+      "target_operation": "[需要优化的操作名，若为新增则为 null]",
+      "rationale": "[为何这是最佳改进方案]",
+      "priority": "[high—medium—low]"
+    }
+  ],
+  "summary": "[1-2 句总结主要发现]"
+}
+```
+重点关注可执行的改进：具体应该如何修改技能库，才能避免这些失败？
+只输出 JSON，不要包含其他内容。
+
+`````
+
+### Designer Refinement Prompt
+
+`````markdown
+Based on the failure analysis, propose a specific improvement to the memory operation bank.
+## Failure Analysis (from Stage 1)
+{analysis\_feedback}
+## Current Operation Bank
+{operation\_bank\_full}
+{evolution\_feedback}
+## Your Task
+Propose up to {max\_changes} improvements based on the analysis:
+\*\*Option A - Add New Operation\*\*: Create a new operation if the analysis shows a capability gap (e.g., certain information types are not being captured).
+\*\*Option B - Refine Existing Operation\*\*: Improve an existing operation’s instruction template if the analysis shows it’s not working well (e.g., memories are too vague, missing key details).
+\*\*Option C - No Change\*\*: If the failures are due to retrieval issues (not operation issues), or if the current operations are already well-designed.
+## CRITICAL Requirements
+1. instruction\_template MUST be a skill-style guide and MUST NOT include context placeholders (the executor injects the text chunk and retrieved memories)
+2. instruction\_template MUST clearly state purpose, when to use, and constraints
+3. instruction\_template MUST specify the allowed action type (INSERT or UPDATE only)
+4. For new operations, ‘update\_type‘ must be either “insert” or “update” (delete and noop operations are not evolved at this time)
+5. Only propose operations with update\_type “insert” or “update”
+6. Avoid labels like “ENHANCED”, “ADVANCED”, or other marketing adjectives in descriptions or templates; keep phrasing neutral and task-specific
+7. Do NOT embed output blocks; the executor handles output formatting and can apply the skill multiple times
+8. The number of changes in the list MUST be less than max\_changes
+9. Do NOT modify the same operation more than once in a single response, and do NOT refine an operation you add in the same response
+## Example of a Well-Designed Insert Operation
+{
+“name”: “extract\_personal\_preferences”,
+“description”: “Memory management skill for capturing personal preferences and habits mentioned in the text chunk.”,
+“update\_type”: “insert”,
+“instruction\_template”: “Skill: Insert Preferences. Purpose: Capture personal preferences, habits, or opinions stated in the text chunk. When to use: The text chunk mentions likes, dislikes, routines, or goals tied to a person. How to apply: Attribute the preference to the correct person. Keep the preference specific and actionable. Constraints: Avoid one-off or ambiguous statements. Action type: INSERT only.”
+}
+## Output Format
+Respond with ONE of these JSON structures:
+### One or more changes (up to max\_changes):
+{
+“action”: “apply\_changes”,
+“summary”: “[overall rationale for the set of changes]”,
+“changes”: [
+{
+“action”: “add\_new”,
+“new\_operation”: {
+“name”: “[snake\_case\_name]”,
+“description”: “[what it does and when to use it]”,
+“instruction\_template”: “[skill-style instruction template]”,
+“update\_type”: “[insert—update]”,
+“reasoning”: “[how this addresses the identified failures]”
+}
+},
+{
+“action”: “refine\_existing”,
+“refined\_operation”: {
+“name”: “[existing\_operation\_name]”,
+“changes”: {
+“description”: “[improved description]”,
+“instruction\_template”: “[improved template]”
+},
+“reasoning”: “[how these changes address the identified failures]”
+}
+}
+]
+}
+### No changes needed:
+{
+“action”: “no\_change”,
+“reasoning”: “[why the current operations are sufficient]”
+}
+## Instruction Template Structure
+When writing instruction templates, follow this structure:
+Skill: [Short skill name]
+Purpose: [What this skill does]
+When to use:
+- [Trigger 1]
+- [Trigger 2]
+How to apply:
+- [Step 1]
+- [Step 2]
+Constraints:
+- [What to avoid]
+Action type: [INSERT only — UPDATE only]
+Output ONLY the JSON, no other text.
+
+
+基于失败分析，提出对记忆操作库的具体改进方案。
+## 失败分析（来自阶段 1）
+{analysis_feedback}
+
+## 当前操作库
+{operation_bank_full}
+{evolution_feedback}
+
+## 你的任务
+根据分析结果，提出最多 {max_changes} 项改进：
+* **选项 A - 新增操作**：若分析显示能力缺口（例如某类信息未被捕获）
+* **选项 B - 优化已有操作**：若现有操作效果不佳（例如记忆过于模糊）
+* **选项 C - 不做改动**：若问题源于检索而非操作
+
+## 关键要求
+1. instruction_template 必须是技能风格，不得包含上下文占位符
+2. 必须明确说明：目的、使用时机、约束
+3. 必须指定操作类型（仅 INSERT 或 UPDATE）
+4. 新操作的 update_type 必须为 "insert" 或 "update"（当前不进化 delete/noop）
+5. 仅提出 insert 或 update 类型操作
+6. 避免使用“ENHANCED”“ADVANCED”等营销词汇
+7. 不要嵌入输出格式（由执行器负责）
+8. 改动数量必须少于 max_changes
+9. 不要在同一轮中多次修改同一操作，也不要对刚新增的操作再优化
+
+## 示例（良好的 Insert 操作）
+```json
+{
+  "name": "extract_personal_preferences",
+  "description": "用于捕获文本中提到的个人偏好和习惯",
+  "update_type": "insert",
+  "instruction_template": "Skill: Insert Preferences. Purpose: 捕获个人偏好、习惯或观点。When to use: 出现喜欢、不喜欢、习惯、目标等描述。How to apply: 关联到正确的人，并保持具体。Constraints: 避免一次性或模糊表述。Action type: INSERT only."
+}
+```
+
+## 输出格式
+返回以下 JSON 结构之一：
+### 有改动：
+```json
+{
+  "action": "apply_changes",
+  "summary": "[整体改进思路]",
+  "changes": [
+    {
+      "action": "add_new",
+      "new_operation": {
+        "name": "[snake_case_name]",
+        "description": "[功能说明]",
+        "instruction_template": "[技能模板]",
+        "update_type": "[insert—update]",
+        "reasoning": "[如何解决问题]"
+      }
+    },
+    {
+      "action": "refine_existing",
+      "refined_operation": {
+        "name": "[已有操作名]",
+        "changes": {
+          "description": "[改进说明]",
+          "instruction_template": "[改进模板]"
+        },
+        "reasoning": "[改进原因]"
+      }
+    }
+  ]
+}
+```
+
+### 无需改动：
+
+```json
+{
+  "action": "no_change",
+  "reasoning": "[当前操作已足够]"
+}
+```
+
+## 技能模板结构
+编写 instruction_template 时，必须遵循：
+* Skill: 技能名称
+* Purpose: 技能作用
+* When to use:
+  * 触发条件1
+  * 触发条件2
+* How to apply:
+  * 步骤1
+  * 步骤2
+* Constraints:
+  * 避免事项
+* Action type: [INSERT only 或 UPDATE only]
+
+只输出 JSON，不要包含其他内容。
+
+`````
+
+### LLM Judge Prompt
+`````markdown
+You are an expert judge evaluating the quality of an answer for a QA task.
+Your goal is to determine whether the model’s answer correctly and sufficiently
+answers the given question.
+Read the following information carefully:
+[Question]
+{question}
+[Ground Truth Answers]
+{ground\_truth}
+[Model Answer]
+{model\_answer}
+Your evaluation criteria:
+1. Correctness:
+- Is the model answer factually consistent with ANY of the correct answers?
+- Does it avoid contradictions or introducing false information?
+2. Relevance:
+- Does the answer address the question directly without unnecessary content?
+3. Completeness:
+- Does the answer include all essential information needed to fully answer the question?
+- Partial answers are allowed but should receive lower scores.
+Scoring Rules:
+- Score = 1.0 if the answer is fully correct.
+- Score = 0.5 if the answer is partially correct but incomplete or slightly inaccurate.
+- Score = 0.0 if the answer is incorrect, irrelevant, or contradicts the ground truth.
+Output Format (STRICT):
+Return your output as a JSON dictionary with two fields:
+{
+“explanation”: “<brief explanation of your reasoning>”,
+”score”: <0.0 — 0.5 — 1.0>}
+Be concise and objective. Do not include anything outside the JSON.
+
+
+你是一名评审专家，负责评估问答任务中模型答案的质量。
+目标是判断模型答案是否正确且充分回答了问题。
+
+请阅读以下内容：
+**[问题]**
+{question}
+
+**[标准答案]**
+{ground_truth}
+
+**[模型答案]**
+{model_answer}
+
+## 评估标准
+1. **正确性（Correctness）**
+* 是否与任一标准答案一致？
+* 是否避免错误或矛盾？
+
+2. **相关性（Relevance）**
+* 是否直接回答问题？
+* 是否避免无关内容？
+
+3. **完整性（Completeness）**
+* 是否包含所有关键要点？
+* 不完整但部分正确可给中等分
+
+## 评分规则
+
+* 1.0：完全正确
+* 0.5：部分正确但不完整或略有偏差
+* 0.0：错误或无关
+
+## 输出格式（严格）
+
+```json
+{
+  "explanation": "<简要说明理由>",
+  "score": 0.0 | 0.5 | 1.0
+}
+```
+保持简洁客观，仅输出 JSON。
+
+`````
+
+
+
+
+
+
+
+
+
